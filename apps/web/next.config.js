@@ -1,5 +1,12 @@
 module.exports = {
   reactStrictMode: true,
+  transpilePackages: ['@repo/shared', '@repo/ui'],
+  output: 'standalone',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
   turbopack: {
     resolveAlias: {
       "react-native": "react-native-web",
