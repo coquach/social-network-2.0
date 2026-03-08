@@ -1,7 +1,7 @@
 /**
  * Friend Hooks
- * React Query hooks for friend/social relationship operations
- * 
+ * React Query hooks for friend/social relationship operations with optimistic updates
+ *
  * Note: Some friend mutation hooks are in useUser.ts for backwards compatibility:
  * - useSendFriendRequest
  * - useAcceptFriendRequest
@@ -12,9 +12,20 @@
  * - useUserFriends
  */
 
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { friendService, type FriendSuggestionDTO, type RelationshipStatusResponse } from '../api/services';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import {
+  friendService,
+  type FriendSuggestionDTO,
+  type RelationshipStatusResponse,
+} from '../api/services';
 import type { CursorPaginatedResponse } from '../types';
+import { cancelQueries, invalidateQueries } from '../utils/cache-utils';
+import { queryConfigs } from '../utils/query-configs';
 import { queryKeys } from './query-keys';
 
 /**
@@ -23,8 +34,11 @@ import { queryKeys } from './query-keys';
 export const useRelationshipStatus = (targetId: string) => {
   return useQuery<RelationshipStatusResponse>({
     queryKey: queryKeys.friends.relationshipStatus(targetId),
-    queryFn: () => friendService.getRelationshipStatus(targetId),
+    queryFn: async () => {
+      return friendService.getRelationshipStatus(targetId);
+    },
     enabled: !!targetId,
+    ...queryConfigs.standard,
   });
 };
 
@@ -34,10 +48,16 @@ export const useRelationshipStatus = (targetId: string) => {
 export const useFriendRequests = (params?: { limit?: number }) => {
   return useInfiniteQuery<CursorPaginatedResponse<string>>({
     queryKey: queryKeys.friends.requests(),
-    queryFn: ({ pageParam }) =>
-      friendService.getFriendRequests({ ...params, cursor: pageParam as string | undefined }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    queryFn: async ({ pageParam }) => {
+      return friendService.getFriendRequests({
+        ...params,
+        cursor: pageParam as string | undefined,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
+    ...queryConfigs.realtime,
   });
 };
 
@@ -47,10 +67,16 @@ export const useFriendRequests = (params?: { limit?: number }) => {
 export const useFriends = (userId?: string, params?: { limit?: number }) => {
   return useInfiniteQuery<CursorPaginatedResponse<string>>({
     queryKey: queryKeys.friends.list(userId),
-    queryFn: ({ pageParam }) =>
-      friendService.getFriends(userId, { ...params, cursor: pageParam as string | undefined }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    queryFn: async ({ pageParam }) => {
+      return friendService.getFriends(userId, {
+        ...params,
+        cursor: pageParam as string | undefined,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
+    ...queryConfigs.semiStatic,
   });
 };
 
@@ -60,10 +86,16 @@ export const useFriends = (userId?: string, params?: { limit?: number }) => {
 export const useFriendSuggestions = (params?: { limit?: number }) => {
   return useInfiniteQuery<CursorPaginatedResponse<FriendSuggestionDTO>>({
     queryKey: queryKeys.friends.suggestions(),
-    queryFn: ({ pageParam }) =>
-      friendService.getFriendSuggestions({ ...params, cursor: pageParam as string | undefined }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    queryFn: async ({ pageParam }) => {
+      return friendService.getFriendSuggestions({
+        ...params,
+        cursor: pageParam as string | undefined,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
+    ...queryConfigs.standard,
   });
 };
 
@@ -73,10 +105,16 @@ export const useFriendSuggestions = (params?: { limit?: number }) => {
 export const useBlockedUsers = (params?: { limit?: number }) => {
   return useInfiniteQuery<CursorPaginatedResponse<string>>({
     queryKey: queryKeys.friends.blocked(),
-    queryFn: ({ pageParam }) =>
-      friendService.getBlockedUsers({ ...params, cursor: pageParam as string | undefined }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    queryFn: async ({ pageParam }) => {
+      return friendService.getBlockedUsers({
+        ...params,
+        cursor: pageParam as string | undefined,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
+    ...queryConfigs.semiStatic,
   });
 };
 
@@ -85,12 +123,22 @@ export const useBlockedUsers = (params?: { limit?: number }) => {
  */
 export const useCancelFriendRequest = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (targetId: string) => friendService.cancelFriendRequest(targetId),
+    mutationFn: async (targetId: string) => {
+      return friendService.cancelFriendRequest(targetId);
+    },
+    onMutate: async (targetId) => {
+      // Cancel outgoing queries to prevent race conditions
+      await cancelQueries(queryClient, [
+        [...queryKeys.friends.relationshipStatus(targetId)] as unknown[],
+      ]);
+    },
     onSuccess: (_, targetId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.relationshipStatus(targetId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.user.detail(targetId) });
+      invalidateQueries(queryClient, [
+        [...queryKeys.friends.relationshipStatus(targetId)] as unknown[],
+        [...queryKeys.user.detail(targetId)] as unknown[],
+      ]);
     },
   });
 };
@@ -100,14 +148,24 @@ export const useCancelFriendRequest = () => {
  */
 export const useDeclineFriendRequest = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (requesterId: string) => friendService.declineFriendRequest(requesterId),
+    mutationFn: async (requesterId: string) => {
+      return friendService.declineFriendRequest(requesterId);
+    },
+    onMutate: async (requesterId) => {
+      // Cancel outgoing queries to prevent race conditions
+      await cancelQueries(queryClient, [
+        [...queryKeys.friends.requests()] as unknown[],
+        [...queryKeys.friends.relationshipStatus(requesterId)] as unknown[],
+      ]);
+    },
     onSuccess: (_, requesterId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.requests() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.relationshipStatus(requesterId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.user.detail(requesterId) });
+      invalidateQueries(queryClient, [
+        [...queryKeys.friends.requests()] as unknown[],
+        [...queryKeys.friends.relationshipStatus(requesterId)] as unknown[],
+        [...queryKeys.user.detail(requesterId)] as unknown[],
+      ]);
     },
   });
 };
-

@@ -1,59 +1,16 @@
-export enum RootType {
-  POST = 'POST',
-  SHARE = 'SHARE',
-}
+// Re-export all social enums from shared package
+// Using subpath export @repo/shared/types for RSC compatibility
+export {
+  RootType,
+  TargetType,
+  Audience,
+  Emotion,
+  EventType,
+  ReactionType,
+  MediaType,
+  PostGroupStatus,
+  MessageStatus,
+  NotificationStatus,
+} from '@repo/shared';
 
-export enum TargetType {
-  POST = 'POST',
-  SHARE = 'SHARE',
-  COMMENT = 'COMMENT',
-}
-
-export enum Audience {
-  PUBLIC = 'PUBLIC',
-  FRIENDS = 'FRIENDS',
-  ONLY_ME = 'ONLY_ME',
-}
-
-export enum Emotion {
-  JOY = 'JOY',
-  SADNESS = 'SADNESS',
-  ANGER = 'ANGER',
-  FEAR = 'FEAR',
-  DISGUST = 'DISGUST',
-  SURPRISE = 'SURPRISE',
-  NEUTRAL = 'NEUTRAL',
-}
-
-export enum EventType {
-  POST = 'POST',
-  COMMENT = 'COMMENT',
-  SHARE = 'SHARE',
-  REACT = 'REACT',
-}
-export enum ReactionType {
-  LIKE = 'LIKE',
-  LOVE = 'LOVE',
-  HAHA = 'HAHA',
-  WOW = 'WOW',
-  SAD = 'SAD',
-  ANGRY = 'ANGRY',
-}
-
-export enum MediaType {
-  IMAGE,
-  VIDEO,
-}
-
-export interface MediaDTO {
-  type: MediaType;
-  url: string;
-  publicId?: string;
-}
-
-
-export enum PostGroupStatus {
-  PENDING = 'PENDING',
-  REJECTED = 'REJECTED',
-  PUBLISHED = 'PUBLISHED',
-}
+export type { MediaDTO } from '@repo/shared';

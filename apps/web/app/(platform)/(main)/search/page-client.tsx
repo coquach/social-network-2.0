@@ -17,6 +17,7 @@ import { GroupDTO, GroupSummaryDTO } from '@/models/group/groupDTO';
 import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
 import { GroupStatus } from '@/models/group/enums/group-status.enum';
 import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { Emotion } from '@/models/social/enums/social.enum';
 import { UserDTO } from '@/models/user/userDTO';
 import { UserSearchCard } from './_components/user-search-card';
 
@@ -34,7 +35,8 @@ export default function SearchPageClient() {
     : 'posts';
 
   // post filters
-  const emotion = params.get('emotion') ?? undefined;
+  const emotionParam = params.get('emotion');
+  const emotion = emotionParam ? (emotionParam as Emotion) : undefined;
 
   // group filters
   const privacyParam = params.get('privacy') as GroupPrivacy | null;

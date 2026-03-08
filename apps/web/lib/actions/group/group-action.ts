@@ -15,7 +15,8 @@ import { CreateGroupReportForm, GroupReportDTO } from '@/models/group/groupRepor
 import { JoinRequestResponseDTO } from '@/models/group/groupRequestDTO';
 import { GroupSettingDTO, UpdateGroupSettingForm } from '@/models/group/groupSettingDTO';
 import api from '../../api-client';
-import { CursorPageResponse, CursorPagination } from '../../cursor-pagination.dto';
+import { CursorPageResponse, CursorPagination } from '@repo/shared';
+
 
 
 export const getMyGroups = async (
@@ -340,9 +341,11 @@ export const changeMemberPermission = async (
   }
 };
 
-export interface GroupMemberFilter extends CursorPagination {
+export interface GroupMemberFilter {
+  cursor?: string;
+  limit?: number;
   role?: GroupRole;
-  status?: GroupMemberStatus
+  status?: GroupMemberStatus;
 }
 
 export const getGroupMembers = async (

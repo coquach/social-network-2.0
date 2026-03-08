@@ -1,22 +1,46 @@
 /**
  * Post-related React Query hooks
- * 
+ *
  * Platform-agnostic hooks for posts, reactions, and shares.
- * These hooks use the postService and provide type-safe queries and mutations.
+ * These hooks use the postService and provide type-safe queries and mutations
+ * with optimistic updates.
  */
 
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { postService } from '../api/services/post.service';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import type { CreatePostInGroupResponse } from '../api/services/post.service';
-import { queryKeys } from './query-keys';
+import { postService } from '../api/services/post.service';
+import type { CursorPaginatedResponse } from '../types/common.types';
+import {
+  Emotion,
+  PostGroupStatus,
+  ReactionType,
+  TargetType,
+} from '../types/enums';
 import type {
-  PostDTO,
   CreatePostInput,
-  UpdatePostInput,
   EditHistoryDTO,
+  MediaDTO,
+  PostDTO,
+  UpdatePostInput,
 } from '../types/post.types';
-import type { CursorPaginatedResponse, QueryParams } from '../types/common.types';
-import { TargetType, ReactionType, PostGroupStatus, Emotion } from '../types/enums';
+import { useUploadOptional } from '../contexts/upload-context';
+import type { UploadableFile } from '../types/upload.types';
+import {
+  addItemToInfiniteCache,
+  cancelQueries,
+  invalidateQueries,
+  removeItemFromInfiniteCache,
+  restoreQueryData,
+  snapshotQueryData,
+  updateItemInInfiniteCache,
+} from '../utils/cache-utils';
+import { queryConfigs } from '../utils/query-configs';
+import { queryKeys } from './query-keys';
 
 // ==================== Query Hooks ====================
 
@@ -26,10 +50,11 @@ import { TargetType, ReactionType, PostGroupStatus, Emotion } from '../types/enu
 export const usePost = (postId: string, options?: { enabled?: boolean }) => {
   return useQuery<PostDTO>({
     queryKey: queryKeys.posts.detail(postId),
-    queryFn: () => postService.getPost(postId),
+    queryFn: async () => {
+      return postService.getPost(postId);
+    },
     enabled: options?.enabled !== false && !!postId,
-    staleTime: 10_000, // 10 seconds
-    gcTime: 60_000, // 1 minute
+    ...queryConfigs.standard,
   });
 };
 
@@ -39,66 +64,81 @@ export const usePost = (postId: string, options?: { enabled?: boolean }) => {
 export const useMyPosts = (params?: { feeling?: Emotion }) => {
   return useInfiniteQuery<CursorPaginatedResponse<PostDTO>>({
     queryKey: queryKeys.posts.myPosts(),
-    queryFn: ({ pageParam }) =>
-      postService.getMyPosts({
+    queryFn: async ({ pageParam }) => {
+      return postService.getMyPosts({
         ...params,
         cursor: pageParam as string | undefined,
-      }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    ...queryConfigs.standard,
   });
 };
 
 /**
  * Get user's posts with infinite scroll
  */
-export const useUserPosts = (userId: string, params?: QueryParams) => {
+export const useUserPosts = (
+  userId: string,
+  params?: { feeling?: Emotion },
+) => {
   return useInfiniteQuery<CursorPaginatedResponse<PostDTO>>({
     queryKey: queryKeys.posts.list(userId),
-    queryFn: ({ pageParam }) =>
-      postService.getUserPosts(userId, {
+    queryFn: async ({ pageParam }) => {
+      return postService.getUserPosts(userId, {
         ...params,
         cursor: pageParam as string | undefined,
-      }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    ...queryConfigs.standard,
   });
 };
 
 /**
  * Get group posts with infinite scroll
  */
-export const useGroupPosts = (groupId: string, params?: { mainEmotion?: Emotion; status?: PostGroupStatus }) => {
+export const useGroupPosts = (
+  groupId: string,
+  params?: { mainEmotion?: Emotion; status?: PostGroupStatus },
+) => {
   return useInfiniteQuery<CursorPaginatedResponse<PostDTO>>({
-    queryKey: queryKeys.posts.byGroup(groupId),
-    queryFn: ({ pageParam }) =>
-      postService.getGroupPosts(groupId, {
+    queryKey: params?.status
+      ? [...queryKeys.posts.byGroup(groupId), params.status]
+      : queryKeys.posts.byGroup(groupId),
+    queryFn: async ({ pageParam }) => {
+      return postService.getGroupPosts(groupId, {
         ...params,
         cursor: pageParam as string | undefined,
-      }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
     enabled: !!groupId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    ...queryConfigs.standard,
   });
 };
 
 /**
  * Get post edit history
  */
-export const usePostEditHistory = (postId: string, options?: { enabled?: boolean }) => {
+export const usePostEditHistory = (
+  postId: string,
+  options?: { enabled?: boolean },
+) => {
   return useQuery<EditHistoryDTO[]>({
     queryKey: queryKeys.posts.editHistories(postId),
-    queryFn: () => postService.getPostEditHistory(postId),
+    queryFn: async () => {
+      return postService.getPostEditHistory(postId);
+    },
     enabled: options?.enabled !== false && !!postId,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    ...queryConfigs.semiStatic,
   });
 };
 
@@ -106,49 +146,143 @@ export const usePostEditHistory = (postId: string, options?: { enabled?: boolean
 
 /**
  * Create a new post
+ * With optimistic updates for immediate feedback
+ * 
+ * @example
+ * const createPost = useCreatePost();
+ * // With media files
+ * createPost.mutate({
+ *   content: 'Check this out!',
+ *   uploadFiles: [{ file: fileObject, type: MediaType.IMAGE }]
+ * });
  */
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
+  const uploadService = useUploadOptional();
 
-  return useMutation<PostDTO, Error, CreatePostInput>({
-    mutationFn: (input) => postService.createPost(input),
+  return useMutation<
+    PostDTO,
+    Error,
+    CreatePostInput & { uploadFiles?: UploadableFile[] }
+  >({
+    mutationFn: async ({ uploadFiles, ...input }) => {
+      // Upload files if provided and upload service available
+      if (uploadFiles && uploadFiles.length > 0 && uploadService) {
+        try {
+          const uploadResults = await uploadService.uploadMultiple(uploadFiles, {
+            folder: 'posts',
+            concurrency: 3,
+          });
+
+          const media: MediaDTO[] = uploadResults.map((result) => ({
+            type: result.type,
+            url: result.url,
+            publicId: result.publicId,
+          }));
+
+          return postService.createPost({ ...input, media });
+        } catch (uploadError) {
+          console.error('File upload failed:', uploadError);
+          throw new Error('Failed to upload files. Please try again.');
+        }
+      }
+
+      return postService.createPost(input);
+    },
     onSuccess: (newPost) => {
-      // Invalidate feed queries to show new post
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.myPosts() });
-      
-      // Optionally add to cache
+      // Add to detail cache
       queryClient.setQueryData<PostDTO>(
         queryKeys.posts.detail(newPost.id),
-        newPost
+        newPost,
       );
+
+      // Add to my posts list (optimistic)
+      addItemToInfiniteCache(
+        queryClient,
+        [...queryKeys.posts.myPosts()] as unknown[],
+        newPost,
+      );
+
+      // Invalidate feed queries to show new post
+      invalidateQueries(queryClient, [
+        [...queryKeys.feed.all] as unknown[],
+        [...queryKeys.posts.lists()] as unknown[],
+      ]);
     },
   });
 };
 
 /**
  * Create post in group (may require approval)
+ * 
+ * @example
+ * const createPostInGroup = useCreatePostInGroup();
+ * createPostInGroup.mutate({
+ *   content: 'Group post',
+ *   groupId: 'group-123',
+ *   uploadFiles: [{ file, type: MediaType.IMAGE }]
+ * });
  */
 export const useCreatePostInGroup = () => {
   const queryClient = useQueryClient();
+  const uploadService = useUploadOptional();
 
-  return useMutation<CreatePostInGroupResponse, Error, CreatePostInput>({
-    mutationFn: (input) => postService.createPostInGroup(input),
-    onSuccess: (response) => {
-      // Invalidate group posts
-      if (response.post.group?.id) {
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.posts.byGroup(response.post.group.id) 
-        });
+  return useMutation<
+    CreatePostInGroupResponse,
+    Error,
+    CreatePostInput & { uploadFiles?: UploadableFile[] }
+  >({
+    mutationFn: async ({ uploadFiles, ...input }) => {
+      // Upload files if provided and upload service available
+      if (uploadFiles && uploadFiles.length > 0 && uploadService) {
+        try {
+          const uploadResults = await uploadService.uploadMultiple(uploadFiles, {
+            folder: input.groupId ? `groups/${input.groupId}/posts` : 'posts',
+            concurrency: 3,
+          });
+
+          const media: MediaDTO[] = uploadResults.map((result) => ({
+            type: result.type,
+            url: result.url,
+            publicId: result.publicId,
+          }));
+
+          return postService.createPostInGroup({ ...input, media });
+        } catch (uploadError) {
+          console.error('File upload failed:', uploadError);
+          throw new Error('Failed to upload files. Please try again.');
+        }
       }
-      
-      // If approved immediately, also invalidate feed
-      if (response.status === PostGroupStatus.PUBLISHED) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+
+      return postService.createPostInGroup(input);
+    },
+    onSuccess: (response) => {
+      const { post, status } = response;
+
+      // If published immediately, add to caches
+      if (status === PostGroupStatus.PUBLISHED && post.group?.id) {
+        // Add to detail cache
         queryClient.setQueryData<PostDTO>(
-          queryKeys.posts.detail(response.post.id),
-          response.post
+          queryKeys.posts.detail(post.id),
+          post,
         );
+
+        // Add to group posts list
+        addItemToInfiniteCache(
+          queryClient,
+          [...queryKeys.posts.byGroup(post.group.id)] as unknown[],
+          post,
+        );
+
+        // Invalidate feed
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+      }
+
+      // Always invalidate group posts to refresh pending status
+      if (post.group?.id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.posts.byGroup(post.group.id),
+        });
       }
     },
   });
@@ -156,41 +290,125 @@ export const useCreatePostInGroup = () => {
 
 /**
  * Update an existing post
+ * With optimistic updates
  */
 export const useUpdatePost = (postId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation<PostDTO, Error, UpdatePostInput>({
-    mutationFn: (input) => postService.updatePost(postId, input),
-    onSuccess: (updatedPost) => {
-      // Update the post in cache
+    mutationFn: async (input) => {
+      return postService.updatePost(postId, input);
+    },
+    onMutate: async (updatedPost) => {
+      // Cancel outgoing queries
+      await cancelQueries(queryClient, [
+        [...queryKeys.posts.detail(postId)] as unknown[],
+        [...queryKeys.posts.lists()] as unknown[],
+      ]);
+
+      // Snapshot for rollback
+      const context = snapshotQueryData<PostDTO>(queryClient, [
+        ...queryKeys.posts.detail(postId),
+      ] as unknown[]);
+
+      // Optimistically update
       queryClient.setQueryData<PostDTO>(
         queryKeys.posts.detail(postId),
-        updatedPost
+        (old) => (old ? { ...old, ...updatedPost } : old),
       );
-      
-      // Invalidate lists that might contain this post
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.lists() });
+
+      return context;
+    },
+    onSuccess: (updatedPost) => {
+      // Update the post in detail cache
+      queryClient.setQueryData<PostDTO>(
+        queryKeys.posts.detail(postId),
+        updatedPost,
+      );
+
+      // Update in all list caches
+      updateItemInInfiniteCache(
+        queryClient,
+        [...queryKeys.posts.all] as unknown[],
+        updatedPost,
+        (item, updated) => item.id === updated.id,
+      );
+
+      // Invalidate related queries
+      invalidateQueries(queryClient, [
+        [...queryKeys.feed.all] as unknown[],
+        [...queryKeys.posts.lists()] as unknown[],
+      ]);
+    },
+    onError: (_error, _variables, context) => {
+      // Rollback on error
+      if (context) {
+        restoreQueryData(
+          queryClient,
+          [...queryKeys.posts.detail(postId)] as unknown[],
+          context,
+        );
+      }
     },
   });
 };
 
 /**
  * Delete a post
+ * With optimistic removal from cache
  */
 export const useDeletePost = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (postId) => postService.deletePost(postId),
+    mutationFn: async (postId) => {
+      return postService.deletePost(postId);
+    },
+    onMutate: async (postId) => {
+      // Cancel outgoing queries
+      await cancelQueries(queryClient, [
+        [...queryKeys.posts.detail(postId)] as unknown[],
+        [...queryKeys.posts.lists()] as unknown[],
+      ]);
+
+      // Snapshot for rollback
+      const context = snapshotQueryData<PostDTO>(queryClient, [
+        ...queryKeys.posts.detail(postId),
+      ] as unknown[]);
+
+      // Optimistically remove from cache
+      removeItemFromInfiniteCache(
+        queryClient,
+        [...queryKeys.posts.all] as unknown[],
+        (item: PostDTO) => item.id === postId,
+      );
+
+      return context;
+    },
     onSuccess: (_, postId) => {
-      // Remove from cache
+      // Remove from detail cache
       queryClient.removeQueries({ queryKey: queryKeys.posts.detail(postId) });
-      
+
       // Invalidate lists
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.lists() });
+      invalidateQueries(queryClient, [
+        [...queryKeys.feed.all] as unknown[],
+        [...queryKeys.posts.lists()] as unknown[],
+      ]);
+    },
+    onError: (_error, postId, context) => {
+      // Rollback on error
+      if (context) {
+        restoreQueryData(
+          queryClient,
+          [...queryKeys.posts.detail(postId)] as unknown[],
+          context,
+        );
+      }
+
+      // Re-fetch to restore accurate state
+      invalidateQueries(queryClient, [
+        [...queryKeys.posts.lists()] as unknown[],
+      ]);
     },
   });
 };
@@ -201,13 +419,24 @@ export const useDeletePost = () => {
 export const useApproveGroupPost = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<boolean, Error, string>({
-    mutationFn: (postId) => postService.approvePostInGroup(postId),
-    onSuccess: (_, postId) => {
-      // Invalidate post and group posts
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.lists() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+  return useMutation<boolean, Error, { postId: string; groupId: string }>({
+    mutationFn: async ({ postId }) => {
+      return postService.approvePostInGroup(postId);
+    },
+    onSuccess: (_, { postId, groupId }) => {
+      // Remove from pending list
+      removeItemFromInfiniteCache(
+        queryClient,
+        [...queryKeys.posts.byGroup(groupId), PostGroupStatus.PENDING],
+        (item: PostDTO) => item.id === postId,
+      );
+
+      // Invalidate to refresh
+      invalidateQueries(queryClient, [
+        [...queryKeys.posts.detail(postId)] as unknown[],
+        [...queryKeys.posts.byGroup(groupId)] as unknown[],
+        [...queryKeys.feed.all] as unknown[],
+      ]);
     },
   });
 };
@@ -218,12 +447,23 @@ export const useApproveGroupPost = () => {
 export const useRejectGroupPost = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<boolean, Error, string>({
-    mutationFn: (postId) => postService.rejectPostInGroup(postId),
-    onSuccess: (_, postId) => {
-      // Invalidate post and group posts
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.lists() });
+  return useMutation<boolean, Error, { postId: string; groupId: string }>({
+    mutationFn: async ({ postId }) => {
+      return postService.rejectPostInGroup(postId);
+    },
+    onSuccess: (_, { postId, groupId }) => {
+      // Remove from pending list
+      removeItemFromInfiniteCache(
+        queryClient,
+        [...queryKeys.posts.byGroup(groupId), PostGroupStatus.PENDING],
+        (item: PostDTO) => item.id === postId,
+      );
+
+      // Invalidate post details
+      invalidateQueries(queryClient, [
+        [...queryKeys.posts.detail(postId)] as unknown[],
+        [...queryKeys.posts.byGroup(groupId)] as unknown[],
+      ]);
     },
   });
 };
@@ -249,9 +489,11 @@ export const useReactToPost = () => {
       }),
     onSuccess: (_, { postId }) => {
       // Invalidate post to refresh reaction counts
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.reactions.list(postId, TargetType.POST) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.detail(postId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reactions.list(postId, TargetType.POST),
       });
     },
   });
@@ -264,46 +506,19 @@ export const useRemoveReaction = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (postId) => 
+    mutationFn: (postId) =>
       postService.removeReaction({
         targetId: postId,
         targetType: TargetType.POST,
       }),
     onSuccess: (_, postId) => {
       // Invalidate post to refresh reaction counts
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.reactions.list(postId, TargetType.POST) 
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.detail(postId),
       });
-    },
-  });
-};
-
-/**
- * Share a post
- */
-export const useSharePost = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    PostDTO,
-    Error,
-    { postId: string; content?: string }
-  >({
-    mutationFn: ({ postId, content }) =>
-      postService.sharePost({
-        postId,
-        content,
-      }),
-    onSuccess: (sharedPost) => {
-      // Invalidate feed to show shared post
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      
-      // Add shared post to cache
-      queryClient.setQueryData<PostDTO>(
-        queryKeys.posts.detail(sharedPost.id),
-        sharedPost
-      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reactions.list(postId, TargetType.POST),
+      });
     },
   });
 };

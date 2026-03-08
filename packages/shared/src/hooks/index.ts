@@ -18,11 +18,20 @@ export * from './useUser';
 // Comment hooks
 export * from './useComment';
 
+// Reaction hooks
+export * from './useReaction';
+
+// Share hooks
+export * from './useShare';
+
 // Notification hooks
 export * from './useNotification';
 
-// Message and conversation hooks
+// Message hooks
 export * from './useMessage';
+
+// Conversation hooks
+export * from './useConversation';
 
 // Friend hooks
 export * from './useFriend';
@@ -35,3 +44,10 @@ export * from './useGroup';
 
 // Search hooks
 export * from './useSearch';
+
+// Report hooks
+export * from './useReport';
+
+// UI utility hooks (web-only, requires DOM)
+// Note: Import these directly from './useUI' in web apps only
+// export * from './useUI';

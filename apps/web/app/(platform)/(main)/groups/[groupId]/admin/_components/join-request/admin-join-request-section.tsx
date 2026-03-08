@@ -65,9 +65,9 @@ export const GroupAdminJoinRequestsSection = ({ groupId }: Props) => {
   const { ref, inView } = useInView({ threshold: 0 });
 
   const { mutate: approveMutate, isPending: approving } =
-    useApproveJoinRequest(groupId);
+    useApproveJoinRequest();
   const { mutate: rejectMutate, isPending: rejecting } =
-    useRejectJoinRequest(groupId);
+    useRejectJoinRequest();
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
@@ -177,8 +177,8 @@ export const GroupAdminJoinRequestsSection = ({ groupId }: Props) => {
             canManage={canManageJoinRequests}
             approving={approving}
             rejecting={rejecting}
-            onApprove={() => approveMutate(req.id)}
-            onReject={() => rejectMutate(req.id)}
+            onApprove={() => approveMutate({ groupId, requestId: req.id })}
+            onReject={() => rejectMutate({ groupId, requestId: req.id })}
           />
         ))}
       </div>

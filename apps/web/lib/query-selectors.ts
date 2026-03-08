@@ -12,7 +12,7 @@
  */
 
 import { InfiniteData } from '@tanstack/react-query';
-import { CursorPageResponse } from './cursor-pagination.dto';
+import type { CursorPageResponse } from '@repo/shared';
 
 /**
  * Flattens infinite query data into a single array

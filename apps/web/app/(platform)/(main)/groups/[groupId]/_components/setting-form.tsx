@@ -44,9 +44,7 @@ export const SettingForm = ({ open }: SettingFormProps) => {
     shouldFetchSettings ? group!.id : ''
   );
 
-  const { mutate: updateSettingsMutate, isPending } = useUpdateGroupSettings(
-    group?.id ?? ''
-  );
+  const { mutate: updateSettingsMutate, isPending } = useUpdateGroupSettings();
 
   const form = useForm({
     defaultValues: {
@@ -70,10 +68,13 @@ export const SettingForm = ({ open }: SettingFormProps) => {
       const promise = new Promise<void>((resolve, reject) => {
         updateSettingsMutate(
           {
-            requiredPostApproval: value.requiredPostApproval,
-            maxMembers: value.maxMembers,
-            requireAdminApprovalToJoin: value.requireAdminApprovalToJoin,
-            allowMemberInvite: value.allowMemberInvite,
+            groupId: group.id,
+            input: {
+              requiredPostApproval: value.requiredPostApproval,
+              maxMembers: value.maxMembers,
+              requireAdminApprovalToJoin: value.requireAdminApprovalToJoin,
+              allowMemberInvite: value.allowMemberInvite,
+            },
           },
           {
             onSuccess: () => resolve(),

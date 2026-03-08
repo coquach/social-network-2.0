@@ -66,6 +66,13 @@ export const conversationService = {
   },
 
   /**
+   * Mark conversation as read
+   */
+  async markConversationAsRead(conversationId: string): Promise<void> {
+    return getApiClient().post(`/conversations/${conversationId}/mark-read`);
+  },
+
+  /**
    * Hide conversation
    */
   async hideConversation(conversationId: string): Promise<void> {

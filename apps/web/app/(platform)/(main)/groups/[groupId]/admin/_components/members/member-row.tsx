@@ -67,14 +67,14 @@ export const GroupAdminMemberRow = ({
   const [editPermOpen, setEditPermOpen] = useState(false);
 
   const { mutate: removeMember, isPending: removing } =
-    useRemoveMember(groupId);
-  const { mutate: banMemberMutate, isPending: banning } = useBanMember(groupId);
+    useRemoveMember();
+  const { mutate: banMemberMutate, isPending: banning } = useBanMember();
   const { mutate: unbanMemberMutate, isPending: unbanning } =
-    useUnbanMember(groupId);
+    useUnbanMember();
   const { mutate: changeRoleMutate, isPending: changingRole } =
-    useChangeMemberRole(groupId);
+    useChangeMemberRole();
   const { mutate: changePermMutate, isPending: changingPerm } =
-    useChangeMemberPermission(groupId);
+    useChangeMemberPermission();
 
   const isOwner = member.role === GroupRole.OWNER;
 
@@ -201,7 +201,7 @@ export const GroupAdminMemberRow = ({
               className="bg-red-600 hover:bg-red-700"
               disabled={banning}
               onClick={() => {
-                banMemberMutate(member.id);
+                banMemberMutate({ groupId, memberId: member.id });
               }}
             >
               {banning ? 'Đang chặn...' : 'Chặn thành viên'}
@@ -226,7 +226,7 @@ export const GroupAdminMemberRow = ({
               className="bg-sky-500 hover:bg-sky-600 text-white"
               disabled={unbanning}
               onClick={() => {
-                unbanMemberMutate(member.id);
+                unbanMemberMutate({ groupId, memberId: member.id });
               }}
             >
               {unbanning ? 'Đang gỡ...' : 'Gỡ chặn'}
@@ -253,7 +253,7 @@ export const GroupAdminMemberRow = ({
               className="bg-rose-600 hover:bg-rose-700"
               disabled={removing}
               onClick={() => {
-                removeMember(member.id);
+                removeMember({ groupId, memberId: member.id });
               }}
             >
               {removing ? 'Đang xoá...' : 'Xác nhận xoá'}
@@ -273,7 +273,7 @@ export const GroupAdminMemberRow = ({
               member={member}
               currentUserRole={currentRole}
               onSubmit={(newRole) => {
-                changeRoleMutate({ memberId: member.id, newRole });
+                changeRoleMutate({ groupId, memberId: member.id, role: newRole });
                 setEditRoleOpen(false);
               }}
               isSubmitting={changingRole}
@@ -294,7 +294,7 @@ export const GroupAdminMemberRow = ({
             <ChangePermissionForm
               member={member}
               onSubmit={(perms) => {
-                changePermMutate({ memberId: member.id, permissions: perms });
+                changePermMutate({ groupId, memberId: member.id, permissions: perms });
                 setEditPermOpen(false);
               }}
               isSubmitting={changingPerm}

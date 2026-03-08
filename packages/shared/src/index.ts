@@ -10,6 +10,9 @@ export * from './types';
 // Hook exports
 export * from './hooks';
 
+// Context exports
+export * from './contexts';
+
 // Utility exports
 export * from './utils';
 

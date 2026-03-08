@@ -27,22 +27,7 @@ export const ProfileUpdateSchema = UserSchema.partial().extend({
 export type UserCreateForm = z.infer<typeof UserSchema>;
 
 export type ProfileUpdateForm = z.infer<typeof ProfileUpdateSchema>
-export type UserDTO = {
-  id: string;
-  email: string;
-  isActive: boolean;
-  firstName: string;
-  lastName: string;
-  coverImageUrl?: string;
-  coverImage?: {
-    url?: string;
-    publicId?: string;
-  };
-  avatarUrl: string;
-  bio: string;
-  createdAt: Date;
-  relation: {
-    status: string;
-  };
-};
+
+// Re-export UserDTO from shared package
+export type { UserDTO } from '@repo/shared';
 

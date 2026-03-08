@@ -1,6 +1,7 @@
 import { ModalProvider } from '@/components/providers/modal-providers';
 import QueryClientProviders from '@/components/providers/query-client-providers';
 import { ApiClientProvider } from '@/components/providers/api-client-provider';
+import { SharedProviders } from '@/providers/shared-providers';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SkipLink } from '@/components/ui/skip-link';
 import { siteConfig } from '@/config/site';
@@ -55,20 +56,22 @@ export default function RootLayout({
             afterSignOutUrl="/marketing"
           >
             <ApiClientProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="light"
-                enableSystem
-                storageKey="sentimeta-theme"
-                disableTransitionOnChange
-              >
-              <SocketProvider>
-                <Toaster theme="light" richColors closeButton />
-                <ModalProvider />
+              <SharedProviders>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="light"
+                  enableSystem
+                  storageKey="sentimeta-theme"
+                  disableTransitionOnChange
+                >
+                  <SocketProvider>
+                    <Toaster theme="light" richColors closeButton />
+                    <ModalProvider />
 
-                {children}
-              </SocketProvider>
-            </ThemeProvider>
+                    {children}
+                  </SocketProvider>
+                </ThemeProvider>
+              </SharedProviders>
             </ApiClientProvider>
           </ClerkProvider>
         </QueryClientProviders>

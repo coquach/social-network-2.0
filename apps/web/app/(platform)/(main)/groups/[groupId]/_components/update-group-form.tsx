@@ -44,9 +44,7 @@ export const UpdateGroupForm = ({ open }: UpdateGroupFormProps) => {
   const { group, can } = useGroupPermissionContext();
   const canEditInfo = can(GroupPermission.UPDATE_GROUP);
 
-  const { mutate: updateGroupMutate, isPending } = useUpdateGroup(
-    group?.id ?? ''
-  );
+  const { mutate: updateGroupMutate, isPending } = useUpdateGroup();
 
   const [avatarMedia, setAvatarMedia] = useState<MediaItem | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -97,12 +95,13 @@ export const UpdateGroupForm = ({ open }: UpdateGroupFormProps) => {
       const promise = new Promise<void>((resolve, reject) => {
         updateGroupMutate(
           {
-            form: {
+            groupId: group.id,
+            input: {
               name: value.name.trim(),
               description: value.description?.trim() || undefined,
             },
-            avatar: avatarMedia ?? undefined,
-            cover: coverMedia ?? undefined,
+            uploadAvatar: avatarMedia ?? undefined,
+            uploadCover: coverMedia ?? undefined,
           },
           {
             onSuccess: () => {

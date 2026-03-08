@@ -1,56 +1,29 @@
 /**
- * Message and Conversation-related React Query hooks
+ * Message-related React Query hooks
  * 
  * Platform-agnostic hooks for real-time messaging.
  * Note: Real-time message delivery via WebSocket should be implemented at the platform level.
+ * 
+ * For conversation management, see useConversation.ts
  */
 
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { messageService } from '../api/services/message.service';
-import { conversationService } from '../api/services/conversation.service';
 import { queryKeys } from './query-keys';
-import type { MessageDTO, CreateMessageInput } from '../types/message.types';
-import type {
-  ConversationDTO,
-  ConversationWithParticipantsDTO,
-  CreateConversationInput,
-  UpdateConversationInput,
-} from '../types/conversation.types';
+import type { MessageDTO, CreateMessageInput, AttachmentDTO } from '../types/message.types';
+import type { ConversationDTO } from '../types/conversation.types';
 import type { CursorPaginatedResponse, QueryParams } from '../types/common.types';
-import { ReactionType } from '../types/enums';
+import { ReactionType, MessageStatus, MediaType } from '../types/enums';
+import { useAuth } from '../contexts/auth-context';
+import { useUploadOptional } from '../contexts/upload-context';
+import type { UploadableFile } from '../types/upload.types';
+import {
+  invalidateQueries,
+  cancelQueries,
+} from '../utils/cache-utils';
+import { queryConfigs } from '../utils/query-configs';
 
-// ==================== Conversation Hooks ====================
-
-/**
- * Get conversations list with infinite scroll
- */
-export const useConversations = (params?: QueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<ConversationDTO>>({
-    queryKey: queryKeys.conversations.list(),
-    queryFn: ({ pageParam }) =>
-      conversationService.getConversations({
-        ...params,
-        cursor: pageParam as string | undefined,
-      }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: undefined,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000,
-  });
-};
-
-/**
- * Get conversation details
- */
-export const useConversation = (conversationId: string, options?: { enabled?: boolean }) => {
-  return useQuery<ConversationWithParticipantsDTO>({
-    queryKey: queryKeys.conversations.detail(conversationId),
-    queryFn: () => conversationService.getConversation(conversationId),
-    enabled: options?.enabled !== false && !!conversationId,
-    staleTime: 60 * 1000,
-    gcTime: 5 * 60 * 1000,
-  });
-};
+// ==================== Query Hooks ====================
 
 /**
  * Get messages for a conversation with infinite scroll
@@ -59,189 +32,239 @@ export const useConversation = (conversationId: string, options?: { enabled?: bo
 export const useMessages = (conversationId: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPaginatedResponse<MessageDTO>>({
     queryKey: queryKeys.messages.list(conversationId),
-    queryFn: ({ pageParam }) =>
-      messageService.getMessages(conversationId, {
+    queryFn: async ({ pageParam }) => {
+      // Token injection handled by API client interceptor
+      return messageService.getMessages(conversationId, {
         ...params,
         cursor: pageParam as string | undefined,
-      }),
+      });
+    },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
     enabled: !!conversationId,
-    staleTime: 10 * 1000, // 10 seconds
-    gcTime: 5 * 60 * 1000,
-  });
-};
-
-// ==================== Conversation Mutations ====================
-
-/**
- * Create a new conversation
- */
-export const useCreateConversation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<ConversationDTO, Error, CreateConversationInput>({
-    mutationFn: (input) => conversationService.createConversation(input),
-    onSuccess: (newConversation) => {
-      // Invalidate conversations list to refetch with new conversation
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.list() 
-      });
-      
-      // Invalidate detail to fetch full data with participants
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.detail(newConversation._id) 
-      });
-    },
-  });
-};
-
-/**
- * Get or create direct conversation with another user
- */
-export const useGetOrCreateDirectConversation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<ConversationDTO, Error, string>({
-    mutationFn: (userId) => conversationService.getOrCreateDirect(userId),
-    onSuccess: (conversation) => {
-      // Invalidate conversations list
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.list() 
-      });
-      
-      // Invalidate detail to fetch full data
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.detail(conversation._id) 
-      });
-    },
-  });
-};
-
-/**
- * Update conversation (rename, change avatar, etc.)
- */
-export const useUpdateConversation = (conversationId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation<ConversationDTO, Error, UpdateConversationInput>({
-    mutationFn: (input) => conversationService.updateConversation(conversationId, input),
-    onSuccess: () => {
-      // Invalidate conversation detail to refetch
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.detail(conversationId),
-      });
-      
-      // Invalidate conversations list
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.list() 
-      });
-    },
-  });
-};
-
-/**
- * Leave a conversation
- */
-export const useLeaveConversation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error, string>({
-    mutationFn: (conversationId) => conversationService.leaveConversation(conversationId),
-    onSuccess: (_, conversationId) => {
-      // Remove conversation from cache
-      queryClient.removeQueries({ 
-        queryKey: queryKeys.conversations.detail(conversationId) 
-      });
-      
-      // Invalidate conversations list
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.list() 
-      });
-    },
-  });
-};
-
-/**
- * Add participants to a conversation
- */
-export const useAddParticipants = (conversationId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error, string[]>({
-    mutationFn: (userIds) => conversationService.addParticipants(conversationId, userIds),
-    onSuccess: () => {
-      // Invalidate conversation detail to refetch with new participants
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.detail(conversationId),
-      });
-    },
+    ...queryConfigs.realtime,
   });
 };
 
 // ==================== Message Mutations ====================
 
 /**
- * Send a message
+ * Send a message with optimistic UI updates and optional file attachments
+ * 
+ * @param conversationId - The conversation ID
+ * 
+ * @example
+ * const sendMessage = useSendMessage(conversationId);
+ * // Send text message
+ * sendMessage.mutate({ conversationId, content: 'Hello!' });
+ * // Send with files
+ * sendMessage.mutate({
+ *   conversationId,
+ *   content: 'Check this out!',
+ *   uploadFiles: [{ file: fileObject, type: MediaType.IMAGE }]
+ * });
  */
 export const useSendMessage = (conversationId: string) => {
   const queryClient = useQueryClient();
+  const { userId } = useAuth();
+  const uploadService = useUploadOptional();
 
-  return useMutation<MessageDTO, Error, CreateMessageInput>({
-    mutationFn: (input) => messageService.sendMessage(input),
-    onSuccess: (newMessage) => {
-      // Add message to cache (prepend to start for reverse chronological order)
-      queryClient.setQueriesData<{ pages: CursorPaginatedResponse<MessageDTO>[] }>(
-        { queryKey: queryKeys.messages.list(conversationId) },
+  return useMutation<
+    MessageDTO,
+    Error,
+    CreateMessageInput & { uploadFiles?: UploadableFile[] },
+    { tempId: string; conversationId: string }
+  >({
+    onMutate: async ({ content, uploadFiles }) => {
+      // Generate temporary ID for optimistic message
+      const tempId = `temp:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const now = new Date();
+      const hasMedia = !!uploadFiles?.length;
+
+      // Create optimistic message
+      const optimisticMessage: MessageDTO = {
+        _id: tempId,
+        senderId: userId ?? 'me',
+        conversationId,
+        content: content?.trim() || (hasMedia ? 'Đang gửi tệp...' : ''),
+        status: MessageStatus.SENT,
+        seenBy: userId ? [userId] : [],
+        reactionStats: {},
+        attachments: [],
+        isDeleted: false,
+        createdAt: now,
+        updatedAt: now,
+        clientStatus: 'sending',
+      };
+
+      // Add optimistic message to cache      
+      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+        queryKeys.messages.list(conversationId),
         (old) => {
           if (!old || old.pages.length === 0) {
             return {
-              pages: [{ data: [newMessage], nextCursor: undefined, hasMore: false }],
+              pages: [{
+                data: [optimisticMessage],
+                nextCursor: undefined,
+                hasMore: false,
+              }],
               pageParams: [undefined],
             };
           }
-          
-          // Add to first page
+
+          // Add to end of first page (newest messages)
+          const firstPage = old.pages[0];
           return {
             ...old,
             pages: [
               {
-                ...old.pages[0],
-                data: [newMessage, ...old.pages[0].data],
+                ...firstPage,
+                data: [...firstPage.data, optimisticMessage],
               },
               ...old.pages.slice(1),
             ],
           };
         }
       );
-      
-      // Update conversation's last message
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.list() 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.detail(conversationId) 
+
+      return { tempId, conversationId };
+    },
+    mutationFn: async ({ uploadFiles, ...input }) => {
+      // Token injection handled by API client interceptor
+      let attachments: AttachmentDTO[] = [];
+
+      // Upload files if provided and upload service available
+      if (uploadFiles && uploadFiles.length > 0 && uploadService) {
+        try {
+          const uploadResults = await uploadService.uploadMultiple(uploadFiles, {
+            folder: `conversations/${conversationId}/messages`,
+            concurrency: 3,
+          });
+
+          attachments = uploadResults.map((result) => ({
+            url: result.url,
+            publicId: result.publicId,
+            mimeType: result.type === MediaType.IMAGE ? 'image' : 'video',
+            thumbnailUrl: result.thumbnailUrl,
+            size: result.size,
+          }));
+        } catch (uploadError) {
+          console.error('File upload failed:', uploadError);
+          throw new Error('Failed to upload files. Please try again.');
+        }
+      }
+
+      // Send message with attachments
+      return messageService.sendMessage({
+        ...input,
+        attachments: attachments.length > 0 ? attachments : undefined,
       });
     },
+    onSuccess: (newMessage, _variables, context) => {
+      // Replace optimistic message with real message
+      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+        queryKeys.messages.list(newMessage.conversationId),
+        (old) => {
+          if (!old) return old;
+
+          const firstPage = old.pages[0];
+          
+          // Check if real message already exists (avoid duplicates)
+          if (firstPage.data.some((m) => m._id === newMessage._id)) {
+            return old;
+          }
+
+          // Replace temp message with real message
+          return {
+            ...old,
+            pages: [
+              {
+                ...firstPage,
+                data: firstPage.data.map((msg) =>
+                  msg._id === context?.tempId ? newMessage : msg
+                ),
+              },
+              ...old.pages.slice(1),
+            ],
+          };
+        }
+      );
+
+      // Update conversation's last message
+      const updatedAt = newMessage.createdAt ?? new Date();
+      
+      queryClient.setQueryData<ConversationDTO>(
+        queryKeys.conversations.detail(newMessage.conversationId),
+        (old) => {
+          if (!old) return old;
+          return { ...old, lastMessage: newMessage as any, updatedAt };
+        }
+      );
+
+      // Update in conversations list
+      queryClient.setQueriesData<InfiniteData<CursorPaginatedResponse<ConversationDTO>>>(
+        { queryKey: queryKeys.conversations.all },
+        (old) => {
+          if (!old?.pages) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((conv) =>
+                conv._id === newMessage.conversationId
+                  ? { ...conv, lastMessage: newMessage as any, updatedAt }
+                  : conv
+              ),
+            })),
+          };
+        }
+      );
+
+      // Invalidate conversations to ensure sync
+      invalidateQueries(queryClient, [
+        [...queryKeys.conversations.all],
+      ]);
+    },
+    onError: (_error, _variables, context) => {
+      // Remove optimistic message on error
+      if (context?.conversationId && context?.tempId) {
+        queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+          queryKeys.messages.list(context.conversationId),
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                data: page.data.filter((m) => m._id !== context.tempId),
+              })),
+            };
+          }
+        );
+      }
+    },
+    retry: false, // Don't retry failed message sends automatically
   });
 };
 
 /**
- * Update a message (edit)
+ * Update a message (edit content)
  */
 export const useUpdateMessage = (conversationId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation<MessageDTO, Error, { messageId: string; content: string }>({
-    mutationFn: ({ messageId, content }) => 
-      messageService.updateMessage(messageId, { content }),
+    mutationFn: async ({ messageId, content }) => {
+      // Token injection handled by API client interceptor
+      return messageService.updateMessage(messageId, { content });
+    },
     onSuccess: (updatedMessage) => {
       // Update message in cache
-      queryClient.setQueriesData<{ pages: CursorPaginatedResponse<MessageDTO>[] }>(
-        { queryKey: queryKeys.messages.list(conversationId) },
+      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+        queryKeys.messages.list(conversationId),
         (old) => {
           if (!old) return old;
-          
+
           return {
             ...old,
             pages: old.pages.map((page) => ({
@@ -264,14 +287,21 @@ export const useDeleteMessage = (conversationId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (messageId) => messageService.deleteMessage(messageId),
-    onSuccess: (_, messageId) => {
-      // Remove message from cache
-      queryClient.setQueriesData<{ pages: CursorPaginatedResponse<MessageDTO>[] }>(
-        { queryKey: queryKeys.messages.list(conversationId) },
+    mutationFn: async (messageId) => {
+      // Token injection handled by API client interceptor
+      return messageService.deleteMessage(messageId);
+    },
+    onMutate: async (messageId) => {
+      await cancelQueries(queryClient, [
+        [...queryKeys.messages.list(conversationId)],
+      ]);
+      
+      // Optimistically remove message
+      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+        queryKeys.messages.list(conversationId),
         (old) => {
           if (!old) return old;
-          
+
           return {
             ...old,
             pages: old.pages.map((page) => ({
@@ -281,11 +311,18 @@ export const useDeleteMessage = (conversationId: string) => {
           };
         }
       );
-      
+    },
+    onSuccess: () => {
       // Invalidate conversation to update last message
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.detail(conversationId) 
-      });
+      invalidateQueries(queryClient, [
+        [...queryKeys.conversations.detail(conversationId)],
+      ]);
+    },
+    onError: () => {
+      // Restore messages on error
+      invalidateQueries(queryClient, [
+        [...queryKeys.messages.list(conversationId)],
+      ]);
     },
   });
 };
@@ -295,35 +332,39 @@ export const useDeleteMessage = (conversationId: string) => {
  */
 export const useMarkMessageAsRead = () => {
   const queryClient = useQueryClient();
+  const { userId } = useAuth();
 
   return useMutation<void, Error, { conversationId: string; messageId: string }>({
-    mutationFn: ({ conversationId, messageId }) => 
-      messageService.markAsRead({ conversationId, messageId }),
+    mutationFn: async ({ conversationId, messageId }) => {
+      // Token injection handled by API client interceptor
+      return messageService.markAsRead({ conversationId, messageId });
+    },
     onSuccess: (_, { conversationId, messageId }) => {
       // Update message in cache
-      queryClient.setQueriesData<{ pages: CursorPaginatedResponse<MessageDTO>[] }>({
-        queryKey: queryKeys.messages.list(conversationId) },
+      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+        queryKeys.messages.list(conversationId),
         (old) => {
           if (!old) return old;
-          
+
           return {
             ...old,
             pages: old.pages.map((page) => ({
               ...page,
-              data: page.data.map((msg) =>
-                msg._id === messageId
-                  ? { ...msg, seenBy: [...(msg.seenBy || []), 'current-user'] }
-                  : msg
-              ),
+              data: page.data.map((msg) => {
+                if (msg._id === messageId && userId && !msg.seenBy.includes(userId)) {
+                  return { ...msg, seenBy: [...msg.seenBy, userId] };
+                }
+                return msg;
+              }),
             })),
           };
         }
       );
-      
+
       // Invalidate conversation to update unread count
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.conversations.detail(conversationId) 
-      });
+      invalidateQueries(queryClient, [
+        [...queryKeys.conversations.detail(conversationId)],
+      ]);
     },
   });
 };
@@ -335,25 +376,29 @@ export const useReactToMessage = (conversationId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, { messageId: string; reactionType: ReactionType }>({
-    mutationFn: ({ messageId, reactionType }) =>
-      messageService.reactToMessage(messageId, reactionType),
+    mutationFn: async ({ messageId, reactionType }) => {
+      // Token injection handled by API client interceptor
+      return messageService.reactToMessage(messageId, reactionType);
+    },
     onSuccess: () => {
-      // Invalidate messages to refresh reaction
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.messages.list(conversationId) 
-      });
+      // Invalidate messages to refresh reactions
+      invalidateQueries(queryClient, [
+        [...queryKeys.messages.list(conversationId)],
+      ]);
     },
   });
 };
 
 /**
  * Send typing indicator
- * Note: This should be throttled at the UI level
+ * Note: This should be throttled at the UI level (e.g., max once per 3 seconds)
  */
 export const useSendTypingIndicator = () => {
   return useMutation<void, Error, { conversationId: string; isTyping: boolean }>({
-    mutationFn: ({ conversationId, isTyping }) =>
-      messageService.sendTypingIndicator(conversationId, isTyping),
-    // No cache updates needed - this is typically handled via WebSocket
+    mutationFn: async ({ conversationId, isTyping }) => {
+      // Token injection handled by API client interceptor
+      return messageService.sendTypingIndicator(conversationId, isTyping);
+    },
+    // No cache updates needed - this is typically handled via WebSocket on platform level
   });
 };

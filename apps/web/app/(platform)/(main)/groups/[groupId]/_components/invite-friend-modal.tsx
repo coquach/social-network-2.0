@@ -97,7 +97,7 @@ export const GroupInviteDialog = () => {
     (group?.groupSetting?.allowMemberInvite ?? false) ||
     can(GroupPermission.INVITE_MEMBERS);
   const { mutateAsync: inviteUser, isPending: isInviting } =
-    useInviteUserToGroup(group?.id ?? '');
+    useInviteUserToGroup();
 
   const {
     data,
@@ -143,7 +143,9 @@ export const GroupInviteDialog = () => {
     const ids = Array.from(selected);
     if (!group?.id || ids.length === 0) return;
 
-    await Promise.all(ids.map((id) => inviteUser(id)));
+    await Promise.all(
+      ids.map((userId) => inviteUser({ groupId: group.id, userId }))
+    );
     setSelected(new Set());
     setQ('');
   };

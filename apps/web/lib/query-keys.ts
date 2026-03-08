@@ -12,7 +12,7 @@
  */
 
 import { TargetType, ReactionType } from '@/models/social/enums/social.enum';
-import { CursorPagination } from './cursor-pagination.dto';
+import type { CursorPagination } from '@repo/shared';
 
 export const queryKeys = {
   // ==================== User ====================

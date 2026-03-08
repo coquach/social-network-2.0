@@ -68,11 +68,11 @@ export const GroupHeader = () => {
 
   const groupId = group?.id ?? '';
   const { mutateAsync: joinGroup, isPending: isJoining } =
-    useRequestToJoinGroup(groupId);
+    useRequestToJoinGroup();
   const { mutateAsync: leaveGroupMutate, isPending: isLeaving } =
-    useLeaveGroup(groupId);
+    useLeaveGroup();
   const { mutateAsync: deleteGroupMutate, isPending: isDeleting } =
-    useDeleteGroup(groupId);
+    useDeleteGroup();
 
   if (!group) return null;
 
@@ -89,7 +89,7 @@ export const GroupHeader = () => {
   const isOwner = role === GroupRole.OWNER;
 
   const handleJoinGroup = async () => {
-    const promise = joinGroup();
+    const promise = joinGroup(groupId);
     toast.promise(promise, {
       loading: 'Đang gửi yêu cầu tham gia nhóm...',
     });
@@ -100,7 +100,7 @@ export const GroupHeader = () => {
   };
 
   const handleLeaveGroup = async () => {
-    const promise = leaveGroupMutate();
+    const promise = leaveGroupMutate(groupId);
     toast.promise(promise, {
       loading: 'Đang rời nhóm...',
     });
@@ -111,7 +111,7 @@ export const GroupHeader = () => {
   };
 
   const handleDeleteGroup = async () => {
-    const promise = deleteGroupMutate();
+    const promise = deleteGroupMutate(groupId);
     toast.promise(promise, {
       loading: 'Đang xóa nhóm...',
     });

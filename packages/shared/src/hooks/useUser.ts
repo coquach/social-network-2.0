@@ -1,18 +1,36 @@
 /**
  * User-related React Query hooks
- * 
- * Platform-agnostic hooks for user profiles, friends, and social interactions.
+ *
+ * Platform-agnostic hooks for user profiles with optimistic updates.
+ * These hooks use the userService and provide type-safe queries and mutations.
  */
 
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { userService } from '../api/services/user.service';
-import { queryKeys } from './query-keys';
 import type {
+  CursorPaginatedResponse,
+  QueryParams,
+} from '../types/common.types';
+import type {
+  UpdateUserInput,
   UserDTO,
   UserProfile,
-  UpdateUserInput,
 } from '../types/user.types';
-import type { CursorPaginatedResponse, QueryParams } from '../types/common.types';
+import { useUploadOptional } from '../contexts/upload-context';
+import type { UploadableFile } from '../types/upload.types';
+import {
+  cancelQueries,
+  invalidateQueries,
+  restoreQueryData,
+  snapshotQueryData,
+} from '../utils/cache-utils';
+import { queryConfigs } from '../utils/query-configs';
+import { queryKeys } from './query-keys';
 
 // ==================== Query Hooks ====================
 
@@ -22,9 +40,10 @@ import type { CursorPaginatedResponse, QueryParams } from '../types/common.types
 export const useCurrentUser = () => {
   return useQuery<UserDTO>({
     queryKey: queryKeys.user.current(),
-    queryFn: () => userService.getCurrentUser(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    queryFn: async () => {
+      return userService.getCurrentUser();
+    },
+    ...queryConfigs.semiStatic, // User profile changes infrequently
   });
 };
 
@@ -34,10 +53,11 @@ export const useCurrentUser = () => {
 export const useUser = (userId: string, options?: { enabled?: boolean }) => {
   return useQuery<UserProfile>({
     queryKey: queryKeys.user.detail(userId),
-    queryFn: () => userService.getUser(userId),
+    queryFn: async () => {
+      return userService.getUser(userId);
+    },
     enabled: options?.enabled !== false && !!userId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    ...queryConfigs.semiStatic,
   });
 };
 
@@ -47,17 +67,18 @@ export const useUser = (userId: string, options?: { enabled?: boolean }) => {
 export const useSearchUsers = (query: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPaginatedResponse<UserDTO>>({
     queryKey: queryKeys.search.users(query),
-    queryFn: ({ pageParam }) =>
-      userService.searchUsers({
+    queryFn: async ({ pageParam }) => {
+      return userService.searchUsers({
         query,
         cursor: pageParam as string | undefined,
         limit: params?.limit,
-      }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
     enabled: query.length > 0,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000,
+    ...queryConfigs.standard,
   });
 };
 
@@ -67,16 +88,17 @@ export const useSearchUsers = (query: string, params?: QueryParams) => {
 export const useUserFriends = (userId: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPaginatedResponse<UserDTO>>({
     queryKey: queryKeys.user.friends(userId),
-    queryFn: ({ pageParam }) =>
-      userService.getUserFriends(userId, {
+    queryFn: async ({ pageParam }) => {
+      return userService.getUserFriends(userId, {
         ...params,
         cursor: pageParam as string | undefined,
-      }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+      });
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    ...queryConfigs.semiStatic,
   });
 };
 
@@ -84,27 +106,100 @@ export const useUserFriends = (userId: string, params?: QueryParams) => {
 
 /**
  * Update user profile
+ * With optimistic updates
+ * 
+ * @example
+ * const updateProfile = useUpdateProfile();
+ * updateProfile.mutate({
+ *   firstName: 'John',
+ *   bio: 'Software engineer',
+ *   uploadAvatar: { file: avatarFile, type: MediaType.IMAGE },
+ *   uploadCover: { file: coverFile, type: MediaType.IMAGE }
+ * });
  */
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
+  const uploadService = useUploadOptional();
 
-  return useMutation<UserDTO, Error, UpdateUserInput>({
-    mutationFn: (input) => userService.updateProfile(input),
+  return useMutation<
+    UserDTO,
+    Error,
+    UpdateUserInput & {
+      uploadAvatar?: UploadableFile;
+      uploadCover?: UploadableFile;
+    }
+  >({
+    mutationFn: async ({ uploadAvatar, uploadCover, ...input }) => {
+      // Upload avatar if provided
+      if (uploadAvatar && uploadService) {
+        try {
+          const avatarResult = await uploadService.uploadFile(uploadAvatar, {
+            folder: 'users/avatars',
+          });
+
+          input.avatarUrl = avatarResult.url;
+        } catch (uploadError) {
+          console.error('Avatar upload failed:', uploadError);
+          throw new Error('Failed to upload avatar. Please try again.');
+        }
+      }
+
+      // Upload cover image if provided
+      if (uploadCover && uploadService) {
+        try {
+          const coverResult = await uploadService.uploadFile(uploadCover, {
+            folder: 'users/covers',
+          });
+
+          input.coverImageUrl = coverResult.url;
+        } catch (uploadError) {
+          console.error('Cover image upload failed:', uploadError);
+          throw new Error('Failed to upload cover image. Please try again.');
+        }
+      }
+
+      return userService.updateProfile(input);
+    },
+    onMutate: async (updatedProfile) => {
+      // Cancel outgoing queries
+      await cancelQueries(queryClient, [
+        [...queryKeys.user.current()] as unknown[],
+      ]);
+
+      // Snapshot for rollback
+      const context = snapshotQueryData<UserDTO>(queryClient, [
+        ...queryKeys.user.current(),
+      ] as unknown[]);
+
+      // Optimistically update current user
+      queryClient.setQueryData<UserDTO>(queryKeys.user.current(), (old) =>
+        old ? { ...old, ...updatedProfile } : old,
+      );
+
+      return context;
+    },
     onSuccess: (updatedUser) => {
       // Update current user cache
-      queryClient.setQueryData<UserDTO>(
-        queryKeys.user.current(),
-        updatedUser
-      );
-      
+      queryClient.setQueryData<UserDTO>(queryKeys.user.current(), updatedUser);
+
       // Update user detail cache
       queryClient.setQueryData<UserProfile>(
         queryKeys.user.detail(updatedUser.id),
-        updatedUser
+        updatedUser,
       );
-      
+
       // Invalidate all user queries to refresh everywhere
-      queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
+      invalidateQueries(queryClient, [[...queryKeys.user.all] as unknown[]]);
+    },
+    onError: (_error, _variables, context) => {
+      // Rollback on error
+      if (context) {
+        restoreQueryData(
+          queryClient,
+          [...queryKeys.user.current()] as unknown[],
+          context,
+        );
+      }
     },
   });
 };
@@ -118,13 +213,15 @@ export const useSendFriendRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (userId) => userService.sendFriendRequest(userId),
+    mutationFn: async (userId) => {
+      return userService.sendFriendRequest(userId);
+    },
     onSuccess: (_, userId) => {
       // Invalidate friend requests to show pending
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.requests() });
-      
-      // Invalidate user detail to update relationship status
-      queryClient.invalidateQueries({ queryKey: queryKeys.user.detail(userId) });
+      invalidateQueries(queryClient, [
+        [...queryKeys.friends.requests()] as unknown[],
+        [...queryKeys.user.detail(userId)] as unknown[], // Update relationship status
+      ]);
     },
   });
 };
@@ -136,14 +233,16 @@ export const useAcceptFriendRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (requestId) => userService.acceptFriendRequest(requestId),
+    mutationFn: async (requestId) => {
+      return userService.acceptFriendRequest(requestId);
+    },
     onSuccess: () => {
       // Invalidate friend requests list
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.requests() });
-      
-      // Invalidate friends lists
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
+      invalidateQueries(queryClient, [
+        [...queryKeys.friends.requests()] as unknown[],
+        [...queryKeys.friends.all] as unknown[],
+        [...queryKeys.user.all] as unknown[],
+      ]);
     },
   });
 };
@@ -174,9 +273,11 @@ export const useRemoveFriend = () => {
     onSuccess: (_, userId) => {
       // Invalidate friends lists
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
-      
+
       // Invalidate user detail to update relationship status
-      queryClient.invalidateQueries({ queryKey: queryKeys.user.detail(userId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.user.detail(userId),
+      });
     },
   });
 };
@@ -191,11 +292,13 @@ export const useBlockUser = () => {
     mutationFn: (userId) => userService.blockUser(userId),
     onSuccess: (_, userId) => {
       // Invalidate user detail
-      queryClient.invalidateQueries({ queryKey: queryKeys.user.detail(userId) });
-      
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.user.detail(userId),
+      });
+
       // Invalidate friends lists
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
-      
+
       // Invalidate feeds (remove blocked user's posts)
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
     },
@@ -212,7 +315,9 @@ export const useUnblockUser = () => {
     mutationFn: (userId) => userService.unblockUser(userId),
     onSuccess: (_, userId) => {
       // Invalidate user detail
-      queryClient.invalidateQueries({ queryKey: queryKeys.user.detail(userId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.user.detail(userId),
+      });
     },
   });
 };

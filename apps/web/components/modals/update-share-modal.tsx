@@ -81,7 +81,7 @@ export const UpdateSharePostModal = () => {
             <div className="flex-1 space-y-2 p-2">
               <AudienceSelect
                 value={form.watch('audience') as Audience}
-                onChange={(val) => form.setValue('audience', val)}
+                onChange={(val) => form.setValue('audience', val as never)}
               />
 
               <FormTextarea

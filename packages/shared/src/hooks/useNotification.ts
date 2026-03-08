@@ -6,18 +6,24 @@
  */
 
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
   useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
 import { notificationService } from '../api/services/notification.service';
-import { queryKeys } from './query-keys';
-import type { NotificationDTO } from '../types/notification.types';
 import type {
   CursorPaginatedResponse,
   QueryParams,
 } from '../types/common.types';
+import type { NotificationDTO } from '../types/notification.types';
+import {
+  cancelQueries,
+  invalidateQueries,
+  removeItemFromInfiniteCache,
+} from '../utils/cache-utils';
+import { queryConfigs } from '../utils/query-configs';
+import { queryKeys } from './query-keys';
 
 // ==================== Query Hooks ====================
 
@@ -27,15 +33,15 @@ import type {
 export const useNotifications = (params?: QueryParams) => {
   return useInfiniteQuery<CursorPaginatedResponse<NotificationDTO>>({
     queryKey: queryKeys.notifications.list(),
-    queryFn: ({ pageParam }) =>
-      notificationService.getNotifications({
+    queryFn: async ({ pageParam }) => {
+      return notificationService.getNotifications({
         ...params,
         cursor: pageParam as string | undefined,
-      }),
+      });
+    },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
-    staleTime: 100_000, // 100 seconds
-    gcTime: 5 * 60 * 1000,
+    ...queryConfigs.realtime,
   });
 };
 
@@ -49,8 +55,7 @@ export const useUnreadCount = () => {
       const result = await notificationService.getUnreadCount();
       return result.count;
     },
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000,
+    ...queryConfigs.realtime,
     refetchInterval: 60 * 1000, // Refetch every minute
   });
 };
@@ -61,9 +66,10 @@ export const useUnreadCount = () => {
 export const useNotificationPreferences = () => {
   return useQuery({
     queryKey: [...queryKeys.notifications.all, 'preferences'],
-    queryFn: () => notificationService.getPreferences(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      return notificationService.getPreferences();
+    },
+    ...queryConfigs.semiStatic,
   });
 };
 
@@ -76,8 +82,9 @@ export const useMarkNotificationAsRead = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (notificationId) =>
-      notificationService.markAsRead(notificationId),
+    mutationFn: async (notificationId) => {
+      return notificationService.markAsRead(notificationId);
+    },
     onSuccess: (_, notificationId) => {
       // Update notification in cache
       queryClient.setQueriesData<{
@@ -112,7 +119,9 @@ export const useMarkAllNotificationsAsRead = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, void>({
-    mutationFn: () => notificationService.markAllAsRead(),
+    mutationFn: async () => {
+      return notificationService.markAllAsRead();
+    },
     onSuccess: () => {
       // Update all notifications in cache
       queryClient.setQueriesData<{
@@ -148,28 +157,32 @@ export const useDeleteNotification = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (notificationId) =>
-      notificationService.deleteNotification(notificationId),
-    onSuccess: (_, notificationId) => {
-      // Remove notification from cache
-      queryClient.setQueriesData<{
-        pages: CursorPaginatedResponse<NotificationDTO>[];
-      }>({ queryKey: queryKeys.notifications.list() }, (old) => {
-        if (!old) return old;
+    mutationFn: async (notificationId) => {
+      return notificationService.deleteNotification(notificationId);
+    },
+    onMutate: async (notificationId) => {
+      // Cancel outgoing queries
+      await cancelQueries(queryClient, [[...queryKeys.notifications.list()]]);
 
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            data: page.data.filter((notif) => notif._id !== notificationId),
-          })),
-        };
-      });
-
+      // Optimistically remove from cache
+      removeItemFromInfiniteCache<NotificationDTO>(
+        queryClient,
+        [...queryKeys.notifications.list()] as unknown[],
+        (notif) => notif._id === notificationId,
+      );
+    },
+    onSuccess: () => {
       // Invalidate unread count
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.notifications.unreadCount(),
-      });
+      invalidateQueries(queryClient, [
+        [...queryKeys.notifications.unreadCount()],
+      ]);
+    },
+    onError: () => {
+      // Refetch on error to restore state
+      invalidateQueries(queryClient, [
+        [...queryKeys.notifications.list()],
+        [...queryKeys.notifications.unreadCount()],
+      ]);
     },
   });
 };

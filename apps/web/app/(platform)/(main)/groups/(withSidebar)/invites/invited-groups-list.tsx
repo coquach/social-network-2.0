@@ -20,9 +20,9 @@ type InvitedGroupCardProps = {
 
 const InvitedGroupCard = ({ group }: InvitedGroupCardProps) => {
   const { mutate: acceptInvite, isPending: isAccepting } =
-    useAcceptGroupInvite(group.id);
+    useAcceptGroupInvite();
   const { mutate: declineInvite, isPending: isDeclining } =
-    useDeclineGroupInvite(group.id);
+    useDeclineGroupInvite();
   const inviterNames = group.inviterNames?.filter(Boolean) ?? [];
   const maxVisibleInviters = 2;
   const visibleInviters = inviterNames.slice(0, maxVisibleInviters);
@@ -59,7 +59,7 @@ const InvitedGroupCard = ({ group }: InvitedGroupCardProps) => {
       </div>
       <div className="flex items-center gap-2 justify-between">
         <Button
-          onClick={() => acceptInvite()}
+          onClick={() => acceptInvite(group.id)}
           disabled={isAccepting || isDeclining}
           className='flex-1'
         >
@@ -67,7 +67,7 @@ const InvitedGroupCard = ({ group }: InvitedGroupCardProps) => {
         </Button>
         <Button
           variant="outline"
-          onClick={() => declineInvite()}
+          onClick={() => declineInvite(group.id)}
           disabled={isAccepting || isDeclining}
           className='flex-1'
         >

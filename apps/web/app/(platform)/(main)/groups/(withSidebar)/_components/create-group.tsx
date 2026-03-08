@@ -109,9 +109,9 @@ export const CreateGroupDialog = ({
       };
 
       const promise = createGroupMutate({
-        form: payload,
-        avatar: avatarMedia ?? undefined,
-        cover: coverMedia ?? undefined,
+        ...payload,
+        uploadAvatar: avatarMedia ?? undefined,
+        uploadCover: coverMedia ?? undefined,
       });
 
       toast.promise(promise, { loading: 'Đang tạo nhóm...' });
