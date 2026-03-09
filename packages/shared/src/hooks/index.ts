@@ -27,6 +27,9 @@ export * from './useShare';
 // Notification hooks
 export * from './useNotification';
 
+// Device token hooks
+export * from './useDeviceToken';
+
 // Message hooks
 export * from './useMessage';
 

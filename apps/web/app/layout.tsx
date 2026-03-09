@@ -11,6 +11,7 @@ import { Inter } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 import { SocketProvider } from '@/components/providers/socket-provider';
+import { FCMProvider } from '@/components/providers/fcm-provider';
 
 
 
@@ -65,10 +66,12 @@ export default function RootLayout({
                   disableTransitionOnChange
                 >
                   <SocketProvider>
-                    <Toaster theme="light" richColors closeButton />
-                    <ModalProvider />
+                    <FCMProvider>
+                      <Toaster theme="light" richColors closeButton />
+                      <ModalProvider />
 
-                    {children}
+                      {children}
+                    </FCMProvider>
                   </SocketProvider>
                 </ThemeProvider>
               </SharedProviders>

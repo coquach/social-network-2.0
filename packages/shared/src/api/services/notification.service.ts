@@ -62,4 +62,37 @@ export const notificationService = {
   async updatePreferences(data: any): Promise<any> {
     return getApiClient().patch('/notifications/preferences', data);
   },
+
+  /**
+   * Register device token for push notifications
+   */
+  async registerDeviceToken(data: {
+    token: string;
+    platform: 'ios' | 'android' | 'web';
+    deviceId?: string;
+    deviceName?: string;
+  }): Promise<void> {
+    return getApiClient().post('/notifications/device-tokens', data);
+  },
+
+  /**
+   * Remove device token
+   */
+  async removeDeviceToken(token: string): Promise<void> {
+    return getApiClient().delete(`/notifications/device-tokens/${token}`);
+  },
+
+  /**
+   * Get user's registered device tokens
+   */
+  async getUserDeviceTokens(): Promise<any> {
+    return getApiClient().get('/notifications/device-tokens');
+  },
+
+  /**
+   * Remove all device tokens for current user
+   */
+  async removeAllDeviceTokens(): Promise<void> {
+    return getApiClient().delete('/notifications/device-tokens');
+  },
 };

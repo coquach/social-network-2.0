@@ -1,6 +1,5 @@
 'use client';
 
-import { useSocket } from '@/components/providers/socket-provider';
 import { getNotifications } from '@/lib/actions/notification/notification-action';
 import { CursorPageResponse, getStandardNextPageParam } from '@repo/shared';
 import { Pagination } from '@/lib/pagination.dto';
@@ -13,17 +12,16 @@ import { useEffect } from 'react';
 
 export function useNotifications(userId: string) {
   const {getToken} = useAuth();
-  const { notificationSocket} = useSocket();
   const {
     notifications,
     setNotifications,
-    addNotification,
     markRead,
     markReadAll,
     unreadCount,
   } = useNotificationStore();
 
   // ==================== Fetch via React Query ====================
+  // Auto-refetch every 30 seconds to sync with push notifications
   const { data, isLoading, fetchNextPage, hasNextPage, refetch } =
     useInfiniteQuery<CursorPageResponse<NotificationDTO>>({
       queryKey: queryKeys.notifications.list(userId),
@@ -37,8 +35,10 @@ export function useNotifications(userId: string) {
       },
       getNextPageParam: getStandardNextPageParam,
       initialPageParam: undefined,
-      staleTime: 100_000,
-      refetchOnWindowFocus: true,
+      staleTime: 30_000, // Consider data stale after 30s
+      refetchInterval: 30_000, // Auto-refetch every 30s when tab is active
+      refetchOnWindowFocus: true, // Refetch when user returns to tab
+      refetchIntervalInBackground: false, // Don't poll when tab is inactive
     });
 
   // ==================== Sync query data vào Zustand ====================
@@ -48,36 +48,16 @@ export function useNotifications(userId: string) {
     setNotifications(merged);
   }, [data, setNotifications]);
 
-  // ==================== Socket realtime ====================
-  useEffect(() => {
-    if (!userId || !notificationSocket) return;
-      // Khi có notification mới
-      notificationSocket.on('notification', (notif: NotificationDTO) => {
-        addNotification(notif);
-        refetch();
-      });
-
-      // Khi server báo mark read / mark all
-      notificationSocket.on('mark_read', (id: string) => markRead(id));
-      notificationSocket.on('mark_read_all', () => markReadAll());
-
-      return () => {
-        notificationSocket.off('notification');
-        notificationSocket.off('mark_read');
-        notificationSocket.off('mark_read_all');
-      };
-    
-  }, [userId, addNotification, markRead, markReadAll, refetch, notificationSocket]);
-
   // ==================== Action gửi về server ====================
+  // These actions will sync via API calls
   const handleMarkRead = async (id: string) => {
     markRead(id);
-    notificationSocket?.emit('mark_read', id);
+    // API call handled by React Query mutation in the component
   };
 
   const handleMarkReadAll = async () => {
     markReadAll();
-    notificationSocket?.emit('mark_read_all', userId);
+    // API call handled by React Query mutation in the component
   };
 
   return {
