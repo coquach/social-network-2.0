@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Upload Context
  * Provides platform-agnostic file upload functionality via dependency injection

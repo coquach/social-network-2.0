@@ -1,4 +1,6 @@
+import { appConfig } from '@repo/shared';
+
 export const siteConfig = {
-  name: 'Sentimeta',
-  description: 'A social network powered by emotion analysis.'
-}
+  name: appConfig.name,
+  description: appConfig.description,
+};

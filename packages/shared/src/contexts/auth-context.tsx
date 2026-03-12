@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Auth Context for @repo/shared
  * 

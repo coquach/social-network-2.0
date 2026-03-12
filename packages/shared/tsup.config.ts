@@ -15,4 +15,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   external: ['react', '@tanstack/react-query', 'zustand', 'zustand/middleware'],
+  banner: {
+    js: "'use client';",
+  },
 });
