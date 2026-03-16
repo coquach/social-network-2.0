@@ -9,7 +9,7 @@ export default function AuthRoutesLayout() {
   }
 
   if (isSignedIn) {
-    return <Redirect href="/(tabs)/home" />;
+    return <Redirect href="/(tabs)/newfeeds" />;
   }
 
   return (

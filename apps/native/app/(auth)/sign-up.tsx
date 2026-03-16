@@ -222,7 +222,7 @@ export default function SignUpScreen() {
   }, [clearError, code, completeSignUp, isBusy, reportError, signUp]);
 
   if (isSignedIn) {
-    return <Redirect href="/(tabs)/home" />;
+    return <Redirect href="/(tabs)/newfeeds" />;
   }
 
   if (signUp.status === 'complete' && !localError) {

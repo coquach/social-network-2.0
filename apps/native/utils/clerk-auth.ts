@@ -72,7 +72,7 @@ export const resolveAuthError = (localError: string | null, errors?: ClerkErrorS
 
 export const createAuthNavigate =
   (
-    replace: (href: '/(tabs)/home') => void,
+    replace: (href: '/(tabs)/newfeeds') => void,
     setError: (message: string) => void,
   ) =>
   ({ session }: SessionNavigateArgs) => {
@@ -81,5 +81,5 @@ export const createAuthNavigate =
       return;
     }
 
-    replace('/(tabs)/home');
+    replace('/(tabs)/newfeeds');
   };

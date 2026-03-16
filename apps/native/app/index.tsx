@@ -52,5 +52,5 @@ export default function IndexScreen() {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
-  return <Redirect href="/(tabs)/home" />;
+  return <Redirect href="/(tabs)/newfeeds" />;
 }

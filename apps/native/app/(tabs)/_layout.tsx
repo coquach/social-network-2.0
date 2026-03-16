@@ -1,16 +1,14 @@
-﻿import { useAuth, useClerk, useUser } from '@clerk/expo';
+import { useAuth } from '@clerk/expo';
 import { Redirect, Tabs } from 'expo-router';
-import { Pressable, Text } from 'react-native';
 
+import { FloatingTabBar } from '~/components/navigation/floating-tab-bar';
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
 
 export default function TabsLayout() {
   const { isLoaded, isSignedIn } = useAuth();
-  const { signOut } = useClerk();
-  const { user } = useUser();
   const { resolvedTheme } = useAppTheme();
-  const navColors = appThemeColors[resolvedTheme];
+  const colors = appThemeColors[resolvedTheme];
 
   if (!isLoaded) {
     return null;
@@ -23,45 +21,47 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: navColors.primary,
-        tabBarInactiveTintColor: navColors.mutedForeground,
-        tabBarStyle: {
-          backgroundColor: navColors.surface,
-          borderTopColor: navColors.border,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-        headerTintColor: navColors.foreground,
+        headerShadowVisible: false,
+        headerTintColor: colors.foreground,
         headerTitleStyle: {
+          color: colors.foreground,
           fontWeight: '800',
           fontSize: 20,
-          color: navColors.foreground,
         },
         headerStyle: {
-          backgroundColor: navColors.surface,
+          backgroundColor: colors.background,
         },
+        sceneStyle: {
+          backgroundColor: colors.background,
+        },
+        tabBarShowLabel: false,
       }}
+      tabBar={(props) => <FloatingTabBar {...props} />}
     >
-      
       <Tabs.Screen
-        name="home"
+        name="newfeeds"
         options={{
-          title: 'Trang chủ',
-          headerRight: () => (
-            <Pressable
-              className="mr-4 rounded-lg border border-app-border bg-app-surface-elevated px-3 py-2 active:opacity-80 dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
-              onPress={() => void signOut()}
-            >
-              <Text className="text-xs font-semibold text-app-primary dark:text-app-primary-dark">
-                {user ? 'Đăng xuất' : 'Tài khoản'}
-              </Text>
-            </Pressable>
-          ),
+          title: 'Bảng tin',
+        }}
+      />
+      <Tabs.Screen
+        name="groups"
+        options={{
+          title: 'Nhóm',
+        }}
+      />
+      <Tabs.Screen
+        name="sentiment"
+        options={{
+          title: 'Cảm xúc',
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Cá nhân',
         }}
       />
     </Tabs>
   );
 }
-
