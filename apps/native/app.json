@@ -41,8 +41,24 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 200
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "darkMode": {
+            "backgroundColor": "#000000",
+            "image": "./assets/splash.png",
+            "imageWidth": 200
+          }
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Inter-Regular.ttf",
+            "./assets/fonts/Inter-Medium.ttf",
+            "./assets/fonts/Inter-SemiBold.ttf",
+            "./assets/fonts/Inter-Bold.ttf"
+          ]
         }
       ],
       "@clerk/expo",
