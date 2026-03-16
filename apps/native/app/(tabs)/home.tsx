@@ -1,6 +1,9 @@
-﻿import { useUser } from '@clerk/expo';
+import { useUser } from '@clerk/expo';
 import { Pressable, Text, View } from 'react-native';
 
+import { AppCard } from '~/components/ui/app-card';
+import { AppCenteredScreen } from '~/components/ui/app-screen';
+import { AppEyebrow, AppSubtitle, AppTitle } from '~/components/ui/app-text';
 import type { ThemePreference } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
 
@@ -15,18 +18,14 @@ export default function HomeScreen() {
   const { themePreference, resolvedTheme, setThemePreference } = useAppTheme();
 
   return (
-    <View className="flex-1 items-center justify-center bg-app-bg px-6 dark:bg-app-bg-dark">
-      <Text className="mb-2 text-3xl font-extrabold tracking-tight text-app-fg dark:text-app-fg-dark">
-        Xin chào
-      </Text>
-      <Text className="text-center text-base text-app-muted-fg dark:text-app-muted-fg-dark">
+    <AppCenteredScreen>
+      <AppTitle className="mb-2 text-center text-3xl">Xin chào</AppTitle>
+      <AppSubtitle className="text-center">
         {user?.primaryEmailAddress?.emailAddress ?? 'Bạn đã đăng nhập bằng Clerk'}
-      </Text>
+      </AppSubtitle>
 
-      <View className="mt-8 w-full max-w-sm rounded-2xl border border-app-border bg-app-surface p-2 dark:border-app-border-dark dark:bg-app-surface-dark">
-        <Text className="mb-2 px-1 text-xs font-semibold uppercase text-app-muted-fg dark:text-app-muted-fg-dark">
-          Giao diện
-        </Text>
+      <AppCard className="mt-8 w-full max-w-sm p-2">
+        <AppEyebrow className="mb-2 px-1">Giao diện</AppEyebrow>
         <View className="flex-row gap-2">
           {themeOptions.map((option) => {
             const isActive = themePreference === option.value;
@@ -53,8 +52,7 @@ export default function HomeScreen() {
         <Text className="mt-3 text-center text-xs text-app-muted-fg dark:text-app-muted-fg-dark">
           Đang dùng: {resolvedTheme}
         </Text>
-      </View>
-    </View>
+      </AppCard>
+    </AppCenteredScreen>
   );
 }
-

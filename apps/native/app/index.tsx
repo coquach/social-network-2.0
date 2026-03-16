@@ -1,8 +1,10 @@
-﻿import { useAuth } from '@clerk/expo';
+import { useAuth } from '@clerk/expo';
 import { Redirect } from 'expo-router';
 import React from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 
+import { AppCenteredScreen } from '~/components/ui/app-screen';
+import { AppSubtitle } from '~/components/ui/app-text';
 import { useAppTheme } from '~/providers/theme-provider';
 import { hasSeenOnboarding } from '~/utils/storage';
 
@@ -33,10 +35,12 @@ export default function IndexScreen() {
 
   if (!isLoaded || !onboardingLoaded) {
     return (
-      <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
-        <ActivityIndicator size="small" color={resolvedTheme === 'dark' ? '#38bdf8' : '#0284c7'} />
-        <Text className="mt-3 text-sm text-app-muted-fg dark:text-app-muted-fg-dark">Đang tải...</Text>
-      </View>
+      <AppCenteredScreen>
+        <ActivityIndicator size="small" color={resolvedTheme === 'dark' ? '#22d3ee' : '#0ea5e9'} />
+        <AppSubtitle className="mt-3 text-sm text-app-primary dark:text-app-primary-dark">
+          Đang tải...
+        </AppSubtitle>
+      </AppCenteredScreen>
     );
   }
 
@@ -50,4 +54,3 @@ export default function IndexScreen() {
 
   return <Redirect href="/(tabs)/home" />;
 }
-

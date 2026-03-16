@@ -4,6 +4,8 @@ import { tokenCache } from '@clerk/expo/token-cache';
 import { Slot, SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ToastProvider } from '~/providers/toast-provider';
 import { AppThemeProvider } from '~/providers/theme-provider';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -29,9 +31,13 @@ export default function RootLayout() {
   }
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <AppThemeProvider>
-        <Slot />
-      </AppThemeProvider>
+      <SafeAreaProvider>
+        <AppThemeProvider>
+          <ToastProvider>
+            <Slot />
+          </ToastProvider>
+        </AppThemeProvider>
+      </SafeAreaProvider>
     </ClerkProvider>
   );
 }
