@@ -1,44 +1,40 @@
 import { useSSO, useSignIn } from '@clerk/expo';
 import { Link, useRouter } from 'expo-router';
-import * as AuthSession from 'expo-auth-session';
 import React from 'react';
-import * as WebBrowser from 'expo-web-browser';
-import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { Text } from 'react-native';
 
-WebBrowser.maybeCompleteAuthSession();
-void AuthSession.makeRedirectUri;
+import { AuthBrand } from '~/components/auth/auth-brand';
+import { AuthCard } from '~/components/auth/auth-card';
+import {
+  AuthAlert,
+  AuthDivider,
+  AuthField,
+  AuthFooterLink,
+  AuthGoogleButton,
+  AuthPrimaryButton,
+  AuthSecondaryButton,
+} from '~/components/auth/auth-primitives';
+import { AuthShell } from '~/components/auth/auth-shell';
+import {
+  createAuthNavigate,
+  oauthRedirectUrl,
+  resolveAuthError,
+  toErrorMessage,
+  useWarmUpBrowser,
+} from '~/utils/clerk-auth';
 
-const toErrorMessage = (error: unknown, fallback: string): string => {
-  if (!error) {
-    return fallback;
-  }
-
-  if (typeof error === 'string') {
-    return error;
-  }
-
-  if (Array.isArray(error)) {
-    const first = error[0] as { message?: unknown } | undefined;
-    if (typeof first?.message === 'string' && first.message.length > 0) {
-      return first.message;
-    }
-    return fallback;
-  }
-
-  if (typeof error === 'object' && error !== null) {
-    const maybeMessage = (error as { message?: unknown }).message;
-    if (typeof maybeMessage === 'string' && maybeMessage.length > 0) {
-      return maybeMessage;
-    }
-  }
-
-  return fallback;
-};
+const SIGN_IN_HIGHLIGHTS = [
+  'Bảo mật nhiều lớp',
+  'Phiên đăng nhập ổn định',
+  'Đồng bộ thiết bị',
+];
 
 export default function SignInScreen() {
   const { signIn, errors, fetchStatus } = useSignIn();
   const { startSSOFlow } = useSSO();
   const router = useRouter();
+
+  useWarmUpBrowser();
 
   const [emailAddress, setEmailAddress] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -48,60 +44,118 @@ export default function SignInScreen() {
 
   const isSubmitting = fetchStatus === 'fetching';
   const isBusy = isSubmitting || isGoogleLoading;
-  const isPrimaryDisabled = !emailAddress || !password || isBusy;
+  const isPrimaryDisabled = !emailAddress.trim() || !password || isBusy;
   const needsSecondFactor =
-    signIn.status === 'needs_second_factor' || signIn.status === 'needs_client_trust';
+    signIn.status === 'needs_second_factor' ||
+    signIn.status === 'needs_client_trust';
+  const formError = resolveAuthError(localError, errors);
 
-  const completeSignIn = async () => {
-    const { error } = await signIn.finalize();
+  const reportError = React.useCallback((error: unknown, fallback: string) => {
+    setLocalError(toErrorMessage(error, fallback));
+  }, []);
+
+  const clearError = React.useCallback(() => {
+    setLocalError(null);
+  }, []);
+
+  const navigateAfterAuth = React.useMemo(
+    () => createAuthNavigate((href) => router.replace(href), setLocalError),
+    [router],
+  );
+
+  const completeSignIn = React.useCallback(async () => {
+    const { error } = await signIn.finalize({
+      navigate: navigateAfterAuth,
+    });
+
     if (error) {
-      setLocalError(toErrorMessage(error, 'Khong the hoan tat dang nhap.'));
+      reportError(error, 'Không thể hoàn tất đăng nhập.');
+    }
+  }, [navigateAfterAuth, reportError, signIn]);
+
+  const requestMfaEmailCode = React.useCallback(async () => {
+    const emailCodeFactor = signIn.supportedSecondFactors?.find(
+      (factor) => factor.strategy === 'email_code',
+    );
+
+    if (!emailCodeFactor) {
+      setLocalError(
+        'Không tìm thấy phương thức xác minh qua email cho tài khoản này.',
+      );
       return;
     }
 
-    router.replace('/(tabs)/home');
-  };
+    const sendCodeResult = await signIn.mfa.sendEmailCode();
+    if (sendCodeResult.error) {
+      reportError(sendCodeResult.error, 'Không gửi được mã xác minh.');
+    }
+  }, [reportError, signIn]);
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = React.useCallback(async () => {
     if (isBusy) {
       return;
     }
 
     try {
-      setLocalError(null);
+      clearError();
       setIsGoogleLoading(true);
 
-      const { createdSessionId, setActive } = await startSSOFlow({
+      const {
+        createdSessionId,
+        setActive,
+        signIn: ssoSignIn,
+        signUp: ssoSignUp,
+      } = await startSSOFlow({
         strategy: 'oauth_google',
-        redirectUrl: 'sentimeta://sso-callback',
+        redirectUrl: oauthRedirectUrl,
       });
 
       if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-        router.replace('/(tabs)/home');
+        await setActive({
+          session: createdSessionId,
+          navigate: navigateAfterAuth,
+        });
+        return;
       }
+
+      if (
+        ssoSignIn?.status === 'needs_second_factor' ||
+        ssoSignIn?.status === 'needs_client_trust'
+      ) {
+        setLocalError(
+          'Google yêu cầu xác minh bổ sung. Vui lòng thử lại bằng email và mật khẩu.',
+        );
+        return;
+      }
+
+      if (ssoSignUp && ssoSignUp.status !== 'complete') {
+        setLocalError('Đăng nhập Google chưa hoàn tất, vui lòng thử lại.');
+        return;
+      }
+
+      setLocalError('Đăng nhập Google chưa hoàn tất, vui lòng thử lại.');
     } catch (error) {
-      setLocalError(toErrorMessage(error, 'Khong the dang nhap bang Google.'));
+      reportError(error, 'Không thể đăng nhập bằng Google.');
     } finally {
       setIsGoogleLoading(false);
     }
-  };
+  }, [clearError, isBusy, navigateAfterAuth, reportError, startSSOFlow]);
 
-  const handleSubmit = async () => {
-    if (!emailAddress || !password || isBusy) {
-      setLocalError('Vui long nhap day du email va mat khau.');
+  const handleSubmit = React.useCallback(async () => {
+    if (!emailAddress.trim() || !password || isBusy) {
+      setLocalError('Vui lòng nhập đầy đủ email và mật khẩu.');
       return;
     }
 
-    setLocalError(null);
+    clearError();
 
     const { error } = await signIn.password({
-      emailAddress,
+      emailAddress: emailAddress.trim(),
       password,
     });
 
     if (error) {
-      setLocalError(toErrorMessage(error, 'Dang nhap that bai. Vui long thu lai.'));
+      reportError(error, 'Đăng nhập thất bại. Vui lòng thử lại.');
       return;
     }
 
@@ -114,33 +168,33 @@ export default function SignInScreen() {
       signIn.status === 'needs_second_factor' ||
       signIn.status === 'needs_client_trust'
     ) {
-      const emailCodeFactor = signIn.supportedSecondFactors?.find(
-        (factor) => factor.strategy === 'email_code',
-      );
-
-      if (emailCodeFactor) {
-        const sendCodeResult = await signIn.mfa.sendEmailCode();
-        if (sendCodeResult.error) {
-          setLocalError(toErrorMessage(sendCodeResult.error, 'Khong gui duoc ma xac minh.'));
-        }
-      }
+      await requestMfaEmailCode();
       return;
     }
 
-    setLocalError('Dang nhap chua hoan tat. Vui long thu lai.');
-  };
+    setLocalError('Đăng nhập chưa hoàn tất. Vui lòng thử lại.');
+  }, [
+    clearError,
+    completeSignIn,
+    emailAddress,
+    isBusy,
+    password,
+    reportError,
+    requestMfaEmailCode,
+    signIn,
+  ]);
 
-  const handleVerify = async () => {
-    if (!code || isBusy) {
-      setLocalError('Vui long nhap ma xac minh.');
+  const handleVerify = React.useCallback(async () => {
+    if (!code.trim() || isBusy) {
+      setLocalError('Vui lòng nhập mã xác minh.');
       return;
     }
 
-    setLocalError(null);
+    clearError();
 
-    const { error } = await signIn.mfa.verifyEmailCode({ code });
+    const { error } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
     if (error) {
-      setLocalError(toErrorMessage(error, 'Ma xac minh khong hop le.'));
+      reportError(error, 'Mã xác minh không hợp lệ.');
       return;
     }
 
@@ -149,193 +203,82 @@ export default function SignInScreen() {
       return;
     }
 
-    setLocalError('Xac minh chua thanh cong. Vui long thu lai.');
-  };
+    setLocalError('Xác minh chưa thành công. Vui lòng thử lại.');
+  }, [clearError, code, completeSignIn, isBusy, reportError, signIn]);
 
   if (needsSecondFactor) {
     return (
-      <View className="flex-1 bg-slate-50">
-        <View
-          pointerEvents="none"
-          className="absolute -right-14 -top-16 h-56 w-56 rounded-full bg-sky-200/60"
-        />
-        <View
-          pointerEvents="none"
-          className="absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-indigo-200/40"
-        />
-        <View className="flex-1 justify-center px-5 py-8">
-          <View className="mb-5 items-center">
-            <View className="mb-3 h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
-              <Image
-                source={require('../../assets/icon.png')}
-                className="h-9 w-9"
-                resizeMode="contain"
-              />
-            </View>
-            <Text className="text-3xl font-extrabold tracking-tight text-sky-500">Sentimeta</Text>
-          </View>
-          <View className="rounded-3xl border border-slate-200 bg-white px-5 py-6">
-            <Text className="text-xs font-semibold uppercase tracking-widest text-sky-600">
-              Xac thuc
-            </Text>
-            <Text className="mt-2 text-[32px] font-extrabold leading-[38px] text-slate-950">
-              Xac minh tai khoan
-            </Text>
-            <Text className="mt-2 text-sm leading-6 text-slate-500">
-              Nhap ma da gui qua email de tiep tuc.
-            </Text>
-
-            <TextInput
-              className="mt-5 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950"
-              value={code}
-              placeholder="Nhap ma xac minh"
-              placeholderTextColor="#666666"
-              onChangeText={setCode}
-              keyboardType="numeric"
-            />
-            {errors.fields.code?.message && (
-              <Text className="mt-2 text-xs text-red-600">{errors.fields.code.message}</Text>
-            )}
-            {localError && <Text className="mt-2 text-xs text-red-600">{localError}</Text>}
-
-            <Pressable
-              className="mt-4 items-center rounded-xl bg-sky-500 px-6 py-3"
-              style={({ pressed }) => ({
-                opacity: isBusy ? 0.5 : 1,
-                transform: [{ scale: pressed ? 0.97 : 1 }],
-              })}
-              onPress={() => void handleVerify()}
-              disabled={isBusy}
-            >
-              <Text className="font-semibold text-white">Xac minh</Text>
-            </Pressable>
-            <Pressable
-              className="mt-2 items-center rounded-xl px-6 py-3"
-              style={({ pressed }) => ({
-                opacity: isBusy ? 0.5 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              })}
-              onPress={() => void signIn.mfa.sendEmailCode()}
-              disabled={isBusy}
-            >
-              <Text className="font-semibold text-sky-700">Gui lai ma</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
+      <AuthShell>
+        <AuthBrand />
+        <AuthCard badge="Xác thực" title="Xác minh tài khoản">
+          <AuthField
+            label="Mã xác minh"
+            value={code}
+            placeholder="Nhập mã xác minh"
+            keyboardType="numeric"
+            onChangeText={setCode}
+            error={errors.fields.code?.message}
+          />
+          <AuthAlert message={formError} />
+          <AuthPrimaryButton
+            label="Xác minh"
+            onPress={() => void handleVerify()}
+            disabled={isBusy || !code.trim()}
+            loading={isSubmitting}
+            className="mt-2"
+          />
+          <AuthSecondaryButton
+            label="Gửi lại mã"
+            onPress={() => void requestMfaEmailCode()}
+            disabled={isBusy}
+          />
+        </AuthCard>
+      </AuthShell>
     );
   }
 
   return (
-    <View className="flex-1 bg-slate-50">
-      <View
-        pointerEvents="none"
-        className="absolute -right-14 -top-16 h-56 w-56 rounded-full bg-sky-200/60"
-      />
-      <View
-        pointerEvents="none"
-        className="absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-indigo-200/40"
-      />
-      <View className="flex-1 justify-center px-5 py-8">
-        <View className="mb-5 items-center">
-          <View className="mb-3 h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
-            <Image
-              source={require('../../assets/icon.png')}
-              className="h-9 w-9"
-              resizeMode="contain"
-            />
-          </View>
-          <Text className="text-3xl font-extrabold tracking-tight text-sky-500">Sentimeta</Text>
-        </View>
-        <View className="rounded-3xl border border-slate-200 bg-white px-5 py-6">
-          <Text className="text-xs font-semibold uppercase tracking-widest text-sky-600">
-            Dang nhap
-          </Text>
-          <Text className="mt-2 text-[32px] font-extrabold leading-[38px] text-slate-950">
-            Chao mung tro lai
-          </Text>
-          <Text className="mt-2 text-sm leading-6 text-slate-500">
-            Dang nhap de tiep tuc su dung Sentimeta.
-          </Text>
-
-          <Pressable
-            className="mt-5 flex-row items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3"
-            style={({ pressed }) => ({
-              opacity: isBusy ? 0.5 : 1,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
-            })}
-            onPress={() => void handleGoogleSignIn()}
-            disabled={isBusy}
-          >
-            <View className="mr-3 h-6 w-6 items-center justify-center rounded-full bg-sky-100">
-              <Text className="font-bold text-sky-700">G</Text>
-            </View>
-            <Text className="font-semibold text-slate-800">
-              {isGoogleLoading ? 'Dang ket noi Google...' : 'Tiep tuc voi Google'}
+    <AuthShell>
+      <AuthBrand />
+      <AuthCard badge="Đăng nhập" title="Chào mừng trở lại">
+        <AuthGoogleButton
+          onPress={() => void handleGoogleSignIn()}
+          disabled={isBusy}
+          loading={isGoogleLoading}
+        />
+        <AuthDivider />
+        <AuthField
+          label="Email"
+          value={emailAddress}
+          placeholder="ban@example.com"
+          keyboardType="email-address"
+          onChangeText={setEmailAddress}
+          error={errors.fields.identifier?.message}
+        />
+        <AuthField
+          label="Mật khẩu"
+          value={password}
+          placeholder="Nhập mật khẩu"
+          secureTextEntry
+          onChangeText={setPassword}
+          error={errors.fields.password?.message}
+        />
+        <AuthAlert message={formError} />
+        <AuthPrimaryButton
+          label="Đăng nhập"
+          onPress={() => void handleSubmit()}
+          disabled={isPrimaryDisabled}
+          loading={isSubmitting}
+          className="mt-2"
+        />
+        <AuthFooterLink prompt="Bạn chưa có tài khoản?">
+          <Link href="/sign-up" asChild>
+            <Text className="text-md font-semibold text-app-primary dark:text-app-primary-dark">
+              Đăng kí
             </Text>
-          </Pressable>
-
-          <View className="my-5 flex-row items-center">
-            <View className="h-px flex-1 bg-slate-200" />
-            <Text className="mx-3 text-xs uppercase tracking-widest text-slate-400">hoac</Text>
-            <View className="h-px flex-1 bg-slate-200" />
-          </View>
-
-          <Text className="text-sm font-semibold text-slate-800">Email</Text>
-          <TextInput
-            className="mt-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950"
-            autoCapitalize="none"
-            value={emailAddress}
-            placeholder="ban@example.com"
-            placeholderTextColor="#666666"
-            onChangeText={setEmailAddress}
-            keyboardType="email-address"
-          />
-          {errors.fields.identifier?.message && (
-            <Text className="mt-2 text-xs text-red-600">{errors.fields.identifier.message}</Text>
-          )}
-
-          <Text className="mt-4 text-sm font-semibold text-slate-800">Mat khau</Text>
-          <TextInput
-            className="mt-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-950"
-            value={password}
-            placeholder="Nhap mat khau"
-            placeholderTextColor="#666666"
-            secureTextEntry
-            onChangeText={setPassword}
-          />
-          {errors.fields.password?.message && (
-            <Text className="mt-2 text-xs text-red-600">{errors.fields.password.message}</Text>
-          )}
-          {errors.global?.[0]?.message && (
-            <Text className="mt-2 text-xs text-red-600">{errors.global[0].message}</Text>
-          )}
-          {localError && <Text className="mt-2 text-xs text-red-600">{localError}</Text>}
-
-          <Pressable
-            className="mt-5 items-center rounded-xl bg-sky-500 px-6 py-3"
-            style={({ pressed }) => ({
-              opacity: isPrimaryDisabled ? 0.5 : 1,
-              transform: [{ scale: pressed ? 0.97 : 1 }],
-            })}
-            onPress={() => void handleSubmit()}
-            disabled={isPrimaryDisabled}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <Text className="font-semibold text-white">Dang nhap</Text>
-            )}
-          </Pressable>
-
-          <View className="mt-4 flex-row items-center justify-center gap-1">
-            <Text className="text-slate-700">Ban chua co tai khoan?</Text>
-            <Link href="/sign-up">
-              <Text className="font-semibold text-sky-700">Dang ky</Text>
-            </Link>
-          </View>
-        </View>
-      </View>
-    </View>
+          </Link>
+        </AuthFooterLink>
+      </AuthCard>
+    </AuthShell>
   );
 }
