@@ -4,10 +4,15 @@ import { Loader } from '@/components/loader-componnet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useGetUser } from '@/hooks/use-user-hook';
-import { useFriendSuggestions, useSendFriendRequest } from '@repo/shared';
+import {
+  useDismissFriendRecommendation,
+  useFriendSuggestions,
+  useSendFriendRequest,
+} from '@repo/shared';
 import { UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { toast } from 'sonner';
 import { FriendCard } from '../_components/friend-card';
 
 type MutualFriendSnapshot = {
@@ -61,17 +66,38 @@ export const FriendSuggestions = () => {
   } = useFriendSuggestions({ limit: 12 });
 
   const { mutateAsync: requestFriend } = useSendFriendRequest();
+  const { mutateAsync: dismissRecommendation } = useDismissFriendRecommendation();
 
   const handleRequest = async (id: string) => {
     await requestFriend(id);
-  };
-
-  const handleSkip = (id: string) => {
     setHiddenIds((prev) => {
       const next = new Set(prev);
       next.add(id);
       return next;
     });
+  };
+
+  const handleSkip = async (id: string) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+
+    try {
+      await dismissRecommendation(id);
+    } catch (error) {
+      setHiddenIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Unable to dismiss this recommendation.',
+      );
+    }
   };
 
   const friendSuggestions = useMemo(
@@ -162,7 +188,7 @@ export const FriendSuggestions = () => {
                         size="sm"
                         variant="outline"
                         className="flex-1 gap-2"
-                        onClick={() => handleSkip(item.id)}
+                        onClick={() => void handleSkip(item.id)}
                       >
                         <X className="h-4 w-4" />
                         Bỏ qua

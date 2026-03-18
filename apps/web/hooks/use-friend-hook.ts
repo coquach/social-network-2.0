@@ -2,6 +2,7 @@
   acceptFriendRequest,
   blockUser,
   cancelFriendRequest,
+  dismissFriendRecommendation,
   declineFriendRequest,
   getBlockedUsers,
   getFriendRequests,
@@ -199,9 +200,29 @@ export const useRequestFriend = (userId?: string) => {
       toast.error(error.message);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.friends.suggestions() });
       if (userId)
         queryClient.invalidateQueries({ queryKey: queryKeys.user.detail(userId) });
       toast.success('Gửi lời mời kết bạn thành công!');
+    },
+  });
+};
+
+export const useDismissFriendRecommendation = () => {
+  const { getToken } = useAuth();
+  const queryClient = getQueryClient();
+
+  return useMutation({
+    mutationFn: async (targetId: string) => {
+      const token = await getToken();
+      if (!token) throw new Error('No auth token found');
+      return await dismissFriendRecommendation(token, targetId);
+    },
+    onSuccess: (_result, targetId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.friends.suggestions() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.friends.relationshipStatus(targetId),
+      });
     },
   });
 };

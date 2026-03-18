@@ -26,7 +26,7 @@ import {
 import type { CursorPageResponse } from '../types';
 import { cancelQueries, invalidateQueries } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
-import { queryKeys } from './query-keys';
+import { mutationKeys, queryKeys } from './query-keys';
 
 /**
  * Hook to get relationship status with a user
@@ -119,6 +119,27 @@ export const useBlockedUsers = (params?: { limit?: number }) => {
 };
 
 /**
+ * Hook to dismiss a friend recommendation
+ */
+export const useDismissFriendRecommendation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: mutationKeys.friends.dismiss,
+    mutationFn: async (targetId: string) => {
+      return friendService.dismissFriendRecommendation(targetId);
+    },
+    onSuccess: (_, targetId) => {
+      invalidateQueries(queryClient, [
+        ['friend-suggestions'],
+        [...queryKeys.friends.relationshipStatus(targetId)] as unknown[],
+        [...queryKeys.user.detail(targetId)] as unknown[],
+      ]);
+    },
+  });
+};
+
+/**
  * Hook to cancel friend request
  */
 export const useCancelFriendRequest = () => {
@@ -136,6 +157,7 @@ export const useCancelFriendRequest = () => {
     },
     onSuccess: (_, targetId) => {
       invalidateQueries(queryClient, [
+        ['friend-suggestions'],
         [...queryKeys.friends.relationshipStatus(targetId)] as unknown[],
         [...queryKeys.user.detail(targetId)] as unknown[],
       ]);

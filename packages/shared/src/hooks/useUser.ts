@@ -219,6 +219,7 @@ export const useSendFriendRequest = () => {
     onSuccess: (_, userId) => {
       // Invalidate friend requests to show pending
       invalidateQueries(queryClient, [
+        ['friend-suggestions'],
         [...queryKeys.friends.requests()] as unknown[],
         [...queryKeys.user.detail(userId)] as unknown[], // Update relationship status
       ]);

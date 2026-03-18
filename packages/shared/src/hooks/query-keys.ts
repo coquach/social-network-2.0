@@ -214,6 +214,7 @@ export const mutationKeys = {
   // ==================== Friends ====================
   friends: {
     send: ['friends', 'send'] as const,
+    dismiss: ['friends', 'dismiss'] as const,
     accept: ['friends', 'accept'] as const,
     decline: ['friends', 'decline'] as const,
     cancel: ['friends', 'cancel'] as const,

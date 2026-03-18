@@ -49,6 +49,18 @@ export const friendService = {
   },
 
   /**
+   * Dismiss a friend recommendation temporarily
+   */
+  async dismissFriendRecommendation(
+    targetId: string,
+  ): Promise<{ message: string; expiresAt: string }> {
+    return getApiClient().post(
+      `/social/friends/recommend/dismiss/${targetId}`,
+      {},
+    );
+  },
+
+  /**
    * Cancel friend request
    */
   async cancelFriendRequest(targetId: string): Promise<void> {
