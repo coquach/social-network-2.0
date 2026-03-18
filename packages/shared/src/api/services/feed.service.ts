@@ -4,7 +4,7 @@
  */
 
 import { getApiClient } from '../client';
-import type { CursorPaginatedResponse, FeedDTO, PostDTO, Emotion } from '../../types';
+import type { CursorPageResponse, FeedDTO, PostDTO, Emotion } from '../../types';
 
 /**
  * Personal feed query params
@@ -28,15 +28,15 @@ export const feedService = {
   /**
    * Get personalized feed for current user (paginated)
    */
-  async getMyFeed(params?: PersonalFeedParams): Promise<CursorPaginatedResponse<FeedDTO>> {
-    return getApiClient().get('/feeds/my_feed', { params });
+  async getMyFeed(params?: PersonalFeedParams): Promise<CursorPageResponse<FeedDTO>> {
+    return getApiClient().getCursorPage('/feeds/my_feed', { params });
   },
 
   /**
    * Get trending posts feed (paginated)
    */
-  async getTrendingFeed(params?: TrendingFeedParams): Promise<CursorPaginatedResponse<PostDTO>> {
-    return getApiClient().get('/feeds/trending', { params });
+  async getTrendingFeed(params?: TrendingFeedParams): Promise<CursorPageResponse<PostDTO>> {
+    return getApiClient().getCursorPage('/feeds/trending', { params });
   },
 
   /**

@@ -5,14 +5,14 @@
 
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { feedService } from '../api/services';
-import type { CursorPaginatedResponse, FeedDTO, PostDTO, Emotion } from '../types';
+import type { CursorPageResponse, FeedDTO, PostDTO, Emotion } from '../types';
 import { queryKeys } from './query-keys';
 
 /**
  * Hook to get personalized feed (infinite scroll)
  */
 export const useMyFeed = (params?: { mainEmotion?: Emotion; limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<FeedDTO>>({
+  return useInfiniteQuery<CursorPageResponse<FeedDTO>>({
     queryKey: queryKeys.feed.personal(params?.mainEmotion),
     queryFn: ({ pageParam }) =>
       feedService.getMyFeed({ ...params, cursor: pageParam as string | undefined }),
@@ -27,7 +27,7 @@ export const useMyFeed = (params?: { mainEmotion?: Emotion; limit?: number }) =>
  * Hook to get trending feed (infinite scroll)
  */
 export const useTrendingFeed = (params?: { mainEmotion?: Emotion; limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<PostDTO>>({
+  return useInfiniteQuery<CursorPageResponse<PostDTO>>({
     queryKey: queryKeys.feed.trending(params?.mainEmotion),
     queryFn: ({ pageParam }) =>
       feedService.getTrendingFeed({ ...params, cursor: pageParam as string | undefined }),

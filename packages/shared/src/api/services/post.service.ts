@@ -9,7 +9,7 @@ import type {
   CreatePostInput,
   UpdatePostInput,
   SharePostInput,
-  CursorPaginatedResponse,
+  CursorPageResponse,
   CreateReactionInput,
   RemoveReactionInput,
   Emotion,
@@ -56,8 +56,8 @@ export const postService = {
   /**
    * Get current user's posts (paginated)
    */
-  async getMyPosts(params?: GetPostQueryParams): Promise<CursorPaginatedResponse<PostDTO>> {
-    return getApiClient().get('/posts/me', { params });
+  async getMyPosts(params?: GetPostQueryParams): Promise<CursorPageResponse<PostDTO>> {
+    return getApiClient().getCursorPage('/posts/me', { params });
   },
 
   /**
@@ -66,8 +66,8 @@ export const postService = {
   async getUserPosts(
     userId: string,
     params?: GetPostQueryParams
-  ): Promise<CursorPaginatedResponse<PostDTO>> {
-    return getApiClient().get(`/posts/user/${userId}`, { params });
+  ): Promise<CursorPageResponse<PostDTO>> {
+    return getApiClient().getCursorPage(`/posts/user/${userId}`, { params });
   },
 
   /**
@@ -76,8 +76,8 @@ export const postService = {
   async getGroupPosts(
     groupId: string,
     params?: GetGroupPostQueryParams
-  ): Promise<CursorPaginatedResponse<PostDTO>> {
-    return getApiClient().get(`/posts/group/${groupId}`, { params });
+  ): Promise<CursorPageResponse<PostDTO>> {
+    return getApiClient().getCursorPage(`/posts/group/${groupId}`, { params });
   },
 
   /**
@@ -161,7 +161,7 @@ export const postService = {
   async getPostReactions(
     postId: string,
     params?: { reactionType?: string; cursor?: string; limit?: number }
-  ): Promise<CursorPaginatedResponse<any>> {
-    return getApiClient().get(`/posts/${postId}/reactions`, { params });
+  ): Promise<CursorPageResponse<any>> {
+    return getApiClient().getCursorPage(`/posts/${postId}/reactions`, { params });
   },
 };

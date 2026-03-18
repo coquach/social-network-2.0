@@ -12,7 +12,7 @@ import { messageService } from '../api/services/message.service';
 import { queryKeys } from './query-keys';
 import type { MessageDTO, CreateMessageInput, AttachmentDTO } from '../types/message.types';
 import type { ConversationDTO } from '../types/conversation.types';
-import type { CursorPaginatedResponse, QueryParams } from '../types/common.types';
+import type { CursorPageResponse, QueryParams } from '../types/common.types';
 import { ReactionType, MessageStatus, MediaType } from '../types/enums';
 import { useAuth } from '../contexts/auth-context';
 import { useUploadOptional } from '../contexts/upload-context';
@@ -30,7 +30,7 @@ import { queryConfigs } from '../utils/query-configs';
  * Messages are typically sorted in reverse chronological order (newest first)
  */
 export const useMessages = (conversationId: string, params?: QueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<MessageDTO>>({
+  return useInfiniteQuery<CursorPageResponse<MessageDTO>>({
     queryKey: queryKeys.messages.list(conversationId),
     queryFn: async ({ pageParam }) => {
       // Token injection handled by API client interceptor
@@ -98,7 +98,7 @@ export const useSendMessage = (conversationId: string) => {
       };
 
       // Add optimistic message to cache      
-      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
         queryKeys.messages.list(conversationId),
         (old) => {
           if (!old || old.pages.length === 0) {
@@ -106,7 +106,7 @@ export const useSendMessage = (conversationId: string) => {
               pages: [{
                 data: [optimisticMessage],
                 nextCursor: undefined,
-                hasMore: false,
+                hasNextPage: false,
               }],
               pageParams: [undefined],
             };
@@ -162,7 +162,7 @@ export const useSendMessage = (conversationId: string) => {
     },
     onSuccess: (newMessage, _variables, context) => {
       // Replace optimistic message with real message
-      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
         queryKeys.messages.list(newMessage.conversationId),
         (old) => {
           if (!old) return old;
@@ -202,7 +202,7 @@ export const useSendMessage = (conversationId: string) => {
       );
 
       // Update in conversations list
-      queryClient.setQueriesData<InfiniteData<CursorPaginatedResponse<ConversationDTO>>>(
+      queryClient.setQueriesData<InfiniteData<CursorPageResponse<ConversationDTO>>>(
         { queryKey: queryKeys.conversations.all },
         (old) => {
           if (!old?.pages) return old;
@@ -228,7 +228,7 @@ export const useSendMessage = (conversationId: string) => {
     onError: (_error, _variables, context) => {
       // Remove optimistic message on error
       if (context?.conversationId && context?.tempId) {
-        queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+        queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
           queryKeys.messages.list(context.conversationId),
           (old) => {
             if (!old) return old;
@@ -260,7 +260,7 @@ export const useUpdateMessage = (conversationId: string) => {
     },
     onSuccess: (updatedMessage) => {
       // Update message in cache
-      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
         queryKeys.messages.list(conversationId),
         (old) => {
           if (!old) return old;
@@ -297,7 +297,7 @@ export const useDeleteMessage = (conversationId: string) => {
       ]);
       
       // Optimistically remove message
-      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
         queryKeys.messages.list(conversationId),
         (old) => {
           if (!old) return old;
@@ -341,7 +341,7 @@ export const useMarkMessageAsRead = () => {
     },
     onSuccess: (_, { conversationId, messageId }) => {
       // Update message in cache
-      queryClient.setQueryData<InfiniteData<CursorPaginatedResponse<MessageDTO>>>(
+      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
         queryKeys.messages.list(conversationId),
         (old) => {
           if (!old) return old;

@@ -4,6 +4,13 @@ import {
   CursorPagination,
 } from '@repo/shared';
 
+type UserSnapshot = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+};
+
 export const getRelationshipStatus = async (
   token: string,
   targetId: string
@@ -191,6 +198,14 @@ export const getFriendSuggestions = async (
     id: string;
     mutualFriends: number;
     mutualFriendIds: string[];
+    user?: UserSnapshot | null;
+    mutualFriendPreview?: UserSnapshot[];
+    commonGroups?: number;
+    commonGroupIds?: string[];
+    score?: number;
+    reasons?: string[];
+    recommendationId?: string;
+    recommendationRequestId?: string;
   }>
 > => {
   try {

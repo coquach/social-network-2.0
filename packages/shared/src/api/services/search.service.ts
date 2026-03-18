@@ -8,7 +8,7 @@ import type {
   PostSnapshotDTO,
   GroupSummaryDTO,
   UserDTO,
-  CursorPaginatedResponse,
+  CursorPageResponse,
   GroupPrivacy,
   Emotion,
 } from '../../types';
@@ -68,8 +68,8 @@ export const searchService = {
    */
   async searchPosts(
     filter: SearchPostFilter
-  ): Promise<CursorPaginatedResponse<PostSnapshotDTO>> {
-    return getApiClient().get('/search/posts', { params: filter });
+  ): Promise<CursorPageResponse<PostSnapshotDTO>> {
+    return getApiClient().getCursorPage('/search/posts', { params: filter });
   },
 
   /**
@@ -77,8 +77,8 @@ export const searchService = {
    */
   async searchGroups(
     filter: SearchGroupFilter
-  ): Promise<CursorPaginatedResponse<GroupSummaryDTO>> {
-    return getApiClient().get('/search/groups', { params: filter });
+  ): Promise<CursorPageResponse<GroupSummaryDTO>> {
+    return getApiClient().getCursorPage('/search/groups', { params: filter });
   },
 
   /**
@@ -86,7 +86,7 @@ export const searchService = {
    */
   async searchUsers(
     filter: SearchUserFilter
-  ): Promise<CursorPaginatedResponse<UserDTO>> {
-    return getApiClient().get('/search/users', { params: filter });
+  ): Promise<CursorPageResponse<UserDTO>> {
+    return getApiClient().getCursorPage('/search/users', { params: filter });
   },
 };

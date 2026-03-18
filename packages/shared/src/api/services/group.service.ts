@@ -19,7 +19,7 @@ import type {
   GroupMemberFilter,
   GroupLogFilter,
   JoinRequestFilter,
-  CursorPaginatedResponse,
+  CursorPageResponse,
   GroupRole,
   GroupPermission,
 } from '../../types';
@@ -33,8 +33,8 @@ export const groupService = {
   async getMyGroups(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<GroupDTO>> {
-    return getApiClient().get('/groups/my-groups', { params });
+  }): Promise<CursorPageResponse<GroupDTO>> {
+    return getApiClient().getCursorPage('/groups/my-groups', { params });
   },
 
   /**
@@ -43,8 +43,8 @@ export const groupService = {
   async getRecommendedGroups(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<GroupDTO>> {
-    return getApiClient().get('/groups/recommendations', { params });
+  }): Promise<CursorPageResponse<GroupDTO>> {
+    return getApiClient().getCursorPage('/groups/recommendations', { params });
   },
 
   /**
@@ -53,8 +53,8 @@ export const groupService = {
   async getInvitedGroups(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<InvitedGroupDTO>> {
-    return getApiClient().get('/groups/invited-groups', { params });
+  }): Promise<CursorPageResponse<InvitedGroupDTO>> {
+    return getApiClient().getCursorPage('/groups/invited-groups', { params });
   },
 
   /**
@@ -178,8 +178,8 @@ export const groupService = {
   async getGroupMembers(
     groupId: string,
     params?: GroupMemberFilter
-  ): Promise<CursorPaginatedResponse<GroupMemberDTO>> {
-    return getApiClient().get(`/groups/${groupId}/members`, { params });
+  ): Promise<CursorPageResponse<GroupMemberDTO>> {
+    return getApiClient().getCursorPage(`/groups/${groupId}/members`, { params });
   },
 
   // ==================== Activity Logs ====================
@@ -190,8 +190,8 @@ export const groupService = {
   async getGroupLogs(
     groupId: string,
     params?: GroupLogFilter
-  ): Promise<CursorPaginatedResponse<GroupLogDTO>> {
-    return getApiClient().get(`/groups/${groupId}/logs`, { params });
+  ): Promise<CursorPageResponse<GroupLogDTO>> {
+    return getApiClient().getCursorPage(`/groups/${groupId}/logs`, { params });
   },
 
   // ==================== Join Requests ====================
@@ -230,8 +230,8 @@ export const groupService = {
   async getGroupJoinRequests(
     groupId: string,
     params?: JoinRequestFilter
-  ): Promise<CursorPaginatedResponse<JoinRequestResponseDTO>> {
-    return getApiClient().get(`/groups/${groupId}/join-requests`, { params });
+  ): Promise<CursorPageResponse<JoinRequestResponseDTO>> {
+    return getApiClient().getCursorPage(`/groups/${groupId}/join-requests`, { params });
   },
 
   // ==================== Group Invitations ====================

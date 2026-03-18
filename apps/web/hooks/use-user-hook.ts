@@ -8,7 +8,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 
-export const useGetUser = (userId: string) => {
+export const useGetUser = (
+  userId: string,
+  options?: {
+    enabled?: boolean;
+  }
+) => {
   const { getToken } = useAuth();
   return useQuery<UserDTO>({
     queryKey: ['user', userId],
@@ -19,7 +24,7 @@ export const useGetUser = (userId: string) => {
       }
       return await getUser(token, userId);
     },
-    enabled: !!userId,
+    enabled: (options?.enabled ?? true) && !!userId,
   });
 };
 

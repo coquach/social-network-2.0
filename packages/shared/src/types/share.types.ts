@@ -5,7 +5,7 @@
 
 import type { Audience, ReactionType } from './enums';
 import type { PostDTO, PostSnapshotDTO } from './post.types';
-import type { CursorPagination } from './pagination.types';
+import type { CursorPagination } from './common.types';
 
 export interface SharePostStatDTO {
   reactions: number;

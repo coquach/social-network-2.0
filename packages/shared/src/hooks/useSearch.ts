@@ -12,7 +12,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { searchService, type SearchPostFilter, type SearchGroupFilter } from '../api/services';
 import type { PostSnapshotDTO, GroupSummaryDTO } from '../types';
-import type { CursorPaginatedResponse } from '../types';
+import type { CursorPageResponse } from '../types';
 import { queryKeys } from './query-keys';
 
 /**
@@ -21,7 +21,7 @@ import { queryKeys } from './query-keys';
 export const useSearchPosts = (filter: SearchPostFilter) => {
   const { query, ...otherFilters } = filter;
   
-  return useInfiniteQuery<CursorPaginatedResponse<PostSnapshotDTO>>({
+  return useInfiniteQuery<CursorPageResponse<PostSnapshotDTO>>({
     queryKey: [...queryKeys.search.posts(query || ''), otherFilters] as const,
     queryFn: ({ pageParam }) =>
       searchService.searchPosts({
@@ -40,7 +40,7 @@ export const useSearchPosts = (filter: SearchPostFilter) => {
 export const useSearchGroups = (filter: SearchGroupFilter) => {
   const { query, ...otherFilters } = filter;
   
-  return useInfiniteQuery<CursorPaginatedResponse<GroupSummaryDTO>>({
+  return useInfiniteQuery<CursorPageResponse<GroupSummaryDTO>>({
     queryKey: [...queryKeys.search.groups(query || ''), otherFilters] as const,
     queryFn: ({ pageParam }) =>
       searchService.searchGroups({

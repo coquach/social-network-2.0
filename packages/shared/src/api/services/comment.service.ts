@@ -10,7 +10,7 @@ import type {
   UpdateCommentInput,
   CreateReactionInput,
   RemoveReactionInput,
-  CursorPaginatedResponse,
+  CursorPageResponse,
 } from '../../types';
 
 export const commentService = {
@@ -20,8 +20,8 @@ export const commentService = {
   async getComments(
     rootId: string,
     params?: { cursor?: string; limit?: number }
-  ): Promise<CursorPaginatedResponse<CommentDTO>> {
-    return getApiClient().get(`/posts/${rootId}/comments`, { params });
+  ): Promise<CursorPageResponse<CommentDTO>> {
+    return getApiClient().getCursorPage(`/posts/${rootId}/comments`, { params });
   },
 
   /**
@@ -37,8 +37,8 @@ export const commentService = {
   async getReplies(
     commentId: string,
     params?: { cursor?: string; limit?: number }
-  ): Promise<CursorPaginatedResponse<CommentDTO>> {
-    return getApiClient().get(`/comments/${commentId}/replies`, { params });
+  ): Promise<CursorPageResponse<CommentDTO>> {
+    return getApiClient().getCursorPage(`/comments/${commentId}/replies`, { params });
   },
 
   /**
@@ -87,7 +87,7 @@ export const commentService = {
   async getCommentReactions(
     commentId: string,
     params?: { reactionType?: string; cursor?: string; limit?: number }
-  ): Promise<CursorPaginatedResponse<any>> {
-    return getApiClient().get(`/comments/${commentId}/reactions`, { params });
+  ): Promise<CursorPageResponse<any>> {
+    return getApiClient().getCursorPage(`/comments/${commentId}/reactions`, { params });
   },
 };

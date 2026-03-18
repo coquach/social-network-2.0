@@ -11,7 +11,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { reactionService } from '../api/services/reaction.service';
-import type { CursorPaginatedResponse } from '../types/common.types';
+import type { CursorPageResponse } from '../types/common.types';
 import type { ReactionType, TargetType } from '../types/enums';
 import type {
   CreateReactionInput,
@@ -33,7 +33,7 @@ export const useReactions = (
   reactionType?: ReactionType,
   options?: { enabled?: boolean },
 ) => {
-  return useInfiniteQuery<CursorPaginatedResponse<ReactionDTO>>({
+  return useInfiniteQuery<CursorPageResponse<ReactionDTO>>({
     queryKey: queryKeys.reactions.list(targetId, targetType, reactionType),
     queryFn: async ({ pageParam }) => {
       return reactionService.getReactions({
@@ -44,7 +44,7 @@ export const useReactions = (
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: options?.enabled !== false && !!targetId && !!targetType,
     ...queryConfigs.realtime, // Reactions need to be fresh

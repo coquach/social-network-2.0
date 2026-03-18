@@ -14,7 +14,7 @@ import {
 } from '@tanstack/react-query';
 import type { CreatePostInGroupResponse } from '../api/services/post.service';
 import { postService } from '../api/services/post.service';
-import type { CursorPaginatedResponse } from '../types/common.types';
+import type { CursorPageResponse } from '../types/common.types';
 import {
   Emotion,
   PostGroupStatus,
@@ -62,7 +62,7 @@ export const usePost = (postId: string, options?: { enabled?: boolean }) => {
  * Get current user's posts with infinite scroll
  */
 export const useMyPosts = (params?: { feeling?: Emotion }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<PostDTO>>({
+  return useInfiniteQuery<CursorPageResponse<PostDTO>>({
     queryKey: queryKeys.posts.myPosts(),
     queryFn: async ({ pageParam }) => {
       return postService.getMyPosts({
@@ -71,7 +71,7 @@ export const useMyPosts = (params?: { feeling?: Emotion }) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     ...queryConfigs.standard,
   });
@@ -84,7 +84,7 @@ export const useUserPosts = (
   userId: string,
   params?: { feeling?: Emotion },
 ) => {
-  return useInfiniteQuery<CursorPaginatedResponse<PostDTO>>({
+  return useInfiniteQuery<CursorPageResponse<PostDTO>>({
     queryKey: queryKeys.posts.list(userId),
     queryFn: async ({ pageParam }) => {
       return postService.getUserPosts(userId, {
@@ -93,7 +93,7 @@ export const useUserPosts = (
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
     ...queryConfigs.standard,
@@ -107,7 +107,7 @@ export const useGroupPosts = (
   groupId: string,
   params?: { mainEmotion?: Emotion; status?: PostGroupStatus },
 ) => {
-  return useInfiniteQuery<CursorPaginatedResponse<PostDTO>>({
+  return useInfiniteQuery<CursorPageResponse<PostDTO>>({
     queryKey: params?.status
       ? [...queryKeys.posts.byGroup(groupId), params.status]
       : queryKeys.posts.byGroup(groupId),
@@ -118,7 +118,7 @@ export const useGroupPosts = (
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: !!groupId,
     ...queryConfigs.standard,

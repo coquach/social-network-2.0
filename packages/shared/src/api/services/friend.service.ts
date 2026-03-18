@@ -4,7 +4,10 @@
  */
 
 import { getApiClient } from '../client';
-import type { CursorPaginatedResponse } from '../../types';
+import type {
+  CursorPageResponse,
+  UserSnapshotDTO,
+} from '../../types';
 
 /**
  * Relationship status response
@@ -20,6 +23,14 @@ export interface FriendSuggestionDTO {
   id: string;
   mutualFriends: number;
   mutualFriendIds: string[];
+  user?: UserSnapshotDTO | null;
+  mutualFriendPreview?: UserSnapshotDTO[];
+  commonGroups?: number;
+  commonGroupIds?: string[];
+  score?: number;
+  reasons?: string[];
+  recommendationId?: string;
+  recommendationRequestId?: string;
 }
 
 export const friendService = {
@@ -85,8 +96,8 @@ export const friendService = {
   async getFriendRequests(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<string>> {
-    return getApiClient().get('/social/requests', { params });
+  }): Promise<CursorPageResponse<string>> {
+    return getApiClient().getCursorPage('/social/requests', { params });
   },
 
   /**
@@ -96,9 +107,9 @@ export const friendService = {
   async getFriends(
     userId?: string,
     params?: { cursor?: string; limit?: number }
-  ): Promise<CursorPaginatedResponse<string>> {
+  ): Promise<CursorPageResponse<string>> {
     const url = userId ? `/social/friends/${userId}` : '/social/friends/me';
-    return getApiClient().get(url, { params });
+    return getApiClient().getCursorPage(url, { params });
   },
 
   /**
@@ -107,8 +118,8 @@ export const friendService = {
   async getUserFriends(
     userId: string,
     params?: { cursor?: string; limit?: number }
-  ): Promise<CursorPaginatedResponse<string>> {
-    return getApiClient().get(`/social/friends/${userId}`, { params });
+  ): Promise<CursorPageResponse<string>> {
+    return getApiClient().getCursorPage(`/social/friends/${userId}`, { params });
   },
 
   /**
@@ -117,8 +128,8 @@ export const friendService = {
   async getFriendSuggestions(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<FriendSuggestionDTO>> {
-    return getApiClient().get('/social/friends/recommend', { params });
+  }): Promise<CursorPageResponse<FriendSuggestionDTO>> {
+    return getApiClient().getCursorPage('/social/friends/recommend', { params });
   },
 
   /**
@@ -127,7 +138,7 @@ export const friendService = {
   async getBlockedUsers(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<string>> {
-    return getApiClient().get('/social/blocked', { params });
+  }): Promise<CursorPageResponse<string>> {
+    return getApiClient().getCursorPage('/social/blocked', { params });
   },
 };

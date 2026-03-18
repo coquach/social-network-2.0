@@ -13,7 +13,7 @@ import {
 } from '@tanstack/react-query';
 import { conversationService } from '../api/services';
 import type {
-  CursorPaginatedResponse,
+  CursorPageResponse,
   QueryParams,
 } from '../types/common.types';
 import type {
@@ -32,7 +32,7 @@ import { queryKeys } from './query-keys';
  * Get conversation list with infinite scroll
  */
 export const useConversations = (params?: QueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<ConversationDTO>>({
+  return useInfiniteQuery<CursorPageResponse<ConversationDTO>>({
     queryKey: queryKeys.conversations.list(),
     queryFn: async ({ pageParam }) => {
       return conversationService.getConversations({
@@ -40,7 +40,7 @@ export const useConversations = (params?: QueryParams) => {
         cursor: pageParam as string | undefined,
       });
     },
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     staleTime: 10_000, // 10 seconds
     gcTime: 60_000, // 1 minute
@@ -72,7 +72,6 @@ export const useConversation = (
  * 
  * @example
  * const createConversation = useCreateConversation();
- * // Group conversation with avatar
  * createConversation.mutate({
  *   isGroup: true,
  *   participants: ['user1', 'user2'],

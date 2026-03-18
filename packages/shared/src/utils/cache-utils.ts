@@ -11,7 +11,7 @@
  */
 
 import { QueryClient, InfiniteData } from '@tanstack/react-query';
-import type { CursorPageResponse } from '../types/pagination.types';
+import type { CursorPageResponse } from '../types/common.types';
 
 // ==================== Generic Cache Helpers ====================
 

@@ -13,7 +13,7 @@ import {
 } from '@tanstack/react-query';
 import { notificationService } from '../api/services/notification.service';
 import type {
-  CursorPaginatedResponse,
+  CursorPageResponse,
   QueryParams,
 } from '../types/common.types';
 import type { NotificationDTO } from '../types/notification.types';
@@ -31,7 +31,7 @@ import { queryKeys } from './query-keys';
  * Get notifications list with infinite scroll
  */
 export const useNotifications = (params?: QueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<NotificationDTO>>({
+  return useInfiniteQuery<CursorPageResponse<NotificationDTO>>({
     queryKey: queryKeys.notifications.list(),
     queryFn: async ({ pageParam }) => {
       return notificationService.getNotifications({
@@ -88,7 +88,7 @@ export const useMarkNotificationAsRead = () => {
     onSuccess: (_, notificationId) => {
       // Update notification in cache
       queryClient.setQueriesData<{
-        pages: CursorPaginatedResponse<NotificationDTO>[];
+        pages: CursorPageResponse<NotificationDTO>[];
       }>({ queryKey: queryKeys.notifications.list() }, (old) => {
         if (!old) return old;
 
@@ -125,7 +125,7 @@ export const useMarkAllNotificationsAsRead = () => {
     onSuccess: () => {
       // Update all notifications in cache
       queryClient.setQueriesData<{
-        pages: CursorPaginatedResponse<NotificationDTO>[];
+        pages: CursorPageResponse<NotificationDTO>[];
       }>({ queryKey: queryKeys.notifications.list() }, (old) => {
         if (!old) return old;
 

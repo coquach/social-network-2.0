@@ -5,19 +5,35 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useGetUser } from '@/hooks/use-user-hook';
 import { useFriendSuggestions, useSendFriendRequest } from '@repo/shared';
+import { UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { FriendCard } from '../_components/friend-card';
-import { UserPlus, X } from 'lucide-react';
 
-const MutualFriendAvatar = ({ userId }: { userId: string }) => {
-  const { data: user } = useGetUser(userId);
-  const initials = `${user?.firstName?.[0] ?? ''}${user?.lastName?.[0] ?? ''}`.trim();
+type MutualFriendSnapshot = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+};
+
+const MutualFriendAvatar = ({
+  userId,
+  user,
+}: {
+  userId: string;
+  user?: MutualFriendSnapshot;
+}) => {
+  const { data: fetchedUser } = useGetUser(userId, {
+    enabled: !user,
+  });
+  const resolvedUser = user ?? fetchedUser;
+  const initials = `${resolvedUser?.firstName?.[0] ?? ''}${resolvedUser?.lastName?.[0] ?? ''}`.trim();
 
   return (
     <Avatar className="h-6 w-6 border-2 border-white">
       <AvatarImage
-        src={user?.avatarUrl || '/images/placeholder.png'}
+        src={resolvedUser?.avatarUrl || '/images/placeholder.png'}
         alt={initials || 'avatar'}
       />
       <AvatarFallback className="text-[10px] text-slate-600">
@@ -31,7 +47,7 @@ export const FriendSuggestions = () => {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
   const { ref, inView } = useInView({
-    threshold: 0.3, // chỉ cần cuộn gần cuối là fetch
+    threshold: 0.3,
   });
 
   const {
@@ -63,7 +79,7 @@ export const FriendSuggestions = () => {
       data?.pages
         .flatMap((page) => page.data)
         .filter((item) => !hiddenIds.has(item.id)) ?? [],
-    [data, hiddenIds]
+    [data, hiddenIds],
   );
 
   useEffect(() => {
@@ -71,6 +87,7 @@ export const FriendSuggestions = () => {
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   if (isPending) {
     return (
       <div className="flex justify-center py-10">
@@ -81,12 +98,13 @@ export const FriendSuggestions = () => {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-red-100 bg-red-50 p-4 text-center text-red-600 shadow-sm space-y-2">
-        <span>Không thể tải đề xuất kết bạn được</span>
+      <div className="flex flex-col items-center justify-center space-y-2 rounded-2xl border border-red-100 bg-red-50 p-4 text-center text-red-600 shadow-sm">
+        <span>Không thể tải đề xuất kết bạn được.</span>
         <p className="text-sm text-red-600">{error.message}</p>
       </div>
     );
   }
+
   return (
     <div className="space-y-6">
       <div className="grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
@@ -98,26 +116,39 @@ export const FriendSuggestions = () => {
           friendSuggestions.map((item) => {
             const mutualFriendIds = item.mutualFriendIds ?? [];
             const mutualCount = item.mutualFriends ?? mutualFriendIds.length;
-            const mutualPreview = mutualFriendIds.slice(0, 3);
+            const mutualPreview = item.mutualFriendPreview ?? [];
+            const commonGroups = item.commonGroups ?? 0;
+            const reasons = item.reasons?.filter(Boolean) ?? [];
+
             return (
               <FriendCard
                 key={item.id}
                 userId={item.id}
+                user={item.user ?? undefined}
                 action={
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       {mutualPreview.length > 0 && (
                         <div className="flex -space-x-2">
-                          {mutualPreview.map((friendId, index) => (
+                          {mutualPreview.map((friend, index) => (
                             <MutualFriendAvatar
-                              key={`${friendId}-${index}`}
-                              userId={friendId}
+                              key={`${friend.id}-${index}`}
+                              userId={friend.id}
+                              user={friend}
                             />
                           ))}
                         </div>
                       )}
                       <span>Bạn chung: {mutualCount}</span>
                     </div>
+                    {(commonGroups > 0 || reasons.length > 0) && (
+                      <div className="space-y-1 text-xs text-slate-500">
+                        {commonGroups > 0 && <p>Nhóm chung: {commonGroups}</p>}
+                        {reasons.length > 0 && (
+                          <p className="line-clamp-2">{reasons.join(' | ')}</p>
+                        )}
+                      </div>
+                    )}
                     <div className="grid w-full grid-cols-2 gap-2">
                       <Button
                         size="sm"
@@ -146,9 +177,9 @@ export const FriendSuggestions = () => {
       </div>
 
       {hasNextPage && (
-        <div ref={ref} className="h-10 flex justify-center items-center">
+        <div ref={ref} className="flex h-10 items-center justify-center">
           {isFetchingNextPage && (
-            <p className="text-sm text-gray-400 animate-pulse">
+            <p className="animate-pulse text-sm text-gray-400">
               Đang tải thêm...
             </p>
           )}

@@ -17,7 +17,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { groupService } from '../api/services';
-import type { CursorPaginatedResponse } from '../types';
+import type { CursorPageResponse } from '../types';
 import { useUploadOptional } from '../contexts/upload-context';
 import type { UploadableFile } from '../types/upload.types';
 import type {
@@ -53,7 +53,7 @@ import { queryKeys } from './query-keys';
  * Hook to get user's groups (infinite scroll)
  */
 export const useMyGroups = (params?: { limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<GroupDTO>>({
+  return useInfiniteQuery<CursorPageResponse<GroupDTO>>({
     queryKey: queryKeys.groups.myGroups(),
     queryFn: async ({ pageParam }) => {
       return groupService.getMyGroups({
@@ -71,7 +71,7 @@ export const useMyGroups = (params?: { limit?: number }) => {
  * Hook to get recommended groups (infinite scroll)
  */
 export const useRecommendedGroups = (params?: { limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<GroupDTO>>({
+  return useInfiniteQuery<CursorPageResponse<GroupDTO>>({
     queryKey: queryKeys.groups.recommended(),
     queryFn: async ({ pageParam }) => {
       return groupService.getRecommendedGroups({
@@ -89,7 +89,7 @@ export const useRecommendedGroups = (params?: { limit?: number }) => {
  * Hook to get groups user is invited to (infinite scroll)
  */
 export const useInvitedGroups = (params?: { limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<InvitedGroupDTO>>({
+  return useInfiniteQuery<CursorPageResponse<InvitedGroupDTO>>({
     queryKey: queryKeys.groups.invited(),
     queryFn: async ({ pageParam }) => {
       return groupService.getInvitedGroups({
@@ -138,7 +138,7 @@ export const useGroupMembers = (
   groupId: string,
   filter?: GroupMemberFilter,
 ) => {
-  return useInfiniteQuery<CursorPaginatedResponse<GroupMemberDTO>>({
+  return useInfiniteQuery<CursorPageResponse<GroupMemberDTO>>({
     queryKey: [...queryKeys.groups.members(groupId), filter] as const,
     queryFn: async ({ pageParam }) => {
       return groupService.getGroupMembers(groupId, {
@@ -157,7 +157,7 @@ export const useGroupMembers = (
  * Hook to get group activity logs (infinite scroll)
  */
 export const useGroupLogs = (groupId: string, filter?: GroupLogFilter) => {
-  return useInfiniteQuery<CursorPaginatedResponse<GroupLogDTO>>({
+  return useInfiniteQuery<CursorPageResponse<GroupLogDTO>>({
     queryKey: [...queryKeys.groups.logs(groupId), filter] as const,
     queryFn: async ({ pageParam }) => {
       return groupService.getGroupLogs(groupId, {
@@ -179,7 +179,7 @@ export const useGroupJoinRequests = (
   groupId: string,
   filter?: JoinRequestFilter,
 ) => {
-  return useInfiniteQuery<CursorPaginatedResponse<JoinRequestResponseDTO>>({
+  return useInfiniteQuery<CursorPageResponse<JoinRequestResponseDTO>>({
     queryKey: [...queryKeys.groups.joinRequests(groupId), filter] as const,
     queryFn: async ({ pageParam }) => {
       return groupService.getGroupJoinRequests(groupId, {

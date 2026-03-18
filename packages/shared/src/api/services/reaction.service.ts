@@ -5,7 +5,7 @@
 
 import { getApiClient } from '../client';
 import type {
-  CursorPaginatedResponse,
+  CursorPageResponse,
   CreateReactionInput,
   RemoveReactionInput,
   ReactionDTO,
@@ -24,8 +24,8 @@ export const reactionService = {
   /**
    * Get reactions for a target (post, comment, share)
    */
-  async getReactions(params: GetReactionsParams): Promise<CursorPaginatedResponse<ReactionDTO>> {
-    return getApiClient().get('/reactions', { params });
+  async getReactions(params: GetReactionsParams): Promise<CursorPageResponse<ReactionDTO>> {
+    return getApiClient().getCursorPage('/reactions', { params });
   },
 
   /**

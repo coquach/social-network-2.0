@@ -12,7 +12,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { shareService } from '../api/services/share.service';
-import type { CursorPaginatedResponse } from '../types/common.types';
+import type { CursorPageResponse } from '../types/common.types';
 import type {
   CreateShareInput,
   GetShareQueryParams,
@@ -52,7 +52,7 @@ export const useShare = (shareId: string, options?: { enabled?: boolean }) => {
  * Get shares for a post with infinite scroll
  */
 export const usePostShares = (postId: string, params?: GetShareQueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<SharePostSnapshotDTO>>({
+  return useInfiniteQuery<CursorPageResponse<SharePostSnapshotDTO>>({
     queryKey: queryKeys.shares.byPost(postId),
     queryFn: async ({ pageParam }) => {
       return shareService.getPostShares(postId, {
@@ -61,7 +61,7 @@ export const usePostShares = (postId: string, params?: GetShareQueryParams) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: !!postId,
     ...queryConfigs.standard,
@@ -72,7 +72,7 @@ export const usePostShares = (postId: string, params?: GetShareQueryParams) => {
  * Get current user's shares with infinite scroll
  */
 export const useMyShares = (params?: GetShareQueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<SharePostSnapshotDTO>>({
+  return useInfiniteQuery<CursorPageResponse<SharePostSnapshotDTO>>({
     queryKey: [...queryKeys.shares.all, 'me'],
     queryFn: async ({ pageParam }) => {
       return shareService.getMyShares({
@@ -81,7 +81,7 @@ export const useMyShares = (params?: GetShareQueryParams) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     ...queryConfigs.standard,
   });
@@ -91,7 +91,7 @@ export const useMyShares = (params?: GetShareQueryParams) => {
  * Get a user's shares with infinite scroll
  */
 export const useUserShares = (userId: string, params?: GetShareQueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<SharePostSnapshotDTO>>({
+  return useInfiniteQuery<CursorPageResponse<SharePostSnapshotDTO>>({
     queryKey: queryKeys.shares.byUser(userId),
     queryFn: async ({ pageParam }) => {
       return shareService.getUserShares(userId, {
@@ -100,7 +100,7 @@ export const useUserShares = (userId: string, params?: GetShareQueryParams) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
     ...queryConfigs.standard,

@@ -11,7 +11,9 @@ import type {
   NotificationDTO,
   MessageDTO,
   ConversationDTO,
-  CursorPaginatedResponse,
+  Pagination,
+  PageResponse,
+  CursorPageResponse,
   CreatePostInput,
   UpdatePostInput,
 } from '../types';
@@ -141,12 +143,25 @@ const testServices = () => {
  * Test: Pagination response type
  */
 const testPaginationResponse = () => {
-  const response: CursorPaginatedResponse<PostDTO> = {
+  const response: CursorPageResponse<PostDTO> = {
     data: [],
-    hasMore: false,
+    hasNextPage: false,
   };
 
-  console.log('Pagination response type works:', response);
+  const pageQuery: Pagination = {
+    page: 1,
+    limit: 10,
+  };
+
+  const pageResponse: PageResponse<PostDTO> = {
+    data: [],
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  };
+
+  console.log('Pagination response type works:', { response, pageQuery, pageResponse });
 };
 
 // Export test functions
@@ -160,7 +175,9 @@ type TestCompilation = {
   notification: NotificationDTO;
   message: MessageDTO;
   conversation: ConversationDTO;
-  paginatedPosts: CursorPaginatedResponse<PostDTO>;
+  pagination: Pagination;
+  pageResponse: PageResponse<PostDTO>;
+  paginatedPosts: CursorPageResponse<PostDTO>;
   reactionType: ReactionType;
   mediaType: MediaType;
 };

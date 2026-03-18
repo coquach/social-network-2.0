@@ -9,7 +9,7 @@ import type {
   ConversationWithParticipantsDTO,
   CreateConversationInput,
   UpdateConversationInput,
-  CursorPaginatedResponse,
+  CursorPageResponse,
 } from '../../types';
 
 export const conversationService = {
@@ -19,8 +19,8 @@ export const conversationService = {
   async getConversations(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<ConversationDTO>> {
-    return getApiClient().get('/conversations', { params });
+  }): Promise<CursorPageResponse<ConversationDTO>> {
+    return getApiClient().getCursorPage('/conversations', { params });
   },
 
   /**

@@ -32,6 +32,12 @@ type RelationStatus =
   | 'NONE';
 
 type UserSnapshot = UserDTO | undefined;
+type FriendSuggestionUserSnapshot = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+};
 
 type OptimisticContext = {
   previousUser?: UserSnapshot;
@@ -132,6 +138,14 @@ export const useGetFriendSuggestions = (query: CursorPagination) => {
       id: string;
       mutualFriends: number;
       mutualFriendIds: string[];
+      user?: FriendSuggestionUserSnapshot | null;
+      mutualFriendPreview?: FriendSuggestionUserSnapshot[];
+      commonGroups?: number;
+      commonGroupIds?: string[];
+      score?: number;
+      reasons?: string[];
+      recommendationId?: string;
+      recommendationRequestId?: string;
     }>
   >({
     queryKey: queryKeys.friends.suggestions(query),

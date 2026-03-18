@@ -1,8 +1,7 @@
 'use client';
 
 import { getNotifications } from '@/lib/actions/notification/notification-action';
-import { CursorPageResponse, getStandardNextPageParam } from '@repo/shared';
-import { Pagination } from '@/lib/pagination.dto';
+import { CursorPageResponse, CursorPagination, getStandardNextPageParam } from '@repo/shared';
 import { queryKeys } from '@/lib/query-keys';
 import { NotificationDTO } from '@/models/notification/notificationDTO';
 import { useNotificationStore } from '@repo/shared';
@@ -31,7 +30,7 @@ export function useNotifications(userId: string) {
         return await getNotifications(token, {
           cursor: pageParam,
           limit: 10,
-        } as Pagination);
+        } as CursorPagination);
       },
       getNextPageParam: getStandardNextPageParam,
       initialPageParam: undefined,

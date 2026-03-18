@@ -3,7 +3,7 @@
  * Helper functions for React Query infinite queries
  */
 
-import type { CursorPageResponse } from '../types/pagination.types';
+import type { CursorPageResponse } from '../types/common.types';
 
 /**
  * Standardized getNextPageParam for infinite queries using cursor pagination.

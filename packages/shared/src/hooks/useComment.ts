@@ -24,7 +24,7 @@ import type {
   CommentDTO,
   CreateCommentInput,
   UpdateCommentInput,
-  CursorPaginatedResponse,
+  CursorPageResponse,
   MediaDTO,
 } from '../types';
 
@@ -51,7 +51,7 @@ export const useComment = (commentId: string, options?: { enabled?: boolean }) =
 export const useComments = (rootId: string, params?: { limit?: number }) => {
 
   
-  return useInfiniteQuery<CursorPaginatedResponse<CommentDTO>>({
+  return useInfiniteQuery<CursorPageResponse<CommentDTO>>({
     queryKey: queryKeys.comments.byPost(rootId),
     queryFn: async ({ pageParam }) => {
       return commentService.getComments(rootId, {
@@ -59,7 +59,7 @@ export const useComments = (rootId: string, params?: { limit?: number }) => {
         cursor: pageParam as string | undefined,
       });
     },
-    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextCursor : undefined,
+    getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: !!rootId,
     ...queryConfigs.realtime, // Comments need to be fresh
@@ -72,7 +72,7 @@ export const useComments = (rootId: string, params?: { limit?: number }) => {
 export const useReplies = (commentId: string, params?: { limit?: number }) => {
 
   
-  return useInfiniteQuery<CursorPaginatedResponse<CommentDTO>>({
+  return useInfiniteQuery<CursorPageResponse<CommentDTO>>({
     queryKey: queryKeys.comments.replies(commentId),
     queryFn: async ({ pageParam }) => {
     
@@ -81,7 +81,7 @@ export const useReplies = (commentId: string, params?: { limit?: number }) => {
         cursor: pageParam as string | undefined,
       });
     },
-    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextCursor : undefined,
+    getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: !!commentId,
     ...queryConfigs.realtime,

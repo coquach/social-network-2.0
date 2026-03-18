@@ -1,4 +1,29 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import type { CursorPageResponse } from '../types/common.types';
+
+type LegacyCursorPageResponse<T> = {
+  data: T[];
+  nextCursor?: string | null;
+  hasMore: boolean;
+};
+
+type CursorPageApiResponse<T> =
+  | CursorPageResponse<T>
+  | LegacyCursorPageResponse<T>;
+
+const normalizeCursorPageResponse = <T>(
+  response: CursorPageApiResponse<T>
+): CursorPageResponse<T> => {
+  if ('hasNextPage' in response) {
+    return response;
+  }
+
+  return {
+    data: response.data,
+    nextCursor: response.nextCursor ?? null,
+    hasNextPage: response.hasMore,
+  };
+};
 
 /**
  * Configuration for initializing the API client
@@ -76,6 +101,15 @@ export class ApiClient {
   async get<T>(url: string, config?: any): Promise<T> {
     const response = await this.client.get<T>(url, config);
     return response.data;
+  }
+
+  /**
+   * HTTP GET request for cursor-paginated responses.
+   * Normalizes legacy `hasMore` payloads into `hasNextPage`.
+   */
+  async getCursorPage<T>(url: string, config?: any): Promise<CursorPageResponse<T>> {
+    const response = await this.get<CursorPageApiResponse<T>>(url, config);
+    return normalizeCursorPageResponse(response);
   }
 
   /**

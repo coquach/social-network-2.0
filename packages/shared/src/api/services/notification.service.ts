@@ -6,7 +6,7 @@
 import { getApiClient } from '../client';
 import type {
   NotificationDTO,
-  CursorPaginatedResponse,
+  CursorPageResponse,
 } from '../../types';
 
 export const notificationService = {
@@ -17,8 +17,8 @@ export const notificationService = {
     cursor?: string;
     limit?: number;
     status?: 'read' | 'unread';
-  }): Promise<CursorPaginatedResponse<NotificationDTO>> {
-    return getApiClient().get('/notifications', { params });
+  }): Promise<CursorPageResponse<NotificationDTO>> {
+    return getApiClient().getCursorPage('/notifications', { params });
   },
 
   /**

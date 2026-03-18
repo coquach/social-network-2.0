@@ -5,7 +5,7 @@
 
 import { getApiClient } from '../client';
 import type {
-  CursorPaginatedResponse,
+  CursorPageResponse,
   SharePostDTO,
   SharePostSnapshotDTO,
   CreateShareInput,
@@ -48,8 +48,8 @@ export const shareService = {
   async getPostShares(
     postId: string,
     params?: GetShareQueryParams
-  ): Promise<CursorPaginatedResponse<SharePostSnapshotDTO>> {
-    return getApiClient().get(`/shares/post/${postId}`, { params });
+  ): Promise<CursorPageResponse<SharePostSnapshotDTO>> {
+    return getApiClient().getCursorPage(`/shares/post/${postId}`, { params });
   },
 
   /**
@@ -57,8 +57,8 @@ export const shareService = {
    */
   async getMyShares(
     params?: GetShareQueryParams
-  ): Promise<CursorPaginatedResponse<SharePostSnapshotDTO>> {
-    return getApiClient().get('/shares/me', { params });
+  ): Promise<CursorPageResponse<SharePostSnapshotDTO>> {
+    return getApiClient().getCursorPage('/shares/me', { params });
   },
 
   /**
@@ -67,7 +67,7 @@ export const shareService = {
   async getUserShares(
     userId: string,
     params?: GetShareQueryParams
-  ): Promise<CursorPaginatedResponse<SharePostSnapshotDTO>> {
-    return getApiClient().get(`/shares/user/${userId}`, { params });
+  ): Promise<CursorPageResponse<SharePostSnapshotDTO>> {
+    return getApiClient().getCursorPage(`/shares/user/${userId}`, { params });
   },
 };

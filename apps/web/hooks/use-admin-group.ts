@@ -19,8 +19,7 @@ import {
   GroupReportQuery,
   unbanGroup,
 } from '@/lib/actions/admin/admin-group-action';
-import { CursorPageResponse, getStandardNextPageParam } from '@repo/shared';
-import { PageResponse } from '@/lib/pagination.dto';
+import { CursorPageResponse, getStandardNextPageParam, PageResponse } from '@repo/shared';
 import { AdminGroupDTO } from '@/models/group/adminGroupDTO';
 import { GroupReportDTO } from '@/models/group/groupReportDTO';
 import { GroupStatus } from '@/models/group/enums/group-status.enum';

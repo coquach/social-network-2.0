@@ -1,6 +1,10 @@
 import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { PageResponse, Pagination } from '@/lib/pagination.dto';
+import {
+  CursorPageResponse,
+  CursorPagination,
+  PageResponse,
+  Pagination,
+} from '@repo/shared';
 import { AdminGroupDTO } from '@/models/group/adminGroupDTO';
 import { GroupStatus } from '@/models/group/enums/group-status.enum';
 import { GroupReportDTO } from '@/models/group/groupReportDTO';

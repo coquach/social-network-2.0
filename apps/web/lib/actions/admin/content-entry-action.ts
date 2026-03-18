@@ -1,5 +1,5 @@
 import api from '@/lib/api-client';
-import { PageResponse, Pagination } from '@/lib/pagination.dto';
+import { PageResponse, Pagination } from '@repo/shared';
 import { TargetType } from '@/models/social/enums/social.enum';
 import { ContentEntryDTO, ContentStatus } from '@/models/social/post/contentEntryDTO';
 

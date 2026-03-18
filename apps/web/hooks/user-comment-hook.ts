@@ -6,7 +6,6 @@ import {
   GetCommentsQuery,
   updateComment,
 } from '@/lib/actions/social/comment/comment-action';
-import { PageResponse } from '@/lib/pagination.dto';
 import { getQueryClient } from '@/lib/query-client';
 import { MediaItem } from '@/lib/types/media';
 import {
@@ -16,6 +15,7 @@ import {
 } from '@/models/social/comment/commentDTO';
 import { MediaType } from '@/models/social/enums/social.enum';
 import { withAbortOnUnload } from '@/utils/with-abort-unload';
+import { PageResponse } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import {
   InfiniteData,

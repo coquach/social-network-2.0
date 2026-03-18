@@ -23,7 +23,7 @@ import {
   type FriendSuggestionDTO,
   type RelationshipStatusResponse,
 } from '../api/services';
-import type { CursorPaginatedResponse } from '../types';
+import type { CursorPageResponse } from '../types';
 import { cancelQueries, invalidateQueries } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
 import { queryKeys } from './query-keys';
@@ -46,7 +46,7 @@ export const useRelationshipStatus = (targetId: string) => {
  * Hook to get friend requests (infinite scroll)
  */
 export const useFriendRequests = (params?: { limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<string>>({
+  return useInfiniteQuery<CursorPageResponse<string>>({
     queryKey: queryKeys.friends.requests(),
     queryFn: async ({ pageParam }) => {
       return friendService.getFriendRequests({
@@ -55,7 +55,7 @@ export const useFriendRequests = (params?: { limit?: number }) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     ...queryConfigs.realtime,
   });
@@ -65,7 +65,7 @@ export const useFriendRequests = (params?: { limit?: number }) => {
  * Hook to get friends list (infinite scroll)
  */
 export const useFriends = (userId?: string, params?: { limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<string>>({
+  return useInfiniteQuery<CursorPageResponse<string>>({
     queryKey: queryKeys.friends.list(userId),
     queryFn: async ({ pageParam }) => {
       return friendService.getFriends(userId, {
@@ -74,7 +74,7 @@ export const useFriends = (userId?: string, params?: { limit?: number }) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     ...queryConfigs.semiStatic,
   });
@@ -84,7 +84,7 @@ export const useFriends = (userId?: string, params?: { limit?: number }) => {
  * Hook to get friend suggestions (infinite scroll)
  */
 export const useFriendSuggestions = (params?: { limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<FriendSuggestionDTO>>({
+  return useInfiniteQuery<CursorPageResponse<FriendSuggestionDTO>>({
     queryKey: queryKeys.friends.suggestions(),
     queryFn: async ({ pageParam }) => {
       return friendService.getFriendSuggestions({
@@ -93,7 +93,7 @@ export const useFriendSuggestions = (params?: { limit?: number }) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     ...queryConfigs.standard,
   });
@@ -103,7 +103,7 @@ export const useFriendSuggestions = (params?: { limit?: number }) => {
  * Hook to get blocked users (infinite scroll)
  */
 export const useBlockedUsers = (params?: { limit?: number }) => {
-  return useInfiniteQuery<CursorPaginatedResponse<string>>({
+  return useInfiniteQuery<CursorPageResponse<string>>({
     queryKey: queryKeys.friends.blocked(),
     queryFn: async ({ pageParam }) => {
       return friendService.getBlockedUsers({
@@ -112,7 +112,7 @@ export const useBlockedUsers = (params?: { limit?: number }) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     ...queryConfigs.semiStatic,
   });

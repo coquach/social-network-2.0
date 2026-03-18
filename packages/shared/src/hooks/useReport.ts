@@ -11,7 +11,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import type {
-  CursorPaginatedResponse,
+  CursorPageResponse,
   QueryParams,
 } from '../types/common.types';
 import type { TargetType } from '../types/enums';
@@ -56,7 +56,7 @@ interface ReportService {
   createReport: (input: CreateReportInput) => Promise<ReportDTO>;
   getReports: (
     params: ReportFilterParams,
-  ) => Promise<CursorPaginatedResponse<ReportDTO>>;
+  ) => Promise<CursorPageResponse<ReportDTO>>;
   resolveReport: (targetId: string, targetType: TargetType) => Promise<void>;
   ignoreReport: (reportId: string) => Promise<void>;
 }
@@ -102,7 +102,7 @@ export const useCreateReport = () => {
  * Get reports with filtering (admin/moderator)
  */
 export const useReports = (params?: ReportFilterParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<ReportDTO>>({
+  return useInfiniteQuery<CursorPageResponse<ReportDTO>>({
     queryKey: [
       'reports',
       params?.targetId,

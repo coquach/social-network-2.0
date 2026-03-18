@@ -13,7 +13,7 @@ import {
 } from '@tanstack/react-query';
 import { userService } from '../api/services/user.service';
 import type {
-  CursorPaginatedResponse,
+  CursorPageResponse,
   QueryParams,
 } from '../types/common.types';
 import type {
@@ -65,7 +65,7 @@ export const useUser = (userId: string, options?: { enabled?: boolean }) => {
  * Search users
  */
 export const useSearchUsers = (query: string, params?: QueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<UserDTO>>({
+  return useInfiniteQuery<CursorPageResponse<UserDTO>>({
     queryKey: queryKeys.search.users(query),
     queryFn: async ({ pageParam }) => {
       return userService.searchUsers({
@@ -75,7 +75,7 @@ export const useSearchUsers = (query: string, params?: QueryParams) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: query.length > 0,
     ...queryConfigs.standard,
@@ -86,7 +86,7 @@ export const useSearchUsers = (query: string, params?: QueryParams) => {
  * Get user's friends list
  */
 export const useUserFriends = (userId: string, params?: QueryParams) => {
-  return useInfiniteQuery<CursorPaginatedResponse<UserDTO>>({
+  return useInfiniteQuery<CursorPageResponse<UserDTO>>({
     queryKey: queryKeys.user.friends(userId),
     queryFn: async ({ pageParam }) => {
       return userService.getUserFriends(userId, {
@@ -95,7 +95,7 @@ export const useUserFriends = (userId: string, params?: QueryParams) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
     ...queryConfigs.semiStatic,

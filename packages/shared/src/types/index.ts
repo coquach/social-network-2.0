@@ -2,7 +2,6 @@
 
 // Common types
 export * from './common.types';
-export * from './pagination.types';
 
 // Enums
 export * from './enums';

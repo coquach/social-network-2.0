@@ -8,7 +8,7 @@ import type {
   UserDTO,
   UserProfile,
   UpdateUserInput,
-  CursorPaginatedResponse,
+  CursorPageResponse,
 } from '../../types';
 
 export const userService = {
@@ -40,8 +40,8 @@ export const userService = {
     query: string;
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<UserDTO>> {
-    return getApiClient().get('/users/search', { params });
+  }): Promise<CursorPageResponse<UserDTO>> {
+    return getApiClient().getCursorPage('/users/search', { params });
   },
 
   /**
@@ -50,8 +50,8 @@ export const userService = {
   async getUserFriends(
     userId: string,
     params?: { cursor?: string; limit?: number }
-  ): Promise<CursorPaginatedResponse<UserDTO>> {
-    return getApiClient().get(`/users/${userId}/friends`, { params });
+  ): Promise<CursorPageResponse<UserDTO>> {
+    return getApiClient().getCursorPage(`/users/${userId}/friends`, { params });
   },
 
   /**
@@ -88,8 +88,8 @@ export const userService = {
   async getFriendRequests(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<CursorPaginatedResponse<any>> {
-    return getApiClient().get('/friend-requests', { params });
+  }): Promise<CursorPageResponse<any>> {
+    return getApiClient().getCursorPage('/friend-requests', { params });
   },
 
   /**

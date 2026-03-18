@@ -8,7 +8,6 @@ import {
   unbanUser,
   updateSystemUserRole,
 } from '@/lib/actions/admin/admin-users-action';
-import { PageResponse } from '@/lib/pagination.dto';
 import { LogType } from '@/models/log/logDTO';
 import {
   CreateSystemUserDTO,
@@ -16,6 +15,7 @@ import {
   SystemUserDTO,
 } from '@/models/user/systemUserDTO';
 import { withAbortOnUnload } from '@/utils/with-abort-unload';
+import { PageResponse } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import {
   keepPreviousData,

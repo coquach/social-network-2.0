@@ -1,26 +1,48 @@
 'use client';
 
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetUser } from '@/hooks/use-user-hook';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
+type FriendCardUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+  coverImageUrl?: string;
+  coverImage?: {
+    url?: string;
+    publicId?: string;
+  };
+};
+
 interface FriendCardProps {
   userId: string;
-  action?: React.ReactNode; // truyền nút hành động từ cha
+  user?: FriendCardUser | null;
+  action?: React.ReactNode;
 }
 
-export const FriendCard = ({ userId, action }: FriendCardProps) => {
-  const { data: user, isPending, isError, error, refetch } = useGetUser(userId);
+export const FriendCard = ({ userId, user, action }: FriendCardProps) => {
+  const {
+    data: fetchedUser,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useGetUser(userId, {
+    enabled: !user,
+  });
   const router = useRouter();
+  const resolvedUser = user ?? fetchedUser;
 
   const goToProfile = useCallback(() => {
     router.push(`/profile/${userId}`);
   }, [router, userId]);
 
-  if (isPending) {
+  if (!resolvedUser && isPending) {
     return (
       <div className="flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm">
         <Skeleton className="h-24 w-full" />
@@ -35,38 +57,38 @@ export const FriendCard = ({ userId, action }: FriendCardProps) => {
     );
   }
 
-  if (isError) {
+  if (!resolvedUser && isError) {
     console.error('FriendCard error:', error);
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-red-100 bg-red-50 p-4 text-center text-red-600 shadow-sm space-y-2">
-        <span>Không thể tải thông tin người dùng được</span>
+      <div className="flex flex-col items-center justify-center space-y-2 rounded-2xl border border-red-100 bg-red-50 p-4 text-center text-red-600 shadow-sm">
+        <span>Unable to load user information.</span>
         <Button
           size="sm"
           variant="outline"
           onClick={() => refetch()}
-          className="text-red-600 border-red-200 hover:bg-red-100"
+          className="border-red-200 text-red-600 hover:bg-red-100"
         >
-          Thử lại
+          Retry
         </Button>
       </div>
     );
   }
 
-  if (!user) return null;
+  if (!resolvedUser) return null;
 
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       <div
-        className="relative h-24 w-full overflow-hidden bg-slate-100 cursor-pointer"
+        className="relative h-24 w-full cursor-pointer overflow-hidden bg-slate-100"
         onClick={goToProfile}
       >
         <Image
           src={
-            user.coverImage?.url ||
-            user.coverImageUrl ||
+            resolvedUser.coverImage?.url ||
+            resolvedUser.coverImageUrl ||
             '/images/placeholder-bg.png'
           }
-          alt={`${user.firstName} ${user.lastName}`}
+          alt={`${resolvedUser.firstName} ${resolvedUser.lastName}`}
           fill
           loading="lazy"
           className="object-cover"
@@ -77,12 +99,12 @@ export const FriendCard = ({ userId, action }: FriendCardProps) => {
       <div className="relative flex flex-1 flex-col gap-3 px-4 pb-4">
         <div className="flex items-end justify-between gap-3">
           <div
-            className="relative -mt-8 h-16 w-16 overflow-hidden rounded-full ring-4 ring-white bg-slate-200 cursor-pointer"
+            className="relative -mt-8 h-16 w-16 cursor-pointer overflow-hidden rounded-full bg-slate-200 ring-4 ring-white"
             onClick={goToProfile}
           >
             <Image
-              src={user.avatarUrl || '/images/placeholder.png'}
-              alt={`${user.firstName} ${user.lastName}`}
+              src={resolvedUser.avatarUrl || '/images/placeholder.png'}
+              alt={`${resolvedUser.firstName} ${resolvedUser.lastName}`}
               fill
               loading="lazy"
               className="object-cover"
@@ -92,19 +114,19 @@ export const FriendCard = ({ userId, action }: FriendCardProps) => {
             <Button
               size="sm"
               variant="outline"
-              className="h-8 px-3 mt-2 text-xs"
+              className="mt-2 h-8 px-3 text-xs"
               onClick={goToProfile}
             >
-              Xem hồ sơ
+              View profile
             </Button>
           )}
         </div>
 
         <p
-          className="text-base font-semibold text-slate-900 leading-tight cursor-pointer"
+          className="cursor-pointer text-base leading-tight font-semibold text-slate-900"
           onClick={goToProfile}
         >
-          {user.firstName} {user.lastName}
+          {resolvedUser.firstName} {resolvedUser.lastName}
         </p>
 
         <div className="mt-auto w-full">{action}</div>

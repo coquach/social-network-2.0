@@ -3,12 +3,39 @@
  */
 
 /**
- * Cursor-based pagination response
+ * Cursor-based pagination query params
  */
-export interface CursorPaginatedResponse<T> {
+export interface CursorPagination {
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Cursor-based pagination response using `hasNextPage`
+ */
+export interface CursorPageResponse<T> {
   data: T[];
-  nextCursor?: string;
-  hasMore: boolean;
+  nextCursor?: string | null;
+  hasNextPage: boolean;
+}
+
+/**
+ * Traditional page-based pagination query params
+ */
+export interface Pagination {
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Traditional page-based pagination response
+ */
+export interface PageResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 /**
@@ -51,6 +78,7 @@ export interface QueryParams {
   search?: string;
   sortBy?: string;
   sortOrder?: SortOrder;
+  page?: number;
   limit?: number;
   cursor?: string;
 }
