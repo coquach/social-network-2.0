@@ -20,6 +20,8 @@ import {
 } from '@tanstack/react-query';
 import {
   friendService,
+  type FriendRecommendationAnalyticsDTO,
+  type RecommendationAttributionPayload,
   type FriendSuggestionDTO,
   type RelationshipStatusResponse,
 } from '../api/services';
@@ -100,6 +102,19 @@ export const useFriendSuggestions = (params?: { limit?: number }) => {
 };
 
 /**
+ * Hook to get recommendation funnel analytics
+ */
+export const useFriendRecommendationAnalytics = (days?: number) => {
+  return useQuery<FriendRecommendationAnalyticsDTO>({
+    queryKey: queryKeys.friends.analytics(days),
+    queryFn: async () => {
+      return friendService.getFriendRecommendationAnalytics(days);
+    },
+    ...queryConfigs.standard,
+  });
+};
+
+/**
  * Hook to get blocked users (infinite scroll)
  */
 export const useBlockedUsers = (params?: { limit?: number }) => {
@@ -126,10 +141,26 @@ export const useDismissFriendRecommendation = () => {
 
   return useMutation({
     mutationKey: mutationKeys.friends.dismiss,
-    mutationFn: async (targetId: string) => {
-      return friendService.dismissFriendRecommendation(targetId);
+    mutationFn: async (
+      input:
+        | string
+        | ({
+            targetId: string;
+          } & RecommendationAttributionPayload),
+    ) => {
+      const targetId = typeof input === 'string' ? input : input.targetId;
+      const payload =
+        typeof input === 'string'
+          ? undefined
+          : {
+              recommendationId: input.recommendationId,
+              recommendationRequestId: input.recommendationRequestId,
+            };
+
+      return friendService.dismissFriendRecommendation(targetId, payload);
     },
-    onSuccess: (_, targetId) => {
+    onSuccess: (_, input) => {
+      const targetId = typeof input === 'string' ? input : input.targetId;
       invalidateQueries(queryClient, [
         ['friend-suggestions'],
         [...queryKeys.friends.relationshipStatus(targetId)] as unknown[],

@@ -11,6 +11,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { friendService } from '../api/services/friend.service';
 import { userService } from '../api/services/user.service';
 import type {
   CursorPageResponse,
@@ -212,11 +213,30 @@ export const useUpdateProfile = () => {
 export const useSendFriendRequest = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, string>({
-    mutationFn: async (userId) => {
-      return userService.sendFriendRequest(userId);
+  return useMutation<
+    void,
+    Error,
+    | string
+    | {
+        targetId: string;
+        recommendationId?: string;
+        recommendationRequestId?: string;
+      }
+  >({
+    mutationFn: async (input) => {
+      const targetId = typeof input === 'string' ? input : input.targetId;
+      const payload =
+        typeof input === 'string'
+          ? undefined
+          : {
+              recommendationId: input.recommendationId,
+              recommendationRequestId: input.recommendationRequestId,
+            };
+
+      return friendService.sendFriendRequest(targetId, payload);
     },
-    onSuccess: (_, userId) => {
+    onSuccess: (_, input) => {
+      const userId = typeof input === 'string' ? input : input.targetId;
       // Invalidate friend requests to show pending
       invalidateQueries(queryClient, [
         ['friend-suggestions'],
@@ -235,7 +255,7 @@ export const useAcceptFriendRequest = () => {
 
   return useMutation<void, Error, string>({
     mutationFn: async (requestId) => {
-      return userService.acceptFriendRequest(requestId);
+      return friendService.acceptFriendRequest(requestId);
     },
     onSuccess: () => {
       // Invalidate friend requests list
@@ -255,7 +275,7 @@ export const useRejectFriendRequest = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (requestId) => userService.rejectFriendRequest(requestId),
+    mutationFn: (requestId) => friendService.declineFriendRequest(requestId),
     onSuccess: () => {
       // Invalidate friend requests list
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.requests() });
@@ -270,7 +290,7 @@ export const useRemoveFriend = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (userId) => userService.removeFriend(userId),
+    mutationFn: (userId) => friendService.removeFriend(userId),
     onSuccess: (_, userId) => {
       // Invalidate friends lists
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
@@ -290,7 +310,7 @@ export const useBlockUser = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (userId) => userService.blockUser(userId),
+    mutationFn: (userId) => friendService.blockUser(userId),
     onSuccess: (_, userId) => {
       // Invalidate user detail
       queryClient.invalidateQueries({
@@ -313,7 +333,7 @@ export const useUnblockUser = () => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (userId) => userService.unblockUser(userId),
+    mutationFn: (userId) => friendService.unblockUser(userId),
     onSuccess: (_, userId) => {
       // Invalidate user detail
       queryClient.invalidateQueries({

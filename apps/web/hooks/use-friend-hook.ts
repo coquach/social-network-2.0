@@ -10,6 +10,7 @@
   getFriendSuggestions,
   getUserFriends,
   removeFriend,
+  sendAttributedFriendRequest,
   sendFriendRequest,
   unblockUser,
 } from '@/lib/actions/friend/friend-action';
@@ -185,10 +186,25 @@ export const useRequestFriend = (userId?: string) => {
   const { getToken } = useAuth();
   const queryClient = getQueryClient();
   return useMutation({
-    mutationFn: async (targetId: string) => {
+    mutationFn: async (
+      input:
+        | string
+        | {
+            targetId: string;
+            recommendationId?: string;
+            recommendationRequestId?: string;
+          },
+    ) => {
       const token = await getToken();
       if (!token) throw new Error('No auth token found');
-      return await sendFriendRequest(token, targetId);
+      if (typeof input === 'string') {
+        return await sendFriendRequest(token, input);
+      }
+
+      return await sendAttributedFriendRequest(token, input.targetId, {
+        recommendationId: input.recommendationId,
+        recommendationRequestId: input.recommendationRequestId,
+      });
     },
     onMutate: async () => {
       const previousUser = snapshotUser(userId);
@@ -213,12 +229,28 @@ export const useDismissFriendRecommendation = () => {
   const queryClient = getQueryClient();
 
   return useMutation({
-    mutationFn: async (targetId: string) => {
+    mutationFn: async (
+      input:
+        | string
+        | {
+            targetId: string;
+            recommendationId?: string;
+            recommendationRequestId?: string;
+          },
+    ) => {
       const token = await getToken();
       if (!token) throw new Error('No auth token found');
-      return await dismissFriendRecommendation(token, targetId);
+      if (typeof input === 'string') {
+        return await dismissFriendRecommendation(token, input);
+      }
+
+      return await dismissFriendRecommendation(token, input.targetId, {
+        recommendationId: input.recommendationId,
+        recommendationRequestId: input.recommendationRequestId,
+      });
     },
-    onSuccess: (_result, targetId) => {
+    onSuccess: (_result, input) => {
+      const targetId = typeof input === 'string' ? input : input.targetId;
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.suggestions() });
       queryClient.invalidateQueries({
         queryKey: queryKeys.friends.relationshipStatus(targetId),

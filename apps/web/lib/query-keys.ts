@@ -91,10 +91,13 @@ export const queryKeys = {
       ['get-friends', ...(userId !== undefined ? [userId] : [])] as const,
     userFriends: (userId: string) => 
       ['get-user-friends', userId] as const,
+    relationshipStatus: (userId: string) =>
+      ['friend-relationship-status', userId] as const,
     requests: () => ['friend-requests'] as const,
     suggestions: (query?: CursorPagination) => 
       ['friend-suggestions', ...(query !== undefined ? [query] : [])] as const,
     blocked: () => ['blocked-users'] as const,
+
   },
 
   // ==================== Groups ====================

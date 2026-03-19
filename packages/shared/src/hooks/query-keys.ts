@@ -86,6 +86,8 @@ export const queryKeys = {
     requests: () => ['friend-requests'] as const,
     suggestions: (query?: unknown) => 
       ['friend-suggestions', ...(query !== undefined ? [query] : [])] as const,
+    analytics: (days?: number) =>
+      ['friend-recommendation-analytics', ...(typeof days === 'number' ? [days] : [])] as const,
     blocked: () => ['blocked-users'] as const,
     relationshipStatus: (targetId: string) => [...queryKeys.friends.all, 'status', targetId] as const,
   },

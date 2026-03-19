@@ -33,6 +33,45 @@ export interface FriendSuggestionDTO {
   recommendationRequestId?: string;
 }
 
+export interface RecommendationAttributionPayload {
+  recommendationId?: string;
+  recommendationRequestId?: string;
+}
+
+export type FriendRecommendationAnalyticsSource =
+  | 'mutual_only'
+  | 'group_only'
+  | 'mixed'
+  | 'fallback';
+
+export interface FriendRecommendationAnalyticsTotals {
+  served: number;
+  dismissed: number;
+  requestSent: number;
+  accepted: number;
+}
+
+export interface FriendRecommendationAnalyticsRates {
+  dismissFromServed: number;
+  requestSentFromServed: number;
+  acceptFromServed: number;
+  acceptFromRequests: number;
+}
+
+export interface FriendRecommendationAnalyticsSourceBreakdown
+  extends FriendRecommendationAnalyticsTotals {
+  source: FriendRecommendationAnalyticsSource;
+}
+
+export interface FriendRecommendationAnalyticsDTO {
+  windowDays: number;
+  windowStart: string;
+  windowEnd: string;
+  totals: FriendRecommendationAnalyticsTotals;
+  rates: FriendRecommendationAnalyticsRates;
+  sources: FriendRecommendationAnalyticsSourceBreakdown[];
+}
+
 export const friendService = {
   /**
    * Get relationship status with a user
@@ -44,8 +83,11 @@ export const friendService = {
   /**
    * Send friend request
    */
-  async sendFriendRequest(targetId: string): Promise<void> {
-    return getApiClient().post(`/social/request/${targetId}`, {});
+  async sendFriendRequest(
+    targetId: string,
+    payload?: RecommendationAttributionPayload,
+  ): Promise<void> {
+    return getApiClient().post(`/social/request/${targetId}`, payload ?? {});
   },
 
   /**
@@ -53,10 +95,11 @@ export const friendService = {
    */
   async dismissFriendRecommendation(
     targetId: string,
+    payload?: RecommendationAttributionPayload,
   ): Promise<{ message: string; expiresAt: string }> {
     return getApiClient().post(
       `/social/friends/recommend/dismiss/${targetId}`,
-      {},
+      payload ?? {},
     );
   },
 
@@ -142,6 +185,17 @@ export const friendService = {
     limit?: number;
   }): Promise<CursorPageResponse<FriendSuggestionDTO>> {
     return getApiClient().getCursorPage('/social/friends/recommend', { params });
+  },
+
+  /**
+   * Get recommendation funnel analytics for the current user
+   */
+  async getFriendRecommendationAnalytics(
+    days?: number,
+  ): Promise<FriendRecommendationAnalyticsDTO> {
+    return getApiClient().get('/social/friends/recommend/analytics', {
+      params: typeof days === 'number' ? { days } : undefined,
+    });
   },
 
   /**

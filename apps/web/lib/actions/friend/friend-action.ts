@@ -32,11 +32,40 @@ export const getRelationshipStatus = async (
 
 export const sendFriendRequest = async (token: string, targetId: string) => {
   try {
-    const res = await api.post(`/social/request/${targetId}`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const res = await api.post(
+      `/social/request/${targetId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
+    return res.data;
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    throw error;
+  }
+};
+
+export const sendAttributedFriendRequest = async (
+  token: string,
+  targetId: string,
+  payload?: {
+    recommendationId?: string;
+    recommendationRequestId?: string;
+  },
+) => {
+  try {
+    const res = await api.post(
+      `/social/request/${targetId}`,
+      payload ?? {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
     return res.data;
   } catch (error) {
     console.error('Error sending friend request:', error);
@@ -46,14 +75,22 @@ export const sendFriendRequest = async (token: string, targetId: string) => {
 
 export const dismissFriendRecommendation = async (
   token: string,
-  targetId: string
+  targetId: string,
+  payload?: {
+    recommendationId?: string;
+    recommendationRequestId?: string;
+  },
 ): Promise<{ message: string; expiresAt: string }> => {
   try {
-    const res = await api.post(`/social/friends/recommend/dismiss/${targetId}`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const res = await api.post(
+      `/social/friends/recommend/dismiss/${targetId}`,
+      payload ?? {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
     return res.data;
   } catch (error) {
     console.error('Error dismissing friend recommendation:', error);

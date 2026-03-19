@@ -68,8 +68,16 @@ export const FriendSuggestions = () => {
   const { mutateAsync: requestFriend } = useSendFriendRequest();
   const { mutateAsync: dismissRecommendation } = useDismissFriendRecommendation();
 
-  const handleRequest = async (id: string) => {
-    await requestFriend(id);
+  const handleRequest = async (
+    id: string,
+    recommendationId?: string,
+    recommendationRequestId?: string,
+  ) => {
+    await requestFriend({
+      targetId: id,
+      recommendationId,
+      recommendationRequestId,
+    });
     setHiddenIds((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -77,7 +85,11 @@ export const FriendSuggestions = () => {
     });
   };
 
-  const handleSkip = async (id: string) => {
+  const handleSkip = async (
+    id: string,
+    recommendationId?: string,
+    recommendationRequestId?: string,
+  ) => {
     setHiddenIds((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -85,7 +97,11 @@ export const FriendSuggestions = () => {
     });
 
     try {
-      await dismissRecommendation(id);
+      await dismissRecommendation({
+        targetId: id,
+        recommendationId,
+        recommendationRequestId,
+      });
     } catch (error) {
       setHiddenIds((prev) => {
         const next = new Set(prev);
@@ -179,7 +195,13 @@ export const FriendSuggestions = () => {
                       <Button
                         size="sm"
                         className="flex-1 gap-2"
-                        onClick={() => handleRequest(item.id)}
+                        onClick={() =>
+                          handleRequest(
+                            item.id,
+                            item.recommendationId,
+                            item.recommendationRequestId,
+                          )
+                        }
                       >
                         <UserPlus className="h-4 w-4" />
                         Kết bạn
@@ -188,7 +210,13 @@ export const FriendSuggestions = () => {
                         size="sm"
                         variant="outline"
                         className="flex-1 gap-2"
-                        onClick={() => void handleSkip(item.id)}
+                        onClick={() =>
+                          void handleSkip(
+                            item.id,
+                            item.recommendationId,
+                            item.recommendationRequestId,
+                          )
+                        }
                       >
                         <X className="h-4 w-4" />
                         Bỏ qua
