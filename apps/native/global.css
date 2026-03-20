@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+@theme {
+  --font-sans: 'Inter-Regular';
+
+  --color-app-bg: var(--app-background);
+  --color-app-bg-dark: #071823;
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-dark: #0d2535;
+  --color-app-surface-elevated: var(--app-surface-elevated);
+  --color-app-surface-elevated-dark: #15364b;
+  --color-app-fg: var(--app-foreground);
+  --color-app-fg-dark: #e6f7ff;
+  --color-app-muted-fg: var(--app-muted-foreground);
+  --color-app-muted-fg-dark: #8fb2c8;
+  --color-app-primary: var(--app-primary);
+  --color-app-primary-dark: #22d3ee;
+  --color-app-primary-fg: var(--app-primary-foreground);
+  --color-app-primary-fg-dark: #083344;
+  --color-app-border: var(--app-border);
+  --color-app-border-dark: #21455d;
+
+  --color-background: var(--app-background);
+  --color-foreground: var(--app-foreground);
+  --color-primary: var(--app-primary);
+  --color-primary-foreground: var(--app-primary-foreground);
+  --color-secondary: var(--app-surface-elevated);
+  --color-secondary-foreground: var(--app-foreground);
+  --color-destructive: var(--app-destructive);
+  --color-destructive-foreground: #ffffff;
+  --color-muted: var(--app-surface-elevated);
+  --color-muted-foreground: var(--app-muted-foreground);
+  --color-accent: var(--app-surface-elevated);
+  --color-accent-foreground: var(--app-foreground);
+  --color-card: var(--app-surface);
+  --color-card-foreground: var(--app-foreground);
+  --color-border: var(--app-border);
+  --color-input: var(--app-border);
+  --color-ring: var(--app-primary);
+}
+
+@layer theme {
+  :root {
+    @variant light {
+      --app-background: #f3fbff;
+      --app-surface: #ffffff;
+      --app-surface-elevated: #e8f6ff;
+      --app-foreground: #406179;
+      --app-muted-foreground: #6b8aa1;
+      --app-primary: #0ea5e9;
+      --app-primary-foreground: #ffffff;
+      --app-border: #cfe5f2;
+      --app-destructive: #ef4444;
+    }
+
+    @variant dark {
+      --app-background: #071823;
+      --app-surface: #0d2535;
+      --app-surface-elevated: #15364b;
+      --app-foreground: #e6f7ff;
+      --app-muted-foreground: #8fb2c8;
+      --app-primary: #22d3ee;
+      --app-primary-foreground: #083344;
+      --app-border: #21455d;
+      --app-destructive: #fb7185;
+    }
+  }
+}

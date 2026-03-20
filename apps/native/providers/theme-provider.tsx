@@ -5,9 +5,9 @@ import {
 } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useColorScheme } from 'nativewind';
 import React from 'react';
-import { Platform } from 'react-native';
+import { useColorScheme } from 'react-native';
+import { Uniwind, useUniwind } from 'uniwind';
 
 import {
   appThemeColors,
@@ -32,31 +32,21 @@ type ThemeContextValue = {
 const ThemeContext = React.createContext<ThemeContextValue | null>(null);
 
 export function AppThemeProvider({ children }: { children: React.ReactNode }) {
-  const { colorScheme, setColorScheme } = useColorScheme();
+  const systemColorScheme = useColorScheme();
+  const { theme } = useUniwind();
   const [themePreference, setThemePreferenceState] =
     React.useState<ThemePreference>('system');
   const [isHydrated, setIsHydrated] = React.useState(false);
 
-  const applyColorScheme = React.useCallback(
-    (nextTheme: ThemePreference) => {
-      try {
-        if (nextTheme === 'system' && Platform.OS === 'android') {
-          // RN 0.83 Android expects "unspecified" for follow-system mode.
-          setColorScheme(
-            'unspecified' as unknown as Parameters<typeof setColorScheme>[0],
-          );
-          return;
-        }
-
-        setColorScheme(nextTheme);
-      } catch (error) {
-        if (__DEV__) {
-          console.warn('[theme] Failed to set color scheme', error);
-        }
+  const applyColorScheme = React.useCallback((nextTheme: ThemePreference) => {
+    try {
+      Uniwind.setTheme(nextTheme);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[theme] Failed to set color scheme', error);
       }
-    },
-    [setColorScheme],
-  );
+    }
+  }, []);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -71,6 +61,8 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
       if (isThemePreference(storedTheme)) {
         setThemePreferenceState(storedTheme);
         applyColorScheme(storedTheme);
+      } else {
+        applyColorScheme('system');
       }
 
       setIsHydrated(true);
@@ -92,7 +84,10 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
     [applyColorScheme],
   );
 
-  const resolvedTheme: ThemeMode = colorScheme === 'dark' ? 'dark' : 'light';
+  const resolvedTheme: ThemeMode =
+    theme === 'dark' || (theme !== 'light' && systemColorScheme === 'dark')
+      ? 'dark'
+      : 'light';
   const colors = appThemeColors[resolvedTheme];
 
   React.useEffect(() => {

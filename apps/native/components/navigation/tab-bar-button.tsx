@@ -69,7 +69,7 @@ export function TabBarButton({
         <View className="relative h-12 w-16 items-center justify-center">
           <Animated.View
             style={capsuleStyle}
-            className="absolute h-12 w-16 rounded-[20px] bg-app-primary/12 dark:bg-app-primary-dark/18"
+            className="absolute h-12 w-16 rounded-[20px]"
           />
           <Animated.View style={iconStyle}>
             <Ionicons

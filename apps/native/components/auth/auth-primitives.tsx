@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { cn } from '~/lib/cn';
 
 type AuthFieldProps = {
   label: string;
@@ -31,7 +32,10 @@ export function AuthField({
       <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">{label}</Text>
       <View className="relative">
         <TextInput
-          className={`rounded-2xl border border-app-border bg-app-bg/70 px-4 py-3.5 text-base text-app-fg dark:border-app-border-dark dark:bg-app-bg-dark/60 dark:text-app-fg-dark ${isPasswordField ? 'pr-20' : ''}`}
+          className={cn(
+            'rounded-2xl border border-app-border bg-app-bg/70 px-4 py-3.5 text-base text-app-fg dark:border-app-border-dark dark:bg-app-bg-dark/60 dark:text-app-fg-dark',
+            isPasswordField && 'pr-20',
+          )}
           value={value}
           autoCapitalize={autoCapitalize}
           placeholder={placeholder}
@@ -111,7 +115,10 @@ export function AuthPrimaryButton({
 }: AuthPrimaryButtonProps) {
   return (
     <Pressable
-      className={`items-center rounded-2xl bg-app-primary px-6 py-3.5 active:opacity-80 disabled:opacity-50 dark:bg-app-primary-dark ${className}`}
+      className={cn(
+        'items-center rounded-2xl bg-app-primary px-6 py-3.5 active:opacity-80 disabled:opacity-50 dark:bg-app-primary-dark',
+        className,
+      )}
       onPress={onPress}
       disabled={disabled}
     >
