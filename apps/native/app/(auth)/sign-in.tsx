@@ -23,11 +23,7 @@ import {
   useWarmUpBrowser,
 } from '~/utils/clerk-auth';
 
-const SIGN_IN_HIGHLIGHTS = [
-  'Bảo mật nhiều lớp',
-  'Phiên đăng nhập ổn định',
-  'Đồng bộ thiết bị',
-];
+
 
 export default function SignInScreen() {
   const { signIn, errors, fetchStatus } = useSignIn();

@@ -1,5 +1,6 @@
+import { Button } from 'heroui-native/button';
 import React from 'react';
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { cn } from '~/lib/cn';
 
 type ButtonProps = {
@@ -16,13 +17,23 @@ function AppButtonBase({
   disabled = false,
   loading = false,
   className = '',
-  textClassName,
+  variant,
   spinnerColor,
-}: ButtonProps & { textClassName: string; spinnerColor: string }) {
+}: ButtonProps & {
+  variant: 'primary' | 'secondary' | 'outline';
+  spinnerColor: string;
+}) {
   return (
-    <Pressable className={className} onPress={onPress} disabled={disabled}>
-      {loading ? <ActivityIndicator size="small" color={spinnerColor} /> : <Text className={textClassName}>{label}</Text>}
-    </Pressable>
+    <Button variant={variant} className={className} onPress={onPress} isDisabled={disabled}>
+      {loading ? (
+        <View className="flex-row items-center gap-2">
+          <ActivityIndicator size="small" color={spinnerColor} />
+          <Button.Label>{label}</Button.Label>
+        </View>
+      ) : (
+        label
+      )}
+    </Button>
   );
 }
 
@@ -31,10 +42,10 @@ export function PrimaryButton(props: ButtonProps) {
     <AppButtonBase
       {...props}
       className={cn(
-        'items-center rounded-2xl bg-app-primary px-6 py-3.5 active:opacity-80 disabled:opacity-50 dark:bg-app-primary-dark',
+        'min-h-12 rounded-2xl',
         props.className,
       )}
-      textClassName="font-semibold text-app-primary-fg dark:text-app-primary-fg-dark"
+      variant="primary"
       spinnerColor="#ffffff"
     />
   );
@@ -45,10 +56,10 @@ export function SecondaryButton(props: ButtonProps) {
     <AppButtonBase
       {...props}
       className={cn(
-        'items-center rounded-2xl border border-app-border bg-app-surface-elevated px-6 py-3.5 active:opacity-80 disabled:opacity-50 dark:border-app-border-dark dark:bg-app-surface-elevated-dark',
+        'min-h-12 rounded-2xl',
         props.className,
       )}
-      textClassName="font-semibold text-app-fg dark:text-app-fg-dark"
+      variant="secondary"
       spinnerColor="#406179"
     />
   );

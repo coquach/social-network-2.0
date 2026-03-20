@@ -1,9 +1,12 @@
+import 'react-native-gesture-handler';
 import '../global.css';
 import { ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { Slot, SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
+import { HeroUINativeProvider, type HeroUINativeConfig } from 'heroui-native/provider';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ToastProvider } from '~/providers/toast-provider';
 import { AppThemeProvider } from '~/providers/theme-provider';
@@ -13,6 +16,11 @@ const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 if (!publishableKey) {
   throw new Error('Add your Clerk Publishable Key to the .env file');
 }
+
+const heroUIConfig: HeroUINativeConfig = {
+  toast: 'disabled',
+};
+
 SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -30,14 +38,18 @@ export default function RootLayout() {
     return null;
   }
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <SafeAreaProvider>
-        <AppThemeProvider>
-          <ToastProvider>
-            <Slot />
-          </ToastProvider>
-        </AppThemeProvider>
-      </SafeAreaProvider>
-    </ClerkProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <SafeAreaProvider>
+          <HeroUINativeProvider config={heroUIConfig}>
+            <AppThemeProvider>
+              <ToastProvider>
+                <Slot />
+              </ToastProvider>
+            </AppThemeProvider>
+          </HeroUINativeProvider>
+        </SafeAreaProvider>
+      </ClerkProvider>
+    </GestureHandlerRootView>
   );
 }

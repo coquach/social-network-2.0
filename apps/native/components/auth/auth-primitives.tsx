@@ -1,6 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Button } from 'heroui-native/button';
+import { FieldError } from 'heroui-native/field-error';
+import { Input } from 'heroui-native/input';
+import { Label } from 'heroui-native/label';
+import { TextField } from 'heroui-native/text-field';
 import React from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { cn } from '~/lib/cn';
 
 type AuthFieldProps = {
@@ -26,29 +31,31 @@ export function AuthField({
 }: AuthFieldProps) {
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
   const isPasswordField = secureTextEntry;
+  const isInvalid = Boolean(error);
 
   return (
-    <View className="gap-2">
-      <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">{label}</Text>
+    <TextField isInvalid={isInvalid} className="gap-2">
+      <Label>
+        <Label.Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">
+          {label}
+        </Label.Text>
+      </Label>
       <View className="relative">
-        <TextInput
-          className={cn(
-            'rounded-2xl border border-app-border bg-app-bg/70 px-4 py-3.5 text-base text-app-fg dark:border-app-border-dark dark:bg-app-bg-dark/60 dark:text-app-fg-dark',
-            isPasswordField && 'pr-20',
-          )}
+        <Input
+          variant="secondary"
+          className={cn('min-h-14 rounded-2xl px-4 py-3.5 text-base', isPasswordField && 'pr-14')}
           value={value}
           autoCapitalize={autoCapitalize}
           placeholder={placeholder}
-          placeholderTextColor="#64748b"
-          onChangeText={onChangeText}
           keyboardType={keyboardType}
+          onChangeText={onChangeText}
           secureTextEntry={isPasswordField && !isPasswordVisible}
         />
         {isPasswordField ? (
           <Pressable
             className="absolute bottom-0 right-3 top-0 items-center justify-center rounded-full px-2 active:opacity-80"
             accessibilityRole="button"
-            accessibilityLabel={isPasswordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            accessibilityLabel={isPasswordVisible ? '?n m?t kh?u' : 'Hi?n m?t kh?u'}
             onPress={() => setIsPasswordVisible((current) => !current)}
           >
             <Ionicons
@@ -59,8 +66,10 @@ export function AuthField({
           </Pressable>
         ) : null}
       </View>
-      <AuthErrorText message={error} />
-    </View>
+      <FieldError isInvalid={isInvalid} className="min-h-5">
+        {error}
+      </FieldError>
+    </TextField>
   );
 }
 
@@ -114,22 +123,21 @@ export function AuthPrimaryButton({
   className = '',
 }: AuthPrimaryButtonProps) {
   return (
-    <Pressable
-      className={cn(
-        'items-center rounded-2xl bg-app-primary px-6 py-3.5 active:opacity-80 disabled:opacity-50 dark:bg-app-primary-dark',
-        className,
-      )}
+    <Button
+      variant="primary"
+      className={cn('min-h-12 rounded-2xl', className)}
       onPress={onPress}
-      disabled={disabled}
+      isDisabled={disabled}
     >
       {loading ? (
-        <ActivityIndicator size="small" color="#ffffff" />
+        <View className="flex-row items-center gap-2">
+          <ActivityIndicator size="small" color="#ffffff" />
+          <Button.Label>{label}</Button.Label>
+        </View>
       ) : (
-        <Text className="font-semibold text-app-primary-fg dark:text-app-primary-fg-dark">
-          {label}
-        </Text>
+        label
       )}
-    </Pressable>
+    </Button>
   );
 }
 
@@ -141,13 +149,9 @@ type AuthSecondaryButtonProps = {
 
 export function AuthSecondaryButton({ label, onPress, disabled = false }: AuthSecondaryButtonProps) {
   return (
-    <Pressable
-      className="items-center rounded-2xl border border-app-border px-6 py-3.5 active:opacity-80 disabled:opacity-50 dark:border-app-border-dark"
-      onPress={onPress}
-      disabled={disabled}
-    >
-      <Text className="font-semibold text-app-primary dark:text-app-primary-dark">{label}</Text>
-    </Pressable>
+    <Button variant="outline" className="min-h-12 rounded-2xl" onPress={onPress} isDisabled={disabled}>
+      {label}
+    </Button>
   );
 }
 
@@ -159,18 +163,21 @@ type AuthGoogleButtonProps = {
 
 export function AuthGoogleButton({ onPress, disabled = false, loading = false }: AuthGoogleButtonProps) {
   return (
-    <Pressable
-      className="flex-row items-center justify-center rounded-2xl border border-app-border bg-app-bg/70 px-4 py-3.5 active:opacity-80 disabled:opacity-50 dark:border-app-border-dark dark:bg-app-bg-dark/60"
-      onPress={onPress}
-      disabled={disabled}
-    >
-      <View className="mr-3 h-6 w-6 items-center justify-center rounded-full bg-app-primary/15 dark:bg-app-primary-dark/15">
-        <Text className="font-bold text-app-primary dark:text-app-primary-dark">G</Text>
-      </View>
-      <Text className="font-semibold text-app-primary dark:text-app-primary-dark">
-        {loading ? 'Đang kết nối Google...' : 'Tiếp tục với Google'}
-      </Text>
-    </Pressable>
+    <Button variant="outline" className="min-h-12 rounded-2xl" onPress={onPress} isDisabled={disabled}>
+      {loading ? (
+        <View className="flex-row items-center gap-3">
+          <ActivityIndicator size="small" color="#0ea5e9" />
+          <Button.Label>Đang kết nối Google...</Button.Label>
+        </View>
+      ) : (
+        <View className="flex-row items-center gap-3">
+          <View className="h-7 w-7 items-center justify-center rounded-full bg-app-primary/15 dark:bg-app-primary-dark/15">
+            <Text className="font-bold text-app-primary dark:text-app-primary-dark">G</Text>
+          </View>
+          <Button.Label>Tiếp tục với Google</Button.Label>
+        </View>
+      )}
+    </Button>
   );
 }
 
@@ -179,7 +186,7 @@ export function AuthDivider() {
     <View className="my-1 flex-row items-center">
       <View className="h-px flex-1 bg-app-border dark:bg-app-border-dark" />
       <Text className="mx-3 text-xs uppercase tracking-widest text-app-muted-fg dark:text-app-muted-fg-dark">
-        hoặc
+        ho?c
       </Text>
       <View className="h-px flex-1 bg-app-border dark:bg-app-border-dark" />
     </View>
@@ -203,3 +210,24 @@ export function AuthFooterLink({ prompt, children }: AuthFooterLinkProps) {
 type AuthFeatureChipsProps = {
   items: string[];
 };
+
+export function AuthFeatureChips({ items }: AuthFeatureChipsProps) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <View className="flex-row flex-wrap justify-center gap-2">
+      {items.map((item) => (
+        <View
+          key={item}
+          className="rounded-full border border-app-border bg-app-surface px-3 py-1.5 dark:border-app-border-dark dark:bg-app-surface-dark"
+        >
+          <Text className="text-xs font-semibold text-app-muted-fg dark:text-app-muted-fg-dark">
+            {item}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}

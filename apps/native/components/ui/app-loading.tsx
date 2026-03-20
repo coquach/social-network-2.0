@@ -1,5 +1,9 @@
+import { Card } from 'heroui-native/card';
+import { Spinner } from 'heroui-native/spinner';
 import React from 'react';
-import { ActivityIndicator, Modal, Text, View } from 'react-native';
+import { View } from 'react-native';
+
+import { AppModal } from '~/components/ui/app-modal';
 
 type AppLoadingContentProps = {
   label?: string;
@@ -11,34 +15,34 @@ type AppLoadingOverlayProps = AppLoadingContentProps & {
 };
 
 export function AppLoadingBlock({
-  label = 'Đang xử lý',
+  label = 'Dang xu ly',
   description,
 }: AppLoadingContentProps) {
   return (
-    <View className="items-center gap-3 rounded-3xl border border-app-border bg-app-surface px-5 py-6 dark:border-app-border-dark dark:bg-app-surface-dark">
-      <ActivityIndicator size="small" color="#0ea5e9" />
-      <Text className="text-base font-semibold text-app-fg dark:text-app-fg-dark">{label}</Text>
+    <Card className="items-center gap-3 rounded-3xl border border-app-border bg-app-surface px-5 py-6 dark:border-app-border-dark dark:bg-app-surface-dark">
+      <Spinner size="sm" color="default" />
+      <Card.Title className="text-base font-semibold text-app-fg dark:text-app-fg-dark">
+        {label}
+      </Card.Title>
       {description ? (
-        <Text className="text-center text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
+        <Card.Description className="text-center text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
           {description}
-        </Text>
+        </Card.Description>
       ) : null}
-    </View>
+    </Card>
   );
 }
 
 export function AppLoadingOverlay({
   visible,
-  label = 'Đang xử lý',
+  label = 'Dang xu ly',
   description,
 }: AppLoadingOverlayProps) {
   return (
-    <Modal transparent animationType="fade" visible={visible}>
-      <View className="flex-1 items-center justify-center bg-slate-950/35 px-6">
-        <View className="w-full max-w-xs">
-          <AppLoadingBlock label={label} description={description} />
-        </View>
+    <AppModal visible={visible} onClose={() => {}} dismissible={false}>
+      <View className="w-full max-w-xs">
+        <AppLoadingBlock label={label} description={description} />
       </View>
-    </Modal>
+    </AppModal>
   );
 }

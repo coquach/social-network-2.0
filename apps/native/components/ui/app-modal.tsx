@@ -1,5 +1,6 @@
+import { Dialog } from 'heroui-native/dialog';
 import React from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 
 type AppModalProps = {
   visible: boolean;
@@ -21,24 +22,30 @@ export function AppModal({
   dismissible = true,
 }: AppModalProps) {
   return (
-    <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
-      <View className="flex-1 items-center justify-center bg-slate-950/40 px-6">
-        <Pressable className="absolute inset-0" onPress={dismissible ? onClose : undefined} />
-        <View className="w-full max-w-md rounded-[28px] border border-app-border bg-app-surface p-5 dark:border-app-border-dark dark:bg-app-surface-dark">
+    <Dialog isOpen={visible} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          className="bg-slate-950/40"
+          isCloseOnPress={dismissible}
+        />
+        <Dialog.Content
+          className="w-full max-w-md rounded-[28px] border border-app-border bg-app-surface p-5 dark:border-app-border-dark dark:bg-app-surface-dark"
+          isSwipeable={false}
+        >
           {title ? (
-            <Text className="text-2xl font-extrabold tracking-tight text-app-fg dark:text-app-fg-dark">
+            <Dialog.Title className="text-2xl font-extrabold tracking-tight text-app-fg dark:text-app-fg-dark">
               {title}
-            </Text>
+            </Dialog.Title>
           ) : null}
           {description ? (
-            <Text className="mt-2 text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
+            <Dialog.Description className="mt-2 text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
               {description}
-            </Text>
+            </Dialog.Description>
           ) : null}
           {children ? <View className="mt-5">{children}</View> : null}
           {footer ? <View className="mt-5 gap-3">{footer}</View> : null}
-        </View>
-      </View>
-    </Modal>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog>
   );
 }
