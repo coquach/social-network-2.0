@@ -1,25 +1,12 @@
-﻿'use client';
+'use client';
 
 import { ErrorFallback } from '@/components/error-fallback';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetUser } from '@/hooks/use-user-hook';
+import { useStartConversation } from '@/hooks/use-start-conversation';
+import { useImageViewerModal } from '@/store/use-image-viewer-modal';
 import { useProfileModal } from '@/store/use-profile-modal';
-import { format as formatDate } from 'date-fns';
-import {
-  CalendarDays,
-  Check,
-  MessageCircle,
-  PenBox,
-  ShieldAlert,
-  ShieldX,
-  UserPlus,
-  UserX,
-  X,
-} from 'lucide-react';
-import Image from 'next/image';
-import { useMemo } from 'react';
-import { CldImage } from 'next-cloudinary';
 import {
   useAcceptFriendRequest,
   useBlockUser,
@@ -29,12 +16,30 @@ import {
   useSendFriendRequest,
   useUnblockUser,
 } from '@repo/shared';
-import { useStartConversation } from '@/hooks/use-start-conversation';
-import { useImageViewerModal } from '@/store/use-image-viewer-modal';
+import { format as formatDate } from 'date-fns';
+import {
+  Briefcase,
+  Building2,
+  CalendarDays,
+  Check,
+  GraduationCap,
+  MapPin,
+  MessageCircle,
+  PenBox,
+  ShieldAlert,
+  ShieldX,
+  Tags,
+  UserPlus,
+  UserX,
+  X,
+} from 'lucide-react';
+import { CldImage } from 'next-cloudinary';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
+import { useMemo } from 'react';
 
 export const UserProfileInfo = () => {
-  const { userId } = useParams();
+  const { userId } = useParams<{ userId: string }>();
   const {
     data: fetchedUser,
     isLoading,
@@ -42,7 +47,8 @@ export const UserProfileInfo = () => {
     error,
   } = useGetUser(userId as string);
 
-  const { mutate: requestFriend, isPending: isRequesting } = useSendFriendRequest();
+  const { mutate: requestFriend, isPending: isRequesting } =
+    useSendFriendRequest();
   const { mutate: acceptFriendRequest, isPending: isAccepting } =
     useAcceptFriendRequest();
   const { mutate: declineFriendRequest, isPending: isDeclining } =
@@ -55,7 +61,6 @@ export const UserProfileInfo = () => {
   const { startConversation, isPending: isStartingConversation } =
     useStartConversation();
   const { onOpen: openImageViewer } = useImageViewerModal();
-
   const profileModal = useProfileModal();
 
   const formattedCreatedAt = useMemo(() => {
@@ -107,6 +112,7 @@ export const UserProfileInfo = () => {
   const isSelf = relationStatus === 'SELF';
   const isBlocked = relationStatus === 'BLOCKED';
   const avatarSrc = fetchedUser.avatarUrl || '/images/placeholder.png';
+  const interests = fetchedUser.interests?.filter(Boolean) ?? [];
 
   return (
     <div className="w-full">
@@ -115,7 +121,7 @@ export const UserProfileInfo = () => {
           {coverUrl ? (
             <CldImage
               src={coverUrl}
-              alt="Cover Image"
+              alt="Ảnh bìa"
               fill
               className="object-cover"
             />
@@ -138,12 +144,12 @@ export const UserProfileInfo = () => {
               <button
                 type="button"
                 onClick={() => openImageViewer(avatarSrc, 'Ảnh đại diện')}
-                className="relative h-26 w-26 overflow-hidden rounded-full border-4 border-white bg-slate-200 shadow-md ring-1 ring-black/5 cursor-zoom-in"
+                className="relative h-26 w-26 cursor-zoom-in overflow-hidden rounded-full border-4 border-white bg-slate-200 shadow-md ring-1 ring-black/5"
                 aria-label="Xem ảnh đại diện"
               >
                 <Image
                   src={avatarSrc}
-                  alt="Avatar"
+                  alt="Ảnh đại diện"
                   fill
                   loading="lazy"
                   className="object-cover"
@@ -157,7 +163,7 @@ export const UserProfileInfo = () => {
                 {formattedCreatedAt && (
                   <div className="flex items-center gap-1.5 text-xs text-slate-500">
                     <CalendarDays className="h-4 w-4" />
-                    {'Tham gia vào ' + formattedCreatedAt}
+                    {`Tham gia vào ${formattedCreatedAt}`}
                   </div>
                 )}
               </div>
@@ -252,8 +258,8 @@ export const UserProfileInfo = () => {
                       variant={isBlocked ? 'secondary' : 'outline'}
                       className={
                         isBlocked
-                          ? ' bg-amber-100 text-amber-800 shadow-sm hover:bg-amber-200'
-                          : ' text-slate-700 shadow-sm transition hover:bg-slate-50'
+                          ? 'bg-amber-100 text-amber-800 shadow-sm hover:bg-amber-200'
+                          : 'text-slate-700 shadow-sm transition hover:bg-slate-50'
                       }
                       onClick={() =>
                         isBlocked
@@ -279,6 +285,57 @@ export const UserProfileInfo = () => {
             <p className="text-sm leading-relaxed text-slate-600">
               {fetchedUser.bio || 'Chưa có tiểu sử.'}
             </p>
+
+            {(fetchedUser.location ||
+              fetchedUser.jobTitle ||
+              fetchedUser.company ||
+              fetchedUser.school) && (
+              <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-2">
+                {fetchedUser.location && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 text-slate-400" />
+                    <span>{fetchedUser.location}</span>
+                  </div>
+                )}
+                {fetchedUser.jobTitle && (
+                  <div className="flex items-start gap-2">
+                    <Briefcase className="mt-0.5 h-4 w-4 text-slate-400" />
+                    <span>{fetchedUser.jobTitle}</span>
+                  </div>
+                )}
+                {fetchedUser.company && (
+                  <div className="flex items-start gap-2">
+                    <Building2 className="mt-0.5 h-4 w-4 text-slate-400" />
+                    <span>{fetchedUser.company}</span>
+                  </div>
+                )}
+                {fetchedUser.school && (
+                  <div className="flex items-start gap-2">
+                    <GraduationCap className="mt-0.5 h-4 w-4 text-slate-400" />
+                    <span>{fetchedUser.school}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {interests.length > 0 && (
+              <div className="mt-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <Tags className="h-4 w-4 text-slate-400" />
+                  Quan tâm
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {interests.map((interest) => (
+                    <span
+                      key={interest}
+                      className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                    >
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

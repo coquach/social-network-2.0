@@ -1,20 +1,19 @@
 'use client';
 
-
 import { getUser, updateUser } from '@/lib/actions/user/user-actions';
 import { ProfileUpdateForm, UserDTO } from '@/models/user/userDTO';
 import { useAuth } from '@clerk/nextjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-
 export const useGetUser = (
   userId: string,
   options?: {
     enabled?: boolean;
-  }
+  },
 ) => {
   const { getToken } = useAuth();
+
   return useQuery<UserDTO>({
     queryKey: ['user', userId],
     queryFn: async () => {
@@ -22,7 +21,8 @@ export const useGetUser = (
       if (!token) {
         throw new Error('Token is required');
       }
-      return await getUser(token, userId);
+
+      return getUser(token, userId);
     },
     enabled: (options?.enabled ?? true) && !!userId,
   });
@@ -31,13 +31,15 @@ export const useGetUser = (
 export const useUpdateUser = (userId: string) => {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (update: ProfileUpdateForm) => {
       const token = await getToken();
       if (!token) {
         throw new Error('Token is required');
       }
-      return await updateUser(token, update);
+
+      return updateUser(token, update);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['user', userId] });
