@@ -19,6 +19,11 @@ export interface UserDTO {
   };
   avatarUrl: string;
   bio: string;
+  location?: string;
+  jobTitle?: string;
+  company?: string;
+  school?: string;
+  interests?: string[];
   createdAt: Date;
   relation?: {
     status: string;
@@ -80,6 +85,11 @@ export interface UpdateUserInput {
   firstName?: string;
   lastName?: string;
   bio?: string;
+  location?: string;
+  jobTitle?: string;
+  company?: string;
+  school?: string;
+  interests?: string[];
   avatarUrl?: string;
   coverImageUrl?: string;
 }

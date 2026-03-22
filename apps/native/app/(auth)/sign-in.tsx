@@ -215,7 +215,7 @@ export default function SignInScreen() {
             onChangeText={setCode}
             error={errors.fields.code?.message}
           />
-          <AuthAlert message={formError} />
+
           <AuthPrimaryButton
             label="Xác minh"
             onPress={() => void handleVerify()}
@@ -249,7 +249,6 @@ export default function SignInScreen() {
           placeholder="ban@example.com"
           keyboardType="email-address"
           onChangeText={setEmailAddress}
-          error={errors.fields.identifier?.message}
         />
         <AuthField
           label="Mật khẩu"
@@ -257,7 +256,7 @@ export default function SignInScreen() {
           placeholder="Nhập mật khẩu"
           secureTextEntry
           onChangeText={setPassword}
-          error={errors.fields.password?.message}
+          
         />
         <AuthAlert message={formError} />
         <AuthPrimaryButton

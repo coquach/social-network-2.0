@@ -306,7 +306,6 @@ export default function SignUpScreen() {
           placeholder="ban@example.com"
           keyboardType="email-address"
           onChangeText={setEmailAddress}
-          error={errors.fields.emailAddress?.message}
         />
         <AuthField
           label="Mật khẩu"
@@ -314,7 +313,6 @@ export default function SignUpScreen() {
           placeholder="Tạo mật khẩu"
           secureTextEntry
           onChangeText={setPassword}
-          error={errors.fields.password?.message}
         />
         <AuthAlert message={formError} />
         <AuthPrimaryButton
