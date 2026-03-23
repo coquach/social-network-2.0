@@ -8,7 +8,7 @@ import { HeroUINativeProvider, type HeroUINativeConfig } from 'heroui-native/pro
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ToastProvider } from '~/providers/toast-provider';
+
 import { AppThemeProvider } from '~/providers/theme-provider';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -18,10 +18,21 @@ if (!publishableKey) {
 }
 
 const heroUIConfig: HeroUINativeConfig = {
-  toast: 'disabled',
+  toast: {
+    defaultProps: {
+      placement: 'top',
+      isSwipeable: true,
+    },
+    insets: {
+      left: 16,
+      right: 16,
+    },
+    maxVisibleToasts: 3,
+  },
 };
 
 SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     'Inter-Regular': require('../assets/fonts/Inter-Regular.ttf'),
@@ -37,15 +48,14 @@ export default function RootLayout() {
   if (!loaded && !error) {
     return null;
   }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
         <SafeAreaProvider>
           <HeroUINativeProvider config={heroUIConfig}>
             <AppThemeProvider>
-              <ToastProvider>
-                <Slot />
-              </ToastProvider>
+              <Slot />
             </AppThemeProvider>
           </HeroUINativeProvider>
         </SafeAreaProvider>

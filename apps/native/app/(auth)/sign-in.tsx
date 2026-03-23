@@ -1,7 +1,7 @@
 import { useSSO, useSignIn } from '@clerk/expo';
 import { Link, useRouter } from 'expo-router';
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { AuthBrand } from '~/components/auth/auth-brand';
 import { AuthCard } from '~/components/auth/auth-card';
@@ -256,8 +256,14 @@ export default function SignInScreen() {
           placeholder="Nhập mật khẩu"
           secureTextEntry
           onChangeText={setPassword}
-          
         />
+        <View className="items-end">
+          <Link href="/forgot-password" asChild>
+            <Text className="text-sm font-semibold text-app-primary dark:text-app-primary-dark">
+              Quên mật khẩu?
+            </Text>
+          </Link>
+        </View>
         <AuthAlert message={formError} />
         <AuthPrimaryButton
           label="Đăng nhập"
