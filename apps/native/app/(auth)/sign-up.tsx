@@ -37,6 +37,8 @@ export default function SignUpScreen() {
 
   useWarmUpBrowser();
 
+  const [firstName, setFirstName] = React.useState('');
+  const [lastName, setLastName] = React.useState('');
   const [emailAddress, setEmailAddress] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [code, setCode] = React.useState('');
@@ -46,7 +48,12 @@ export default function SignUpScreen() {
 
   const isSubmitting = fetchStatus === 'fetching';
   const isBusy = isSubmitting || isGoogleLoading;
-  const isPrimaryDisabled = !emailAddress.trim() || !password || isBusy;
+  const isPrimaryDisabled =
+    !firstName.trim() ||
+    !lastName.trim() ||
+    !emailAddress.trim() ||
+    !password ||
+    isBusy;
   const needsEmailVerification =
     signUp.status === 'missing_requirements' &&
     signUp.unverifiedFields.includes('email_address') &&
@@ -150,6 +157,11 @@ export default function SignUpScreen() {
   }, [clearError, isBusy, navigateAfterAuth, reportError, startSSOFlow]);
 
   const handleSubmit = React.useCallback(async () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      setLocalError('Vui lòng nhập đầy đủ họ và tên.');
+      return;
+    }
+
     if (!emailAddress.trim() || !password || isBusy) {
       setLocalError('Vui lòng nhập đầy đủ email và mật khẩu.');
       return;
@@ -158,6 +170,8 @@ export default function SignUpScreen() {
     clearError();
 
     const { error } = await signUp.password({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       emailAddress: emailAddress.trim(),
       password,
     });
@@ -190,7 +204,9 @@ export default function SignUpScreen() {
     clearError,
     completeSignUp,
     emailAddress,
+    firstName,
     isBusy,
+    lastName,
     password,
     reportError,
     requestVerificationEmail,
@@ -222,7 +238,7 @@ export default function SignUpScreen() {
   }, [clearError, code, completeSignUp, isBusy, reportError, signUp]);
 
   if (isSignedIn) {
-    return <Redirect href="/(tabs)/newfeeds" />;
+    return <Redirect href="/(main)/newfeeds" />;
   }
 
   if (signUp.status === 'complete' && !localError) {
@@ -300,6 +316,22 @@ export default function SignUpScreen() {
           loading={isGoogleLoading}
         />
         <AuthDivider />
+        <AuthField
+          label="Họ"
+          value={lastName}
+          placeholder="Nguyễn"
+          autoCapitalize="words"
+          onChangeText={setLastName}
+        
+        />
+        <AuthField
+          label="Tên"
+          value={firstName}
+          placeholder="An"
+          autoCapitalize="words"
+          onChangeText={setFirstName}
+         
+        />
         <AuthField
           label="Email"
           value={emailAddress}
