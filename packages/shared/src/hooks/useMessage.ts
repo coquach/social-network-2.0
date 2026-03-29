@@ -31,7 +31,7 @@ import { queryConfigs } from '../utils/query-configs';
  */
 export const useMessages = (conversationId: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPageResponse<MessageDTO>>({
-    queryKey: queryKeys.messages.list(conversationId),
+    queryKey: [...queryKeys.messages.list(conversationId), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       // Token injection handled by API client interceptor
       return messageService.getMessages(conversationId, {
@@ -98,8 +98,8 @@ export const useSendMessage = (conversationId: string) => {
       };
 
       // Add optimistic message to cache      
-      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
-        queryKeys.messages.list(conversationId),
+      queryClient.setQueriesData<InfiniteData<CursorPageResponse<MessageDTO>>>(
+        { queryKey: queryKeys.messages.list(conversationId) },
         (old) => {
           if (!old || old.pages.length === 0) {
             return {
@@ -170,8 +170,22 @@ export const useSendMessage = (conversationId: string) => {
           const firstPage = old.pages[0];
           
           // Check if real message already exists (avoid duplicates)
-          if (firstPage.data.some((m) => m._id === newMessage._id)) {
-            return old;
+          const realMessageExists = firstPage.data.some(
+            (message) => message._id === newMessage._id
+          );
+          if (realMessageExists) {
+            return {
+              ...old,
+              pages: [
+                {
+                  ...firstPage,
+                  data: firstPage.data.filter(
+                    (message) => message._id !== context?.tempId
+                  ),
+                },
+                ...old.pages.slice(1),
+              ],
+            };
           }
 
           // Replace temp message with real message
@@ -228,11 +242,11 @@ export const useSendMessage = (conversationId: string) => {
     onError: (_error, _variables, context) => {
       // Remove optimistic message on error
       if (context?.conversationId && context?.tempId) {
-        queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
-          queryKeys.messages.list(context.conversationId),
-          (old) => {
-            if (!old) return old;
-            return {
+      queryClient.setQueriesData<InfiniteData<CursorPageResponse<MessageDTO>>>(
+        { queryKey: queryKeys.messages.list(context.conversationId) },
+        (old) => {
+          if (!old) return old;
+          return {
               ...old,
               pages: old.pages.map((page) => ({
                 ...page,
@@ -260,8 +274,8 @@ export const useUpdateMessage = (conversationId: string) => {
     },
     onSuccess: (updatedMessage) => {
       // Update message in cache
-      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
-        queryKeys.messages.list(conversationId),
+      queryClient.setQueriesData<InfiniteData<CursorPageResponse<MessageDTO>>>(
+        { queryKey: queryKeys.messages.list(conversationId) },
         (old) => {
           if (!old) return old;
 
@@ -297,8 +311,8 @@ export const useDeleteMessage = (conversationId: string) => {
       ]);
       
       // Optimistically remove message
-      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
-        queryKeys.messages.list(conversationId),
+      queryClient.setQueriesData<InfiniteData<CursorPageResponse<MessageDTO>>>(
+        { queryKey: queryKeys.messages.list(conversationId) },
         (old) => {
           if (!old) return old;
 
@@ -341,8 +355,8 @@ export const useMarkMessageAsRead = () => {
     },
     onSuccess: (_, { conversationId, messageId }) => {
       // Update message in cache
-      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
-        queryKeys.messages.list(conversationId),
+      queryClient.setQueriesData<InfiniteData<CursorPageResponse<MessageDTO>>>(
+        { queryKey: queryKeys.messages.list(conversationId) },
         (old) => {
           if (!old) return old;
 

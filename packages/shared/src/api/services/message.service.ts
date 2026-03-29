@@ -11,6 +11,7 @@ import type {
   MarkAsReadInput,
   CursorPageResponse,
 } from '../../types';
+import { normalizeMessage, normalizeMessagePage } from '../../utils';
 
 export const messageService = {
   /**
@@ -20,23 +21,29 @@ export const messageService = {
     conversationId: string,
     params?: { cursor?: string; limit?: number }
   ): Promise<CursorPageResponse<MessageDTO>> {
-    return getApiClient().getCursorPage(`/conversations/${conversationId}/messages`, {
-      params,
-    });
+    const response = await getApiClient().getCursorPage<MessageDTO>(
+      `/chats/conversations/${conversationId}/messages`,
+      {
+        params,
+      }
+    );
+    return normalizeMessagePage(response as CursorPageResponse<any>);
   },
 
   /**
    * Get single message by ID
    */
   async getMessage(messageId: string): Promise<MessageDTO> {
-    return getApiClient().get(`/messages/${messageId}`);
+    const response = await getApiClient().get<MessageDTO>(`/chats/messages/${messageId}`);
+    return normalizeMessage(response as any);
   },
 
   /**
    * Send new message
    */
   async sendMessage(data: CreateMessageInput): Promise<MessageDTO> {
-    return getApiClient().post('/messages', data);
+    const response = await getApiClient().post<MessageDTO>('/chats/messages', data);
+    return normalizeMessage(response as any);
   },
 
   /**
@@ -46,28 +53,34 @@ export const messageService = {
     messageId: string,
     data: UpdateMessageInput
   ): Promise<MessageDTO> {
-    return getApiClient().patch(`/messages/${messageId}`, data);
+    const response = await getApiClient().patch<MessageDTO>(
+      `/chats/messages/${messageId}`,
+      data
+    );
+    return normalizeMessage(response as any);
   },
 
   /**
    * Delete message
    */
   async deleteMessage(messageId: string): Promise<void> {
-    return getApiClient().delete(`/messages/${messageId}`);
+    return getApiClient().delete(`/chats/messages/${messageId}`);
   },
 
   /**
    * Mark message as read
    */
   async markAsRead(data: MarkAsReadInput): Promise<void> {
-    return getApiClient().post(`/messages/${data.messageId}/read`);
+    return getApiClient().post(`/chats/conversations/${data.conversationId}/read`, {
+      lastMessageId: data.messageId,
+    });
   },
 
   /**
    * Mark all messages in conversation as read
    */
   async markConversationAsRead(conversationId: string): Promise<void> {
-    return getApiClient().post(`/conversations/${conversationId}/read`);
+    return getApiClient().post(`/chats/conversations/${conversationId}/read`, {});
   },
 
   /**
@@ -77,7 +90,7 @@ export const messageService = {
     messageId: string,
     reaction: string
   ): Promise<void> {
-    return getApiClient().post(`/messages/${messageId}/reactions`, {
+    return getApiClient().post(`/chats/messages/${messageId}/reactions`, {
       reaction,
     });
   },
@@ -86,7 +99,7 @@ export const messageService = {
    * Remove reaction from message
    */
   async removeReaction(messageId: string): Promise<void> {
-    return getApiClient().delete(`/messages/${messageId}/reactions`);
+    return getApiClient().delete(`/chats/messages/${messageId}/reactions`);
   },
 
   /**

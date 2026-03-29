@@ -67,7 +67,7 @@ export const useUser = (userId: string, options?: { enabled?: boolean }) => {
  */
 export const useSearchUsers = (query: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
-    queryKey: queryKeys.search.users(query),
+    queryKey: [...queryKeys.search.users(query), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       return userService.searchUsers({
         query,
@@ -88,7 +88,7 @@ export const useSearchUsers = (query: string, params?: QueryParams) => {
  */
 export const useUserFriends = (userId: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
-    queryKey: queryKeys.user.friends(userId),
+    queryKey: [...queryKeys.user.friends(userId), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       return userService.getUserFriends(userId, {
         ...params,
