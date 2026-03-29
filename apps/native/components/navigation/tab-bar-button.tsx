@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
@@ -12,6 +12,7 @@ import Animated, {
 type TabBarButtonProps = {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
+  avatarUrl?: string | null;
   activeColor: string;
   inactiveColor: string;
   isFocused: boolean;
@@ -22,6 +23,7 @@ type TabBarButtonProps = {
 export function TabBarButton({
   label,
   icon,
+  avatarUrl,
   activeColor,
   inactiveColor,
   isFocused,
@@ -63,7 +65,7 @@ export function TabBarButton({
       accessibilityLabel={label}
       onPress={onPress}
       onLongPress={onLongPress}
-      className="min-w-[72px] items-center justify-center py-2"
+      className="min-w-18 items-center justify-center py-2"
     >
       <View className="items-center">
         <View className="relative h-12 w-16 items-center justify-center">
@@ -72,11 +74,27 @@ export function TabBarButton({
             className="absolute h-12 w-16 rounded-[20px]"
           />
           <Animated.View style={iconStyle}>
-            <Ionicons
-              name={icon}
-              size={24}
-              color={isFocused ? activeColor : inactiveColor}
-            />
+            {avatarUrl ? (
+              <View
+                className="h-9 w-9 overflow-hidden rounded-full"
+                style={{
+                  borderWidth: isFocused ? 2 : 1.5,
+                  borderColor: isFocused ? activeColor : inactiveColor,
+                }}
+              >
+                <Image
+                  source={{ uri: avatarUrl }}
+                  resizeMode="cover"
+                  style={{ height: '100%', width: '100%' }}
+                />
+              </View>
+            ) : (
+              <Ionicons
+                name={icon}
+                size={26}
+                color={isFocused ? activeColor : inactiveColor}
+              />
+            )}
           </Animated.View>
         </View>
         <Animated.View style={labelStyle}>

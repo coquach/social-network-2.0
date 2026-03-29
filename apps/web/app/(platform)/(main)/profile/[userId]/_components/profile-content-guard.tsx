@@ -22,7 +22,7 @@ export const ProfileContentGuard = ({
 
   if (fetchedUser?.relation?.status === 'BLOCKED') {
     return (
-      <div className="rounded-xl text-center border border-amber-200 bg-amber-50 px-4 py-6 text-sm text-amber-700 shadow-sm">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-6 text-center text-sm text-amber-700 shadow-sm">
         Bạn đã chặn người này nên không xem được thông tin.
       </div>
     );

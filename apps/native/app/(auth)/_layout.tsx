@@ -9,14 +9,14 @@ export default function AuthRoutesLayout() {
   }
 
   if (isSignedIn) {
-    return <Redirect href="/(tabs)/newfeeds" />;
+    return <Redirect href="/(main)/newfeeds" />;
   }
 
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: 'fade_from_bottom',
+        animation: 'fade',
         gestureEnabled: true,
         presentation: 'card',
       }}
