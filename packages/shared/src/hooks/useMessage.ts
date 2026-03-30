@@ -162,8 +162,8 @@ export const useSendMessage = (conversationId: string) => {
     },
     onSuccess: (newMessage, _variables, context) => {
       // Replace optimistic message with real message
-      queryClient.setQueryData<InfiniteData<CursorPageResponse<MessageDTO>>>(
-        queryKeys.messages.list(newMessage.conversationId),
+      queryClient.setQueriesData<InfiniteData<CursorPageResponse<MessageDTO>>>(
+        { queryKey: queryKeys.messages.list(newMessage.conversationId) },
         (old) => {
           if (!old) return old;
 

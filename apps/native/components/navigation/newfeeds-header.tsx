@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -13,12 +14,13 @@ export const NEWFEEDS_HEADER_BAR_HEIGHT = 52;
 type HeaderAction = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
+  href?: '/chat';
 };
 
 const RIGHT_ACTIONS: HeaderAction[] = [
-  { icon: 'search-outline', label: 'Tìm kiếm' },
-  { icon: 'notifications-outline', label: 'Thông báo' },
-  { icon: 'chatbubble-outline', label: 'Nhắn tin' },
+  { icon: 'search-outline', label: 'Tim kiem' },
+  { icon: 'notifications-outline', label: 'Thong bao' },
+  { icon: 'chatbubble-outline', label: 'Nhan tin', href: '/chat' },
 ];
 
 export function NewfeedsHeader() {
@@ -35,7 +37,7 @@ export function NewfeedsHeader() {
           <AppToast
             toast={{
               title: label,
-              message: 'Chức năng này sẽ được bổ sung ở bước tiếp theo.',
+              message: 'Chuc nang nay se duoc bo sung o buoc tiep theo.',
             }}
             toastProps={toastProps}
           />
@@ -43,6 +45,18 @@ export function NewfeedsHeader() {
       });
     },
     [toast],
+  );
+
+  const handleActionPress = React.useCallback(
+    (action: HeaderAction) => {
+      if (action.href) {
+        router.push(action.href);
+        return;
+      }
+
+      handleComingSoon(action.label);
+    },
+    [handleComingSoon],
   );
 
   return (
@@ -57,7 +71,7 @@ export function NewfeedsHeader() {
         <View className="flex-row items-center gap-2">
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Mở menu"
+            accessibilityLabel="Mo menu"
             className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
             onPress={() => handleComingSoon('Menu')}
           >
@@ -75,7 +89,7 @@ export function NewfeedsHeader() {
               accessibilityRole="button"
               accessibilityLabel={action.label}
               className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
-              onPress={() => handleComingSoon(action.label)}
+              onPress={() => handleActionPress(action)}
             >
               <Ionicons name={action.icon} size={20} color={colors.primary} />
             </Pressable>

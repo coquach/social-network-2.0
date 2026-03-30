@@ -2,12 +2,18 @@ import 'react-native-gesture-handler';
 import '../global.css';
 import { ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
-import { Slot, SplashScreen } from 'expo-router';
+import { SplashScreen, Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
-import { HeroUINativeProvider, type HeroUINativeConfig } from 'heroui-native/provider';
+import {
+  HeroUINativeProvider,
+  type HeroUINativeConfig,
+} from 'heroui-native/provider';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NativeQueryProvider } from '~/providers/query-provider';
+import { NativeSharedProvider } from '~/providers/shared-provider';
+import { NativeSocketProvider } from '~/providers/socket-provider';
 
 import { AppThemeProvider } from '~/providers/theme-provider';
 
@@ -53,11 +59,23 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
         <SafeAreaProvider>
-          <HeroUINativeProvider config={heroUIConfig}>
-            <AppThemeProvider>
-              <Slot />
-            </AppThemeProvider>
-          </HeroUINativeProvider>
+          <NativeQueryProvider>
+            <NativeSharedProvider>
+              <NativeSocketProvider>
+                <HeroUINativeProvider config={heroUIConfig}>
+                  <AppThemeProvider>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="index" />
+                      <Stack.Screen name="(onboarding)" />
+                      <Stack.Screen name="(auth)" />
+                      <Stack.Screen name="(main)" />
+                      <Stack.Screen name="chat" />
+                    </Stack>
+                  </AppThemeProvider>
+                </HeroUINativeProvider>
+              </NativeSocketProvider>
+            </NativeSharedProvider>
+          </NativeQueryProvider>
         </SafeAreaProvider>
       </ClerkProvider>
     </GestureHandlerRootView>
