@@ -83,3 +83,17 @@ export const createAuthNavigate =
 
     replace('/(main)/newfeeds');
   };
+
+type ClerkTokenGetter = (
+  options?: {
+    skipCache?: boolean;
+  },
+) => Promise<string | null>;
+
+export const getFreshClerkToken = async (getToken: ClerkTokenGetter) => {
+  try {
+    return await getToken({ skipCache: true });
+  } catch {
+    return getToken();
+  }
+};

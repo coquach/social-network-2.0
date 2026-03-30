@@ -15,7 +15,8 @@ export const queryKeys = {
     all: ['user'] as const,
     detail: (userId: string) => [...queryKeys.user.all, userId] as const,
     current: () => [...queryKeys.user.all, 'current'] as const,
-    friends: (userId: string) => [...queryKeys.user.all, userId, 'friends'] as const,
+    friends: (userId: string) =>
+      [...queryKeys.user.all, userId, 'friends'] as const,
   },
 
   // ==================== Posts ====================
@@ -26,23 +27,27 @@ export const queryKeys = {
     myPosts: () => [...queryKeys.posts.lists(), 'me'] as const,
     details: () => [...queryKeys.posts.all, 'detail'] as const,
     detail: (postId: string) => [...queryKeys.posts.details(), postId] as const,
-    editHistories: (postId: string) => 
+    editHistories: (postId: string) =>
       [...queryKeys.posts.detail(postId), 'edit-histories'] as const,
-    byGroup: (groupId: string) => 
+    byGroup: (groupId: string) =>
       [...queryKeys.posts.all, 'group', groupId] as const,
-    groupPending: (groupId: string) => 
+    groupPending: (groupId: string) =>
       [...queryKeys.posts.byGroup(groupId), 'pending'] as const,
   },
 
   // ==================== Reactions ====================
   reactions: {
     all: ['reactions'] as const,
-    list: (targetId: string, targetType?: TargetType, reactionType?: ReactionType) => 
+    list: (
+      targetId: string,
+      targetType?: TargetType,
+      reactionType?: ReactionType,
+    ) =>
       [
-        ...queryKeys.reactions.all, 
-        targetId, 
+        ...queryKeys.reactions.all,
+        targetId,
         ...(targetType !== undefined ? [targetType] : []),
-        ...(reactionType !== undefined ? [reactionType] : [])
+        ...(reactionType !== undefined ? [reactionType] : []),
       ] as const,
   },
 
@@ -50,67 +55,85 @@ export const queryKeys = {
   comments: {
     all: ['comments'] as const,
     lists: () => [...queryKeys.comments.all, 'list'] as const,
-    detail: (commentId: string) => [...queryKeys.comments.all, 'detail', commentId] as const,
-    byPost: (postId: string) => [...queryKeys.comments.all, 'post', postId] as const,
-    replies: (commentId: string) => [...queryKeys.comments.all, 'replies', commentId] as const,
-    list: (rootId: string, rootType?: string, parentId?: string) => 
+    detail: (commentId: string) =>
+      [...queryKeys.comments.all, 'detail', commentId] as const,
+    byPost: (postId: string) =>
+      [...queryKeys.comments.all, 'post', postId] as const,
+    replies: (commentId: string) =>
+      [...queryKeys.comments.all, 'replies', commentId] as const,
+    list: (rootId: string, rootType?: string, parentId?: string) =>
       [
-        ...queryKeys.comments.all, 
-        rootId, 
+        ...queryKeys.comments.all,
+        rootId,
         ...(rootType !== undefined ? [rootType] : []),
-        ...(parentId !== undefined ? [parentId] : [])
+        ...(parentId !== undefined ? [parentId] : []),
       ] as const,
   },
 
   // ==================== Notifications ====================
   notifications: {
     all: ['notifications'] as const,
-    list: (userId?: string) => [...queryKeys.notifications.all, ...(userId !== undefined ? [userId] : [])] as const,
-    unreadCount: () => [...queryKeys.notifications.all, 'unread-count'] as const,
+    list: (userId?: string) =>
+      [
+        ...queryKeys.notifications.all,
+        ...(userId !== undefined ? [userId] : []),
+      ] as const,
+    unreadCount: () =>
+      [...queryKeys.notifications.all, 'unread-count'] as const,
   },
 
   // ==================== Feed ====================
   feed: {
     all: ['feed'] as const,
-    personal: (emotion?: string) => [...queryKeys.feed.all, 'personal', emotion ?? 'ALL'] as const,
-    trending: (emotion?: string) => [...queryKeys.feed.all, 'trending', emotion ?? 'ALL'] as const,
+    personal: (emotion?: string) =>
+      [...queryKeys.feed.all, 'personal', emotion ?? 'ALL'] as const,
+    trending: (emotion?: string) =>
+      [...queryKeys.feed.all, 'trending', emotion ?? 'ALL'] as const,
   },
 
   // ==================== Friends ====================
   friends: {
     all: ['friends'] as const,
-    list: (userId?: string) => 
+    list: (userId?: string) =>
       ['get-friends', ...(userId !== undefined ? [userId] : [])] as const,
-    userFriends: (userId: string) => 
-      ['get-user-friends', userId] as const,
+    userFriends: (userId: string) => ['get-user-friends', userId] as const,
     requests: () => ['friend-requests'] as const,
-    suggestions: (query?: unknown) => 
+    suggestions: (query?: unknown) =>
       ['friend-suggestions', ...(query !== undefined ? [query] : [])] as const,
     analytics: (days?: number) =>
-      ['friend-recommendation-analytics', ...(typeof days === 'number' ? [days] : [])] as const,
+      [
+        'friend-recommendation-analytics',
+        ...(typeof days === 'number' ? [days] : []),
+      ] as const,
     blocked: () => ['blocked-users'] as const,
-    relationshipStatus: (targetId: string) => [...queryKeys.friends.all, 'status', targetId] as const,
+    relationshipStatus: (targetId: string) =>
+      [...queryKeys.friends.all, 'status', targetId] as const,
   },
 
   // ==================== Conversations ====================
   conversations: {
     all: ['conversations'] as const,
     list: () => [...queryKeys.conversations.all, 'list'] as const,
-    detail: (conversationId: string) => [...queryKeys.conversations.all, conversationId] as const,
+    detail: (conversationId: string) =>
+      [...queryKeys.conversations.all, conversationId] as const,
   },
 
   // ==================== Messages ====================
   messages: {
     all: ['messages'] as const,
-    list: (conversationId: string) => [...queryKeys.messages.all, conversationId] as const,
+    list: (conversationId: string) =>
+      [...queryKeys.messages.all, conversationId] as const,
   },
 
   // ==================== Search ====================
   search: {
     all: ['search'] as const,
-    users: (query: string) => [...queryKeys.search.all, 'users', query] as const,
-    posts: (query: string) => [...queryKeys.search.all, 'posts', query] as const,
-    groups: (query: string) => [...queryKeys.search.all, 'groups', query] as const,
+    users: (query: string) =>
+      [...queryKeys.search.all, 'users', query] as const,
+    posts: (query: string) =>
+      [...queryKeys.search.all, 'posts', query] as const,
+    groups: (query: string) =>
+      [...queryKeys.search.all, 'groups', query] as const,
   },
 
   // ==================== Groups ====================
@@ -118,18 +141,29 @@ export const queryKeys = {
     all: ['groups'] as const,
     lists: () => [...queryKeys.groups.all, 'list'] as const,
     myGroups: () => ['get-my-groups'] as const,
-    invited: (query?: unknown) => 
+    invited: (query?: unknown) =>
       ['get-invited-groups', ...(query !== undefined ? [query] : [])] as const,
     detail: (groupId: string) => ['group', groupId] as const,
-    members: (groupId: string, filter?: string) => 
-      ['group-members', groupId, ...(filter !== undefined ? [filter] : [])] as const,
-    joinRequests: (groupId: string, filter?: string) => 
-      ['group-join-requests', groupId, ...(filter !== undefined ? [filter] : [])] as const,
-    logs: (groupId: string, filter?: string) => 
-      ['group-logs', groupId, ...(filter !== undefined ? [filter] : [])] as const,
-    settings: (groupId: string) => 
-      ['group-settings', groupId] as const,
-    recommended: (query?: unknown) => 
+    members: (groupId: string, filter?: string) =>
+      [
+        'group-members',
+        groupId,
+        ...(filter !== undefined ? [filter] : []),
+      ] as const,
+    joinRequests: (groupId: string, filter?: string) =>
+      [
+        'group-join-requests',
+        groupId,
+        ...(filter !== undefined ? [filter] : []),
+      ] as const,
+    logs: (groupId: string, filter?: string) =>
+      [
+        'group-logs',
+        groupId,
+        ...(filter !== undefined ? [filter] : []),
+      ] as const,
+    settings: (groupId: string) => ['group-settings', groupId] as const,
+    recommended: (query?: unknown) =>
       ['recommended-groups', ...(query !== undefined ? [query] : [])] as const,
   },
 
@@ -152,21 +186,36 @@ export const queryKeys = {
   admin: {
     all: ['admin'] as const,
     dashboard: () => [...queryKeys.admin.all, 'dashboard'] as const,
-    users: (query?: unknown) => 
-      [...queryKeys.admin.all, 'users', ...(query !== undefined ? [query] : [])] as const,
-    groups: (query?: unknown) => 
-      [...queryKeys.admin.all, 'groups', ...(query !== undefined ? [query] : [])] as const,
-    logs: (query?: unknown) => 
-      [...queryKeys.admin.all, 'logs', ...(query !== undefined ? [query] : [])] as const,
+    users: (query?: unknown) =>
+      [
+        ...queryKeys.admin.all,
+        'users',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    groups: (query?: unknown) =>
+      [
+        ...queryKeys.admin.all,
+        'groups',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    logs: (query?: unknown) =>
+      [
+        ...queryKeys.admin.all,
+        'logs',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
   },
 
   // ==================== Emotion Journal ====================
   emotionJournal: {
     all: ['emotion-journal'] as const,
-    entries: (query?: unknown) => 
-      [...queryKeys.emotionJournal.all, 'entries', ...(query !== undefined ? [query] : [])] as const,
-    analytics: () => 
-      [...queryKeys.emotionJournal.all, 'analytics'] as const,
+    entries: (query?: unknown) =>
+      [
+        ...queryKeys.emotionJournal.all,
+        'entries',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    analytics: () => [...queryKeys.emotionJournal.all, 'analytics'] as const,
   },
 } as const;
 

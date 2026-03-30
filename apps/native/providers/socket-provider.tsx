@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/expo';
 import React from 'react';
 import { io, type Socket } from 'socket.io-client';
+import { getFreshClerkToken } from '~/utils/clerk-auth';
 
 type SocketContextValue = {
   chatSocket: Socket | null;
@@ -43,7 +44,7 @@ export function NativeSocketProvider({ children }: SocketProviderProps) {
     const socket = io(`${wsURL}/chat`, {
       transports: ['websocket'],
       auth: async (cb) => {
-        const token = await getTokenRef.current();
+        const token = await getFreshClerkToken(getTokenRef.current);
         cb({ token });
       },
     });

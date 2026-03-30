@@ -32,7 +32,10 @@ import { queryKeys } from './query-keys';
 /**
  * Get conversation list with infinite scroll
  */
-export const useConversations = (params?: QueryParams) => {
+export const useConversations = (
+  params?: QueryParams,
+  options?: { enabled?: boolean },
+) => {
   return useInfiniteQuery<CursorPageResponse<ConversationDTO>>({
     queryKey: [...queryKeys.conversations.list(), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
@@ -43,6 +46,7 @@ export const useConversations = (params?: QueryParams) => {
     },
     getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
     staleTime: 10_000, // 10 seconds
     gcTime: 60_000, // 1 minute
   });

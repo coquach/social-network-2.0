@@ -53,11 +53,11 @@ export const getMessagePreview = (
   otherUserName?: string,
 ) => {
   if (!message) {
-    return isGroup ? 'Nhom moi duoc tao.' : 'Bat dau cuoc tro chuyen.';
+    return isGroup ? 'Nhóm mới được tạo.' : 'Bắt đầu cuộc trò chuyện.';
   }
 
   if (message.isDeleted) {
-    return 'Tin nhan da bi xoa.';
+    return 'Tin nhắn đã bị xóa.';
   }
 
   if (message.content?.trim()) {
@@ -65,8 +65,8 @@ export const getMessagePreview = (
   }
 
   if (message.attachments?.length) {
-    return 'Da gui tep dinh kem.';
+    return 'Đã gửi một tệp đính kèm.';
   }
 
-  return otherUserName ? `${otherUserName} da gui tin nhan.` : 'Tin nhan moi.';
+  return otherUserName ? `${otherUserName} đã gửi` : 'Đã gửi một tin nhắn.';
 };

@@ -1,6 +1,28 @@
+import { createCloudinaryUploadService } from '@/lib/services/cloudinary-upload.service';
 import { MediaItem } from '@/lib/types/media';
 import { MediaDTO, MediaType } from '@/models/social/enums/social.enum';
-import axios from 'axios';
+
+let uploadServiceInstance:
+  | ReturnType<typeof createCloudinaryUploadService>
+  | null = null;
+
+const getUploadService = () => {
+  if (!uploadServiceInstance) {
+    uploadServiceInstance = createCloudinaryUploadService();
+  }
+
+  return uploadServiceInstance;
+};
+
+const mapUploadResultToMediaDTO = (result: {
+  url: string;
+  type: MediaType;
+  publicId?: string;
+}): MediaDTO => ({
+  url: result.url,
+  type: result.type,
+  publicId: result.publicId,
+});
 
 export const uploadMultipleToCloudinary = async (
   files: MediaItem[],
@@ -8,24 +30,14 @@ export const uploadMultipleToCloudinary = async (
   signal?: AbortSignal,
   concurrency = 3
 ) => {
-  const results: MediaDTO[] = [];
+  const uploadService = getUploadService();
+  const results = await uploadService.uploadMultiple(files, {
+    folder,
+    signal,
+    concurrency,
+  });
 
-  for (let i = 0; i < files.length; i += concurrency) {
-    const chunk = files.slice(i, i + concurrency);
-    const chunkResults = await Promise.all(
-      chunk.map((item) =>
-        uploadToCloudinary(
-          item.file,
-          item.type === MediaType.VIDEO ? 'video' : 'image',
-          folder,
-          signal
-        )
-      )
-    );
-    results.push(...chunkResults);
-  }
-  window.removeEventListener('beforeunload', () => {});
-  return results;
+  return results.map(mapUploadResultToMediaDTO);
 };
 
 export const uploadToCloudinary = async (
@@ -35,32 +47,18 @@ export const uploadToCloudinary = async (
   signal?: AbortSignal,
   publicId?: string
 ): Promise<MediaDTO> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append(
-    'upload_preset',
-    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET as string
-  );
-  formData.append('folder', folder);
-  if (publicId) {
-    // phải đúng key: public_id
-    formData.append('public_id', publicId);
-  }
-
-  const res = await axios.post(
-    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/${type}/upload`,
-    formData,
+  const uploadService = getUploadService();
+  const result = await uploadService.uploadFile(
     {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      file,
+      type: type === 'video' ? MediaType.VIDEO : MediaType.IMAGE,
+    },
+    {
+      folder,
       signal,
+      publicId,
     }
   );
 
-  const data = res.data;
-
-  return {
-    url: data.secure_url,
-    type: data.resource_type === 'video' ? MediaType.VIDEO : MediaType.IMAGE,
-    publicId: data.public_id,
-  };
+  return mapUploadResultToMediaDTO(result);
 };

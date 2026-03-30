@@ -27,6 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
+      "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.sentimeta.app"
     },
@@ -62,7 +63,22 @@
       ],
       "@clerk/expo",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          },
+          "ios": {
+            "infoPlist": {
+              "NSAppTransportSecurity": {
+                "NSAllowsArbitraryLoads": true
+              }
+            }
+          }
+        }
+      ]
     ]
   }
 }

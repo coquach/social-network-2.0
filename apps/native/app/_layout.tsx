@@ -11,6 +11,7 @@ import {
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NativePresenceProvider } from '~/providers/presence-provider';
 import { NativeQueryProvider } from '~/providers/query-provider';
 import { NativeSharedProvider } from '~/providers/shared-provider';
 import { NativeSocketProvider } from '~/providers/socket-provider';
@@ -62,17 +63,19 @@ export default function RootLayout() {
           <NativeQueryProvider>
             <NativeSharedProvider>
               <NativeSocketProvider>
-                <HeroUINativeProvider config={heroUIConfig}>
-                  <AppThemeProvider>
-                    <Stack screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="index" />
-                      <Stack.Screen name="(onboarding)" />
-                      <Stack.Screen name="(auth)" />
-                      <Stack.Screen name="(main)" />
-                      <Stack.Screen name="chat" />
-                    </Stack>
-                  </AppThemeProvider>
-                </HeroUINativeProvider>
+                <NativePresenceProvider>
+                  <HeroUINativeProvider config={heroUIConfig}>
+                    <AppThemeProvider>
+                      <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="index" />
+                        <Stack.Screen name="(onboarding)" />
+                        <Stack.Screen name="(auth)" />
+                        <Stack.Screen name="(main)" />
+                        <Stack.Screen name="chat" />
+                      </Stack>
+                    </AppThemeProvider>
+                  </HeroUINativeProvider>
+                </NativePresenceProvider>
               </NativeSocketProvider>
             </NativeSharedProvider>
           </NativeQueryProvider>

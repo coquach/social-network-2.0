@@ -15,13 +15,14 @@ import { Spinner } from 'heroui-native/spinner';
 import React from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 
-import { ChatAvatar } from '~/components/chat/chat-avatar';
+import { DirectChatAvatar, GroupChatAvatar } from '~/components/chat/chat-avatar';
 import { ChatComposer } from '~/components/chat/chat-composer';
 import { getConversationName, getConversationOtherUserId } from '~/components/chat/chat-helpers';
 import { ChatMessageBubble } from '~/components/chat/chat-message-bubble';
 import { AppCard } from '~/components/ui/app-card';
 import { AppScreen } from '~/components/ui/app-screen';
 import { AppHeaderIconButton, AppHeader } from '~/components/ui/app-header';
+import { usePresenceChannel } from '~/providers/presence-provider';
 import { useSocket } from '~/providers/socket-provider';
 
 export default function ChatConversationScreen() {
@@ -74,6 +75,8 @@ export default function ChatConversationScreen() {
     return (conversation?.participants ?? []).filter((participantId) => participantId !== userId);
   }, [conversation?.participants, userId]);
 
+  usePresenceChannel(participantIds);
+
   const participantMap = React.useMemo(() => {
     const map = new Map<string, { name: string; avatarUrl?: string }>();
 
@@ -119,10 +122,6 @@ export default function ChatConversationScreen() {
       return;
     }
 
-    if (participantIds.length > 0) {
-      chatSocket.emit('presence.subscribe', { userIds: participantIds });
-    }
-
     const handleRealtimeRefresh = (payload?: { conversationId?: string }) => {
       if (payload?.conversationId && payload.conversationId !== conversationId) {
         return;
@@ -138,16 +137,12 @@ export default function ChatConversationScreen() {
     chatSocket.on('conversation.read', handleRealtimeRefresh);
 
     return () => {
-      if (participantIds.length > 0) {
-        chatSocket.emit('presence.unsubscribe', { userIds: participantIds });
-      }
-
       chatSocket.off('message.new', handleRealtimeRefresh);
       chatSocket.off('message.deleted', handleRealtimeRefresh);
       chatSocket.off('conversation.updated', handleRealtimeRefresh);
       chatSocket.off('conversation.read', handleRealtimeRefresh);
     };
-  }, [chatSocket, conversationId, participantIds, refetchConversation, refetchMessages]);
+  }, [chatSocket, conversationId, refetchConversation, refetchMessages]);
 
   React.useEffect(() => {
     if (!conversationId || messages.length === 0) {
@@ -194,11 +189,15 @@ export default function ChatConversationScreen() {
             contentClassName="flex-row items-center gap-3"
           >
             <View className="flex-1 flex-row items-center gap-3">
-              <ChatAvatar
-                name={conversationName}
-                imageUrl={conversation?.isGroup ? conversation.groupAvatar?.url : otherUser?.avatarUrl}
-                online={presence?.status === 'online'}
-              />
+              {conversation?.isGroup ? (
+                <GroupChatAvatar conversation={conversation} />
+              ) : (
+                <DirectChatAvatar
+                  name={conversationName}
+                  imageUrl={otherUser?.avatarUrl}
+                  online={presence?.status === 'online'}
+                />
+              )}
               <View className="flex-1">
                 <Text
                   numberOfLines={1}

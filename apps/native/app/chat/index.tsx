@@ -11,10 +11,7 @@ import { FlatList, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatConversationRow } from '~/components/chat/chat-conversation-row';
-import {
-  getConversationName,
-  getConversationOtherUserId,
-} from '~/components/chat/chat-helpers';
+import { getConversationName } from '~/components/chat/chat-helpers';
 import { AppLoadingBlock } from '~/components/ui/app-loading';
 import { AppScreen } from '~/components/ui/app-screen';
 import { AppHeaderIconButton, AppHeader } from '~/components/ui/app-header';
@@ -22,7 +19,7 @@ import { useSocket } from '~/providers/socket-provider';
 
 export default function ChatInboxScreen() {
   const insets = useSafeAreaInsets();
-  const { isSignedIn, userId } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const { chatSocket } = useSocket();
   const [searchText, setSearchText] = React.useState('');
 
@@ -34,7 +31,10 @@ export default function ChatInboxScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useConversations({ limit: 20 });
+  } = useConversations(
+    { limit: 20 },
+    { enabled: isLoaded && !!isSignedIn },
+  );
 
   const conversations = React.useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
@@ -62,20 +62,12 @@ export default function ChatInboxScreen() {
     ? 'Hãy thử điều chỉnh từ khóa tìm kiếm của bạn.'
     : 'Khi bạn bắt đầu một cuộc trò chuyện mới, nó sẽ xuất hiện ở đây.';
 
-  const directParticipantIds = React.useMemo(() => {
-    return conversations
-      .map((conversation) =>
-        getConversationOtherUserId(conversation, userId ?? null),
-      )
-      .filter((value): value is string => Boolean(value));
-  }, [conversations, userId]);
-
   useFocusEffect(
     React.useCallback(() => {
-      if (!isSignedIn) {
+      if (isLoaded && !isSignedIn) {
         router.replace('/(auth)/sign-in');
       }
-    }, [isSignedIn]),
+    }, [isLoaded, isSignedIn]),
   );
 
   React.useEffect(() => {
@@ -101,20 +93,6 @@ export default function ChatInboxScreen() {
       chatSocket.off('message.new', handleRealtimeRefresh);
     };
   }, [chatSocket, refetch]);
-
-  React.useEffect(() => {
-    if (!chatSocket || directParticipantIds.length === 0) {
-      return;
-    }
-
-    chatSocket.emit('presence.subscribe', { userIds: directParticipantIds });
-
-    return () => {
-      chatSocket.emit('presence.unsubscribe', {
-        userIds: directParticipantIds,
-      });
-    };
-  }, [chatSocket, directParticipantIds]);
 
   return (
     <AppScreen className="px-0 py-0">
@@ -147,9 +125,9 @@ export default function ChatInboxScreen() {
             )}
             contentContainerStyle={{
               flexGrow: conversations.length === 0 ? 1 : 0,
-              paddingHorizontal: 20,
+              paddingHorizontal: 16,
               paddingBottom: insets.bottom + 28,
-              gap: 12,
+              gap: 4,
               justifyContent: conversations.length === 0 ? 'center' : 'flex-start',
             }}
             showsVerticalScrollIndicator={false}
@@ -165,9 +143,10 @@ export default function ChatInboxScreen() {
             onEndReachedThreshold={0.3}
             ListFooterComponent={
               isFetchingNextPage ? (
-                <View className="py-4">
-                  <Spinner size="sm" color="default" />
-                </View>
+                <AppLoadingBlock
+                  label="Đang tải thêm cuộc trò chuyện..."
+                 
+                />
               ) : null
             }
             ListEmptyComponent={
