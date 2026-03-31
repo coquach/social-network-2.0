@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/expo';
 import { useFocusEffect } from '@react-navigation/native';
 import {
+  MediaType,
   type MessageDTO,
   useConversation,
   useCurrentUser,
@@ -8,13 +9,34 @@ import {
   useMessages,
   usePresenceStore,
   useSendMessage,
+  useUploadOptional,
   useUser,
 } from '@repo/shared';
+import * as DocumentPicker from 'expo-document-picker';
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from 'expo-audio';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams } from 'expo-router';
 import { Spinner } from 'heroui-native/spinner';
 import React from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  View,
+} from 'react-native';
 
+import {
+  type ChatComposerAttachment,
+  inferMediaType,
+} from '~/components/chat/chat-attachment-utils';
 import { DirectChatAvatar, GroupChatAvatar } from '~/components/chat/chat-avatar';
 import { ChatComposer } from '~/components/chat/chat-composer';
 import { getConversationName, getConversationOtherUserId } from '~/components/chat/chat-helpers';
@@ -25,13 +47,38 @@ import { AppHeaderIconButton, AppHeader } from '~/components/ui/app-header';
 import { usePresenceChannel } from '~/providers/presence-provider';
 import { useSocket } from '~/providers/socket-provider';
 
+const MAX_ATTACHMENTS = 6;
+
+const createAttachmentId = () =>
+  `attachment:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const buildFileDescriptor = (params: {
+  uri: string;
+  name: string;
+  mimeType?: string;
+}) => ({
+  uri: params.uri,
+  name: params.name,
+  type: params.mimeType || 'application/octet-stream',
+});
+
+const ensureAttachmentLimit = (
+  currentCount: number,
+  nextCount: number,
+): boolean => currentCount + nextCount <= MAX_ATTACHMENTS;
+
 export default function ChatConversationScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const { userId } = useAuth();
   const { chatSocket } = useSocket();
+  const uploadService = useUploadOptional();
   const { data: currentUser } = useCurrentUser();
   const [composerValue, setComposerValue] = React.useState('');
+  const [attachments, setAttachments] = React.useState<ChatComposerAttachment[]>([]);
   const listRef = React.useRef<FlatList<MessageDTO>>(null);
+  const isRecordingRef = React.useRef(false);
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
 
   const {
     data: conversation,
@@ -103,6 +150,205 @@ export default function ChatConversationScreen() {
     ? getConversationName(conversation, otherUser)
     : 'Cuoc tro chuyen';
 
+  const recordingDurationMs = React.useMemo(() => {
+    const currentTime = (audioRecorder as { currentTime?: number }).currentTime;
+    return typeof currentTime === 'number' ? Math.round(currentTime * 1000) : 0;
+  }, [audioRecorder, recorderState]);
+
+  const ensureUploadsEnabled = React.useCallback(() => {
+    if (uploadService) {
+      return true;
+    }
+
+    Alert.alert(
+      'Thiếu cấu hình upload',
+      'Thêm EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME và EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET vào app native để gửi tệp.',
+    );
+    return false;
+  }, [uploadService]);
+
+  const appendAttachments = React.useCallback((nextItems: ChatComposerAttachment[]) => {
+    if (nextItems.length === 0) {
+      return;
+    }
+
+    setAttachments((current) => {
+      if (!ensureAttachmentLimit(current.length, nextItems.length)) {
+        Alert.alert(
+          'Vượt quá giới hạn',
+          `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
+        );
+        return current;
+      }
+
+      return [...current, ...nextItems];
+    });
+  }, []);
+
+  const handlePickMedia = React.useCallback(async () => {
+    if (!ensureUploadsEnabled()) {
+      return;
+    }
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Cần quyền truy cập thư viện', 'Hãy cho phép truy cập ảnh và video để gửi media.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images', 'videos'],
+      allowsMultipleSelection: true,
+      quality: 1,
+      selectionLimit: Math.max(1, MAX_ATTACHMENTS - attachments.length),
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const mappedAttachments = result.assets.map((asset) => {
+      const type = asset.type === 'video' ? MediaType.VIDEO : MediaType.IMAGE;
+      const name =
+        asset.fileName || `${type === MediaType.VIDEO ? 'video' : 'image'}-${Date.now()}`;
+      const mimeType =
+        asset.mimeType || (type === MediaType.VIDEO ? 'video/mp4' : 'image/jpeg');
+
+      return {
+        id: createAttachmentId(),
+        type,
+        name,
+        mimeType,
+        size: asset.fileSize,
+        durationMs: asset.duration ?? undefined,
+        previewUri: asset.uri,
+        uploadFile: {
+          file: buildFileDescriptor({
+            uri: asset.uri,
+            name,
+            mimeType,
+          }),
+          type,
+          previewUri: asset.uri,
+        },
+      } satisfies ChatComposerAttachment;
+    });
+
+    appendAttachments(mappedAttachments);
+  }, [appendAttachments, attachments.length, ensureUploadsEnabled]);
+
+  const handlePickFile = React.useCallback(async () => {
+    if (!ensureUploadsEnabled()) {
+      return;
+    }
+
+    const result = await DocumentPicker.getDocumentAsync({
+      multiple: true,
+      copyToCacheDirectory: true,
+      type: '*/*',
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const mappedAttachments = result.assets.map((asset) => {
+      const type = inferMediaType(asset.mimeType, asset.name);
+
+      return {
+        id: createAttachmentId(),
+        type,
+        name: asset.name,
+        mimeType: asset.mimeType ?? undefined,
+        size: asset.size ?? undefined,
+        previewUri: type === MediaType.IMAGE ? asset.uri : undefined,
+        uploadFile: {
+          file: buildFileDescriptor({
+            uri: asset.uri,
+            name: asset.name,
+            mimeType: asset.mimeType ?? undefined,
+          }),
+          type,
+          previewUri: type === MediaType.IMAGE ? asset.uri : undefined,
+        },
+      } satisfies ChatComposerAttachment;
+    });
+
+    appendAttachments(mappedAttachments);
+  }, [appendAttachments, ensureUploadsEnabled]);
+
+  const handleToggleRecording = React.useCallback(async () => {
+    if (!ensureUploadsEnabled()) {
+      return;
+    }
+
+    if (recorderState.isRecording) {
+      await audioRecorder.stop();
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: false,
+      });
+
+      if (!audioRecorder.uri) {
+        return;
+      }
+
+      const fileName = `voice-note-${Date.now()}.m4a`;
+      appendAttachments([
+        {
+          id: createAttachmentId(),
+          type: MediaType.AUDIO,
+          name: fileName,
+          mimeType: 'audio/m4a',
+          durationMs: recordingDurationMs,
+          previewUri: audioRecorder.uri,
+          uploadFile: {
+            file: buildFileDescriptor({
+              uri: audioRecorder.uri,
+              name: fileName,
+              mimeType: 'audio/m4a',
+            }),
+            type: MediaType.AUDIO,
+            previewUri: audioRecorder.uri,
+          },
+        },
+      ]);
+      return;
+    }
+
+    const permission = await AudioModule.requestRecordingPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Cần quyền micro', 'Hãy cho phép truy cập micro để ghi âm.');
+      return;
+    }
+
+    if (!ensureAttachmentLimit(attachments.length, 1)) {
+      Alert.alert(
+        'Vượt quá giới hạn',
+        `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
+      );
+      return;
+    }
+
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: true,
+    });
+    await audioRecorder.prepareToRecordAsync();
+    audioRecorder.record();
+  }, [
+    appendAttachments,
+    attachments.length,
+    audioRecorder,
+    ensureUploadsEnabled,
+    recorderState.isRecording,
+    recordingDurationMs,
+  ]);
+
+  const handleRemoveAttachment = React.useCallback((attachmentId: string) => {
+    setAttachments((current) => current.filter((attachment) => attachment.id !== attachmentId));
+  }, []);
+
   useFocusEffect(
     React.useCallback(() => {
       if (!conversationId || !chatSocket) {
@@ -152,23 +398,37 @@ export default function ChatConversationScreen() {
     markConversationAsRead(conversationId);
   }, [conversationId, markConversationAsRead, messages.length]);
 
+  React.useEffect(() => {
+    isRecordingRef.current = recorderState.isRecording;
+  }, [recorderState.isRecording]);
+
+  React.useEffect(() => {
+    return () => {
+      if (isRecordingRef.current) {
+        void audioRecorder.stop().catch(() => undefined);
+      }
+    };
+  }, [audioRecorder]);
+
   const handleSend = React.useCallback(async () => {
     const content = composerValue.trim();
-    if (!conversationId || content.length === 0) {
+    if (!conversationId || (content.length === 0 && attachments.length === 0)) {
       return;
     }
 
     await sendMessage({
       conversationId,
       content,
+      uploadFiles: attachments.map((attachment) => attachment.uploadFile),
     });
 
     setComposerValue('');
+    setAttachments([]);
 
     requestAnimationFrame(() => {
       listRef.current?.scrollToEnd({ animated: true });
     });
-  }, [composerValue, conversationId, sendMessage]);
+  }, [attachments, composerValue, conversationId, sendMessage]);
 
   const subtitle = conversation?.isGroup
     ? `${conversation.participants.length} thanh vien`
@@ -262,10 +522,17 @@ export default function ChatConversationScreen() {
 
           <ChatComposer
             value={composerValue}
+            attachments={attachments}
             onChange={setComposerValue}
+            onPickMedia={handlePickMedia}
+            onPickFile={handlePickFile}
+            onToggleRecording={handleToggleRecording}
+            onRemoveAttachment={handleRemoveAttachment}
             onSend={() => {
               void handleSend();
             }}
+            isRecording={recorderState.isRecording}
+            recordingDurationMs={recordingDurationMs}
             disabled={isSending || !conversationId}
           />
         </View>

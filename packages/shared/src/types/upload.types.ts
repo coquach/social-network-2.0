@@ -29,6 +29,8 @@ export interface UploadResult {
   type: MediaType;
   publicId?: string;
   thumbnailUrl?: string;
+  mimeType?: string;
+  fileName?: string;
   width?: number;
   height?: number;
   duration?: number; // for videos

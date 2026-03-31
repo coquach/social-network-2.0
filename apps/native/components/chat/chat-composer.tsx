@@ -1,33 +1,275 @@
 import { Ionicons } from '@expo/vector-icons';
+import { MediaType } from '@repo/shared';
 import { Button } from 'heroui-native/button';
 import React from 'react';
-import { TextInput, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
+import type { ChatComposerAttachment } from '~/components/chat/chat-attachment-utils';
+import {
+  buildAttachmentMeta,
+  formatAttachmentDuration,
+} from '~/components/chat/chat-attachment-utils';
 import { cn } from '~/lib/cn';
 
 type ChatComposerProps = {
   value: string;
+  attachments: ChatComposerAttachment[];
   onChange: (value: string) => void;
   onSend: () => void;
+  onPickMedia: () => void | Promise<void>;
+  onPickFile: () => void | Promise<void>;
+  onToggleRecording: () => void | Promise<void>;
+  onRemoveAttachment: (attachmentId: string) => void;
   disabled?: boolean;
+  isRecording?: boolean;
+  recordingDurationMs?: number;
 };
+
+type ComposerActionButtonProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  onPress: () => void | Promise<void>;
+};
+
+function ComposerActionButton({
+  icon,
+  label,
+  active = false,
+  disabled = false,
+  onPress,
+}: ComposerActionButtonProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={disabled}
+      onPress={() => {
+        void onPress();
+      }}
+      className={cn(
+        'h-10 w-10 items-center justify-center rounded-full border',
+        active
+          ? 'border-rose-200 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/15'
+          : 'border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark',
+        disabled ? 'opacity-50' : 'active:scale-95',
+      )}
+    >
+      <Ionicons
+        name={icon}
+        size={18}
+        color={active ? '#e11d48' : '#2563eb'}
+      />
+    </Pressable>
+  );
+}
+
+function ComposerAttachmentCard({
+  attachment,
+  onRemove,
+}: {
+  attachment: ChatComposerAttachment;
+  onRemove: (attachmentId: string) => void;
+}) {
+  const meta = buildAttachmentMeta(attachment.size, attachment.durationMs);
+  const isImage = attachment.type === MediaType.IMAGE;
+  const isVideo = attachment.type === MediaType.VIDEO;
+  const isAudio = attachment.type === MediaType.AUDIO;
+  const isVisualMedia = isImage || isVideo;
+
+  if (isVisualMedia) {
+    return (
+      <View className="relative">
+        <Pressable className="h-20 w-20 overflow-hidden rounded-[18px] border border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark">
+          {isImage && attachment.previewUri ? (
+            <Image source={{ uri: attachment.previewUri }} className="h-full w-full" />
+          ) : (
+            <View className="flex-1 items-center justify-center bg-slate-950 px-2">
+              <Ionicons name="film-outline" size={24} color="#ffffff" />
+              <Text className="mt-2 text-[10px] font-semibold uppercase tracking-[0.6px] text-white">
+                Video
+              </Text>
+              {meta ? (
+                <Text className="mt-1 text-center text-[10px] text-white/80">{meta}</Text>
+              ) : null}
+            </View>
+          )}
+
+          {isVideo ? (
+            <View className="absolute bottom-1.5 left-1.5 rounded-full bg-black/75 px-2 py-1">
+              <Text className="text-[10px] font-semibold uppercase tracking-[0.6px] text-white">
+                Video
+              </Text>
+            </View>
+          ) : null}
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Xóa ${attachment.name}`}
+          onPress={() => onRemove(attachment.id)}
+          className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-black/70"
+        >
+          <Ionicons name="close" size={14} color="#ffffff" />
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View className="relative min-w-0 flex-1 basis-[48%]">
+      <Pressable className="min-h-[88px] overflow-hidden rounded-[18px] border border-app-border bg-app-surface px-3 py-3 dark:border-app-border-dark dark:bg-app-surface-dark">
+        <View className="flex-1 justify-between gap-3">
+          <View
+            className={cn(
+              'h-10 w-10 items-center justify-center rounded-full',
+              isAudio
+                ? 'bg-emerald-100 dark:bg-emerald-500/15'
+                : 'bg-sky-100 dark:bg-sky-500/15',
+            )}
+          >
+            <Ionicons
+              name={isAudio ? 'mic-outline' : 'document-attach-outline'}
+              size={18}
+              color={isAudio ? '#059669' : '#2563eb'}
+            />
+          </View>
+
+          <View className="gap-1">
+            <Text
+              numberOfLines={2}
+              className="text-xs font-semibold text-app-fg dark:text-app-fg-dark"
+            >
+              {attachment.name}
+            </Text>
+            {meta ? (
+              <Text
+                numberOfLines={2}
+                className="text-[11px] text-app-muted-fg dark:text-app-muted-fg-dark"
+              >
+                {meta}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Xóa ${attachment.name}`}
+        onPress={() => onRemove(attachment.id)}
+        className="absolute right-1.5 top-1.5 h-6 w-6 items-center justify-center rounded-full bg-black/70"
+      >
+        <Ionicons name="close" size={14} color="#ffffff" />
+      </Pressable>
+    </View>
+  );
+}
 
 export function ChatComposer({
   value,
+  attachments,
   onChange,
   onSend,
+  onPickMedia,
+  onPickFile,
+  onToggleRecording,
+  onRemoveAttachment,
   disabled = false,
+  isRecording = false,
+  recordingDurationMs = 0,
 }: ChatComposerProps) {
-  const isSendDisabled = disabled || value.trim().length === 0;
+  const hasPayload = value.trim().length > 0 || attachments.length > 0;
+  const isSendDisabled = disabled || !hasPayload;
+  const mediaAttachments = attachments.filter(
+    (attachment) =>
+      attachment.type === MediaType.IMAGE || attachment.type === MediaType.VIDEO,
+  );
+  const fileAttachments = attachments.filter(
+    (attachment) =>
+      attachment.type !== MediaType.IMAGE && attachment.type !== MediaType.VIDEO,
+  );
 
   return (
     <View className="border-t border-app-border bg-app-surface px-4 pb-6 pt-3 dark:border-app-border-dark dark:bg-app-surface-dark">
+      {attachments.length > 0 ? (
+        <View className="mb-3 rounded-[24px] bg-app-surface-elevated px-2.5 py-2.5 dark:bg-app-surface-elevated-dark">
+          {mediaAttachments.length > 0 ? (
+            <View className="flex-row flex-wrap gap-2">
+              {mediaAttachments.map((attachment) => (
+                <ComposerAttachmentCard
+                  key={attachment.id}
+                  attachment={attachment}
+                  onRemove={onRemoveAttachment}
+                />
+              ))}
+            </View>
+          ) : null}
+
+          {fileAttachments.length > 0 ? (
+            <View
+              className={cn(
+                'flex-row flex-wrap gap-2',
+                mediaAttachments.length > 0 ? 'mt-2' : '',
+              )}
+            >
+              {fileAttachments.map((attachment) => (
+                <ComposerAttachmentCard
+                  key={attachment.id}
+                  attachment={attachment}
+                  onRemove={onRemoveAttachment}
+                />
+              ))}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
+      {isRecording ? (
+        <View className="mb-3 flex-row items-center gap-2 rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
+          <View className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+          <Text className="flex-1 text-sm font-medium text-rose-700 dark:text-rose-200">
+            Đang ghi âm {formatAttachmentDuration(recordingDurationMs) ?? '0:00'}
+          </Text>
+          <Text className="text-xs text-rose-600 dark:text-rose-200">Nhấn mic để dừng</Text>
+        </View>
+      ) : null}
+
       <View className="flex-row items-end gap-3">
+        <View className="flex-row gap-2">
+          <ComposerActionButton
+            icon="images-outline"
+            label="Chọn ảnh hoặc video"
+            disabled={disabled}
+            onPress={onPickMedia}
+          />
+          <ComposerActionButton
+            icon="document-attach-outline"
+            label="Chọn tệp"
+            disabled={disabled}
+            onPress={onPickFile}
+          />
+          <ComposerActionButton
+            icon={isRecording ? 'stop-circle-outline' : 'mic-outline'}
+            label={isRecording ? 'Dừng ghi âm' : 'Ghi âm'}
+            active={isRecording}
+            disabled={disabled}
+            onPress={onToggleRecording}
+          />
+        </View>
+
         <View className="flex-1 rounded-[28px] bg-app-surface-elevated px-4 py-3 dark:bg-app-surface-elevated-dark">
           <TextInput
             multiline
             maxLength={1500}
-            placeholder="Nhap tin nhan..."
+            placeholder="Nhập tin nhắn..."
             placeholderTextColor="#6b8aa1"
             value={value}
             onChangeText={onChange}

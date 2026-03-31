@@ -1,7 +1,9 @@
 import { useAuth } from '@clerk/expo';
-import { AuthProvider, initializeApiClient } from '@repo/shared';
+import { AuthProvider, UploadProvider, initializeApiClient } from '@repo/shared';
 import React from 'react';
 import { Platform } from 'react-native';
+
+import { createNativeCloudinaryUploadService } from '~/lib/services/native-cloudinary-upload.service';
 import { getFreshClerkToken } from '~/utils/clerk-auth';
 
 type SharedProviderProps = {
@@ -11,6 +13,14 @@ type SharedProviderProps = {
 export function NativeSharedProvider({ children }: SharedProviderProps) {
   const { userId, isLoaded, isSignedIn, getToken } = useAuth();
   const [isApiClientReady, setIsApiClientReady] = React.useState(false);
+  const uploadService = React.useMemo(() => {
+    try {
+      return createNativeCloudinaryUploadService();
+    } catch (error) {
+      console.warn('[Native Upload] Upload service disabled:', error);
+      return null;
+    }
+  }, []);
   const authRef = React.useRef({
     isLoaded,
     getToken,
@@ -59,7 +69,11 @@ export function NativeSharedProvider({ children }: SharedProviderProps) {
         isAuthenticated: !!isSignedIn,
       }}
     >
-      {children}
+      {uploadService ? (
+        <UploadProvider uploadService={uploadService}>{children}</UploadProvider>
+      ) : (
+        children
+      )}
     </AuthProvider>
   );
 }

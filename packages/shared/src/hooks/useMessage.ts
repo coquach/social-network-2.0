@@ -23,6 +23,24 @@ import {
 } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
 
+const toAttachmentMimeType = (type: MediaType, mimeType?: string) => {
+  if (mimeType?.trim()) {
+    return mimeType;
+  }
+
+  switch (type) {
+    case MediaType.IMAGE:
+      return 'image/*';
+    case MediaType.VIDEO:
+      return 'video/*';
+    case MediaType.AUDIO:
+      return 'audio/*';
+    case MediaType.FILE:
+    default:
+      return 'application/octet-stream';
+  }
+};
+
 // ==================== Query Hooks ====================
 
 /**
@@ -144,7 +162,8 @@ export const useSendMessage = (conversationId: string) => {
           attachments = uploadResults.map((result) => ({
             url: result.url,
             publicId: result.publicId,
-            mimeType: result.type === MediaType.IMAGE ? 'image' : 'video',
+            mimeType: toAttachmentMimeType(result.type, result.mimeType),
+            fileName: result.fileName,
             thumbnailUrl: result.thumbnailUrl,
             size: result.size,
           }));

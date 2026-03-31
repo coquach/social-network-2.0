@@ -20,13 +20,19 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sentimeta.app"
+      "bundleIdentifier": "com.sentimeta.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Sentimeta needs microphone access so you can record and send voice messages."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
+      "permissions": [
+        "RECORD_AUDIO"
+      ],
       "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.sentimeta.app"
@@ -59,6 +65,14 @@
             "./assets/fonts/Inter-SemiBold.ttf",
             "./assets/fonts/Inter-Bold.ttf"
           ]
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Sentimeta to access your microphone so you can record and send voice messages.",
+          "recordAudioAndroid": true,
+          "enableBackgroundPlayback": false
         }
       ],
       "@clerk/expo",
