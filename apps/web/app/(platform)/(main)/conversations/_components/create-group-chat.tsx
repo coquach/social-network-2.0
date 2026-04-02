@@ -80,7 +80,7 @@ export const CreateGroupConversationDialog = ({
           groupName: value.groupName?.trim() ?? '',
         });
         if (parsed.success) return;
-        return parsed.error.issues.map((i) => i.message);
+        return parsed.error.issues.map((issue: z.ZodIssue) => issue.message);
       },
     },
     onSubmit: async ({ value, formApi }) => {

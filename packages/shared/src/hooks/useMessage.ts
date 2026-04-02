@@ -22,6 +22,7 @@ import {
   cancelQueries,
 } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
+import { getRecommendedUploadBatchOptions } from '../utils/upload.utils';
 
 const toAttachmentMimeType = (type: MediaType, mimeType?: string) => {
   if (mimeType?.trim()) {
@@ -154,10 +155,12 @@ export const useSendMessage = (conversationId: string) => {
       // Upload files if provided and upload service available
       if (uploadFiles && uploadFiles.length > 0 && uploadService) {
         try {
-          const uploadResults = await uploadService.uploadMultiple(uploadFiles, {
-            folder: `conversations/${conversationId}/messages`,
-            concurrency: 3,
-          });
+          const uploadResults = await uploadService.uploadMultiple(
+            uploadFiles,
+            getRecommendedUploadBatchOptions(uploadFiles, {
+              folder: `conversations/${conversationId}/messages`,
+            }),
+          );
 
           attachments = uploadResults.map((result) => ({
             url: result.url,

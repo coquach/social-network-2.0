@@ -10,12 +10,22 @@
 import type { MediaType } from './enums';
 
 /**
- * Generic file item for upload
- * Platform will provide appropriate File/Blob/Asset type
+ * Portable file descriptor for React Native / Expo uploads.
+ * Web can use the browser File object directly via UploadableFile<File>.
  */
-export interface UploadableFile {
-  // Platform-specific file object (File for web, Asset for mobile, etc.)
-  file: any;
+export interface NativeUploadFileDescriptor {
+  uri: string;
+  name?: string;
+  type?: string;
+  size?: number;
+}
+
+/**
+ * Generic file item for upload
+ * Platform will provide the appropriate concrete file type.
+ */
+export interface UploadableFile<TFile = unknown> {
+  file: TFile;
   type: MediaType;
   // Optional preview URI for immediate display
   previewUri?: string;
@@ -49,6 +59,16 @@ export interface UploadOptions {
 }
 
 /**
+ * Batch upload options.
+ * `concurrency` limits simultaneous uploads inside a chunk.
+ * `chunkSize` limits how many files are attempted before moving to the next chunk.
+ */
+export interface UploadBatchOptions extends UploadOptions {
+  concurrency?: number;
+  chunkSize?: number;
+}
+
+/**
  * Upload service interface
  * Platform must provide implementation
  */
@@ -66,7 +86,7 @@ export interface IUploadService {
    */
   uploadMultiple(
     files: UploadableFile[],
-    options?: UploadOptions & { concurrency?: number }
+    options?: UploadBatchOptions
   ): Promise<UploadResult[]>;
 
   /**

@@ -1,20 +1,16 @@
 import type {
   IUploadService,
+  NativeUploadFileDescriptor,
+  UploadBatchOptions,
   UploadableFile,
   UploadOptions,
   UploadResult,
 } from '@repo/shared';
-import { MediaType } from '@repo/shared';
+import { MediaType, uploadFilesInChunks } from '@repo/shared';
 
 type NativeCloudinaryConfig = {
   cloudName: string;
   uploadPreset: string;
-};
-
-type NativeUploadFile = {
-  uri: string;
-  name?: string;
-  type?: string;
 };
 
 const fallbackMimeTypeByMediaType: Record<MediaType, string> = {
@@ -32,9 +28,9 @@ const resourceTypeByMediaType: Record<MediaType, 'image' | 'video' | 'auto'> = {
 };
 
 const normalizeFile = (
-  uploadableFile: UploadableFile,
-): { file: NativeUploadFile; name: string; mimeType: string } => {
-  const rawFile = uploadableFile.file as NativeUploadFile | undefined;
+  uploadableFile: UploadableFile<NativeUploadFileDescriptor>,
+): { file: NativeUploadFileDescriptor; name: string; mimeType: string } => {
+  const rawFile = uploadableFile.file;
 
   if (!rawFile?.uri) {
     throw new Error('Selected file is missing a local uri.');
@@ -65,7 +61,9 @@ export class NativeCloudinaryUploadService implements IUploadService {
     uploadableFile: UploadableFile,
     options?: UploadOptions,
   ): Promise<UploadResult> {
-    const { file, name, mimeType } = normalizeFile(uploadableFile);
+    const { file, name, mimeType } = normalizeFile(
+      uploadableFile as UploadableFile<NativeUploadFileDescriptor>,
+    );
     const folder = options?.folder || 'uploads';
     const resourceType =
       options?.resourceType || resourceTypeByMediaType[uploadableFile.type];
@@ -115,20 +113,13 @@ export class NativeCloudinaryUploadService implements IUploadService {
 
   async uploadMultiple(
     files: UploadableFile[],
-    options?: UploadOptions & { concurrency?: number },
+    options?: UploadBatchOptions,
   ): Promise<UploadResult[]> {
-    const concurrency = options?.concurrency || 3;
-    const results: UploadResult[] = [];
-
-    for (let index = 0; index < files.length; index += concurrency) {
-      const batch = files.slice(index, index + concurrency);
-      const batchResults = await Promise.all(
-        batch.map((file) => this.uploadFile(file, options)),
-      );
-      results.push(...batchResults);
-    }
-
-    return results;
+    return uploadFilesInChunks(
+      (file, uploadOptions) => this.uploadFile(file, uploadOptions),
+      files,
+      options,
+    );
   }
 
   async deleteFile(): Promise<void> {

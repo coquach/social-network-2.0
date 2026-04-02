@@ -41,6 +41,7 @@ import {
 } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
 import { queryKeys } from './query-keys';
+import { getRecommendedUploadBatchOptions } from '../utils/upload.utils';
 
 // ==================== Query Hooks ====================
 
@@ -169,10 +170,12 @@ export const useCreatePost = () => {
       // Upload files if provided and upload service available
       if (uploadFiles && uploadFiles.length > 0 && uploadService) {
         try {
-          const uploadResults = await uploadService.uploadMultiple(uploadFiles, {
-            folder: 'posts',
-            concurrency: 3,
-          });
+          const uploadResults = await uploadService.uploadMultiple(
+            uploadFiles,
+            getRecommendedUploadBatchOptions(uploadFiles, {
+              folder: 'posts',
+            }),
+          );
 
           const media: MediaDTO[] = uploadResults.map((result) => ({
             type: result.type,
@@ -236,10 +239,12 @@ export const useCreatePostInGroup = () => {
       // Upload files if provided and upload service available
       if (uploadFiles && uploadFiles.length > 0 && uploadService) {
         try {
-          const uploadResults = await uploadService.uploadMultiple(uploadFiles, {
-            folder: input.groupId ? `groups/${input.groupId}/posts` : 'posts',
-            concurrency: 3,
-          });
+          const uploadResults = await uploadService.uploadMultiple(
+            uploadFiles,
+            getRecommendedUploadBatchOptions(uploadFiles, {
+              folder: input.groupId ? `groups/${input.groupId}/posts` : 'posts',
+            }),
+          );
 
           const media: MediaDTO[] = uploadResults.map((result) => ({
             type: result.type,

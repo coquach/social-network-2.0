@@ -1,6 +1,7 @@
 import { createCloudinaryUploadService } from '@/lib/services/cloudinary-upload.service';
 import { MediaItem } from '@/lib/types/media';
 import { MediaDTO, MediaType } from '@/models/social/enums/social.enum';
+import { getRecommendedUploadBatchOptions } from '@repo/shared';
 
 let uploadServiceInstance:
   | ReturnType<typeof createCloudinaryUploadService>
@@ -28,21 +29,26 @@ export const uploadMultipleToCloudinary = async (
   files: MediaItem[],
   folder: string,
   signal?: AbortSignal,
-  concurrency = 3
+  concurrency?: number,
+  chunkSize?: number,
 ) => {
   const uploadService = getUploadService();
-  const results = await uploadService.uploadMultiple(files, {
-    folder,
-    signal,
-    concurrency,
-  });
+  const results = await uploadService.uploadMultiple(
+    files,
+    getRecommendedUploadBatchOptions(files, {
+      folder,
+      signal,
+      concurrency,
+      chunkSize,
+    }),
+  );
 
   return results.map(mapUploadResultToMediaDTO);
 };
 
 export const uploadToCloudinary = async (
   file: File,
-  type: 'image' | 'video',
+  type: MediaType,
   folder: string,
   signal?: AbortSignal,
   publicId?: string
@@ -51,7 +57,7 @@ export const uploadToCloudinary = async (
   const result = await uploadService.uploadFile(
     {
       file,
-      type: type === 'video' ? MediaType.VIDEO : MediaType.IMAGE,
+      type,
     },
     {
       folder,

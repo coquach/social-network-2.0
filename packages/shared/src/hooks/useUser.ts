@@ -22,6 +22,7 @@ import type {
   UserDTO,
   UserProfile,
 } from '../types/user.types';
+import { useAuth } from '../contexts/auth-context';
 import { useUploadOptional } from '../contexts/upload-context';
 import type { UploadableFile } from '../types/upload.types';
 import {
@@ -39,11 +40,18 @@ import { queryKeys } from './query-keys';
  * Get current authenticated user
  */
 export const useCurrentUser = () => {
-  return useQuery<UserDTO>({
+  const { userId } = useAuth();
+
+  return useQuery<UserProfile>({
     queryKey: queryKeys.user.current(),
     queryFn: async () => {
-      return userService.getCurrentUser();
+      if (!userId) {
+        throw new Error('Current user is not available');
+      }
+
+      return userService.getCurrentUser(userId);
     },
+    enabled: !!userId,
     ...queryConfigs.semiStatic, // User profile changes infrequently
   });
 };

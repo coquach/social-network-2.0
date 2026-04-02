@@ -13,6 +13,9 @@ export * from './hooks';
 // Context exports
 export * from './contexts';
 
+// Schema exports
+export * from './schemas';
+
 // Utility exports
 export * from './utils';
 

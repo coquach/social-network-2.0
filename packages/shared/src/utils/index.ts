@@ -8,3 +8,4 @@ export * from './cache-utils';
 export * from './chat-normalizers';
 export * from './colors';
 export * from './theme';
+export * from './upload.utils';

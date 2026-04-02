@@ -14,9 +14,10 @@ import type {
 export const userService = {
   /**
    * Get current user profile
+   * Backend currently exposes this as /users/:id instead of /users/me.
    */
-  async getCurrentUser(): Promise<UserDTO> {
-    return getApiClient().get('/users/me');
+  async getCurrentUser(userId: string): Promise<UserProfile> {
+    return getApiClient().get(`/users/${userId}`);
   },
 
   /**
@@ -30,7 +31,7 @@ export const userService = {
    * Update user profile
    */
   async updateProfile(data: UpdateUserInput): Promise<UserDTO> {
-    return getApiClient().patch('/users/me', data);
+    return getApiClient().patch('/users', data);
   },
 
   /**
