@@ -92,7 +92,7 @@ type ClerkTokenGetter = (
 
 export const getFreshClerkToken = async (getToken: ClerkTokenGetter) => {
   try {
-    return await getToken({ skipCache: true });
+    return await getToken();
   } catch {
     return getToken();
   }

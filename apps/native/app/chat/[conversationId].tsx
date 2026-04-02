@@ -1,5 +1,5 @@
-import { useAuth } from '@clerk/expo';
-import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from "@clerk/expo";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   MediaType,
   type MessageDTO,
@@ -11,19 +11,19 @@ import {
   useSendMessage,
   useUploadOptional,
   useUser,
-} from '@repo/shared';
-import * as DocumentPicker from 'expo-document-picker';
+} from "@repo/shared";
+import * as DocumentPicker from "expo-document-picker";
 import {
   AudioModule,
   RecordingPresets,
   setAudioModeAsync,
   useAudioRecorder,
   useAudioRecorderState,
-} from 'expo-audio';
-import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams } from 'expo-router';
-import { Spinner } from 'heroui-native/spinner';
-import React from 'react';
+} from "expo-audio";
+import * as ImagePicker from "expo-image-picker";
+import { useLocalSearchParams } from "expo-router";
+import { Spinner } from "heroui-native/spinner";
+import React from "react";
 import {
   Alert,
   FlatList,
@@ -31,21 +31,27 @@ import {
   Platform,
   Text,
   View,
-} from 'react-native';
+} from "react-native";
 
 import {
   type ChatComposerAttachment,
   inferMediaType,
-} from '~/components/chat/chat-attachment-utils';
-import { DirectChatAvatar, GroupChatAvatar } from '~/components/chat/chat-avatar';
-import { ChatComposer } from '~/components/chat/chat-composer';
-import { getConversationName, getConversationOtherUserId } from '~/components/chat/chat-helpers';
-import { ChatMessageBubble } from '~/components/chat/chat-message-bubble';
-import { AppCard } from '~/components/ui/app-card';
-import { AppScreen } from '~/components/ui/app-screen';
-import { AppHeaderIconButton, AppHeader } from '~/components/ui/app-header';
-import { usePresenceChannel } from '~/providers/presence-provider';
-import { useSocket } from '~/providers/socket-provider';
+} from "~/components/chat/chat-attachment-utils";
+import {
+  DirectChatAvatar,
+  GroupChatAvatar,
+} from "~/components/chat/chat-avatar";
+import { ChatComposer } from "~/components/chat/chat-composer";
+import {
+  getConversationName,
+  getConversationOtherUserId,
+} from "~/components/chat/chat-helpers";
+import { ChatMessageBubble } from "~/components/chat/chat-message-bubble";
+import { AppCard } from "~/components/ui/app-card";
+import { AppScreen } from "~/components/ui/app-screen";
+import { AppHeaderIconButton, AppHeader } from "~/components/ui/app-header";
+import { usePresenceChannel } from "~/providers/presence-provider";
+import { useSocket } from "~/providers/socket-provider";
 
 const MAX_ATTACHMENTS = 6;
 
@@ -59,7 +65,7 @@ const buildFileDescriptor = (params: {
 }) => ({
   uri: params.uri,
   name: params.name,
-  type: params.mimeType || 'application/octet-stream',
+  type: params.mimeType || "application/octet-stream",
 });
 
 const ensureAttachmentLimit = (
@@ -73,8 +79,10 @@ export default function ChatConversationScreen() {
   const { chatSocket } = useSocket();
   const uploadService = useUploadOptional();
   const { data: currentUser } = useCurrentUser();
-  const [composerValue, setComposerValue] = React.useState('');
-  const [attachments, setAttachments] = React.useState<ChatComposerAttachment[]>([]);
+  const [composerValue, setComposerValue] = React.useState("");
+  const [attachments, setAttachments] = React.useState<
+    ChatComposerAttachment[]
+  >([]);
   const listRef = React.useRef<FlatList<MessageDTO>>(null);
   const isRecordingRef = React.useRef(false);
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -84,18 +92,20 @@ export default function ChatConversationScreen() {
     data: conversation,
     isLoading: isConversationLoading,
     refetch: refetchConversation,
-  } = useConversation(conversationId ?? '', {
+  } = useConversation(conversationId ?? "", {
     enabled: Boolean(conversationId),
   });
   const {
     data: messagesPage,
     isLoading: isMessagesLoading,
     refetch: refetchMessages,
-  } = useMessages(conversationId ?? '', {
+  } = useMessages(conversationId ?? "", {
     limit: 30,
   });
 
-  const { mutateAsync: sendMessage, isPending: isSending } = useSendMessage(conversationId ?? '');
+  const { mutateAsync: sendMessage, isPending: isSending } = useSendMessage(
+    conversationId ?? "",
+  );
   const { mutate: markConversationAsRead } = useMarkConversationAsRead();
 
   const otherUserId = React.useMemo(() => {
@@ -106,7 +116,7 @@ export default function ChatConversationScreen() {
     return getConversationOtherUserId(conversation, userId ?? null);
   }, [conversation, userId]);
 
-  const { data: otherUser } = useUser(otherUserId ?? '', {
+  const { data: otherUser } = useUser(otherUserId ?? "", {
     enabled: Boolean(otherUserId),
   });
   const presence = usePresenceStore((state) =>
@@ -115,11 +125,15 @@ export default function ChatConversationScreen() {
 
   const messages = React.useMemo(() => {
     const items = messagesPage?.pages.flatMap((page) => page.data) ?? [];
-    return [...items].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return [...items].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
   }, [messagesPage?.pages]);
 
   const participantIds = React.useMemo(() => {
-    return (conversation?.participants ?? []).filter((participantId) => participantId !== userId);
+    return (conversation?.participants ?? []).filter(
+      (participantId) => participantId !== userId,
+    );
   }, [conversation?.participants, userId]);
 
   usePresenceChannel(participantIds);
@@ -128,7 +142,8 @@ export default function ChatConversationScreen() {
     const map = new Map<string, { name: string; avatarUrl?: string }>();
 
     if (currentUser?.id) {
-      const ownName = `${currentUser.firstName} ${currentUser.lastName}`.trim() || 'Ban';
+      const ownName =
+        `${currentUser.firstName} ${currentUser.lastName}`.trim() || "Ban";
       map.set(currentUser.id, {
         name: ownName,
         avatarUrl: currentUser.avatarUrl,
@@ -136,7 +151,8 @@ export default function ChatConversationScreen() {
     }
 
     if (otherUser?.id) {
-      const otherName = `${otherUser.firstName} ${otherUser.lastName}`.trim() || 'Nguoi dung';
+      const otherName =
+        `${otherUser.firstName} ${otherUser.lastName}`.trim() || "Nguoi dung";
       map.set(otherUser.id, {
         name: otherName,
         avatarUrl: otherUser.avatarUrl,
@@ -148,11 +164,11 @@ export default function ChatConversationScreen() {
 
   const conversationName = conversation
     ? getConversationName(conversation, otherUser)
-    : 'Cuoc tro chuyen';
+    : "Cuoc tro chuyen";
 
   const recordingDurationMs = React.useMemo(() => {
     const currentTime = (audioRecorder as { currentTime?: number }).currentTime;
-    return typeof currentTime === 'number' ? Math.round(currentTime * 1000) : 0;
+    return typeof currentTime === "number" ? Math.round(currentTime * 1000) : 0;
   }, [audioRecorder, recorderState]);
 
   const ensureUploadsEnabled = React.useCallback(() => {
@@ -161,29 +177,32 @@ export default function ChatConversationScreen() {
     }
 
     Alert.alert(
-      'Thiếu cấu hình upload',
-      'Thêm EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME và EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET vào app native để gửi tệp.',
+      "Thieu cau hinh upload",
+      "Them EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME va EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET vao app native de gui tep.",
     );
     return false;
   }, [uploadService]);
 
-  const appendAttachments = React.useCallback((nextItems: ChatComposerAttachment[]) => {
-    if (nextItems.length === 0) {
-      return;
-    }
-
-    setAttachments((current) => {
-      if (!ensureAttachmentLimit(current.length, nextItems.length)) {
-        Alert.alert(
-          'Vượt quá giới hạn',
-          `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
-        );
-        return current;
+  const appendAttachments = React.useCallback(
+    (nextItems: ChatComposerAttachment[]) => {
+      if (nextItems.length === 0) {
+        return;
       }
 
-      return [...current, ...nextItems];
-    });
-  }, []);
+      setAttachments((current) => {
+        if (!ensureAttachmentLimit(current.length, nextItems.length)) {
+          Alert.alert(
+            "Vuot qua gioi han",
+            `Moi tin nhan chi gui toi da ${MAX_ATTACHMENTS} tep.`,
+          );
+          return current;
+        }
+
+        return [...current, ...nextItems];
+      });
+    },
+    [],
+  );
 
   const handlePickMedia = React.useCallback(async () => {
     if (!ensureUploadsEnabled()) {
@@ -192,12 +211,15 @@ export default function ChatConversationScreen() {
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Cần quyền truy cập thư viện', 'Hãy cho phép truy cập ảnh và video để gửi media.');
+      Alert.alert(
+        "Can quyen truy cap thu vien",
+        "Hay cho phep truy cap anh va video de gui media.",
+      );
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
+      mediaTypes: ["images", "videos"],
       allowsMultipleSelection: true,
       quality: 1,
       selectionLimit: Math.max(1, MAX_ATTACHMENTS - attachments.length),
@@ -208,11 +230,13 @@ export default function ChatConversationScreen() {
     }
 
     const mappedAttachments = result.assets.map((asset) => {
-      const type = asset.type === 'video' ? MediaType.VIDEO : MediaType.IMAGE;
+      const type = asset.type === "video" ? MediaType.VIDEO : MediaType.IMAGE;
       const name =
-        asset.fileName || `${type === MediaType.VIDEO ? 'video' : 'image'}-${Date.now()}`;
+        asset.fileName ||
+        `${type === MediaType.VIDEO ? "video" : "image"}-${Date.now()}`;
       const mimeType =
-        asset.mimeType || (type === MediaType.VIDEO ? 'video/mp4' : 'image/jpeg');
+        asset.mimeType ||
+        (type === MediaType.VIDEO ? "video/mp4" : "image/jpeg");
 
       return {
         id: createAttachmentId(),
@@ -245,7 +269,7 @@ export default function ChatConversationScreen() {
     const result = await DocumentPicker.getDocumentAsync({
       multiple: true,
       copyToCacheDirectory: true,
-      type: '*/*',
+      type: "*/*",
     });
 
     if (result.canceled) {
@@ -299,14 +323,14 @@ export default function ChatConversationScreen() {
           id: createAttachmentId(),
           type: MediaType.AUDIO,
           name: fileName,
-          mimeType: 'audio/m4a',
+          mimeType: "audio/m4a",
           durationMs: recordingDurationMs,
           previewUri: audioRecorder.uri,
           uploadFile: {
             file: buildFileDescriptor({
               uri: audioRecorder.uri,
               name: fileName,
-              mimeType: 'audio/m4a',
+              mimeType: "audio/m4a",
             }),
             type: MediaType.AUDIO,
             previewUri: audioRecorder.uri,
@@ -318,14 +342,14 @@ export default function ChatConversationScreen() {
 
     const permission = await AudioModule.requestRecordingPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Cần quyền micro', 'Hãy cho phép truy cập micro để ghi âm.');
+      Alert.alert("Can quyen micro", "Hay cho phep truy cap micro de ghi am.");
       return;
     }
 
     if (!ensureAttachmentLimit(attachments.length, 1)) {
       Alert.alert(
-        'Vượt quá giới hạn',
-        `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
+        "Vuot qua gioi han",
+        `Moi tin nhan chi gui toi da ${MAX_ATTACHMENTS} tep.`,
       );
       return;
     }
@@ -346,7 +370,9 @@ export default function ChatConversationScreen() {
   ]);
 
   const handleRemoveAttachment = React.useCallback((attachmentId: string) => {
-    setAttachments((current) => current.filter((attachment) => attachment.id !== attachmentId));
+    setAttachments((current) =>
+      current.filter((attachment) => attachment.id !== attachmentId),
+    );
   }, []);
 
   useFocusEffect(
@@ -355,10 +381,10 @@ export default function ChatConversationScreen() {
         return undefined;
       }
 
-      chatSocket.emit('conversation.join', { conversationId });
+      chatSocket.emit("conversation.join", { conversationId });
 
       return () => {
-        chatSocket.emit('conversation.leave', { conversationId });
+        chatSocket.emit("conversation.leave", { conversationId });
       };
     }, [chatSocket, conversationId]),
   );
@@ -369,7 +395,10 @@ export default function ChatConversationScreen() {
     }
 
     const handleRealtimeRefresh = (payload?: { conversationId?: string }) => {
-      if (payload?.conversationId && payload.conversationId !== conversationId) {
+      if (
+        payload?.conversationId &&
+        payload.conversationId !== conversationId
+      ) {
         return;
       }
 
@@ -377,16 +406,16 @@ export default function ChatConversationScreen() {
       void refetchConversation();
     };
 
-    chatSocket.on('message.new', handleRealtimeRefresh);
-    chatSocket.on('message.deleted', handleRealtimeRefresh);
-    chatSocket.on('conversation.updated', handleRealtimeRefresh);
-    chatSocket.on('conversation.read', handleRealtimeRefresh);
+    chatSocket.on("message.new", handleRealtimeRefresh);
+    chatSocket.on("message.deleted", handleRealtimeRefresh);
+    chatSocket.on("conversation.updated", handleRealtimeRefresh);
+    chatSocket.on("conversation.read", handleRealtimeRefresh);
 
     return () => {
-      chatSocket.off('message.new', handleRealtimeRefresh);
-      chatSocket.off('message.deleted', handleRealtimeRefresh);
-      chatSocket.off('conversation.updated', handleRealtimeRefresh);
-      chatSocket.off('conversation.read', handleRealtimeRefresh);
+      chatSocket.off("message.new", handleRealtimeRefresh);
+      chatSocket.off("message.deleted", handleRealtimeRefresh);
+      chatSocket.off("conversation.updated", handleRealtimeRefresh);
+      chatSocket.off("conversation.read", handleRealtimeRefresh);
     };
   }, [chatSocket, conversationId, refetchConversation, refetchMessages]);
 
@@ -422,7 +451,7 @@ export default function ChatConversationScreen() {
       uploadFiles: attachments.map((attachment) => attachment.uploadFile),
     });
 
-    setComposerValue('');
+    setComposerValue("");
     setAttachments([]);
 
     requestAnimationFrame(() => {
@@ -432,20 +461,22 @@ export default function ChatConversationScreen() {
 
   const subtitle = conversation?.isGroup
     ? `${conversation.participants.length} thanh vien`
-    : presence?.status === 'online'
-      ? 'Dang hoat dong'
-      : 'Ngoai tuyen';
+    : presence?.status === "online"
+      ? "Dang hoat dong"
+      : "Ngoai tuyen";
 
   return (
     <AppScreen className="px-0 py-0">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1 bg-app-bg dark:bg-app-bg-dark"
       >
         <View className="flex-1">
           <AppHeader
             variant="bordered"
-            trailing={<AppHeaderIconButton icon="ellipsis-horizontal" iconSize={18} />}
+            trailing={
+              <AppHeaderIconButton icon="ellipsis-horizontal" iconSize={18} />
+            }
             contentClassName="flex-row items-center gap-3"
           >
             <View className="flex-1 flex-row items-center gap-3">
@@ -455,7 +486,7 @@ export default function ChatConversationScreen() {
                 <DirectChatAvatar
                   name={conversationName}
                   imageUrl={otherUser?.avatarUrl}
-                  online={presence?.status === 'online'}
+                  online={presence?.status === "online"}
                 />
               )}
               <View className="flex-1">
@@ -492,7 +523,7 @@ export default function ChatConversationScreen() {
                 return (
                   <ChatMessageBubble
                     message={item}
-                    senderName={sender?.name ?? 'Nguoi dung'}
+                    senderName={sender?.name ?? "Nguoi dung"}
                     senderAvatarUrl={sender?.avatarUrl}
                     showAvatar={showAvatar}
                   />

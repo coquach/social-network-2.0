@@ -1,12 +1,15 @@
-import type { ConversationDTO, ConversationWithParticipantsDTO } from '@repo/shared';
-import { useUser } from '@repo/shared';
-import { Avatar } from 'heroui-native/avatar';
-import React from 'react';
-import { View } from 'react-native';
+import type {
+  ConversationDTO,
+  ConversationWithParticipantsDTO,
+} from "@repo/shared";
+import { useUser } from "@repo/shared";
+import { Avatar } from "heroui-native/avatar";
+import React from "react";
+import { View } from "react-native";
 
-import { cn } from '~/lib/cn';
+import { cn } from "~/lib/cn";
 
-type ChatAvatarSize = 'sm' | 'md' | 'lg';
+type ChatAvatarSize = "sm" | "md" | "lg";
 
 type ChatAvatarProps = {
   name: string;
@@ -18,6 +21,7 @@ type ChatAvatarProps = {
 type GroupChatAvatarProps = {
   conversation?: ConversationDTO | ConversationWithParticipantsDTO | null;
   size?: ChatAvatarSize;
+  allowNetworkFetch?: boolean;
 };
 
 type AvatarVisualSize = {
@@ -32,8 +36,8 @@ type AvatarVisualSize = {
 
 const avatarSizes: Record<ChatAvatarSize, AvatarVisualSize> = {
   sm: {
-    textClassName: 'text-xs',
-    dotClassName: '-bottom-0.5 -right-0.5 h-3.5 w-3.5',
+    textClassName: "text-xs",
+    dotClassName: "-bottom-0.5 -right-0.5 h-3.5 w-3.5",
     groupContainerPx: 40,
     groupCirclePx: 28,
     groupStepPx: 12,
@@ -41,8 +45,8 @@ const avatarSizes: Record<ChatAvatarSize, AvatarVisualSize> = {
     groupFontPx: 10,
   },
   md: {
-    textClassName: 'text-sm',
-    dotClassName: '-bottom-0.5 -right-0.5 h-4 w-4',
+    textClassName: "text-sm",
+    dotClassName: "-bottom-0.5 -right-0.5 h-4 w-4",
     groupContainerPx: 48,
     groupCirclePx: 34,
     groupStepPx: 14,
@@ -50,8 +54,8 @@ const avatarSizes: Record<ChatAvatarSize, AvatarVisualSize> = {
     groupFontPx: 12,
   },
   lg: {
-    textClassName: 'text-base',
-    dotClassName: '-bottom-1 -right-1 h-5 w-5',
+    textClassName: "text-base",
+    dotClassName: "-bottom-1 -right-1 h-5 w-5",
     groupContainerPx: 56,
     groupCirclePx: 39,
     groupStepPx: 17,
@@ -61,21 +65,17 @@ const avatarSizes: Record<ChatAvatarSize, AvatarVisualSize> = {
 };
 
 const getInitials = (name: string) => {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
+  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
 
   if (parts.length === 0) {
-    return '?';
+    return "?";
   }
 
-  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
 };
 
 const getSingleInitial = (name?: string) => {
-  return getInitials(name ?? '?').charAt(0) || '?';
+  return getInitials(name ?? "?").charAt(0) || "?";
 };
 
 type AvatarPrimitiveProps = ChatAvatarProps;
@@ -83,7 +83,7 @@ type AvatarPrimitiveProps = ChatAvatarProps;
 function AvatarPrimitive({
   name,
   imageUrl,
-  size = 'md',
+  size = "md",
   online = false,
 }: AvatarPrimitiveProps) {
   const visualSize = avatarSizes[size];
@@ -106,7 +106,7 @@ function AvatarPrimitive({
       {online ? (
         <View
           className={cn(
-            'absolute rounded-full border-2 border-app-surface bg-emerald-500 dark:border-app-surface-dark',
+            "absolute rounded-full border-2 border-app-surface bg-emerald-500 dark:border-app-surface-dark",
             visualSize.dotClassName,
           )}
         />
@@ -119,8 +119,10 @@ export function DirectChatAvatar(props: ChatAvatarProps) {
   return <AvatarPrimitive {...props} />;
 }
 
-function resolveParticipantDetails(conversation?: ConversationDTO | ConversationWithParticipantsDTO | null) {
-  if (!conversation || !('participantDetails' in conversation)) {
+function resolveParticipantDetails(
+  conversation?: ConversationDTO | ConversationWithParticipantsDTO | null,
+) {
+  if (!conversation || !("participantDetails" in conversation)) {
     return [];
   }
 
@@ -133,19 +135,20 @@ function resolveDisplayName(member?: {
   lastName?: string;
 }) {
   if (!member) {
-    return '';
+    return "";
   }
 
   if (member.name?.trim()) {
     return member.name.trim();
   }
 
-  return `${member.firstName ?? ''} ${member.lastName ?? ''}`.trim();
+  return `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim();
 }
 
 export function GroupChatAvatar({
   conversation,
-  size = 'md',
+  size = "md",
+  allowNetworkFetch = true,
 }: GroupChatAvatarProps) {
   const visualSize = avatarSizes[size];
   const participantIds = React.useMemo(
@@ -162,14 +165,14 @@ export function GroupChatAvatar({
   const prefetchedMember2 = participantDetails[1];
   const prefetchedMember3 = participantDetails[2];
 
-  const { data: fetchedMember1 } = useUser(memberId1 ?? '', {
-    enabled: Boolean(memberId1) && !prefetchedMember1,
+  const { data: fetchedMember1 } = useUser(memberId1 ?? "", {
+    enabled: allowNetworkFetch && Boolean(memberId1) && !prefetchedMember1,
   });
-  const { data: fetchedMember2 } = useUser(memberId2 ?? '', {
-    enabled: Boolean(memberId2) && !prefetchedMember2,
+  const { data: fetchedMember2 } = useUser(memberId2 ?? "", {
+    enabled: allowNetworkFetch && Boolean(memberId2) && !prefetchedMember2,
   });
-  const { data: fetchedMember3 } = useUser(memberId3 ?? '', {
-    enabled: Boolean(memberId3) && !prefetchedMember3,
+  const { data: fetchedMember3 } = useUser(memberId3 ?? "", {
+    enabled: allowNetworkFetch && Boolean(memberId3) && !prefetchedMember3,
   });
 
   const members = [
@@ -181,7 +184,7 @@ export function GroupChatAvatar({
   if (conversation?.groupAvatar?.url) {
     return (
       <AvatarPrimitive
-        name={conversation.groupName?.trim() || 'Nhom chat'}
+        name={conversation.groupName?.trim() || "Nhom chat"}
         imageUrl={conversation.groupAvatar.url}
         size={size}
       />
@@ -206,7 +209,8 @@ export function GroupChatAvatar({
       {circles.length > 0 ? (
         circles.map(({ id, left, zIndex, member }) => {
           const memberName = resolveDisplayName(member);
-          const fallbackName = memberName || conversation?.groupName?.trim() || 'Group';
+          const fallbackName =
+            memberName || conversation?.groupName?.trim() || "Group";
 
           return (
             <Avatar
@@ -220,16 +224,22 @@ export function GroupChatAvatar({
               style={{
                 width: visualSize.groupCirclePx,
                 height: visualSize.groupCirclePx,
-                top: Math.round((visualSize.groupContainerPx - visualSize.groupCirclePx) / 2),
+                top: Math.round(
+                  (visualSize.groupContainerPx - visualSize.groupCirclePx) / 2,
+                ),
                 left,
                 zIndex,
                 borderWidth: visualSize.groupBorderPx,
-                borderColor: '#ffffff',
+                borderColor: "#ffffff",
               }}
             >
-              {member?.avatarUrl ? <Avatar.Image source={{ uri: member.avatarUrl }} /> : null}
+              {member?.avatarUrl ? (
+                <Avatar.Image source={{ uri: member.avatarUrl }} />
+              ) : null}
               <Avatar.Fallback
-                classNames={{ text: 'text-app-primary dark:text-app-primary-dark' }}
+                classNames={{
+                  text: "text-app-primary dark:text-app-primary-dark",
+                }}
                 styles={{ text: { fontSize: visualSize.groupFontPx } }}
               >
                 {getSingleInitial(fallbackName)}
@@ -239,7 +249,7 @@ export function GroupChatAvatar({
         })
       ) : (
         <AvatarPrimitive
-          name={conversation?.groupName?.trim() || 'Nhom chat'}
+          name={conversation?.groupName?.trim() || "Nhom chat"}
           size={size}
         />
       )}

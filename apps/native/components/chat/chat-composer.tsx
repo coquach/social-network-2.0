@@ -1,21 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
-import { MediaType } from '@repo/shared';
-import { Button } from 'heroui-native/button';
-import React from 'react';
-import {
-  Image,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { MediaType } from "@repo/shared";
+import { Button } from "heroui-native/button";
+import React from "react";
+import { Image, Pressable, Text, TextInput, View } from "react-native";
 
-import type { ChatComposerAttachment } from '~/components/chat/chat-attachment-utils';
+import type { ChatComposerAttachment } from "~/components/chat/chat-attachment-utils";
 import {
   buildAttachmentMeta,
   formatAttachmentDuration,
-} from '~/components/chat/chat-attachment-utils';
-import { cn } from '~/lib/cn';
+} from "~/components/chat/chat-attachment-utils";
+import { cn } from "~/lib/cn";
 
 type ChatComposerProps = {
   value: string;
@@ -55,18 +49,14 @@ function ComposerActionButton({
         void onPress();
       }}
       className={cn(
-        'h-10 w-10 items-center justify-center rounded-full border',
+        "h-10 w-10 items-center justify-center rounded-full border",
         active
-          ? 'border-rose-200 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/15'
-          : 'border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark',
-        disabled ? 'opacity-50' : 'active:scale-95',
+          ? "border-rose-200 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/15"
+          : "border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark",
+        disabled ? "opacity-50" : "active:scale-95",
       )}
     >
-      <Ionicons
-        name={icon}
-        size={18}
-        color={active ? '#e11d48' : '#2563eb'}
-      />
+      <Ionicons name={icon} size={18} color={active ? "#e11d48" : "#2563eb"} />
     </Pressable>
   );
 }
@@ -89,7 +79,10 @@ function ComposerAttachmentCard({
       <View className="relative">
         <Pressable className="h-20 w-20 overflow-hidden rounded-[18px] border border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark">
           {isImage && attachment.previewUri ? (
-            <Image source={{ uri: attachment.previewUri }} className="h-full w-full" />
+            <Image
+              source={{ uri: attachment.previewUri }}
+              className="h-full w-full"
+            />
           ) : (
             <View className="flex-1 items-center justify-center bg-slate-950 px-2">
               <Ionicons name="film-outline" size={24} color="#ffffff" />
@@ -97,7 +90,9 @@ function ComposerAttachmentCard({
                 Video
               </Text>
               {meta ? (
-                <Text className="mt-1 text-center text-[10px] text-white/80">{meta}</Text>
+                <Text className="mt-1 text-center text-[10px] text-white/80">
+                  {meta}
+                </Text>
               ) : null}
             </View>
           )}
@@ -113,7 +108,7 @@ function ComposerAttachmentCard({
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Xóa ${attachment.name}`}
+          accessibilityLabel={`Xoa ${attachment.name}`}
           onPress={() => onRemove(attachment.id)}
           className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-black/70"
         >
@@ -129,16 +124,16 @@ function ComposerAttachmentCard({
         <View className="flex-1 justify-between gap-3">
           <View
             className={cn(
-              'h-10 w-10 items-center justify-center rounded-full',
+              "h-10 w-10 items-center justify-center rounded-full",
               isAudio
-                ? 'bg-emerald-100 dark:bg-emerald-500/15'
-                : 'bg-sky-100 dark:bg-sky-500/15',
+                ? "bg-emerald-100 dark:bg-emerald-500/15"
+                : "bg-sky-100 dark:bg-sky-500/15",
             )}
           >
             <Ionicons
-              name={isAudio ? 'mic-outline' : 'document-attach-outline'}
+              name={isAudio ? "mic-outline" : "document-attach-outline"}
               size={18}
-              color={isAudio ? '#059669' : '#2563eb'}
+              color={isAudio ? "#059669" : "#2563eb"}
             />
           </View>
 
@@ -163,7 +158,7 @@ function ComposerAttachmentCard({
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Xóa ${attachment.name}`}
+        accessibilityLabel={`Xoa ${attachment.name}`}
         onPress={() => onRemove(attachment.id)}
         className="absolute right-1.5 top-1.5 h-6 w-6 items-center justify-center rounded-full bg-black/70"
       >
@@ -190,11 +185,13 @@ export function ChatComposer({
   const isSendDisabled = disabled || !hasPayload;
   const mediaAttachments = attachments.filter(
     (attachment) =>
-      attachment.type === MediaType.IMAGE || attachment.type === MediaType.VIDEO,
+      attachment.type === MediaType.IMAGE ||
+      attachment.type === MediaType.VIDEO,
   );
   const fileAttachments = attachments.filter(
     (attachment) =>
-      attachment.type !== MediaType.IMAGE && attachment.type !== MediaType.VIDEO,
+      attachment.type !== MediaType.IMAGE &&
+      attachment.type !== MediaType.VIDEO,
   );
 
   return (
@@ -216,8 +213,8 @@ export function ChatComposer({
           {fileAttachments.length > 0 ? (
             <View
               className={cn(
-                'flex-row flex-wrap gap-2',
-                mediaAttachments.length > 0 ? 'mt-2' : '',
+                "flex-row flex-wrap gap-2",
+                mediaAttachments.length > 0 ? "mt-2" : "",
               )}
             >
               {fileAttachments.map((attachment) => (
@@ -236,9 +233,12 @@ export function ChatComposer({
         <View className="mb-3 flex-row items-center gap-2 rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
           <View className="h-2.5 w-2.5 rounded-full bg-rose-500" />
           <Text className="flex-1 text-sm font-medium text-rose-700 dark:text-rose-200">
-            Đang ghi âm {formatAttachmentDuration(recordingDurationMs) ?? '0:00'}
+            Dang ghi am{" "}
+            {formatAttachmentDuration(recordingDurationMs) ?? "0:00"}
           </Text>
-          <Text className="text-xs text-rose-600 dark:text-rose-200">Nhấn mic để dừng</Text>
+          <Text className="text-xs text-rose-600 dark:text-rose-200">
+            Nhan mic de dung
+          </Text>
         </View>
       ) : null}
 
@@ -246,19 +246,19 @@ export function ChatComposer({
         <View className="flex-row gap-2">
           <ComposerActionButton
             icon="images-outline"
-            label="Chọn ảnh hoặc video"
+            label="Chon anh hoac video"
             disabled={disabled}
             onPress={onPickMedia}
           />
           <ComposerActionButton
             icon="document-attach-outline"
-            label="Chọn tệp"
+            label="Chon tep"
             disabled={disabled}
             onPress={onPickFile}
           />
           <ComposerActionButton
-            icon={isRecording ? 'stop-circle-outline' : 'mic-outline'}
-            label={isRecording ? 'Dừng ghi âm' : 'Ghi âm'}
+            icon={isRecording ? "stop-circle-outline" : "mic-outline"}
+            label={isRecording ? "Dung ghi am" : "Ghi am"}
             active={isRecording}
             disabled={disabled}
             onPress={onToggleRecording}
@@ -269,28 +269,31 @@ export function ChatComposer({
           <TextInput
             multiline
             maxLength={1500}
-            placeholder="Nhập tin nhắn..."
+            placeholder="Nhap tin nhan..."
             placeholderTextColor="#6b8aa1"
             value={value}
             onChangeText={onChange}
             editable={!disabled}
             className={cn(
-              'min-h-6 text-[15px] leading-5 text-app-fg dark:text-app-fg-dark',
-              disabled ? 'opacity-60' : '',
+              "min-h-6 text-[15px] leading-5 text-app-fg dark:text-app-fg-dark",
+              disabled ? "opacity-60" : "",
             )}
           />
         </View>
 
         <Button
-          variant={isSendDisabled ? 'secondary' : 'primary'}
-          className={cn('h-12 w-12 min-h-12 rounded-full px-0', isSendDisabled ? 'opacity-70' : '')}
+          variant={isSendDisabled ? "secondary" : "primary"}
+          className={cn(
+            "h-12 w-12 min-h-12 rounded-full px-0",
+            isSendDisabled ? "opacity-70" : "",
+          )}
           isDisabled={isSendDisabled}
           onPress={onSend}
         >
           <Ionicons
             name="paper-plane"
             size={18}
-            color={isSendDisabled ? '#6b8aa1' : '#ffffff'}
+            color={isSendDisabled ? "#6b8aa1" : "#ffffff"}
           />
         </Button>
       </View>
