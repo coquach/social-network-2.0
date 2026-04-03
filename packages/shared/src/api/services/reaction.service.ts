@@ -24,7 +24,9 @@ export const reactionService = {
   /**
    * Get reactions for a target (post, comment, share)
    */
-  async getReactions(params: GetReactionsParams): Promise<CursorPageResponse<ReactionDTO>> {
+  async getReactions(
+    params: GetReactionsParams,
+  ): Promise<CursorPageResponse<ReactionDTO>> {
     return getApiClient().getCursorPage('/reactions', { params });
   },
 
@@ -32,13 +34,13 @@ export const reactionService = {
    * React to a target
    */
   async react(input: CreateReactionInput): Promise<void> {
-    return getApiClient().post('/reactions/react', input);
+    return getApiClient().post('/reactions', input);
   },
 
   /**
    * Remove reaction from a target
    */
   async disReact(input: RemoveReactionInput): Promise<void> {
-    return getApiClient().delete('/reactions/dis-react', { data: input });
+    return getApiClient().delete('/reactions', { data: input });
   },
 };

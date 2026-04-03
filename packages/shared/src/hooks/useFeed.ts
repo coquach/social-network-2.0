@@ -11,30 +11,44 @@ import { queryKeys } from './query-keys';
 /**
  * Hook to get personalized feed (infinite scroll)
  */
-export const useMyFeed = (params?: { mainEmotion?: Emotion; limit?: number }) => {
+export const useMyFeed = (params?: {
+  mainEmotion?: Emotion;
+  limit?: number;
+}) => {
   return useInfiniteQuery<CursorPageResponse<FeedDTO>>({
     queryKey: queryKeys.feed.personal(params?.mainEmotion),
     queryFn: ({ pageParam }) =>
-      feedService.getMyFeed({ ...params, cursor: pageParam as string | undefined }),
+      feedService.getMyFeed({
+        ...params,
+        cursor: pageParam as string | undefined,
+      }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
     staleTime: 10 * 1000, // 10 seconds
-    refetchInterval: 15 * 1000, // 15 seconds
+    refetchInterval: false,
+    refetchOnReconnect: true,
   });
 };
 
 /**
  * Hook to get trending feed (infinite scroll)
  */
-export const useTrendingFeed = (params?: { mainEmotion?: Emotion; limit?: number }) => {
+export const useTrendingFeed = (params?: {
+  mainEmotion?: Emotion;
+  limit?: number;
+}) => {
   return useInfiniteQuery<CursorPageResponse<PostDTO>>({
     queryKey: queryKeys.feed.trending(params?.mainEmotion),
     queryFn: ({ pageParam }) =>
-      feedService.getTrendingFeed({ ...params, cursor: pageParam as string | undefined }),
+      feedService.getTrendingFeed({
+        ...params,
+        cursor: pageParam as string | undefined,
+      }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
     staleTime: 10 * 1000, // 10 seconds
-    refetchInterval: 15 * 1000, // 15 seconds
+    refetchInterval: false,
+    refetchOnReconnect: true,
   });
 };
 
