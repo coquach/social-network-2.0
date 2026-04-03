@@ -18,6 +18,7 @@ import React from "react";
 import { Alert, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { CreateConversationSheet } from "~/components/chat/create-conversation-sheet";
 import { ChatConversationRow } from "~/components/chat/chat-conversation-row";
 import {
   DirectChatAvatar,
@@ -38,6 +39,7 @@ import {
 import { AppLoadingBlock } from "~/components/ui/app-loading";
 import { AppScreen } from "~/components/ui/app-screen";
 import { AppToast, type AppToastData } from "~/components/ui/app-toast";
+import { FloatingActionButton } from "~/components/ui/floating-action-button";
 import { cn } from "~/lib/cn";
 
 const sortConversations = (conversations: ConversationDTO[]) => {
@@ -95,6 +97,8 @@ export default function ChatInboxScreen() {
   const [selectedConversation, setSelectedConversation] =
     React.useState<ConversationDTO | null>(null);
   const [actionOpen, setActionOpen] = React.useState(false);
+  const [createConversationOpen, setCreateConversationOpen] =
+    React.useState(false);
 
   const {
     data,
@@ -517,6 +521,31 @@ export default function ChatInboxScreen() {
           </View>
         ) : null}
       </AppBottomSheet>
+
+      <View
+        pointerEvents="box-none"
+        className="absolute bottom-0 left-0 right-0"
+      >
+        <View
+          className="items-end px-5"
+          style={{ paddingBottom: insets.bottom + 18 }}
+        >
+          <FloatingActionButton
+            isActive={createConversationOpen}
+            onPress={() => {
+              setCreateConversationOpen((current) => !current);
+            }}
+            accessibilityLabel="Tao cuoc tro chuyen"
+          />
+        </View>
+      </View>
+
+      <CreateConversationSheet
+        visible={createConversationOpen}
+        onClose={() => {
+          setCreateConversationOpen(false);
+        }}
+      />
     </AppScreen>
   );
 }

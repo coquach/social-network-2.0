@@ -20,7 +20,6 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
-import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
 import React from "react";
@@ -50,6 +49,7 @@ import { ChatMessageBubble } from "~/components/chat/chat-message-bubble";
 import { AppCard } from "~/components/ui/app-card";
 import { AppScreen } from "~/components/ui/app-screen";
 import { AppHeaderIconButton, AppHeader } from "~/components/ui/app-header";
+import { pickLibraryMediaAssets } from "~/lib/media-picker";
 import { usePresenceChannel } from "~/providers/presence-provider";
 import { useSocket } from "~/providers/socket-provider";
 
@@ -209,27 +209,20 @@ export default function ChatConversationScreen() {
       return;
     }
 
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert(
-        "Can quyen truy cap thu vien",
-        "Hay cho phep truy cap anh va video de gui media.",
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const assets = await pickLibraryMediaAssets({
+      permissionAlert: {
+        title: "Can quyen truy cap thu vien",
+        message: "Hay cho phep truy cap anh va video de gui media.",
+      },
       mediaTypes: ["images", "videos"],
-      allowsMultipleSelection: true,
-      quality: 1,
       selectionLimit: Math.max(1, MAX_ATTACHMENTS - attachments.length),
     });
 
-    if (result.canceled) {
+    if (assets.length === 0) {
       return;
     }
 
-    const mappedAttachments = result.assets.map((asset) => {
+    const mappedAttachments = assets.map((asset) => {
       const type = asset.type === "video" ? MediaType.VIDEO : MediaType.IMAGE;
       const name =
         asset.fileName ||
