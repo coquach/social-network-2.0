@@ -141,10 +141,10 @@ function ComposerAttachmentCard({
             />
           </View>
 
-          <View className="gap-1">
+          <View className="gap-1 flex-row">
             <Text
               numberOfLines={2}
-              className="text-xs font-semibold text-app-fg dark:text-app-fg-dark"
+              className="text-xs font-semibold text-app-fg dark:text-app-fg-dark truncate"
             >
               {attachment.name}
             </Text>
@@ -189,7 +189,7 @@ export function ChatComposer({
   recordingDurationMs = 0,
 }: ChatComposerProps) {
   const [isFocused, setIsFocused] = React.useState(false);
-  const [inputHeight, setInputHeight] = React.useState(24);
+  const [inputHeight, setInputHeight] = React.useState(22);
   const hasPayload = value.trim().length > 0 || attachments.length > 0;
   const isSendDisabled = disabled || isRecording || !hasPayload;
   const mediaAttachments = attachments.filter(
@@ -202,7 +202,7 @@ export function ChatComposer({
       attachment.type !== MediaType.IMAGE &&
       attachment.type !== MediaType.VIDEO,
   );
-  const minComposerHeight = isFocused ? 72 : 24;
+  const minComposerHeight = isFocused ? 72 : 22;
   const maxComposerHeight = isFocused ? 128 : 72;
   const resolvedInputHeight = Math.max(minComposerHeight, inputHeight);
 
@@ -264,7 +264,7 @@ export function ChatComposer({
         </View>
       ) : null}
 
-      <View className="flex-row items-end gap-3">
+      <View className={cn("flex-row gap-3", isFocused ? "items-end" : "items-center")}>
         {!isFocused || isRecording ? (
           <View className="flex-row gap-2">
             <ComposerActionButton
@@ -297,8 +297,10 @@ export function ChatComposer({
 
         <View
           className={cn(
-            "flex-1 rounded-[28px] border border-app-border bg-app-surface-elevated px-4 py-3 dark:border-app-border-dark dark:bg-app-surface-elevated-dark",
-            isFocused ? "rounded-[24px]" : "",
+            "flex-1 border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark",
+            isFocused
+              ? "rounded-[24px] px-4 py-3"
+              : "min-h-12 rounded-full px-4 py-2.5",
           )}
         >
           <TextInput
@@ -315,7 +317,7 @@ export function ChatComposer({
             }}
             onBlur={() => {
               setIsFocused(false);
-              setInputHeight(24);
+              setInputHeight(22);
             }}
             onContentSizeChange={(event) => {
               const nextHeight = Math.min(
@@ -332,6 +334,7 @@ export function ChatComposer({
             }}
             className={cn(
               "text-[15px] leading-5 text-app-fg dark:text-app-fg-dark",
+              !isFocused ? "py-0" : "",
               disabled ? "opacity-60" : "",
             )}
           />

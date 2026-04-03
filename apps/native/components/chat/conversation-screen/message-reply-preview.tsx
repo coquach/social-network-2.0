@@ -13,6 +13,7 @@ type MessageReplyPreviewProps = {
   tone?: MessageReplyPreviewTone;
   onPress?: () => void;
   onClear?: () => void;
+  compact?: boolean;
 };
 
 const toneStyles: Record<
@@ -82,6 +83,7 @@ export function MessageReplyPreview({
   tone = "other",
   onPress,
   onClear,
+  compact = false,
 }: MessageReplyPreviewProps) {
   if (!replyTo) {
     return null;
@@ -95,20 +97,34 @@ export function MessageReplyPreview({
     getAttachmentTypeFromMessage(firstAttachment) === MediaType.IMAGE;
 
   const content = (
-    <View className={cn("flex-row items-center gap-3 rounded-2xl px-3 py-2", style.container)}>
+    <View
+      className={cn(
+        "w-full flex-row items-start rounded-2xl",
+        compact ? "gap-2 px-2.5 py-2" : "gap-3 px-3 py-2",
+        style.container,
+      )}
+    >
       <Ionicons
         name="arrow-undo-outline"
-        size={16}
+        size={compact ? 14 : 16}
         color={style.iconColor}
+        style={{ marginTop: compact ? 1 : 2 }}
       />
       <View className="min-w-0 flex-1">
-        <Text className={cn("text-[11px] font-semibold", style.title)}>
+        <Text
+          numberOfLines={1}
+          className={cn(
+            compact ? "text-[10px]" : "text-[11px]",
+            "font-semibold",
+            style.title,
+          )}
+        >
           Trả lời tin nhắn
         </Text>
         <Text
           numberOfLines={2}
           className={cn(
-            "mt-0.5 text-[13px] leading-5",
+            compact ? "mt-0.5 text-[12px] leading-4" : "mt-0.5 text-[13px] leading-5",
             style.body,
             replyTo.isDeleted ? "italic opacity-75" : "",
           )}
@@ -118,10 +134,16 @@ export function MessageReplyPreview({
       </View>
 
       {canShowImage ? (
-        <View className={cn("overflow-hidden rounded-xl border", style.thumbnailBorder)}>
+        <View
+          className={cn(
+            "shrink-0 overflow-hidden border",
+            compact ? "rounded-lg" : "rounded-xl",
+            style.thumbnailBorder,
+          )}
+        >
           <Image
             source={{ uri: firstAttachment.url }}
-            className="h-11 w-11"
+            className={compact ? "h-9 w-9" : "h-11 w-11"}
           />
         </View>
       ) : null}
@@ -131,7 +153,10 @@ export function MessageReplyPreview({
           accessibilityRole="button"
           accessibilityLabel="Bỏ trả lời"
           onPress={onClear}
-          className="h-8 w-8 items-center justify-center rounded-full"
+          className={cn(
+            "items-center justify-center rounded-full",
+            compact ? "h-7 w-7" : "h-8 w-8",
+          )}
         >
           <Ionicons name="close" size={16} color={style.closeIconColor} />
         </Pressable>

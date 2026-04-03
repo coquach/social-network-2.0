@@ -9,7 +9,7 @@ import { View } from "react-native";
 
 import { cn } from "~/lib/cn";
 
-type ChatAvatarSize = "sm" | "md" | "lg";
+type ChatAvatarSize = "xs" | "sm" | "md" | "lg";
 
 type ChatAvatarProps = {
   name: string;
@@ -25,6 +25,7 @@ type GroupChatAvatarProps = {
 };
 
 type AvatarVisualSize = {
+  avatarPx: number;
   textClassName: string;
   dotClassName: string;
   groupContainerPx: number;
@@ -35,7 +36,18 @@ type AvatarVisualSize = {
 };
 
 const avatarSizes: Record<ChatAvatarSize, AvatarVisualSize> = {
+  xs: {
+    avatarPx: 22,
+    textClassName: "text-[10px]",
+    dotClassName: "-bottom-0.5 -right-0.5 h-2.5 w-2.5",
+    groupContainerPx: 32,
+    groupCirclePx: 20,
+    groupStepPx: 9,
+    groupBorderPx: 2,
+    groupFontPx: 9,
+  },
   sm: {
+    avatarPx: 40,
     textClassName: "text-xs",
     dotClassName: "-bottom-0.5 -right-0.5 h-3.5 w-3.5",
     groupContainerPx: 40,
@@ -45,6 +57,7 @@ const avatarSizes: Record<ChatAvatarSize, AvatarVisualSize> = {
     groupFontPx: 10,
   },
   md: {
+    avatarPx: 48,
     textClassName: "text-sm",
     dotClassName: "-bottom-0.5 -right-0.5 h-4 w-4",
     groupContainerPx: 48,
@@ -54,6 +67,7 @@ const avatarSizes: Record<ChatAvatarSize, AvatarVisualSize> = {
     groupFontPx: 12,
   },
   lg: {
+    avatarPx: 56,
     textClassName: "text-base",
     dotClassName: "-bottom-1 -right-1 h-5 w-5",
     groupContainerPx: 56,
@@ -92,13 +106,21 @@ function AvatarPrimitive({
     <View className="relative">
       <Avatar
         alt={name}
-        size={size}
+        size={size === "xs" ? "sm" : size}
         variant="soft"
         color="accent"
         animation="disable-all"
+        className="overflow-hidden"
+        style={{
+          width: visualSize.avatarPx,
+          height: visualSize.avatarPx,
+        }}
       >
         {imageUrl ? <Avatar.Image source={{ uri: imageUrl }} /> : null}
-        <Avatar.Fallback classNames={{ text: visualSize.textClassName }}>
+        <Avatar.Fallback
+          classNames={{ text: visualSize.textClassName }}
+          styles={{ text: { lineHeight: visualSize.avatarPx * 0.42 } }}
+        >
           {getInitials(name)}
         </Avatar.Fallback>
       </Avatar>

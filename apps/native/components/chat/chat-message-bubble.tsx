@@ -214,10 +214,16 @@ export function ChatMessageBubble({
               )}
             >
               {message.replyTo ? (
-                <View className={cn(content || attachments.length > 0 ? "mb-3" : "")}>
+                <View
+                  className={cn(
+                    "max-w-full",
+                    content || attachments.length > 0 ? "mb-3" : "",
+                  )}
+                >
                   <MessageReplyPreview
                     replyTo={message.replyTo}
                     tone={isOwn ? "own" : "other"}
+                    compact
                   />
                 </View>
               ) : null}
@@ -289,7 +295,7 @@ export function ChatMessageBubble({
                       <ChatAvatar
                         name={user.name}
                         imageUrl={user.avatarUrl}
-                        size="sm"
+                        size="xs"
                       />
                     </View>
                   ))}

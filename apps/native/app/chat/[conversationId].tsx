@@ -27,7 +27,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
 import React from "react";
-import { Alert, KeyboardAvoidingView, Platform, View } from "react-native";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
 
 import {
   type ChatComposerAttachment,
@@ -45,6 +45,9 @@ import { ConversationHeader } from "~/components/chat/conversation-screen/conver
 import { MessageActionSheet } from "~/components/chat/conversation-screen/message-action-sheet";
 import { ConversationInfoSheet } from "~/components/chat/conversation-screen/conversation-info-sheet";
 import { ConversationMessageList } from "~/components/chat/conversation-screen/conversation-message-list";
+import { PrimaryButton, SecondaryButton } from "~/components/ui/app-button";
+import { AppAlert, type AppAlertVariant } from "~/components/ui/app-alert";
+import { AppModal } from "~/components/ui/app-modal";
 import { AppScreen } from "~/components/ui/app-screen";
 import { AppToast, type AppToastData } from "~/components/ui/app-toast";
 import { pickLibraryMediaAssets, pickSingleImage } from "~/lib/media-picker";
@@ -71,6 +74,12 @@ const ensureAttachmentLimit = (
   nextCount: number,
 ): boolean => currentCount + nextCount <= MAX_ATTACHMENTS;
 
+type ConversationScreenAlert = {
+  title: string;
+  description: string;
+  variant: AppAlertVariant;
+};
+
 export default function ChatConversationScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const { userId } = useAuth();
@@ -83,6 +92,10 @@ export default function ChatConversationScreen() {
   const [selectedMessage, setSelectedMessage] = React.useState<MessageDTO | null>(
     null,
   );
+  const [messagePendingDelete, setMessagePendingDelete] =
+    React.useState<MessageDTO | null>(null);
+  const [screenAlert, setScreenAlert] =
+    React.useState<ConversationScreenAlert | null>(null);
   const [attachments, setAttachments] = React.useState<
     ChatComposerAttachment[]
   >([]);
@@ -224,19 +237,30 @@ export default function ChatConversationScreen() {
   React.useEffect(() => {
     clearReply();
     setSelectedMessage(null);
+    setMessagePendingDelete(null);
+    setScreenAlert(null);
   }, [clearReply, conversationId]);
+
+  const showScreenAlert = React.useCallback(
+    (value: ConversationScreenAlert) => {
+      setScreenAlert(value);
+    },
+    [],
+  );
 
   const ensureUploadsEnabled = React.useCallback(() => {
     if (uploadService) {
       return true;
     }
 
-    Alert.alert(
-      "Thiếu cấu hình upload",
-      "Thêm EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME và EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET vào app native để gửi tệp.",
-    );
+    showScreenAlert({
+      title: "Thiếu cấu hình upload",
+      description:
+        "Thêm EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME và EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET để gửi tệp trong cuộc trò chuyện.",
+      variant: "warning",
+    });
     return false;
-  }, [uploadService]);
+  }, [showScreenAlert, uploadService]);
 
   const appendAttachments = React.useCallback(
     (nextItems: ChatComposerAttachment[]) => {
@@ -246,17 +270,18 @@ export default function ChatConversationScreen() {
 
       setAttachments((current) => {
         if (!ensureAttachmentLimit(current.length, nextItems.length)) {
-          Alert.alert(
-            "Vượt quá giới hạn",
-            `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
-          );
+          showScreenAlert({
+            title: "Vượt quá giới hạn",
+            description: `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
+            variant: "warning",
+          });
           return current;
         }
 
         return [...current, ...nextItems];
       });
     },
-    [],
+    [showScreenAlert],
   );
 
   const handlePickMedia = React.useCallback(async () => {
@@ -432,15 +457,20 @@ export default function ChatConversationScreen() {
 
     const permission = await AudioModule.requestRecordingPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Cần quyền micro", "Hãy cho phép truy cập micro để ghi âm.");
+      showScreenAlert({
+        title: "Cần quyền micro",
+        description: "Hãy cho phép truy cập micro để ghi âm trong cuộc trò chuyện.",
+        variant: "warning",
+      });
       return;
     }
 
     if (!ensureAttachmentLimit(attachments.length, 1)) {
-      Alert.alert(
-        "Vượt quá giới hạn",
-        `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
-      );
+      showScreenAlert({
+        title: "Vượt quá giới hạn",
+        description: `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
+        variant: "warning",
+      });
       return;
     }
 
@@ -457,6 +487,7 @@ export default function ChatConversationScreen() {
     ensureUploadsEnabled,
     recorderState.isRecording,
     recordingDurationMs,
+    showScreenAlert,
   ]);
 
   const handleRemoveAttachment = React.useCallback((attachmentId: string) => {
@@ -539,34 +570,30 @@ export default function ChatConversationScreen() {
     }
 
     setSelectedMessage(null);
-    Alert.alert("Xóa tin nhắn", "Bạn có chắc muốn xóa tin nhắn này không?", [
-      {
-        text: "Hủy",
-        style: "cancel",
-      },
-      {
-        text: "Xóa",
-        style: "destructive",
-        onPress: () => {
-          void deleteMessage(message._id)
-            .then(() => {
-              showToast({
-                title: "Đã xóa tin nhắn",
-                variant: "success",
-              });
-            })
-            .catch((error) => {
-              console.error("Failed to delete message:", error);
-              showToast({
-                title: "Không thể xóa tin nhắn",
-                message: "Vui lòng thử lại sau.",
-                variant: "error",
-              });
-            });
-        },
-      },
-    ]);
-  }, [deleteMessage, selectedMessage, showToast, userId]);
+    setMessagePendingDelete(message);
+  }, [selectedMessage, userId]);
+
+  const handleConfirmDeleteMessage = React.useCallback(async () => {
+    if (!messagePendingDelete) {
+      return;
+    }
+
+    try {
+      await deleteMessage(messagePendingDelete._id);
+      setMessagePendingDelete(null);
+      showToast({
+        title: "Đã xóa tin nhắn",
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      showToast({
+        title: "Không thể xóa tin nhắn",
+        message: "Vui lòng thử lại sau.",
+        variant: "error",
+      });
+    }
+  }, [deleteMessage, messagePendingDelete, showToast]);
 
   return (
     <AppScreen className="px-0 py-0">
@@ -605,6 +632,19 @@ export default function ChatConversationScreen() {
               onLongPressMessage={handleLongPressMessage}
             />
           )}
+
+          {screenAlert ? (
+            <View className="px-4 pb-3">
+              <AppAlert
+                title={screenAlert.title}
+                description={screenAlert.description}
+                variant={screenAlert.variant}
+                onClose={() => {
+                  setScreenAlert(null);
+                }}
+              />
+            </View>
+          ) : null}
 
           <ChatComposer
             value={composerValue}
@@ -651,6 +691,39 @@ export default function ChatConversationScreen() {
             }}
             onReply={handleReplyMessage}
             onDelete={handleDeleteMessage}
+          />
+
+          <AppModal
+            visible={Boolean(messagePendingDelete)}
+            onClose={() => {
+              if (!isDeletingMessage) {
+                setMessagePendingDelete(null);
+              }
+            }}
+            variant="danger"
+            title="Xác nhận xóa tin nhắn"
+            description="Tin nhắn này sẽ bị xóa khỏi cuộc trò chuyện. Hành động này không thể hoàn tác."
+            dismissible={!isDeletingMessage}
+            footer={
+              <>
+                <PrimaryButton
+                  label="Xóa tin nhắn"
+                  onPress={() => {
+                    void handleConfirmDeleteMessage();
+                  }}
+                  loading={isDeletingMessage}
+                  disabled={isDeletingMessage}
+                  className="bg-rose-600"
+                />
+                <SecondaryButton
+                  label="Hủy"
+                  onPress={() => {
+                    setMessagePendingDelete(null);
+                  }}
+                  disabled={isDeletingMessage}
+                />
+              </>
+            }
           />
         </View>
       </KeyboardAvoidingView>
