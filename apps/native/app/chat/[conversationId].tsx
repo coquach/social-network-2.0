@@ -1,10 +1,12 @@
 import { useAuth } from "@clerk/expo";
-import { useFocusEffect } from "@react-navigation/native";
 import {
   MediaType,
   type MessageDTO,
+  type ConversationWithParticipantsDTO,
+  useChatStore,
   useConversation,
   useCurrentUser,
+  useDeleteMessage,
   useMarkConversationAsRead,
   useMessages,
   usePresenceStore,
@@ -12,6 +14,7 @@ import {
   useUploadOptional,
   useUser,
 } from "@repo/shared";
+import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
 import {
   AudioModule,
@@ -22,36 +25,31 @@ import {
 } from "expo-audio";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
+import { useToast } from "heroui-native/toast";
 import React from "react";
-import {
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Text,
-  View,
-} from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, View } from "react-native";
 
 import {
   type ChatComposerAttachment,
   inferMediaType,
 } from "~/components/chat/chat-attachment-utils";
-import {
-  DirectChatAvatar,
-  GroupChatAvatar,
-} from "~/components/chat/chat-avatar";
 import { ChatComposer } from "~/components/chat/chat-composer";
 import {
+  compareMessagesAscending,
   getConversationName,
+  getConversationOtherParticipant,
   getConversationOtherUserId,
+  getConversationLastSeenMap,
 } from "~/components/chat/chat-helpers";
-import { ChatMessageBubble } from "~/components/chat/chat-message-bubble";
-import { AppCard } from "~/components/ui/app-card";
+import { ConversationHeader } from "~/components/chat/conversation-screen/conversation-header";
+import { MessageActionSheet } from "~/components/chat/conversation-screen/message-action-sheet";
+import { ConversationInfoSheet } from "~/components/chat/conversation-screen/conversation-info-sheet";
+import { ConversationMessageList } from "~/components/chat/conversation-screen/conversation-message-list";
 import { AppScreen } from "~/components/ui/app-screen";
-import { AppHeaderIconButton, AppHeader } from "~/components/ui/app-header";
-import { pickLibraryMediaAssets } from "~/lib/media-picker";
+import { AppToast, type AppToastData } from "~/components/ui/app-toast";
+import { pickLibraryMediaAssets, pickSingleImage } from "~/lib/media-picker";
+import { useNativeConversationRealtime } from "~/providers/chat-realtime-provider";
 import { usePresenceChannel } from "~/providers/presence-provider";
-import { useSocket } from "~/providers/socket-provider";
 
 const MAX_ATTACHMENTS = 6;
 
@@ -76,29 +74,32 @@ const ensureAttachmentLimit = (
 export default function ChatConversationScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const { userId } = useAuth();
-  const { chatSocket } = useSocket();
+  const { toast } = useToast();
   const uploadService = useUploadOptional();
   const { data: currentUser } = useCurrentUser();
+  const { replyTo, setReplyTo, clearReply } = useChatStore();
   const [composerValue, setComposerValue] = React.useState("");
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [selectedMessage, setSelectedMessage] = React.useState<MessageDTO | null>(
+    null,
+  );
   const [attachments, setAttachments] = React.useState<
     ChatComposerAttachment[]
   >([]);
-  const listRef = React.useRef<FlatList<MessageDTO>>(null);
   const isRecordingRef = React.useRef(false);
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
 
-  const {
-    data: conversation,
-    isLoading: isConversationLoading,
-    refetch: refetchConversation,
-  } = useConversation(conversationId ?? "", {
-    enabled: Boolean(conversationId),
-  });
+  const { data: conversation, isLoading: isConversationLoading } =
+    useConversation(conversationId ?? "", {
+      enabled: Boolean(conversationId),
+    });
   const {
     data: messagesPage,
     isLoading: isMessagesLoading,
-    refetch: refetchMessages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useMessages(conversationId ?? "", {
     limit: 30,
   });
@@ -106,6 +107,8 @@ export default function ChatConversationScreen() {
   const { mutateAsync: sendMessage, isPending: isSending } = useSendMessage(
     conversationId ?? "",
   );
+  const { mutateAsync: deleteMessage, isPending: isDeletingMessage } =
+    useDeleteMessage(conversationId ?? "");
   const { mutate: markConversationAsRead } = useMarkConversationAsRead();
 
   const otherUserId = React.useMemo(() => {
@@ -123,11 +126,9 @@ export default function ChatConversationScreen() {
     otherUserId ? state.getById(otherUserId) : undefined,
   );
 
-  const messages = React.useMemo(() => {
+  const fetchedMessages = React.useMemo(() => {
     const items = messagesPage?.pages.flatMap((page) => page.data) ?? [];
-    return [...items].sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-    );
+    return [...items].sort(compareMessagesAscending);
   }, [messagesPage?.pages]);
 
   const participantIds = React.useMemo(() => {
@@ -136,14 +137,49 @@ export default function ChatConversationScreen() {
     );
   }, [conversation?.participants, userId]);
 
+  const isHiddenForMe = React.useMemo(() => {
+    if (!userId) {
+      return false;
+    }
+
+    return Boolean(conversation?.hiddenFor?.includes(userId));
+  }, [conversation?.hiddenFor, userId]);
+
   usePresenceChannel(participantIds);
+
+  const { messages, handleReachedBottom } = useNativeConversationRealtime({
+    conversationId,
+    isHiddenForMe,
+    fetchedMessages,
+    markConversationAsRead,
+  });
+
+  const otherParticipant = React.useMemo(() => {
+    if (!conversation) {
+      return null;
+    }
+
+    return getConversationOtherParticipant(conversation, userId ?? null);
+  }, [conversation, userId]);
 
   const participantMap = React.useMemo(() => {
     const map = new Map<string, { name: string; avatarUrl?: string }>();
+    const conversationWithParticipants = conversation as
+      | ConversationWithParticipantsDTO
+      | undefined;
+
+    if (Array.isArray(conversationWithParticipants?.participantDetails)) {
+      conversationWithParticipants.participantDetails.forEach((participant) => {
+        map.set(participant.id, {
+          name: participant.name?.trim() || "Người dùng",
+          avatarUrl: participant.avatarUrl,
+        });
+      });
+    }
 
     if (currentUser?.id) {
       const ownName =
-        `${currentUser.firstName} ${currentUser.lastName}`.trim() || "Ban";
+        `${currentUser.firstName} ${currentUser.lastName}`.trim() || "Bạn";
       map.set(currentUser.id, {
         name: ownName,
         avatarUrl: currentUser.avatarUrl,
@@ -152,7 +188,7 @@ export default function ChatConversationScreen() {
 
     if (otherUser?.id) {
       const otherName =
-        `${otherUser.firstName} ${otherUser.lastName}`.trim() || "Nguoi dung";
+        `${otherUser.firstName} ${otherUser.lastName}`.trim() || "Người dùng";
       map.set(otherUser.id, {
         name: otherName,
         avatarUrl: otherUser.avatarUrl,
@@ -160,16 +196,35 @@ export default function ChatConversationScreen() {
     }
 
     return map;
-  }, [currentUser, otherUser]);
+  }, [conversation, currentUser, otherUser]);
+
+  const lastSeenMap = React.useMemo(
+    () => getConversationLastSeenMap(conversation?.lastSeenMessageId as never),
+    [conversation?.lastSeenMessageId],
+  );
+
+  const showToast = React.useCallback(
+    (value: AppToastData) => {
+      toast.show({
+        component: (toastProps) => <AppToast toast={value} toastProps={toastProps} />,
+      });
+    },
+    [toast],
+  );
 
   const conversationName = conversation
-    ? getConversationName(conversation, otherUser)
-    : "Cuoc tro chuyen";
+    ? getConversationName(conversation, otherUser ?? otherParticipant)
+    : "Cuộc trò chuyện";
 
   const recordingDurationMs = React.useMemo(() => {
     const currentTime = (audioRecorder as { currentTime?: number }).currentTime;
     return typeof currentTime === "number" ? Math.round(currentTime * 1000) : 0;
   }, [audioRecorder, recorderState]);
+
+  React.useEffect(() => {
+    clearReply();
+    setSelectedMessage(null);
+  }, [clearReply, conversationId]);
 
   const ensureUploadsEnabled = React.useCallback(() => {
     if (uploadService) {
@@ -177,8 +232,8 @@ export default function ChatConversationScreen() {
     }
 
     Alert.alert(
-      "Thieu cau hinh upload",
-      "Them EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME va EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET vao app native de gui tep.",
+      "Thiếu cấu hình upload",
+      "Thêm EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME và EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET vào app native để gửi tệp.",
     );
     return false;
   }, [uploadService]);
@@ -192,8 +247,8 @@ export default function ChatConversationScreen() {
       setAttachments((current) => {
         if (!ensureAttachmentLimit(current.length, nextItems.length)) {
           Alert.alert(
-            "Vuot qua gioi han",
-            `Moi tin nhan chi gui toi da ${MAX_ATTACHMENTS} tep.`,
+            "Vượt quá giới hạn",
+            `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
           );
           return current;
         }
@@ -211,8 +266,8 @@ export default function ChatConversationScreen() {
 
     const assets = await pickLibraryMediaAssets({
       permissionAlert: {
-        title: "Can quyen truy cap thu vien",
-        message: "Hay cho phep truy cap anh va video de gui media.",
+        title: "Cần quyền truy cập thư viện",
+        message: "Hãy cho phép truy cập ảnh và video để gửi media.",
       },
       mediaTypes: ["images", "videos"],
       selectionLimit: Math.max(1, MAX_ATTACHMENTS - attachments.length),
@@ -253,6 +308,48 @@ export default function ChatConversationScreen() {
 
     appendAttachments(mappedAttachments);
   }, [appendAttachments, attachments.length, ensureUploadsEnabled]);
+
+  const handlePickCamera = React.useCallback(async () => {
+    if (!ensureUploadsEnabled()) {
+      return;
+    }
+
+    const asset = await pickSingleImage({
+      source: "camera",
+      permissionAlert: {
+        title: "Cần quyền truy cập camera",
+        message: "Hãy cho phép camera để chụp ảnh gửi trong cuộc trò chuyện.",
+      },
+      allowsEditing: false,
+    });
+
+    if (!asset) {
+      return;
+    }
+
+    const name = asset.fileName || `image-${Date.now()}.jpg`;
+    const mimeType = asset.mimeType || "image/jpeg";
+
+    appendAttachments([
+      {
+        id: createAttachmentId(),
+        type: MediaType.IMAGE,
+        name,
+        mimeType,
+        size: asset.fileSize,
+        previewUri: asset.uri,
+        uploadFile: {
+          file: buildFileDescriptor({
+            uri: asset.uri,
+            name,
+            mimeType,
+          }),
+          type: MediaType.IMAGE,
+          previewUri: asset.uri,
+        },
+      } satisfies ChatComposerAttachment,
+    ]);
+  }, [appendAttachments, ensureUploadsEnabled]);
 
   const handlePickFile = React.useCallback(async () => {
     if (!ensureUploadsEnabled()) {
@@ -335,14 +432,14 @@ export default function ChatConversationScreen() {
 
     const permission = await AudioModule.requestRecordingPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Can quyen micro", "Hay cho phep truy cap micro de ghi am.");
+      Alert.alert("Cần quyền micro", "Hãy cho phép truy cập micro để ghi âm.");
       return;
     }
 
     if (!ensureAttachmentLimit(attachments.length, 1)) {
       Alert.alert(
-        "Vuot qua gioi han",
-        `Moi tin nhan chi gui toi da ${MAX_ATTACHMENTS} tep.`,
+        "Vượt quá giới hạn",
+        `Mỗi tin nhắn chỉ gửi tối đa ${MAX_ATTACHMENTS} tệp.`,
       );
       return;
     }
@@ -368,58 +465,6 @@ export default function ChatConversationScreen() {
     );
   }, []);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      if (!conversationId || !chatSocket) {
-        return undefined;
-      }
-
-      chatSocket.emit("conversation.join", { conversationId });
-
-      return () => {
-        chatSocket.emit("conversation.leave", { conversationId });
-      };
-    }, [chatSocket, conversationId]),
-  );
-
-  React.useEffect(() => {
-    if (!chatSocket || !conversationId) {
-      return;
-    }
-
-    const handleRealtimeRefresh = (payload?: { conversationId?: string }) => {
-      if (
-        payload?.conversationId &&
-        payload.conversationId !== conversationId
-      ) {
-        return;
-      }
-
-      void refetchMessages();
-      void refetchConversation();
-    };
-
-    chatSocket.on("message.new", handleRealtimeRefresh);
-    chatSocket.on("message.deleted", handleRealtimeRefresh);
-    chatSocket.on("conversation.updated", handleRealtimeRefresh);
-    chatSocket.on("conversation.read", handleRealtimeRefresh);
-
-    return () => {
-      chatSocket.off("message.new", handleRealtimeRefresh);
-      chatSocket.off("message.deleted", handleRealtimeRefresh);
-      chatSocket.off("conversation.updated", handleRealtimeRefresh);
-      chatSocket.off("conversation.read", handleRealtimeRefresh);
-    };
-  }, [chatSocket, conversationId, refetchConversation, refetchMessages]);
-
-  React.useEffect(() => {
-    if (!conversationId || messages.length === 0) {
-      return;
-    }
-
-    markConversationAsRead(conversationId);
-  }, [conversationId, markConversationAsRead, messages.length]);
-
   React.useEffect(() => {
     isRecordingRef.current = recorderState.isRecording;
   }, [recorderState.isRecording]);
@@ -441,22 +486,87 @@ export default function ChatConversationScreen() {
     await sendMessage({
       conversationId,
       content,
+      replyTo: replyTo?._id,
       uploadFiles: attachments.map((attachment) => attachment.uploadFile),
     });
 
     setComposerValue("");
     setAttachments([]);
+    clearReply();
+  }, [attachments, clearReply, composerValue, conversationId, replyTo?._id, sendMessage]);
 
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToEnd({ animated: true });
-    });
-  }, [attachments, composerValue, conversationId, sendMessage]);
+  const handleLongPressMessage = React.useCallback((message: MessageDTO) => {
+    setSelectedMessage(message);
+  }, []);
 
-  const subtitle = conversation?.isGroup
-    ? `${conversation.participants.length} thanh vien`
-    : presence?.status === "online"
-      ? "Dang hoat dong"
-      : "Ngoai tuyen";
+  const handleCopyMessage = React.useCallback(async () => {
+    const content = selectedMessage?.content?.trim();
+    if (!content) {
+      return;
+    }
+
+    try {
+      await Clipboard.setStringAsync(content);
+      showToast({
+        title: "Đã sao chép",
+        message: "Nội dung tin nhắn đã được lưu vào bộ nhớ tạm.",
+        variant: "success",
+      });
+      setSelectedMessage(null);
+    } catch (error) {
+      console.error("Failed to copy message:", error);
+      showToast({
+        title: "Không thể sao chép",
+        message: "Vui lòng thử lại sau.",
+        variant: "error",
+      });
+    }
+  }, [selectedMessage?.content, showToast]);
+
+  const handleReplyMessage = React.useCallback(() => {
+    if (!selectedMessage || selectedMessage.isDeleted) {
+      return;
+    }
+
+    setReplyTo(selectedMessage);
+    setSelectedMessage(null);
+  }, [selectedMessage, setReplyTo]);
+
+  const handleDeleteMessage = React.useCallback(() => {
+    const message = selectedMessage;
+    if (!message || message.senderId !== userId) {
+      return;
+    }
+
+    setSelectedMessage(null);
+    Alert.alert("Xóa tin nhắn", "Bạn có chắc muốn xóa tin nhắn này không?", [
+      {
+        text: "Hủy",
+        style: "cancel",
+      },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: () => {
+          void deleteMessage(message._id)
+            .then(() => {
+              showToast({
+                title: "Đã xóa tin nhắn",
+                variant: "success",
+              });
+            })
+            .catch((error) => {
+              console.error("Failed to delete message:", error);
+              showToast({
+                title: "Không thể xóa tin nhắn",
+                message: "Vui lòng thử lại sau.",
+                variant: "error",
+              });
+            });
+        },
+      },
+    ]);
+  }, [deleteMessage, selectedMessage, showToast, userId]);
 
   return (
     <AppScreen className="px-0 py-0">
@@ -465,99 +575,82 @@ export default function ChatConversationScreen() {
         className="flex-1 bg-app-bg dark:bg-app-bg-dark"
       >
         <View className="flex-1">
-          <AppHeader
-            variant="bordered"
-            trailing={
-              <AppHeaderIconButton icon="ellipsis-horizontal" iconSize={18} />
-            }
-            contentClassName="flex-row items-center gap-3"
-          >
-            <View className="flex-1 flex-row items-center gap-3">
-              {conversation?.isGroup ? (
-                <GroupChatAvatar conversation={conversation} />
-              ) : (
-                <DirectChatAvatar
-                  name={conversationName}
-                  imageUrl={otherUser?.avatarUrl}
-                  online={presence?.status === "online"}
-                />
-              )}
-              <View className="flex-1">
-                <Text
-                  numberOfLines={1}
-                  className="text-base font-semibold text-app-fg dark:text-app-fg-dark"
-                >
-                  {conversationName}
-                </Text>
-                <Text
-                  numberOfLines={1}
-                  className="mt-0.5 text-xs text-app-muted-fg dark:text-app-muted-fg-dark"
-                >
-                  {subtitle}
-                </Text>
-              </View>
-            </View>
-          </AppHeader>
+          <ConversationHeader
+            conversation={conversation}
+            conversationName={conversationName}
+            directAvatarUrl={otherUser?.avatarUrl ?? otherParticipant?.avatarUrl}
+            presence={presence}
+            onOpenDrawer={() => {
+              setDrawerOpen(true);
+            }}
+          />
 
-          {isConversationLoading || isMessagesLoading ? (
+          {isConversationLoading ? (
             <View className="flex-1 items-center justify-center">
               <Spinner size="sm" color="default" />
             </View>
           ) : (
-            <FlatList
-              ref={listRef}
-              data={messages}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item, index }) => {
-                const sender = participantMap.get(item.senderId);
-                const previousMessage = index > 0 ? messages[index - 1] : null;
-                const showAvatar = previousMessage?.senderId !== item.senderId;
-
-                return (
-                  <ChatMessageBubble
-                    message={item}
-                    senderName={sender?.name ?? "Nguoi dung"}
-                    senderAvatarUrl={sender?.avatarUrl}
-                    showAvatar={showAvatar}
-                  />
-                );
+            <ConversationMessageList
+              messages={messages}
+              currentUserId={userId}
+              participantMap={participantMap}
+              lastSeenMap={lastSeenMap}
+              isLoading={isMessagesLoading}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onLoadEarlier={() => {
+                void fetchNextPage();
               }}
-              contentContainerStyle={{
-                paddingVertical: 18,
-                paddingBottom: 28,
-                gap: 12,
-              }}
-              showsVerticalScrollIndicator={false}
-              onContentSizeChange={() => {
-                listRef.current?.scrollToEnd({ animated: true });
-              }}
-              ListEmptyComponent={
-                <AppCard className="mx-4 rounded-[32px] px-6 py-10">
-                  <Text className="text-center text-base font-semibold text-app-fg dark:text-app-fg-dark">
-                    Chua co tin nhan nao
-                  </Text>
-                  <Text className="mt-2 text-center text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-                    Gui loi chao dau tien de bat dau cuoc tro chuyen.
-                  </Text>
-                </AppCard>
-              }
+              onReachedBottom={handleReachedBottom}
+              onLongPressMessage={handleLongPressMessage}
             />
           )}
 
           <ChatComposer
             value={composerValue}
             attachments={attachments}
+            replyTo={replyTo}
             onChange={setComposerValue}
+            onPickCamera={handlePickCamera}
             onPickMedia={handlePickMedia}
             onPickFile={handlePickFile}
             onToggleRecording={handleToggleRecording}
             onRemoveAttachment={handleRemoveAttachment}
+            onClearReply={clearReply}
             onSend={() => {
               void handleSend();
             }}
             isRecording={recorderState.isRecording}
             recordingDurationMs={recordingDurationMs}
-            disabled={isSending || !conversationId}
+            disabled={
+              isSending || isDeletingMessage || !conversationId || isHiddenForMe
+            }
+          />
+
+          <ConversationInfoSheet
+            visible={drawerOpen}
+            onClose={() => {
+              setDrawerOpen(false);
+            }}
+            conversation={conversation}
+            conversationName={conversationName}
+            currentUserId={userId}
+            directAvatarUrl={otherUser?.avatarUrl ?? otherParticipant?.avatarUrl}
+            presence={presence}
+          />
+
+          <MessageActionSheet
+            visible={Boolean(selectedMessage)}
+            message={selectedMessage}
+            isOwn={selectedMessage?.senderId === userId}
+            onClose={() => {
+              setSelectedMessage(null);
+            }}
+            onCopy={() => {
+              void handleCopyMessage();
+            }}
+            onReply={handleReplyMessage}
+            onDelete={handleDeleteMessage}
           />
         </View>
       </KeyboardAvoidingView>

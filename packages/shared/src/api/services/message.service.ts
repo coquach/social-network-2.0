@@ -11,7 +11,6 @@ import type {
   MarkAsReadInput,
   CursorPageResponse,
 } from '../../types';
-import { normalizeMessage, normalizeMessagePage } from '../../utils';
 
 export const messageService = {
   /**
@@ -21,29 +20,26 @@ export const messageService = {
     conversationId: string,
     params?: { cursor?: string; limit?: number }
   ): Promise<CursorPageResponse<MessageDTO>> {
-    const response = await getApiClient().getCursorPage<MessageDTO>(
+    return getApiClient().getCursorPage<MessageDTO>(
       `/chats/conversations/${conversationId}/messages`,
       {
         params,
       }
     );
-    return normalizeMessagePage(response as CursorPageResponse<any>);
   },
 
   /**
    * Get single message by ID
    */
   async getMessage(messageId: string): Promise<MessageDTO> {
-    const response = await getApiClient().get<MessageDTO>(`/chats/messages/${messageId}`);
-    return normalizeMessage(response as any);
+    return getApiClient().get<MessageDTO>(`/chats/messages/${messageId}`);
   },
 
   /**
    * Send new message
    */
   async sendMessage(data: CreateMessageInput): Promise<MessageDTO> {
-    const response = await getApiClient().post<MessageDTO>('/chats/messages', data);
-    return normalizeMessage(response as any);
+    return getApiClient().post<MessageDTO>('/chats/messages', data);
   },
 
   /**
@@ -53,11 +49,10 @@ export const messageService = {
     messageId: string,
     data: UpdateMessageInput
   ): Promise<MessageDTO> {
-    const response = await getApiClient().patch<MessageDTO>(
+    return getApiClient().patch<MessageDTO>(
       `/chats/messages/${messageId}`,
       data
     );
-    return normalizeMessage(response as any);
   },
 
   /**

@@ -19,7 +19,10 @@ import { Alert, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CreateConversationSheet } from "~/components/chat/create-conversation-sheet";
-import { ChatConversationRow } from "~/components/chat/chat-conversation-row";
+import {
+  ChatConversationRow,
+  ChatConversationRowSkeleton,
+} from "~/components/chat/chat-conversation-row";
 import {
   DirectChatAvatar,
   GroupChatAvatar,
@@ -49,6 +52,8 @@ const sortConversations = (conversations: ConversationDTO[]) => {
       getConversationLastActivity(a).getTime(),
   );
 };
+
+const conversationSkeletonItems = Array.from({ length: 7 }, (_, index) => index);
 
 function ConversationSheetAction({
   icon,
@@ -369,6 +374,24 @@ export default function ChatInboxScreen() {
         </View>
 
         {isLoading ? (
+          <FlashList
+            data={conversationSkeletonItems}
+            keyExtractor={(item) => `conversation-skeleton-${item}`}
+            renderItem={() => <ChatConversationRowSkeleton />}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingBottom: insets.bottom + 28,
+              paddingTop: 6,
+            }}
+            ItemSeparatorComponent={() => <View className="h-2.5" />}
+            scrollEnabled={false}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : null}
+
+        {!isLoading ? (
+          <>
+        {isLoading ? (
           <AppLoadingBlock label="Đang tải cuộc trò chuyện..." />
         ) : (
           <FlashList
@@ -431,6 +454,8 @@ export default function ChatInboxScreen() {
             }
           />
         )}
+          </>
+        ) : null}
       </View>
 
       <AppBottomSheet

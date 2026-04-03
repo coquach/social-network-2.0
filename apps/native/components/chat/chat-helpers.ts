@@ -4,6 +4,14 @@ import type {
   MessageDTO,
   UserProfile,
 } from "@repo/shared";
+import {
+  format,
+  formatDistanceToNow,
+  isSameYear,
+  isToday,
+  isYesterday,
+} from "date-fns";
+import { vi } from "date-fns/locale";
 
 type ConversationParticipantLike = {
   id?: string;
@@ -14,12 +22,128 @@ type ConversationParticipantLike = {
   isOnline?: boolean;
 };
 
+type PresenceLike = {
+  status?: "online" | "offline" | "away";
+  lastSeen?: string | null;
+};
+
+type ChatDateValue = Date | string | number | null | undefined;
+type LastSeenMapLike =
+  | Map<string, string>
+  | Record<string, string>
+  | Array<[string, string]>
+  | null
+  | undefined;
+
 const hasParticipantDetails = (
   conversation: ConversationDTO | ConversationWithParticipantsDTO,
 ): conversation is ConversationWithParticipantsDTO => {
   return (
     "participantDetails" in conversation &&
     Array.isArray(conversation.participantDetails)
+  );
+};
+
+const coerceChatDate = (value: ChatDateValue): Date | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "object") {
+    const candidate = value as {
+      $date?: Date | string | number;
+      date?: Date | string | number;
+      toDate?: () => Date;
+      seconds?: number;
+      _seconds?: number;
+    };
+
+    if (typeof candidate.toDate === "function") {
+      return coerceChatDate(candidate.toDate());
+    }
+
+    if (candidate.$date !== undefined) {
+      return coerceChatDate(candidate.$date);
+    }
+
+    if (candidate.date !== undefined) {
+      return coerceChatDate(candidate.date);
+    }
+
+    if (typeof candidate.seconds === "number") {
+      return new Date(candidate.seconds * 1000);
+    }
+
+    if (typeof candidate._seconds === "number") {
+      return new Date(candidate._seconds * 1000);
+    }
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
+};
+
+export const getChatDateMs = (value: ChatDateValue) => {
+  return coerceChatDate(value)?.getTime() ?? 0;
+};
+
+export const getChatDayKey = (value: ChatDateValue) => {
+  const date = coerceChatDate(value);
+
+  if (!date) {
+    return "";
+  }
+
+  return format(date, "yyyy-MM-dd");
+};
+
+export const compareMessagesAscending = (a: MessageDTO, b: MessageDTO) => {
+  const createdAtDiff = getChatDateMs(a.createdAt) - getChatDateMs(b.createdAt);
+
+  if (createdAtDiff !== 0) {
+    return createdAtDiff;
+  }
+
+  const updatedAtDiff = getChatDateMs(a.updatedAt) - getChatDateMs(b.updatedAt);
+
+  if (updatedAtDiff !== 0) {
+    return updatedAtDiff;
+  }
+
+  return a._id.localeCompare(b._id);
+};
+
+export const getConversationLastSeenMap = (value: LastSeenMapLike) => {
+  if (!value) {
+    return new Map<string, string>();
+  }
+
+  if (value instanceof Map) {
+    return new Map(value);
+  }
+
+  if (Array.isArray(value)) {
+    return new Map(
+      value.filter(
+        (entry): entry is [string, string] =>
+          Array.isArray(entry) &&
+          entry.length === 2 &&
+          typeof entry[0] === "string" &&
+          typeof entry[1] === "string",
+      ),
+    );
+  }
+
+  return new Map(
+    Object.entries(value).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[0] === "string" && typeof entry[1] === "string",
+    ),
   );
 };
 
@@ -34,7 +158,7 @@ export const getParticipantDisplayName = (
     return participant.name.trim();
   }
 
-  return `${participant.lastName ?? ""} ${participant.firstName ?? ""}`.trim();
+  return `${participant.firstName ?? ""} ${participant.lastName ?? ""}`.trim();
 };
 
 export const getConversationParticipantDetails = (
@@ -81,46 +205,107 @@ export const getConversationName = (
     | null,
 ) => {
   if (conversation.isGroup) {
-    return conversation.groupName?.trim() || "Nhom chat";
+    return conversation.groupName?.trim() || "Nhóm chat";
   }
 
   const fullName = getParticipantDisplayName(otherUser);
-  return fullName || "Cuoc tro chuyen";
+  return fullName || "Cuộc trò chuyện";
 };
 
 export const getConversationLastActivity = (conversation: ConversationDTO) => {
   return (
-    conversation.lastMessage?.createdAt ??
-    conversation.updatedAt ??
-    conversation.createdAt
+    coerceChatDate(
+      conversation.lastMessage?.createdAt ??
+        conversation.updatedAt ??
+        conversation.createdAt,
+    ) ?? new Date(0)
   );
 };
 
-export const formatConversationTime = (date?: Date) => {
+export const formatConversationTime = (value?: ChatDateValue) => {
+  const date = coerceChatDate(value);
+
   if (!date) {
     return "";
   }
 
   const now = new Date();
-  const isSameDay =
-    now.getFullYear() === date.getFullYear() &&
-    now.getMonth() === date.getMonth() &&
-    now.getDate() === date.getDate();
 
-  if (isSameDay) {
-    return new Intl.DateTimeFormat("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
+  if (isToday(date)) {
+    return "Hôm nay";
   }
 
-  const isSameYear = now.getFullYear() === date.getFullYear();
+  if (isYesterday(date)) {
+    return "Hôm qua";
+  }
 
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    ...(isSameYear ? {} : { year: "2-digit" }),
-  }).format(date);
+  return format(date, isSameYear(date, now) ? "dd/MM" : "dd/MM/yy");
+};
+
+export const formatTimeAgo = (
+  value?: ChatDateValue,
+  options?: { withPrefix?: boolean },
+) => {
+  const date = coerceChatDate(value);
+
+  if (!date) {
+    return "";
+  }
+
+  return formatDistanceToNow(date, {
+    addSuffix: options?.withPrefix ?? false,
+    locale: vi,
+  }).replace(/^khoảng\s+/i, "");
+};
+
+export const getConversationPresenceSubtitle = (presence?: PresenceLike) => {
+  if (!presence || presence.status === "offline") {
+    const lastSeenLabel = formatTimeAgo(presence?.lastSeen, {
+      withPrefix: true,
+    });
+
+    return lastSeenLabel ? `Hoạt động ${lastSeenLabel}` : "Ngoại tuyến";
+  }
+
+  if (presence.status === "away") {
+    return "Đang tạm vắng";
+  }
+
+  return "Đang hoạt động";
+};
+
+export const getGroupConversationSubtitle = (participantCount: number) => {
+  return `${participantCount} thành viên`;
+};
+
+export const formatMessageTimestamp = (value?: ChatDateValue) => {
+  const date = coerceChatDate(value);
+
+  if (!date) {
+    return "";
+  }
+
+  return format(date, "HH:mm");
+};
+
+export const formatMessageDateLabel = (value?: ChatDateValue) => {
+  const date = coerceChatDate(value);
+
+  if (!date) {
+    return "";
+  }
+
+  if (isToday(date)) {
+    return "Hôm nay";
+  }
+
+  if (isYesterday(date)) {
+    return "Hôm qua";
+  }
+
+  return format(date, "EEEE, dd 'tháng' MM, yyyy", {
+    locale: vi,
+  });
 };
 
 export const getConversationUnreadState = (
@@ -135,10 +320,9 @@ export const getConversationUnreadState = (
     return false;
   }
 
-  const lastSeenMessageId =
-    conversation.lastSeenMessageId instanceof Map
-      ? conversation.lastSeenMessageId.get(currentUserId)
-      : undefined;
+  const lastSeenMessageId = getConversationLastSeenMap(
+    conversation.lastSeenMessageId as LastSeenMapLike,
+  ).get(currentUserId);
 
   if (lastSeenMessageId) {
     return lastSeenMessageId !== conversation.lastMessage._id;
@@ -159,20 +343,20 @@ export const getMessagePreview = (
   options?: MessagePreviewOptions,
 ) => {
   if (!message) {
-    return isGroup ? "Nhom moi duoc tao." : "Bat dau cuoc tro chuyen.";
+    return isGroup ? "Nhóm mới được tạo." : "Bắt đầu cuộc trò chuyện.";
   }
 
   const isOwnMessage = options?.currentUserId
     ? message.senderId === options.currentUserId
     : false;
   const senderPrefix = isOwnMessage
-    ? "Ban: "
+    ? "Bạn: "
     : isGroup && options?.senderName
       ? `${options.senderName}: `
       : "";
 
   if (message.isDeleted) {
-    return `${senderPrefix}Tin nhan da bi xoa.`;
+    return `${senderPrefix}Tin nhắn đã bị xóa.`;
   }
 
   if (message.content?.trim()) {
@@ -180,10 +364,10 @@ export const getMessagePreview = (
   }
 
   if (message.attachments?.length) {
-    return `${senderPrefix}Da gui tep dinh kem.`;
+    return `${senderPrefix}Đã gửi tệp đính kèm.`;
   }
 
   return otherUserName
-    ? `${otherUserName} da gui tin nhan.`
-    : `${senderPrefix}Da gui tin nhan.`;
+    ? `${otherUserName} đã gửi tin nhắn.`
+    : `${senderPrefix}Đã gửi tin nhắn.`;
 };

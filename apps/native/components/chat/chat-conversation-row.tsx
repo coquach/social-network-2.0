@@ -1,4 +1,5 @@
 import { useAuth } from "@clerk/expo";
+import { Skeleton } from "heroui-native/skeleton";
 import type { ConversationDTO } from "@repo/shared";
 import { usePresenceStore, useUser } from "@repo/shared";
 import React from "react";
@@ -25,6 +26,44 @@ type ChatConversationRowProps = {
   onLongPress: (conversation: ConversationDTO) => void;
 };
 
+const getConversationRowClassName = ({
+  isUnread,
+  pressed,
+}: {
+  isUnread?: boolean;
+  pressed?: boolean;
+}) =>
+  cn(
+    "overflow-hidden rounded-[28px] border px-3 py-3.5",
+    isUnread
+      ? "border-sky-200 bg-white shadow-sm dark:border-sky-400/30 dark:bg-app-surface-dark"
+      : "border-transparent bg-app-surface/82 dark:bg-app-surface-elevated-dark/90",
+    pressed &&
+      "border-sky-200/90 bg-sky-50 dark:border-sky-300/25 dark:bg-sky-500/10",
+  );
+
+export function ChatConversationRowSkeleton() {
+  return (
+    <View className={getConversationRowClassName({})}>
+      <View className="flex-row items-center gap-3">
+        <Skeleton className="h-14 w-14 rounded-full" />
+
+        <View className="min-w-0 flex-1">
+          <View className="flex-row items-center gap-3">
+            <Skeleton className="h-4 flex-1 rounded-full" />
+            <Skeleton className="h-3 w-11 rounded-full" />
+          </View>
+
+          <View className="mt-2 gap-2">
+            <Skeleton className="h-3.5 w-[92%] rounded-full" />
+            <Skeleton className="h-3.5 w-2/3 rounded-full" />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function ChatConversationRowComponent({
   conversation,
   onPress,
@@ -36,12 +75,27 @@ function ChatConversationRowComponent({
     () => getConversationOtherParticipant(conversation, userId ?? null),
     [conversation, userId],
   );
-  const { data: cachedOtherUser } = useUser(otherUserId ?? "", {
-    enabled: false,
+  const shouldResolveOtherUser =
+    !conversation.isGroup && Boolean(otherUserId) && !otherParticipant;
+  const {
+    data: cachedOtherUser,
+    isLoading: isOtherUserLoading,
+    isFetching: isOtherUserFetching,
+  } = useUser(otherUserId ?? "", {
+    enabled: shouldResolveOtherUser,
   });
   const presence = usePresenceStore((state) =>
     otherUserId ? state.getById(otherUserId) : undefined,
   );
+
+  const shouldShowSkeleton =
+    shouldResolveOtherUser &&
+    !cachedOtherUser &&
+    (isOtherUserLoading || isOtherUserFetching);
+
+  if (shouldShowSkeleton) {
+    return <ChatConversationRowSkeleton />;
+  }
 
   const otherUser = otherParticipant ?? cachedOtherUser ?? null;
   const name = getConversationName(conversation, otherUser);
@@ -67,16 +121,7 @@ function ChatConversationRowComponent({
       className="active:scale-[0.99]"
     >
       {({ pressed }) => (
-        <View
-          className={cn(
-            "overflow-hidden rounded-[28px] border px-3 py-3.5",
-            isUnread
-              ? "border-sky-200 bg-white shadow-sm dark:border-sky-400/30 dark:bg-app-surface-dark"
-              : "border-transparent bg-app-surface/82 dark:bg-app-surface-elevated-dark/90",
-            pressed &&
-              "border-sky-200/90 bg-sky-50 dark:border-sky-300/25 dark:bg-sky-500/10",
-          )}
-        >
+        <View className={getConversationRowClassName({ isUnread, pressed })}>
           <View className="flex-row items-center gap-3">
             {conversation.isGroup ? (
               <GroupChatAvatar
@@ -128,7 +173,7 @@ function ChatConversationRowComponent({
                   )}
                   numberOfLines={2}
                 >
-                  {isHidden ? "Cuoc tro chuyen dang bi an." : preview}
+                  {isHidden ? "Cuộc trò chuyện đang bị ẩn" : preview}
                 </Text>
               </View>
             </View>

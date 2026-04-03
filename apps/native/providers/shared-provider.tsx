@@ -1,7 +1,6 @@
 import { useAuth } from '@clerk/expo';
 import { AuthProvider, UploadProvider, initializeApiClient } from '@repo/shared';
 import React from 'react';
-import { Platform } from 'react-native';
 
 import { createNativeCloudinaryUploadService } from '~/lib/services/native-cloudinary-upload.service';
 import { getFreshClerkToken } from '~/utils/clerk-auth';
@@ -34,7 +33,7 @@ export function NativeSharedProvider({ children }: SharedProviderProps) {
   }, [getToken, isLoaded]);
 
   React.useEffect(() => {
-    const baseURL = resolveNativeApiBaseUrl(process.env.EXPO_PUBLIC_API_URL);
+    const baseURL = process.env.EXPO_PUBLIC_API_URL;
 
     if (!baseURL) {
       throw new Error('Add EXPO_PUBLIC_API_URL to the native env configuration.');
@@ -76,25 +75,4 @@ export function NativeSharedProvider({ children }: SharedProviderProps) {
       )}
     </AuthProvider>
   );
-}
-
-function resolveNativeApiBaseUrl(baseURL?: string) {
-  if (!baseURL) {
-    return baseURL;
-  }
-
-  try {
-    const parsed = new URL(baseURL);
-    const isLocalHost =
-      parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
-
-    if (Platform.OS === 'android' && isLocalHost) {
-      parsed.hostname = '10.0.2.2';
-      return parsed.toString().replace(/\/$/, '');
-    }
-
-    return parsed.toString().replace(/\/$/, '');
-  } catch {
-    return baseURL;
-  }
 }

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { MediaType } from "@repo/shared";
+import { MediaType, type MessageDTO } from "@repo/shared";
 import { Button } from "heroui-native/button";
 import React from "react";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
@@ -9,17 +9,21 @@ import {
   buildAttachmentMeta,
   formatAttachmentDuration,
 } from "~/components/chat/chat-attachment-utils";
+import { MessageReplyPreview } from "~/components/chat/conversation-screen/message-reply-preview";
 import { cn } from "~/lib/cn";
 
 type ChatComposerProps = {
   value: string;
   attachments: ChatComposerAttachment[];
+  replyTo?: MessageDTO | null;
   onChange: (value: string) => void;
   onSend: () => void;
+  onPickCamera: () => void | Promise<void>;
   onPickMedia: () => void | Promise<void>;
   onPickFile: () => void | Promise<void>;
   onToggleRecording: () => void | Promise<void>;
   onRemoveAttachment: (attachmentId: string) => void;
+  onClearReply?: () => void;
   disabled?: boolean;
   isRecording?: boolean;
   recordingDurationMs?: number;
@@ -171,18 +175,23 @@ function ComposerAttachmentCard({
 export function ChatComposer({
   value,
   attachments,
+  replyTo,
   onChange,
   onSend,
+  onPickCamera,
   onPickMedia,
   onPickFile,
   onToggleRecording,
   onRemoveAttachment,
+  onClearReply,
   disabled = false,
   isRecording = false,
   recordingDurationMs = 0,
 }: ChatComposerProps) {
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [inputHeight, setInputHeight] = React.useState(24);
   const hasPayload = value.trim().length > 0 || attachments.length > 0;
-  const isSendDisabled = disabled || !hasPayload;
+  const isSendDisabled = disabled || isRecording || !hasPayload;
   const mediaAttachments = attachments.filter(
     (attachment) =>
       attachment.type === MediaType.IMAGE ||
@@ -193,9 +202,22 @@ export function ChatComposer({
       attachment.type !== MediaType.IMAGE &&
       attachment.type !== MediaType.VIDEO,
   );
+  const minComposerHeight = isFocused ? 72 : 24;
+  const maxComposerHeight = isFocused ? 128 : 72;
+  const resolvedInputHeight = Math.max(minComposerHeight, inputHeight);
 
   return (
     <View className="border-t border-app-border bg-app-surface px-4 pb-6 pt-3 dark:border-app-border-dark dark:bg-app-surface-dark">
+      {replyTo ? (
+        <View className="mb-3">
+          <MessageReplyPreview
+            replyTo={replyTo}
+            tone="composer"
+            onClear={onClearReply}
+          />
+        </View>
+      ) : null}
+
       {attachments.length > 0 ? (
         <View className="mb-3 rounded-[24px] bg-app-surface-elevated px-2.5 py-2.5 dark:bg-app-surface-elevated-dark">
           {mediaAttachments.length > 0 ? (
@@ -233,49 +255,83 @@ export function ChatComposer({
         <View className="mb-3 flex-row items-center gap-2 rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
           <View className="h-2.5 w-2.5 rounded-full bg-rose-500" />
           <Text className="flex-1 text-sm font-medium text-rose-700 dark:text-rose-200">
-            Dang ghi am{" "}
+            Đang ghi âm{" "}
             {formatAttachmentDuration(recordingDurationMs) ?? "0:00"}
           </Text>
           <Text className="text-xs text-rose-600 dark:text-rose-200">
-            Nhan mic de dung
+            Nhấn mic để dừng
           </Text>
         </View>
       ) : null}
 
       <View className="flex-row items-end gap-3">
-        <View className="flex-row gap-2">
-          <ComposerActionButton
-            icon="images-outline"
-            label="Chon anh hoac video"
-            disabled={disabled}
-            onPress={onPickMedia}
-          />
-          <ComposerActionButton
-            icon="document-attach-outline"
-            label="Chon tep"
-            disabled={disabled}
-            onPress={onPickFile}
-          />
-          <ComposerActionButton
-            icon={isRecording ? "stop-circle-outline" : "mic-outline"}
-            label={isRecording ? "Dung ghi am" : "Ghi am"}
-            active={isRecording}
-            disabled={disabled}
-            onPress={onToggleRecording}
-          />
-        </View>
+        {!isFocused || isRecording ? (
+          <View className="flex-row gap-2">
+            <ComposerActionButton
+              icon="camera-outline"
+              label="Chụp ảnh"
+              disabled={disabled || isRecording}
+              onPress={onPickCamera}
+            />
+            <ComposerActionButton
+              icon="images-outline"
+              label="Chọn ảnh hoặc video"
+              disabled={disabled || isRecording}
+              onPress={onPickMedia}
+            />
+            <ComposerActionButton
+              icon="document-attach-outline"
+              label="Chọn tệp"
+              disabled={disabled || isRecording}
+              onPress={onPickFile}
+            />
+            <ComposerActionButton
+              icon={isRecording ? "stop-circle-outline" : "mic-outline"}
+              label={isRecording ? "Dừng ghi âm" : "Ghi âm"}
+              active={isRecording}
+              disabled={disabled}
+              onPress={onToggleRecording}
+            />
+          </View>
+        ) : null}
 
-        <View className="flex-1 rounded-[28px] bg-app-surface-elevated px-4 py-3 dark:bg-app-surface-elevated-dark">
+        <View
+          className={cn(
+            "flex-1 rounded-[28px] border border-app-border bg-app-surface-elevated px-4 py-3 dark:border-app-border-dark dark:bg-app-surface-elevated-dark",
+            isFocused ? "rounded-[24px]" : "",
+          )}
+        >
           <TextInput
             multiline
             maxLength={1500}
-            placeholder="Nhap tin nhan..."
+            placeholder="Nhập tin nhắn..."
             placeholderTextColor="#6b8aa1"
             value={value}
             onChangeText={onChange}
             editable={!disabled}
+            onFocus={() => {
+              setIsFocused(true);
+              setInputHeight((current) => Math.max(current, 72));
+            }}
+            onBlur={() => {
+              setIsFocused(false);
+              setInputHeight(24);
+            }}
+            onContentSizeChange={(event) => {
+              const nextHeight = Math.min(
+                Math.max(event.nativeEvent.contentSize.height, minComposerHeight),
+                maxComposerHeight,
+              );
+              setInputHeight(nextHeight);
+            }}
+            style={{
+              minHeight: minComposerHeight,
+              height: resolvedInputHeight,
+              maxHeight: maxComposerHeight,
+              textAlignVertical: "top",
+            }}
             className={cn(
-              "min-h-6 text-[15px] leading-5 text-app-fg dark:text-app-fg-dark",
+              "text-[15px] leading-5 text-app-fg dark:text-app-fg-dark",
               disabled ? "opacity-60" : "",
             )}
           />

@@ -1,6 +1,8 @@
 import { useAuth } from "@clerk/expo";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   type ConversationDTO,
+  type ConversationWithParticipantsDTO,
   type CursorPageResponse,
   type MessageDTO,
   normalizeConversation,
@@ -8,9 +10,14 @@ import {
   queryKeys,
 } from "@repo/shared";
 import { type InfiniteData, useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
 import React from "react";
 
-import { getConversationLastActivity } from "~/components/chat/chat-helpers";
+import {
+  compareMessagesAscending,
+  getConversationLastSeenMap,
+  getConversationLastActivity,
+} from "~/components/chat/chat-helpers";
 import { useSocket } from "~/providers/socket-provider";
 
 type NativeChatRealtimeProviderProps = {
@@ -18,6 +25,7 @@ type NativeChatRealtimeProviderProps = {
 };
 
 type ConversationPageData = InfiniteData<CursorPageResponse<ConversationDTO>>;
+type MessagePages = InfiniteData<CursorPageResponse<MessageDTO>>;
 
 const sortConversations = (conversations: ConversationDTO[]) => {
   return [...conversations].sort(
@@ -142,7 +150,9 @@ const updateConversationReadState = (
           return conversation;
         }
 
-        const lastSeenMessageId = new Map(conversation.lastSeenMessageId);
+        const lastSeenMessageId = getConversationLastSeenMap(
+          conversation.lastSeenMessageId as never,
+        );
 
         if (payload.lastSeenMessageId) {
           lastSeenMessageId.set(payload.userId, payload.lastSeenMessageId);
@@ -159,6 +169,346 @@ const updateConversationReadState = (
   };
 };
 
+const mergeFetchedAndRealtimeMessages = (
+  fetchedMessages: MessageDTO[],
+  realtimeMessages: MessageDTO[],
+) => {
+  const map = new Map<string, MessageDTO>();
+  const fetchedIds = new Set<string>();
+
+  fetchedMessages.forEach((message) => {
+    fetchedIds.add(message._id);
+    map.set(message._id, message);
+  });
+
+  realtimeMessages.forEach((message) => {
+    if (fetchedIds.has(message._id)) {
+      return;
+    }
+
+    if (message.clientStatus === "sending") {
+      return;
+    }
+
+    map.set(message._id, message);
+  });
+
+  return Array.from(map.values()).sort(
+    compareMessagesAscending,
+  );
+};
+
+const upsertMessageInPages = (
+  oldData: MessagePages | undefined,
+  message: MessageDTO,
+) => {
+  if (!oldData?.pages?.length) {
+    return oldData;
+  }
+
+  const firstPage = oldData.pages[0];
+  const existingIndex = firstPage.data.findIndex((item) => item._id === message._id);
+
+  const nextFirstPage =
+    existingIndex >= 0
+      ? {
+          ...firstPage,
+          data: firstPage.data
+            .map((item) => (item._id === message._id ? message : item))
+            .sort(compareMessagesAscending),
+        }
+      : {
+          ...firstPage,
+          data: [...firstPage.data, message].sort(compareMessagesAscending),
+        };
+
+  return {
+    ...oldData,
+    pages: [nextFirstPage, ...oldData.pages.slice(1)],
+  };
+};
+
+const markDeletedMessageInPages = (
+  oldData: MessagePages | undefined,
+  messageId: string,
+) => {
+  if (!oldData?.pages?.length) {
+    return oldData;
+  }
+
+  return {
+    ...oldData,
+    pages: oldData.pages.map((page) => ({
+      ...page,
+      data: page.data.map((message) =>
+        message._id === messageId
+          ? { ...message, isDeleted: true }
+          : message,
+      ),
+    })),
+  };
+};
+
+const syncConversationDetailReadState = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  payload: {
+    conversationId: string;
+    userId: string;
+    lastSeenMessageId: string | null;
+  },
+) => {
+  queryClient.setQueryData<ConversationWithParticipantsDTO>(
+    queryKeys.conversations.detail(payload.conversationId),
+    (oldConversation) => {
+      if (!oldConversation) {
+        return oldConversation;
+      }
+
+      const lastSeenMessageId = getConversationLastSeenMap(
+        oldConversation.lastSeenMessageId as never,
+      );
+
+      if (payload.lastSeenMessageId) {
+        lastSeenMessageId.set(payload.userId, payload.lastSeenMessageId);
+      } else {
+        lastSeenMessageId.delete(payload.userId);
+      }
+
+      return {
+        ...oldConversation,
+        lastSeenMessageId,
+      };
+    },
+  );
+};
+
+const syncConversationDetailLastMessage = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  message: MessageDTO,
+) => {
+  queryClient.setQueryData<ConversationWithParticipantsDTO>(
+    queryKeys.conversations.detail(message.conversationId),
+    (oldConversation) =>
+      oldConversation
+        ? {
+            ...oldConversation,
+            lastMessage: message,
+            updatedAt: message.createdAt,
+          }
+        : oldConversation,
+  );
+};
+
+type UseNativeConversationRealtimeParams = {
+  conversationId?: string | null;
+  isHiddenForMe?: boolean;
+  fetchedMessages: MessageDTO[];
+  markConversationAsRead: (conversationId: string) => void;
+};
+
+export function useNativeConversationRealtime({
+  conversationId,
+  isHiddenForMe = false,
+  fetchedMessages,
+  markConversationAsRead,
+}: UseNativeConversationRealtimeParams) {
+  const queryClient = useQueryClient();
+  const { chatSocket } = useSocket();
+  const [realtimeMessages, setRealtimeMessages] = React.useState<MessageDTO[]>(
+    [],
+  );
+
+  const messages = React.useMemo(
+    () => mergeFetchedAndRealtimeMessages(fetchedMessages, realtimeMessages),
+    [fetchedMessages, realtimeMessages],
+  );
+
+  React.useEffect(() => {
+    setRealtimeMessages([]);
+  }, [conversationId]);
+
+  React.useEffect(() => {
+    setRealtimeMessages((current) =>
+      mergeFetchedAndRealtimeMessages(fetchedMessages, current),
+    );
+  }, [fetchedMessages]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!conversationId || !chatSocket || isHiddenForMe) {
+        return undefined;
+      }
+
+      chatSocket.emit("conversation.join", { conversationId });
+
+      return () => {
+        chatSocket.emit("conversation.leave", { conversationId });
+      };
+    }, [chatSocket, conversationId, isHiddenForMe]),
+  );
+
+  React.useEffect(() => {
+    if (!chatSocket || !conversationId || isHiddenForMe) {
+      return;
+    }
+
+    const handleUpdated = (payload: ConversationDTO) => {
+      if (payload._id !== conversationId) {
+        return;
+      }
+
+      const normalized = normalizeConversation(payload as never);
+
+      queryClient.setQueryData<ConversationWithParticipantsDTO>(
+        queryKeys.conversations.detail(conversationId),
+        (oldConversation) =>
+          oldConversation
+            ? {
+                ...oldConversation,
+                ...normalized,
+                participantDetails: Array.isArray(
+                  oldConversation.participantDetails,
+                )
+                  ? oldConversation.participantDetails
+                  : [],
+              }
+            : oldConversation,
+      );
+    };
+
+    const handleDeleted = (payload: { id: string }) => {
+      if (payload.id !== conversationId) {
+        return;
+      }
+
+      queryClient.removeQueries({
+        queryKey: queryKeys.conversations.detail(conversationId),
+      });
+      router.replace("/chat");
+    };
+
+    const handleLeft = (payload: { conversationId: string }) => {
+      if (payload.conversationId !== conversationId) {
+        return;
+      }
+
+      queryClient.removeQueries({
+        queryKey: queryKeys.conversations.detail(conversationId),
+      });
+      router.replace("/chat");
+    };
+
+    const handleRead = (payload: {
+      conversationId: string;
+      userId: string;
+      lastSeenMessageId: string | null;
+    }) => {
+      if (payload.conversationId !== conversationId) {
+        return;
+      }
+
+      syncConversationDetailReadState(queryClient, payload);
+
+      queryClient.setQueriesData<ConversationPageData>(
+        { queryKey: queryKeys.conversations.all },
+        (oldData) => updateConversationReadState(oldData, payload),
+      );
+    };
+
+    chatSocket.on("conversation.updated", handleUpdated);
+    chatSocket.on("conversation.deleted", handleDeleted);
+    chatSocket.on("conversation.read", handleRead);
+    chatSocket.on("conversation.memberLeft", handleLeft);
+
+    return () => {
+      chatSocket.off("conversation.updated", handleUpdated);
+      chatSocket.off("conversation.deleted", handleDeleted);
+      chatSocket.off("conversation.read", handleRead);
+      chatSocket.off("conversation.memberLeft", handleLeft);
+    };
+  }, [chatSocket, conversationId, isHiddenForMe, queryClient]);
+
+  React.useEffect(() => {
+    if (!chatSocket || !conversationId || isHiddenForMe) {
+      return;
+    }
+
+    const handleNew = (payload: MessageDTO) => {
+      const message = normalizeMessage(payload as never);
+
+      if (message.conversationId !== conversationId) {
+        return;
+      }
+
+      setRealtimeMessages((current) => {
+        if (current.some((item) => item._id === message._id)) {
+          return current;
+        }
+
+        return [...current, message].sort(compareMessagesAscending);
+      });
+
+      queryClient.setQueriesData<MessagePages>(
+        { queryKey: queryKeys.messages.list(conversationId) },
+        (oldData) => upsertMessageInPages(oldData, message),
+      );
+
+      syncConversationDetailLastMessage(queryClient, message);
+    };
+
+    const handleDeleted = (payload: MessageDTO | { messageId: string }) => {
+      const messageId =
+        "messageId" in payload ? payload.messageId : payload?._id;
+
+      if (!messageId) {
+        return;
+      }
+
+      setRealtimeMessages((current) =>
+        current.map((message) =>
+          message._id === messageId
+            ? message.isDeleted
+              ? message
+              : { ...message, isDeleted: true }
+            : message,
+        ),
+      );
+
+      queryClient.setQueriesData<MessagePages>(
+        { queryKey: queryKeys.messages.list(conversationId) },
+        (oldData) => markDeletedMessageInPages(oldData, messageId),
+      );
+    };
+
+    chatSocket.on("message.new", handleNew);
+    chatSocket.on("message.deleted", handleDeleted);
+
+    return () => {
+      chatSocket.off("message.new", handleNew);
+      chatSocket.off("message.deleted", handleDeleted);
+    };
+  }, [chatSocket, conversationId, isHiddenForMe, queryClient]);
+
+  const handleReachedBottom = React.useCallback(() => {
+    if (!conversationId) {
+      return;
+    }
+
+    const lastMessageId = messages.at(-1)?._id;
+
+    if (!lastMessageId || lastMessageId.startsWith("temp:")) {
+      return;
+    }
+
+    markConversationAsRead(conversationId);
+  }, [conversationId, markConversationAsRead, messages]);
+
+  return {
+    messages,
+    handleReachedBottom,
+  };
+}
+
 export function NativeChatRealtimeProvider({
   children,
 }: NativeChatRealtimeProviderProps) {
@@ -174,9 +524,23 @@ export function NativeChatRealtimeProvider({
     const syncConversation = (payload: ConversationDTO) => {
       const conversation = normalizeConversation(payload as never);
 
-      queryClient.setQueryData(
+      queryClient.setQueryData<ConversationWithParticipantsDTO | ConversationDTO>(
         queryKeys.conversations.detail(conversation._id),
-        conversation,
+        (oldConversation) => {
+          if (
+            oldConversation &&
+            "participantDetails" in oldConversation &&
+            Array.isArray(oldConversation.participantDetails)
+          ) {
+            return {
+              ...oldConversation,
+              ...conversation,
+              participantDetails: oldConversation.participantDetails,
+            };
+          }
+
+          return conversation;
+        },
       );
 
       queryClient.setQueriesData<ConversationPageData>(
@@ -222,7 +586,9 @@ export function NativeChatRealtimeProvider({
             return oldConversation;
           }
 
-          const lastSeenMessageId = new Map(oldConversation.lastSeenMessageId);
+          const lastSeenMessageId = getConversationLastSeenMap(
+            oldConversation.lastSeenMessageId as never,
+          );
 
           if (payload.lastSeenMessageId) {
             lastSeenMessageId.set(payload.userId, payload.lastSeenMessageId);

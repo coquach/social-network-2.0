@@ -11,7 +11,6 @@ import type {
   UpdateConversationInput,
   CursorPageResponse,
 } from '../../types';
-import { normalizeConversation, normalizeConversationPage } from '../../utils';
 
 export const conversationService = {
   /**
@@ -21,11 +20,10 @@ export const conversationService = {
     cursor?: string;
     limit?: number;
   }): Promise<CursorPageResponse<ConversationDTO>> {
-    const response = await getApiClient().getCursorPage<ConversationDTO>(
+    return getApiClient().getCursorPage<ConversationDTO>(
       '/chats/conversations',
       { params }
     );
-    return normalizeConversationPage(response as CursorPageResponse<any>);
   },
 
   /**
@@ -34,10 +32,9 @@ export const conversationService = {
   async getConversation(
     conversationId: string
   ): Promise<ConversationWithParticipantsDTO> {
-    const response = await getApiClient().get<ConversationWithParticipantsDTO>(
+    return getApiClient().get<ConversationWithParticipantsDTO>(
       `/chats/conversations/${conversationId}`
     );
-    return normalizeConversation(response as any);
   },
 
   /**
@@ -46,11 +43,10 @@ export const conversationService = {
   async createConversation(
     data: CreateConversationInput
   ): Promise<ConversationDTO> {
-    const response = await getApiClient().post<ConversationDTO>(
+    return getApiClient().post<ConversationDTO>(
       '/chats/conversations',
       data
     );
-    return normalizeConversation(response as any);
   },
 
   /**
@@ -60,11 +56,10 @@ export const conversationService = {
     conversationId: string,
     data: UpdateConversationInput
   ): Promise<ConversationDTO> {
-    const response = await getApiClient().put<ConversationDTO>(
+    return getApiClient().put<ConversationDTO>(
       `/chats/conversations/${conversationId}`,
       data
     );
-    return normalizeConversation(response as any);
   },
 
   /**

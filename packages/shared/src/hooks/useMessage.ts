@@ -94,11 +94,21 @@ export const useSendMessage = (conversationId: string) => {
     CreateMessageInput & { uploadFiles?: UploadableFile[] },
     { tempId: string; conversationId: string }
   >({
-    onMutate: async ({ content, uploadFiles }) => {
+    onMutate: async ({ content, uploadFiles, replyTo }) => {
       // Generate temporary ID for optimistic message
       const tempId = `temp:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const now = new Date();
       const hasMedia = !!uploadFiles?.length;
+      const cachedMessagePages = queryClient.getQueriesData<
+        InfiniteData<CursorPageResponse<MessageDTO>>
+      >({
+        queryKey: queryKeys.messages.list(conversationId),
+      });
+      const replyMessage = replyTo
+        ? cachedMessagePages
+            .flatMap(([, data]) => data?.pages.flatMap((page) => page.data) ?? [])
+            .find((message) => message._id === replyTo)
+        : undefined;
 
       // Create optimistic message
       const optimisticMessage: MessageDTO = {
@@ -110,6 +120,7 @@ export const useSendMessage = (conversationId: string) => {
         seenBy: userId ? [userId] : [],
         reactionStats: {},
         attachments: [],
+        replyTo: replyMessage,
         isDeleted: false,
         createdAt: now,
         updatedAt: now,

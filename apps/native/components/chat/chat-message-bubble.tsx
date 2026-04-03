@@ -3,26 +3,36 @@ import { useAuth } from "@clerk/expo";
 import { MediaType, type AttachmentDTO, type MessageDTO } from "@repo/shared";
 import React from "react";
 import { Image, Linking, Pressable, Text, View } from "react-native";
+import Animated, {
+  FadeInDown,
+  LinearTransition,
+} from "react-native-reanimated";
 
 import {
   buildAttachmentMeta,
   getAttachmentTypeFromMessage,
 } from "~/components/chat/chat-attachment-utils";
 import { ChatAvatar } from "~/components/chat/chat-avatar";
+import { MessageReplyPreview } from "~/components/chat/conversation-screen/message-reply-preview";
 import { cn } from "~/lib/cn";
+import { formatMessageTimestamp } from "./chat-helpers";
+
+type SeenUserVisual = {
+  name: string;
+  avatarUrl?: string;
+};
 
 type ChatMessageBubbleProps = {
   message: MessageDTO;
   senderName: string;
   senderAvatarUrl?: string;
   showAvatar: boolean;
+  seenUsers?: SeenUserVisual[];
+  seenOverflow?: number;
+  isLastMessage?: boolean;
+  animateEntry?: boolean;
+  onLongPress?: (message: MessageDTO) => void;
 };
-
-const formatBubbleTime = (date: Date) =>
-  new Intl.DateTimeFormat("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 
 const formatAttachmentName = (attachment: AttachmentDTO, fallback: string) =>
   attachment.fileName?.trim() || fallback;
@@ -41,10 +51,10 @@ function AttachmentCard({
   const fileName = formatAttachmentName(
     attachment,
     type === MediaType.AUDIO
-      ? "Ghi am"
+      ? "Ghi âm"
       : type === MediaType.VIDEO
         ? "Video"
-        : "Tep dinh kem",
+        : "Tệp đính kèm",
   );
   const iconName =
     type === MediaType.VIDEO
@@ -61,8 +71,8 @@ function AttachmentCard({
       className={cn(
         "rounded-[22px] border px-3 py-3",
         isOwn
-          ? "border-white/20 bg-white/10"
-          : "border-app-border bg-app-bg dark:border-app-border-dark dark:bg-app-bg-dark",
+          ? "border-white/25 bg-white/15"
+          : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800",
       )}
     >
       <View className="flex-row items-center gap-3">
@@ -100,9 +110,7 @@ function AttachmentCard({
             numberOfLines={2}
             className={cn(
               "text-sm font-semibold",
-              isOwn
-                ? "text-app-primary-foreground"
-                : "text-app-fg dark:text-app-fg-dark",
+              isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark",
             )}
           >
             {fileName}
@@ -113,7 +121,7 @@ function AttachmentCard({
               className={cn(
                 "mt-1 text-[11px]",
                 isOwn
-                  ? "text-app-primary-foreground/80"
+                  ? "text-white/80"
                   : "text-app-muted-fg dark:text-app-muted-fg-dark",
               )}
             >
@@ -131,14 +139,29 @@ export function ChatMessageBubble({
   senderName,
   senderAvatarUrl,
   showAvatar,
+  seenUsers = [],
+  seenOverflow = 0,
+  isLastMessage = false,
+  animateEntry = false,
+  onLongPress,
 }: ChatMessageBubbleProps) {
   const { userId } = useAuth();
   const isOwn = message.senderId === userId;
-  const bubbleTime = formatBubbleTime(message.createdAt);
+  const bubbleTime = React.useMemo(
+    () => formatMessageTimestamp(message.createdAt),
+    [message.createdAt],
+  );
+
   const content = message.isDeleted
-    ? "Tin nhan da bi xoa."
+    ? "Tin nhắn đã bị xóa."
     : message.content?.trim() || "";
   const attachments = message.attachments ?? [];
+  const showSeenAvatars = isOwn && !message.isDeleted && seenUsers.length > 0;
+  const showSentStatus =
+    isOwn &&
+    !message.isDeleted &&
+    isLastMessage &&
+    (message.clientStatus === "sending" || seenUsers.length === 0);
 
   const openAttachment = React.useCallback(async (url: string) => {
     try {
@@ -149,93 +172,142 @@ export function ChatMessageBubble({
   }, []);
 
   return (
-    <View
-      className={cn(
-        "flex-row items-end gap-2 px-4",
-        isOwn ? "justify-end" : "justify-start",
-      )}
+    <Animated.View
+      entering={animateEntry ? FadeInDown.duration(180) : undefined}
+      layout={animateEntry ? LinearTransition.duration(140) : undefined}
     >
-      {!isOwn ? (
-        showAvatar ? (
-          <ChatAvatar name={senderName} imageUrl={senderAvatarUrl} size="sm" />
-        ) : (
-          <View className="h-10 w-10" />
-        )
-      ) : null}
-
-      <View className={cn("max-w-[78%]", isOwn ? "items-end" : "items-start")}>
-        {!isOwn && showAvatar ? (
-          <Text className="mb-1 ml-1 text-xs text-app-muted-fg dark:text-app-muted-fg-dark">
-            {senderName}
-          </Text>
+      <View
+        className={cn(
+          "flex-row items-end gap-2 px-4",
+          isOwn ? "justify-end" : "justify-start",
+        )}
+      >
+        {!isOwn ? (
+          showAvatar ? (
+            <ChatAvatar
+              name={senderName}
+              imageUrl={senderAvatarUrl}
+              size="sm"
+            />
+          ) : (
+            <View className="h-10 w-10" />
+          )
         ) : null}
 
         <View
-          className={cn(
-            "rounded-3xl px-4 py-3",
-            isOwn
-              ? "bg-app-primary dark:bg-app-primary-dark"
-              : "bg-app-surface-elevated dark:bg-app-surface-elevated-dark",
-          )}
+          className={cn("max-w-[78%]", isOwn ? "items-end" : "items-start")}
         >
-          {attachments.length > 0 && !message.isDeleted ? (
-            <View className={cn(content ? "mb-3 gap-2" : "gap-2")}>
-              {attachments.map((attachment, index) => {
-                const type = getAttachmentTypeFromMessage(attachment);
-                const key = `${attachment.url}-${index}`;
-
-                if (type === MediaType.IMAGE) {
-                  return (
-                    <Pressable
-                      key={key}
-                      onPress={() => {
-                        void openAttachment(attachment.url);
-                      }}
-                      className="overflow-hidden rounded-[22px] border border-white/10"
-                    >
-                      <Image
-                        source={{ uri: attachment.url }}
-                        className={cn(
-                          attachments.length === 1 ? "h-56 w-60" : "h-36 w-40",
-                        )}
-                      />
-                    </Pressable>
-                  );
-                }
-
-                return (
-                  <AttachmentCard
-                    key={key}
-                    attachment={attachment}
-                    isOwn={isOwn}
-                    onPress={() => {
-                      void openAttachment(attachment.url);
-                    }}
-                  />
-                );
-              })}
-            </View>
-          ) : null}
-
-          {content ? (
-            <Text
+          <Text className="mt-1 px-1 text-[11px] text-app-muted-fg dark:text-app-muted-fg-dark">
+            {bubbleTime}
+          </Text>
+          <Pressable
+            delayLongPress={180}
+            disabled={!onLongPress}
+            onLongPress={() => onLongPress?.(message)}
+          >
+            <View
               className={cn(
-                "text-[15px] leading-5",
+                "rounded-3xl border px-4 py-3 shadow-none",
                 isOwn
-                  ? "text-app-primary-foreground"
-                  : "text-app-fg dark:text-app-fg-dark",
-                message.isDeleted ? "italic opacity-70" : "",
+                  ? "border-sky-500 bg-sky-500 dark:border-sky-500 dark:bg-sky-500"
+                  : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800",
               )}
             >
-              {content}
-            </Text>
+              {message.replyTo ? (
+                <View className={cn(content || attachments.length > 0 ? "mb-3" : "")}>
+                  <MessageReplyPreview
+                    replyTo={message.replyTo}
+                    tone={isOwn ? "own" : "other"}
+                  />
+                </View>
+              ) : null}
+
+              {attachments.length > 0 && !message.isDeleted ? (
+                <View className={cn(content ? "mb-3 gap-2" : "gap-2")}>
+                  {attachments.map((attachment, index) => {
+                    const type = getAttachmentTypeFromMessage(attachment);
+                    const key = `${attachment.url}-${index}`;
+
+                    if (type === MediaType.IMAGE) {
+                      return (
+                        <Pressable
+                          key={key}
+                          onPress={() => {
+                            void openAttachment(attachment.url);
+                          }}
+                          className="overflow-hidden rounded-[22px] border border-white/10"
+                        >
+                          <Image
+                            source={{ uri: attachment.url }}
+                            className={cn(
+                              attachments.length === 1
+                                ? "h-56 w-60"
+                                : "h-36 w-40",
+                            )}
+                          />
+                        </Pressable>
+                      );
+                    }
+
+                    return (
+                      <AttachmentCard
+                        key={key}
+                        attachment={attachment}
+                        isOwn={isOwn}
+                        onPress={() => {
+                          void openAttachment(attachment.url);
+                        }}
+                      />
+                    );
+                  })}
+                </View>
+              ) : null}
+
+              {content ? (
+                <Text
+                  className={cn(
+                    "text-[15px] leading-5",
+                    isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark",
+                    message.isDeleted ? "italic opacity-70" : "",
+                  )}
+                >
+                  {content}
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
+
+          {isOwn && !message.isDeleted ? (
+            <View className="mt-1 min-h-5 flex-row items-center gap-2 px-1">
+              {showSeenAvatars ? (
+                <View className="flex-row items-center">
+                  {seenUsers.map((user, index) => (
+                    <View
+                      key={`${user.name}-${index}`}
+                      className={index === 0 ? "" : "-ml-3"}
+                    >
+                      <ChatAvatar
+                        name={user.name}
+                        imageUrl={user.avatarUrl}
+                        size="sm"
+                      />
+                    </View>
+                  ))}
+                  {seenOverflow > 0 ? (
+                    <Text className="ml-1 text-[10px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                      +{seenOverflow}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : showSentStatus ? (
+                <Text className="text-[11px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                  {message.clientStatus === "sending" ? "Đang gửi..." : "Đã gửi"}
+                </Text>
+              ) : null}
+            </View>
           ) : null}
         </View>
-
-        <Text className="mt-1 px-1 text-[11px] text-app-muted-fg dark:text-app-muted-fg-dark">
-          {bubbleTime}
-        </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 }
