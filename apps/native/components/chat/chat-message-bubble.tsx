@@ -31,7 +31,9 @@ type ChatMessageBubbleProps = {
   seenOverflow?: number;
   isLastMessage?: boolean;
   animateEntry?: boolean;
+  highlighted?: boolean;
   onLongPress?: (message: MessageDTO) => void;
+  onPressReplyTo?: (messageId: string) => void;
 };
 
 const formatAttachmentName = (attachment: AttachmentDTO, fallback: string) =>
@@ -143,7 +145,9 @@ export function ChatMessageBubble({
   seenOverflow = 0,
   isLastMessage = false,
   animateEntry = false,
+  highlighted = false,
   onLongPress,
+  onPressReplyTo,
 }: ChatMessageBubbleProps) {
   const { userId } = useAuth();
   const isOwn = message.senderId === userId;
@@ -211,6 +215,11 @@ export function ChatMessageBubble({
                 isOwn
                   ? "border-sky-500 bg-sky-500 dark:border-sky-500 dark:bg-sky-500"
                   : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800",
+                highlighted
+                  ? isOwn
+                    ? "border-white bg-sky-400 dark:border-white dark:bg-sky-400"
+                    : "border-sky-300 bg-sky-50 dark:border-sky-400 dark:bg-sky-500/10"
+                  : "",
               )}
             >
               {message.replyTo ? (
@@ -223,7 +232,12 @@ export function ChatMessageBubble({
                   <MessageReplyPreview
                     replyTo={message.replyTo}
                     tone={isOwn ? "own" : "other"}
-                    compact
+                    variant="bubble"
+                    onPress={() => {
+                      if (message.replyTo?._id) {
+                        onPressReplyTo?.(message.replyTo._id);
+                      }
+                    }}
                   />
                 </View>
               ) : null}

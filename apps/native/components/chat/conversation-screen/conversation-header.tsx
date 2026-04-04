@@ -83,7 +83,8 @@ export function ConversationHeader({
         <View className="flex-1">
           <Text
             numberOfLines={1}
-            className="text-[17px] font-bold text-app-fg dark:text-app-fg-dark"
+            className="font-bold text-app-fg dark:text-app-fg-dark"
+            style={{ fontSize: 17 }}
           >
             {conversationName}
           </Text>

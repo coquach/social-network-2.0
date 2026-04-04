@@ -10,6 +10,7 @@ import {
   formatAttachmentDuration,
 } from "~/components/chat/chat-attachment-utils";
 import { MessageReplyPreview } from "~/components/chat/conversation-screen/message-reply-preview";
+
 import { cn } from "~/lib/cn";
 
 type ChatComposerProps = {
@@ -90,11 +91,17 @@ function ComposerAttachmentCard({
           ) : (
             <View className="flex-1 items-center justify-center bg-slate-950 px-2">
               <Ionicons name="film-outline" size={24} color="#ffffff" />
-              <Text className="mt-2 text-[10px] font-semibold uppercase tracking-[0.6px] text-white">
+              <Text
+                className="mt-2 font-semibold uppercase text-white"
+                style={{ fontSize: 10 }}
+              >
                 Video
               </Text>
               {meta ? (
-                <Text className="mt-1 text-center text-[10px] text-white/80">
+                <Text
+                  className="mt-1 text-center text-white/80"
+                  style={{ fontSize: 10 }}
+                >
                   {meta}
                 </Text>
               ) : null}
@@ -103,7 +110,10 @@ function ComposerAttachmentCard({
 
           {isVideo ? (
             <View className="absolute bottom-1.5 left-1.5 rounded-full bg-black/75 px-2 py-1">
-              <Text className="text-[10px] font-semibold uppercase tracking-[0.6px] text-white">
+              <Text
+                className="font-semibold uppercase text-white"
+                style={{ fontSize: 10 }}
+              >
                 Video
               </Text>
             </View>
@@ -151,7 +161,8 @@ function ComposerAttachmentCard({
             {meta ? (
               <Text
                 numberOfLines={2}
-                className="text-[11px] text-app-muted-fg dark:text-app-muted-fg-dark"
+                className="text-app-muted-fg dark:text-app-muted-fg-dark"
+                style={{ fontSize: 11 }}
               >
                 {meta}
               </Text>
@@ -190,6 +201,8 @@ export function ChatComposer({
 }: ChatComposerProps) {
   const [isFocused, setIsFocused] = React.useState(false);
   const [inputHeight, setInputHeight] = React.useState(22);
+  const inputRef = React.useRef<TextInput>(null);
+  const [selection, setSelection] = React.useState({ start: 0, end: 0 });
   const hasPayload = value.trim().length > 0 || attachments.length > 0;
   const isSendDisabled = disabled || isRecording || !hasPayload;
   const mediaAttachments = attachments.filter(
@@ -205,6 +218,22 @@ export function ChatComposer({
   const minComposerHeight = isFocused ? 72 : 22;
   const maxComposerHeight = isFocused ? 128 : 72;
   const resolvedInputHeight = Math.max(minComposerHeight, inputHeight);
+  const handleSelectEmoji = React.useCallback(
+    (emoji: string) => {
+      const start = selection.start ?? value.length;
+      const end = selection.end ?? start;
+      const nextValue = `${value.slice(0, start)}${emoji}${value.slice(end)}`;
+      const caretPosition = start + emoji.length;
+
+      onChange(nextValue);
+      setSelection({ start: caretPosition, end: caretPosition });
+
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    },
+    [onChange, selection.end, selection.start, value],
+  );
 
   return (
     <View className="border-t border-app-border bg-app-surface px-4 pb-6 pt-3 dark:border-app-border-dark dark:bg-app-surface-dark">
@@ -295,6 +324,8 @@ export function ChatComposer({
           </View>
         ) : null}
 
+       
+
         <View
           className={cn(
             "flex-1 border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark",
@@ -304,15 +335,26 @@ export function ChatComposer({
           )}
         >
           <TextInput
+            ref={inputRef}
             multiline
             maxLength={1500}
             placeholder="Nhập tin nhắn..."
             placeholderTextColor="#6b8aa1"
             value={value}
+            selection={selection}
             onChangeText={onChange}
+            onSelectionChange={(event) => {
+              setSelection(event.nativeEvent.selection);
+            }}
+            keyboardAppearance="default"
+            
             editable={!disabled}
             onFocus={() => {
               setIsFocused(true);
+              setSelection((current) => ({
+                start: current.start ?? value.length,
+                end: current.end ?? value.length,
+              }));
               setInputHeight((current) => Math.max(current, 72));
             }}
             onBlur={() => {
@@ -331,9 +373,11 @@ export function ChatComposer({
               height: resolvedInputHeight,
               maxHeight: maxComposerHeight,
               textAlignVertical: "top",
+              fontSize: 15,
+              lineHeight: 20,
             }}
             className={cn(
-              "text-[15px] leading-5 text-app-fg dark:text-app-fg-dark",
+              "text-app-fg dark:text-app-fg-dark",
               !isFocused ? "py-0" : "",
               disabled ? "opacity-60" : "",
             )}

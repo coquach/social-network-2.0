@@ -170,12 +170,26 @@ export function ConversationMessageList({
   const [animatedMessageId, setAnimatedMessageId] = React.useState<string | null>(
     null,
   );
+  const [highlightedMessageId, setHighlightedMessageId] = React.useState<string | null>(
+    null,
+  );
 
   const rows = React.useMemo(
     () => buildRows(messages, participantMap, lastSeenMap),
     [lastSeenMap, messages, participantMap],
   );
   const lastMessage = messages.at(-1) ?? null;
+  const rowIndexByMessageId = React.useMemo(() => {
+    const map = new Map<string, number>();
+
+    rows.forEach((row, index) => {
+      if (row.type === "message") {
+        map.set(row.message._id, index);
+      }
+    });
+
+    return map;
+  }, [rows]);
 
   const scrollToBottom = React.useCallback((animated: boolean) => {
     requestAnimationFrame(() => {
@@ -249,6 +263,39 @@ export function ConversationMessageList({
     };
   }, [animatedMessageId]);
 
+  React.useEffect(() => {
+    if (!highlightedMessageId) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setHighlightedMessageId((current) =>
+        current === highlightedMessageId ? null : current,
+      );
+    }, 1400);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [highlightedMessageId]);
+
+  const handlePressReplyTo = React.useCallback(
+    (messageId: string) => {
+      const targetIndex = rowIndexByMessageId.get(messageId);
+      if (targetIndex == null) {
+        return;
+      }
+
+      listRef.current?.scrollToIndex({
+        index: targetIndex,
+        animated: true,
+        viewPosition: 0.5,
+      });
+      setHighlightedMessageId(messageId);
+    },
+    [rowIndexByMessageId],
+  );
+
   const handleScroll = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
@@ -287,11 +334,13 @@ export function ConversationMessageList({
           seenOverflow={item.seenOverflow}
           isLastMessage={item.isLastMessage}
           animateEntry={item.message._id === animatedMessageId}
+          highlighted={item.message._id === highlightedMessageId}
           onLongPress={onLongPressMessage}
+          onPressReplyTo={handlePressReplyTo}
         />
       );
     },
-    [animatedMessageId, onLongPressMessage],
+    [animatedMessageId, handlePressReplyTo, highlightedMessageId, onLongPressMessage],
   );
 
   if (isLoading && messages.length === 0) {
