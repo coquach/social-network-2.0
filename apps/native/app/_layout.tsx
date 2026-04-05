@@ -5,6 +5,7 @@ import { tokenCache } from '@clerk/expo/token-cache';
 import { Slot, SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { HeroUINativeProvider, type HeroUINativeConfig } from 'heroui-native/provider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -31,6 +32,21 @@ const heroUIConfig: HeroUINativeConfig = {
   },
 };
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60,
+      gcTime: 1000 * 60 * 5,
+      retry: 2,
+      refetchOnReconnect: true,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 2,
+    },
+  },
+});
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -52,13 +68,15 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-        <SafeAreaProvider>
-          <HeroUINativeProvider config={heroUIConfig}>
-            <AppThemeProvider>
-              <Slot />
-            </AppThemeProvider>
-          </HeroUINativeProvider>
-        </SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <HeroUINativeProvider config={heroUIConfig}>
+              <AppThemeProvider>
+                <Slot />
+              </AppThemeProvider>
+            </HeroUINativeProvider>
+          </SafeAreaProvider>
+        </QueryClientProvider>
       </ClerkProvider>
     </GestureHandlerRootView>
   );

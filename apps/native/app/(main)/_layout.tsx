@@ -61,7 +61,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Cá nhân',
+            headerShown: false,
           }}
         />
       </Tabs>
