@@ -16,18 +16,12 @@ export interface SharePostProps {
   compact?: boolean;
 }
 
-export function SharePost({
+function SharePostComponent({
   data,
   author,
   originalAuthor,
   compact = false,
 }: SharePostProps) {
-  const authorData: UserSnapshotDTO = author ?? {
-    id: data.userId,
-    firstName: '',
-    lastName: '',
-  };
-
   return (
     <AppCard
       className={
@@ -39,7 +33,6 @@ export function SharePost({
         data={data}
         postId={data.post.postId}
         shareId={data.shareId}
-        author={authorData}
         createdAt={data.createdAt}
         audience={data.audience}
         isShared
@@ -73,3 +66,5 @@ export function SharePost({
     </AppCard>
   );
 }
+
+export const SharePost = React.memo(SharePostComponent);

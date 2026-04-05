@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Dimensions, Modal, Pressable, Text, View } from 'react-native';
+
 import { ReactionType } from '@repo/shared';
 
 export type ReactionOption = {
@@ -26,34 +27,55 @@ export function ReactionPicker({
   if (!open) return null;
 
   const screenHeight = Dimensions.get('window').height;
+
   const pickerTop = Math.min(
-    Math.max((anchorY ?? screenHeight - 120) - 64, 12),
-    screenHeight - 76,
+    Math.max((anchorY ?? screenHeight - 120) - 70, 12),
+    screenHeight - 100,
   );
 
   return (
-    <Modal
-      transparent
-      animationType="fade"
-      visible={open}
-      onRequestClose={onClose}
-    >
-      <View className="flex-1">
+    <Modal transparent animationType="fade" visible={open}>
+      <View style={{ flex: 1 }}>
         {/* BACKDROP */}
-        <Pressable onPress={onClose} className="absolute inset-0" />
+        <Pressable
+          onTouchStart={onClose}
+          style={{ position: 'absolute', inset: 0 }}
+        />
 
         {/* PICKER */}
         <View
-          style={{ top: pickerTop }}
-          className="absolute left-10 right-10 z-20 flex-row items-center rounded-full border border-app-border bg-app-fg-dark px-2 py-2 dark:border-app-border-dark dark:bg-app-fg-dark"
+          style={{
+            position: 'absolute',
+            top: pickerTop,
+            alignSelf: 'center',
+            maxWidth: '90%',
+            flexDirection: 'row',
+            alignItems: 'center',
+
+            backgroundColor: '#fff',
+            borderColor: '#e5e7eb',
+            borderWidth: 1,
+
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: 999,
+
+            elevation: 6,
+          }}
         >
           {options.map((o) => (
             <Pressable
               key={o.type}
-              onPress={() => onSelectReaction?.(o.type)}
-              className="flex-1 items-center justify-center py-0.5"
+              onPress={() => {
+                onSelectReaction?.(o.type);
+                onClose?.();
+              }}
+              style={({ pressed }) => ({
+                transform: [{ scale: pressed ? 1.25 : 1 }],
+                marginHorizontal: 8,
+              })}
             >
-              <Text className="text-2xl">{o.emoji}</Text>
+              <Text style={{ fontSize: 28 }}>{o.emoji}</Text>
             </Pressable>
           ))}
         </View>

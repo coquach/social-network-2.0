@@ -11,7 +11,7 @@ export interface PostMediaProps {
   onPressMedia?: (index: number, media: MediaDTO) => void;
 }
 
-export function PostMedia({
+function PostMediaComponent({
   media,
   mediaRemaining = 0,
   size = 'default',
@@ -53,7 +53,7 @@ export function PostMedia({
         onPress={handlePress}
       >
         <Image
-          source={{ uri: item.url }}
+          source={{ uri: item.url, cache: 'force-cache' }}
           style={{ width: '100%', height: '100%' }}
           resizeMode="cover"
         />
@@ -178,3 +178,5 @@ export function PostMedia({
     </View>
   );
 }
+
+export const PostMedia = React.memo(PostMediaComponent);

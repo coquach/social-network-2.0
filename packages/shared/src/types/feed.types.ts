@@ -21,3 +21,15 @@ export interface FeedDTO {
   type: FeedType;
   item: PostSnapshotDTO | ShareSnapshotDTO; // Can be post or shared post
 }
+
+export type PersonalFeedItem =
+  | {
+      id: string;
+      type: FeedType.POST;
+      data: PostSnapshotDTO;
+    }
+  | {
+      id: string;
+      type: FeedType.SHARE;
+      data: ShareSnapshotDTO;
+    };

@@ -5,8 +5,19 @@
 
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { feedService } from '../api/services';
-import type { CursorPageResponse, FeedDTO, PostDTO, Emotion } from '../types';
+import type {
+  CursorPageResponse,
+  Emotion,
+  FeedDTO,
+  PersonalFeedItem,
+  PostDTO,
+  PostSnapshotDTO,
+} from '../types';
 import { queryKeys } from './query-keys';
+import {
+  normalizePersonalFeedItem,
+  normalizeTrendingPost,
+} from '../lib/mapper/feed.mapper';
 
 /**
  * Hook to get personalized feed (infinite scroll)
@@ -15,16 +26,22 @@ export const useMyFeed = (params?: {
   mainEmotion?: Emotion;
   limit?: number;
 }) => {
-  return useInfiniteQuery<CursorPageResponse<FeedDTO>>({
+  return useInfiniteQuery<
+    CursorPageResponse<FeedDTO>,
+    Error,
+    PersonalFeedItem[]
+  >({
     queryKey: queryKeys.feed.personal(params?.mainEmotion),
     queryFn: ({ pageParam }) =>
       feedService.getMyFeed({
         ...params,
         cursor: pageParam as string | undefined,
       }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: undefined,
-    staleTime: 10 * 1000, // 10 seconds
+    select: (data) =>
+      data.pages.flatMap((page) => page.data.map(normalizePersonalFeedItem)),
+    staleTime: 10 * 1000,
     refetchInterval: false,
     refetchOnReconnect: true,
   });
@@ -37,16 +54,22 @@ export const useTrendingFeed = (params?: {
   mainEmotion?: Emotion;
   limit?: number;
 }) => {
-  return useInfiniteQuery<CursorPageResponse<PostDTO>>({
+  return useInfiniteQuery<
+    CursorPageResponse<PostDTO>,
+    Error,
+    PostSnapshotDTO[]
+  >({
     queryKey: queryKeys.feed.trending(params?.mainEmotion),
     queryFn: ({ pageParam }) =>
       feedService.getTrendingFeed({
         ...params,
         cursor: pageParam as string | undefined,
       }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: undefined,
-    staleTime: 10 * 1000, // 10 seconds
+    select: (data) =>
+      data.pages.flatMap((page) => page.data.map(normalizeTrendingPost)),
+    staleTime: 10 * 1000,
     refetchInterval: false,
     refetchOnReconnect: true,
   });

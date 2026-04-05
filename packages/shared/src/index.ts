@@ -21,3 +21,6 @@ export * from './store';
 
 // Constants exports
 export * from './constants';
+
+// Lib exports
+export * from './lib';

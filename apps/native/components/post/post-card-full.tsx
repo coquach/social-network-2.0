@@ -17,14 +17,8 @@ export interface PostCardFullProps {
   author?: UserSnapshotDTO;
 }
 
-export function PostCardFull({ data, author }: PostCardFullProps) {
+function PostCardFullComponent({ data, author }: PostCardFullProps) {
   const router = useRouter();
-
-  const authorData: UserSnapshotDTO = author ?? {
-    id: data.userId,
-    firstName: '',
-    lastName: '',
-  };
 
   // Navigate to post detail
   const goToPost = React.useCallback(() => {
@@ -49,7 +43,6 @@ export function PostCardFull({ data, author }: PostCardFullProps) {
       <PostHeader
         data={data}
         postId={data.postId}
-        author={authorData}
         createdAt={data.createdAt}
         audience={data.audience}
       />
@@ -92,6 +85,8 @@ export function PostCardFull({ data, author }: PostCardFullProps) {
     </AppCard>
   );
 }
+
+export const PostCardFull = React.memo(PostCardFullComponent);
 
 export function PostCardFullSkeleton() {
   return (

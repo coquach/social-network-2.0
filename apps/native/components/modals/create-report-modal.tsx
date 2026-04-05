@@ -143,7 +143,7 @@ export function CreateReportModal({
         <BottomSheet.Content
           enableDynamicSizing
           enablePanDownToClose
-          keyboardBehavior="interactive"
+          keyboardBehavior="fillParent"
           keyboardBlurBehavior="restore"
           backgroundClassName="rounded-t-[28px] border border-b-0 border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark"
           handleIndicatorClassName="bg-app-border dark:bg-app-border-dark"

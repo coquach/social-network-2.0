@@ -1,6 +1,6 @@
 /**
  * React Query Hooks for @repo/shared
- * 
+ *
  * Platform-agnostic hooks that work with React Query.
  * These hooks use the services layer and provide caching, optimistic updates,
  * and automatic refetching.

@@ -87,7 +87,6 @@ export interface PostHeaderProps {
   postId?: string;
   shareId?: string;
   data: PostSnapshotDTO | SharePostSnapshotDTO;
-  author: UserSnapshotDTO;
   createdAt: Date;
   audience: Audience;
   isShared?: boolean;
@@ -97,11 +96,10 @@ export interface PostHeaderProps {
 
 // ─── Component ─────────────────────────────────────────
 
-export function PostHeader({
+function PostHeaderComponent({
   postId,
   shareId,
   data,
-  author,
   createdAt,
   audience,
   isShared = false,
@@ -111,6 +109,15 @@ export function PostHeader({
   const { userId: currentUserId } = useAuth();
   const router = useRouter();
 
+  // Mock User
+  const author = {
+    id: 'some-user-id',
+    firstName: 'Nguyễn',
+    lastName: 'Thanh Sơn',
+    avatarUrl:
+      'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482740TND/anh-mo-ta.png',
+  };
+
   const [openMenu, setOpenMenu] = React.useState(false);
   const [openHistory, setOpenHistory] = React.useState(false);
   const [openReportModal, setOpenReportModal] = React.useState(false);
@@ -119,7 +126,7 @@ export function PostHeader({
   const { openModal: updatePostModalOpen } = useUpdatePostModal();
   const { openModal: updateSharePostModalOpen } = useUpdateSharePostModal();
 
-  const isOwner = currentUserId === author.id;
+  const isOwner = currentUserId === data.userId;
 
   const createdText = React.useMemo(() => {
     const rel = formatRelativeTime(createdAt);
@@ -132,7 +139,7 @@ export function PostHeader({
     return { icon: 'lock-closed-outline' as const };
   }, [audience]);
 
-  const feeling = React.useMemo(() => {
+  const mainEmotion = React.useMemo(() => {
     if (isShared || !('mainEmotion' in data) || !data.mainEmotion) return null;
 
     const emotionMap: Record<string, string> = {
@@ -164,46 +171,53 @@ export function PostHeader({
     return `${parts[0]![0]}${parts[parts.length - 1]![0]}`.toUpperCase();
   }, [displayName]);
 
-  const goToUser = () => {
+  const goToUser = React.useCallback(() => {
     router.push(`/profile/${author.id}` as never);
-  };
+  }, [author.id, router]);
 
-  const goToGroup = () => {
+  const goToGroup = React.useCallback(() => {
     if (!group?.id) return;
     router.push(`/groups/${group.id}` as never);
-  };
+  }, [group?.id, router]);
 
-  const close = () => setOpenMenu(false);
+  const close = React.useCallback(() => setOpenMenu(false), []);
 
   // ─── Actions ─────────────────────────────────────────
 
-  const handleEdit = () => {
+  const handleEdit = React.useCallback(() => {
     if (isShared) {
       updateSharePostModalOpen(shareId || '');
     } else {
       updatePostModalOpen(postId || '');
     }
     close();
-  };
+  }, [
+    close,
+    isShared,
+    postId,
+    shareId,
+    updatePostModalOpen,
+    updateSharePostModalOpen,
+  ]);
 
-  const handleDelete = () => {
+  const handleDelete = React.useCallback(() => {
     deletePostModalOpen({
       postId: postId || '',
       isShare: isShared,
       shareId,
     });
     close();
-  };
+  }, [close, deletePostModalOpen, isShared, postId, shareId]);
 
-  const handleReport = () => {
+  const handleReport = React.useCallback(() => {
     setOpenReportModal(true);
     close();
-  };
+  }, [close]);
 
-  const handleHistory = () => {
+  const handleHistory = React.useCallback(() => {
     setOpenHistory(true);
     close();
-  };
+  }, [close]);
 
   // ─── UI ──────────────────────────────────────────────
 
@@ -212,26 +226,55 @@ export function PostHeader({
       <View className="flex-row items-start justify-between gap-2">
         <View className="flex-1 flex-row items-start gap-2">
           {/* Avatar */}
-          <Pressable
-            onPress={goToUser}
-            className={
-              compact
-                ? 'h-9 w-9 overflow-hidden rounded-full border border-app-border bg-app-surface'
-                : 'h-11 w-11 overflow-hidden rounded-full border border-app-border bg-app-surface'
-            }
-          >
-            {author.avatarUrl ? (
-              <Image
-                source={{ uri: author.avatarUrl }}
-                className="h-full w-full"
-              />
-            ) : (
-              <View className="h-full w-full items-center justify-center bg-app-primary/12">
-                <Text className="text-xs font-bold text-app-primary">
-                  {initials}
-                </Text>
-              </View>
-            )}
+          <Pressable onPress={group ? goToGroup : goToUser}>
+            <View className={compact ? 'h-9 w-9' : 'h-11 w-11'}>
+              {/* CASE 1: Có group */}
+              {group ? (
+                <>
+                  {/* Group avatar */}
+                  {group.avatarUrl ? (
+                    <Image
+                      source={{ uri: group.avatarUrl, cache: 'force-cache' }}
+                      className="h-full w-full rounded-full border border-app-border"
+                    />
+                  ) : (
+                    <View className="h-full w-full items-center justify-center rounded-full border border-app-border bg-app-surface">
+                      <Text className="text-xs font-bold text-app-primary">
+                        {group.name?.[0] ?? 'G'}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* User avatar overlay */}
+                  <View className="absolute -bottom-1 -right-1 h-7 w-7 overflow-hidden rounded-full border border-white">
+                    {author.avatarUrl ? (
+                      <Image
+                        source={{ uri: author.avatarUrl, cache: 'force-cache' }}
+                        className="h-full w-full"
+                      />
+                    ) : (
+                      <View className="h-full w-full items-center justify-center bg-app-primary/20">
+                        <Text className="text-[9px] font-bold text-app-primary">
+                          {initials}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </>
+              ) : /* CASE 2: Không có group → show author full */
+              author.avatarUrl ? (
+                <Image
+                  source={{ uri: author.avatarUrl, cache: 'force-cache' }}
+                  className="h-full w-full rounded-full border border-app-border"
+                />
+              ) : (
+                <View className="h-full w-full items-center justify-center rounded-full border border-app-border bg-app-surface">
+                  <Text className="text-xs font-bold text-app-primary">
+                    {initials}
+                  </Text>
+                </View>
+              )}
+            </View>
           </Pressable>
 
           {/* Info */}
@@ -243,8 +286,8 @@ export function PostHeader({
                   ellipsizeMode="tail"
                   className={
                     compact
-                      ? 'max-w-[180px] text-[14px] font-semibold text-app-fg'
-                      : 'max-w-[200px] text-[15px] font-semibold text-app-fg'
+                      ? 'max-w-45 text-[14px] font-semibold text-app-fg'
+                      : 'max-w-50 text-[15px] font-semibold text-app-fg'
                   }
                 >
                   {displayName}
@@ -259,18 +302,13 @@ export function PostHeader({
 
               {group?.name && (
                 <View className="flex-row min-w-0 items-center gap-1">
-                  <Text className="text-[11px] text-app-muted-fg">
-                    đăng trong
-                  </Text>
+                  <Text className="text-[12px] text-app-muted-fg">trong</Text>
 
-                  <Pressable
-                    onPress={goToGroup}
-                    className="max-w-[150px] shrink"
-                  >
+                  <Pressable onPress={goToGroup} className="max-w-40 shrink">
                     <Text
                       numberOfLines={1}
                       ellipsizeMode="tail"
-                      className="text-[11px] font-medium text-app-primary"
+                      className="text-[13px] font-semibold text-app-fg"
                     >
                       {group.name}
                     </Text>
@@ -290,8 +328,10 @@ export function PostHeader({
 
               <Text className="text-[11px] text-app-muted-fg">•</Text>
 
-              {feeling && (
-                <Text className="text-[11px] text-app-muted-fg">{feeling}</Text>
+              {mainEmotion && (
+                <Text className="text-[11px] text-app-muted-fg">
+                  {mainEmotion}
+                </Text>
               )}
             </View>
           </View>
@@ -352,18 +392,24 @@ export function PostHeader({
       </View>
 
       {/* Modals */}
-      <PostEditHistoryModal
-        open={openHistory}
-        onOpenChange={setOpenHistory}
-        postId={postId}
-      />
+      {openHistory && (
+        <PostEditHistoryModal
+          open={openHistory}
+          onOpenChange={setOpenHistory}
+          postId={postId}
+        />
+      )}
 
-      <CreateReportModal
-        open={openReportModal}
-        onOpenChange={setOpenReportModal}
-        targetId={isShared ? shareId || '' : postId || ''}
-        targetType={isShared ? TargetType.SHARE : TargetType.POST}
-      />
+      {openReportModal && (
+        <CreateReportModal
+          open={openReportModal}
+          onOpenChange={setOpenReportModal}
+          targetId={isShared ? shareId || '' : postId || ''}
+          targetType={isShared ? TargetType.SHARE : TargetType.POST}
+        />
+      )}
     </>
   );
 }
+
+export const PostHeader = React.memo(PostHeaderComponent);

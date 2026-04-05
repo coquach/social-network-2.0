@@ -190,24 +190,37 @@ export const PostAction = React.memo(function PostAction({
   /** ===================== UI ===================== */
   const selected = reactionOptions.find((r) => r.type === selectedReaction);
 
+  const handleCommentPress = useCallback(() => {
+    if (!disableCommentModal) {
+      onPressComments?.(rootId, rootType);
+    }
+  }, [disableCommentModal, onPressComments, rootId, rootType]);
+
   return (
     <View className="relative border-t border-app-border/50 pt-2">
-      {/* Reaction Picker */}
-      <ReactionPicker
-        open={pickerOpen}
-        anchorY={pickerAnchorY}
-        options={reactionOptions}
-        onSelectReaction={handleSelectReaction}
-        onClose={() => setPickerOpen(false)}
-      />
+      {/* Lazy mount overlays to keep feed row render light */}
+      {(pickerOpen || shareSheetOpen) && (
+        <>
+          {pickerOpen && (
+            <ReactionPicker
+              open={pickerOpen}
+              anchorY={pickerAnchorY}
+              options={reactionOptions}
+              onSelectReaction={handleSelectReaction}
+              onClose={() => setPickerOpen(false)}
+            />
+          )}
 
-      {/* Share Bottom Sheet */}
-      <ShareBottomSheet
-        isOpen={shareSheetOpen}
-        onOpenChange={setShareSheetOpen}
-        onSubmit={handleShareSubmit}
-        onSubmitSuccess={handleShareSuccess}
-      />
+          {shareSheetOpen && (
+            <ShareBottomSheet
+              isOpen={shareSheetOpen}
+              onOpenChange={setShareSheetOpen}
+              onSubmit={handleShareSubmit}
+              onSubmitSuccess={handleShareSuccess}
+            />
+          )}
+        </>
+      )}
 
       <View ref={actionRowRef} className="flex-row items-stretch gap-1.5">
         {/* LIKE */}
@@ -239,11 +252,7 @@ export const PostAction = React.memo(function PostAction({
         {/* COMMENT */}
         <Pressable
           className="min-h-11 flex-1 flex-row items-center justify-center gap-2 rounded-full bg-transparent px-2.5 py-2.5 active:opacity-70 active:scale-[0.98]"
-          onPress={() => {
-            if (!disableCommentModal) {
-              onPressComments?.(rootId, rootType);
-            }
-          }}
+          onPress={handleCommentPress}
         >
           <Ionicons
             name="chatbubble-outline"
