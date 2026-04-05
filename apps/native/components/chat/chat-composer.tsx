@@ -10,6 +10,7 @@ import {
   formatAttachmentDuration,
 } from "~/components/chat/chat-attachment-utils";
 import { MessageReplyPreview } from "~/components/chat/conversation-screen/message-reply-preview";
+import { EmojiButton } from "~/components/ui/emoji-button";
 
 import { cn } from "~/lib/cn";
 
@@ -324,16 +325,20 @@ export function ChatComposer({
           </View>
         ) : null}
 
-       
-
         <View
           className={cn(
-            "flex-1 border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark",
+            "flex-1 flex-row items-end gap-1 border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark",
             isFocused
-              ? "rounded-[24px] px-4 py-3"
-              : "min-h-12 rounded-full px-4 py-2.5",
+              ? "rounded-[24px] px-3 py-3"
+              : "min-h-12 rounded-full px-3 py-1.5",
           )}
         >
+          <EmojiButton
+            disabled={disabled || isRecording}
+            onSelectEmoji={handleSelectEmoji}
+            className={cn("mb-1", !isFocused ? "self-center mb-0" : "")}
+          />
+
           <TextInput
             ref={inputRef}
             multiline
@@ -369,6 +374,7 @@ export function ChatComposer({
               setInputHeight(nextHeight);
             }}
             style={{
+              flex: 1,
               minHeight: minComposerHeight,
               height: resolvedInputHeight,
               maxHeight: maxComposerHeight,

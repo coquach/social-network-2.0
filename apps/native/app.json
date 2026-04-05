@@ -31,7 +31,9 @@
         "backgroundColor": "#FFFFFF"
       },
       "permissions": [
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false,
@@ -93,6 +95,12 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e269aaac-d58b-4520-a4f8-4cf6fc462dad"
+      }
+    }
   }
 }
