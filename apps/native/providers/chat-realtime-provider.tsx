@@ -18,6 +18,7 @@ import {
   getConversationLastSeenMap,
   getConversationLastActivity,
 } from "~/components/chat/chat-helpers";
+import { clearChatThreadNotification } from "~/lib/notifications/chat-thread-notifications";
 import { useSocket } from "~/providers/socket-provider";
 
 type NativeChatRealtimeProviderProps = {
@@ -339,6 +340,13 @@ export function useNativeConversationRealtime({
         return undefined;
       }
 
+      void clearChatThreadNotification(conversationId).catch((error) => {
+        console.warn(
+          "[notifications] Failed to clear chat thread notification on focus:",
+          error,
+        );
+      });
+
       chatSocket.emit("conversation.join", { conversationId });
 
       return () => {
@@ -500,6 +508,12 @@ export function useNativeConversationRealtime({
       return;
     }
 
+    void clearChatThreadNotification(conversationId).catch((error) => {
+      console.warn(
+        "[notifications] Failed to clear chat thread notification on read:",
+        error,
+      );
+    });
     markConversationAsRead(conversationId);
   }, [conversationId, markConversationAsRead, messages]);
 

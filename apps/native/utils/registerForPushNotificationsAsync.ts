@@ -30,7 +30,7 @@ const configureExpoNotificationChannels = async () => {
     description: 'General app notifications',
     importance: Notifications.AndroidImportance.DEFAULT,
     sound: 'general.wav',
-    vibrationPattern: [0, 180, 120, 180],
+    vibrationPattern: [180, 120, 180, 120],
     lightColor: '#0EA5E9',
     showBadge: true,
   });

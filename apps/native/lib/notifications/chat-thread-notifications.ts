@@ -6,6 +6,7 @@ import notifee, {
   type AndroidMessagingStyleMessage,
 } from '@notifee/react-native';
 import { Platform } from 'react-native';
+
 import {
   toChatNotificationPayload,
   type NotificationData,
@@ -72,7 +73,7 @@ const normalizeTimestamp = (value?: number | string) => {
 
 const sanitizePreview = (value?: string) => {
   if (!value?.trim()) {
-    return 'Bạn có tin nhắn mới';
+    return 'Ban co tin nhan moi';
   }
 
   const normalized = value.replace(/\s+/g, ' ').trim();
@@ -84,7 +85,7 @@ const sanitizePreview = (value?: string) => {
 const getConversationTitle = (thread: ChatThreadState) =>
   thread.isGroup
     ? thread.conversationName || 'Nhóm chat'
-    : thread.messages.at(-1)?.senderName || 'Tin nhắn mới';
+    : thread.messages.at(-1)?.senderName ||'Tin nhắn mới';;
 
 const toMessagingStyleMessages = (
   messages: ChatThreadMessage[],
@@ -132,7 +133,7 @@ export async function ensureChatThreadNotificationInfrastructure() {
     importance: AndroidImportance.HIGH,
     sound: 'message.wav',
     vibration: true,
-    vibrationPattern: [0, 250, 150, 250],
+    vibrationPattern: [250, 150, 250, 150],
     lights: true,
     lightColor: '#2563EB',
     badge: true,
@@ -185,13 +186,24 @@ export async function upsertChatThreadNotification(
   const notificationId = getThreadNotificationId(payload.conversationId);
   const title =
     nextThread.unreadCount > 1
-      ? `${nextThread.unreadCount} tin nhan moi`
+      ? `${nextThread.unreadCount} tin nhắn mới`
       : getConversationTitle(nextThread);
   const body = payload.isGroup
     ? latestMessage
       ? `${latestMessage.senderName}: ${latestMessage.preview}`
       : payload.senderName
-    : latestMessage?.preview || 'Ban co tin nhan moi';
+    : latestMessage?.preview || 'Bạn có tin nhắn mới';
+  const messagingStyle = {
+    type: AndroidStyle.MESSAGING,
+    person: {
+      name: payload.isGroup ? payload.conversationName || 'Nhóm chat' : 'Bạn',
+    },
+    group: payload.isGroup,
+    messages: toMessagingStyleMessages(nextMessages),
+    ...(payload.isGroup
+      ? { title: payload.conversationName || 'Nhóm chat' }
+      : {}),
+  } as const;
 
   await notifee.displayNotification({
     id: notificationId,
@@ -216,15 +228,7 @@ export async function upsertChatThreadNotification(
       showTimestamp: true,
       timestamp,
       onlyAlertOnce: false,
-      style: {
-        type: AndroidStyle.MESSAGING,
-        person: {
-          name: payload.isGroup ? payload.conversationName || 'Nhóm chat' : 'Bạn',
-        },
-        group: payload.isGroup,
-        title: payload.isGroup ? payload.conversationName || 'Nhóm chat' : undefined,
-        messages: toMessagingStyleMessages(nextMessages),
-      },
+      style: messagingStyle,
     },
   });
 
@@ -260,13 +264,13 @@ async function syncChatThreadSummaryNotification(stateMap: ChatThreadStateMap) {
   );
   const summaryLines = threads.slice(0, 5).map((thread) => {
     const latestMessage = thread.messages.at(-1);
-    return `${getConversationTitle(thread)}: ${latestMessage?.preview || 'Bạn có tin nhắn mới'}`;
+    return `${getConversationTitle(thread)}: ${latestMessage?.preview || 'Ban co tin nhan moi'}`;
   });
 
   await notifee.displayNotification({
     id: CHAT_SUMMARY_NOTIFICATION_ID,
-    title: `${totalUnread} tin nhắn mới`,
-    body: `${threads.length} cuộc trò chuyện có tin nhắn mới`,
+    title: `${totalUnread} tin nhan moi`,
+    body: `${threads.length} cuoc tro chuyen co tin nhan moi`,
     android: {
       channelId: CHAT_CHANNEL_ID,
       groupId: CHAT_NOTIFICATION_GROUP_ID,
@@ -277,7 +281,7 @@ async function syncChatThreadSummaryNotification(stateMap: ChatThreadStateMap) {
       style: {
         type: AndroidStyle.INBOX,
         lines: summaryLines,
-        summary: `${threads.length} cuộc trò chuyện`,
+        summary: `${threads.length} cuoc tro chuyen`,
       },
       onlyAlertOnce: true,
     },
