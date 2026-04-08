@@ -180,7 +180,7 @@ export function MessageReplyPreview({
         />
       ) : (
         <Ionicons
-          name="arrow-undo-outline"
+          name="arrow-undo-sharp"
           size={compact ? 14 : 16}
           color={style.iconColor}
           style={{ marginTop: compact ? 1 : 2 }}

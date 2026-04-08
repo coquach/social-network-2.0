@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler';
 import '../global.css';
+import '../lib/notifications/notifee-chat-events';
 import { ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { SplashScreen, Stack } from 'expo-router';
@@ -20,6 +21,7 @@ import { NativeSocketProvider } from '~/providers/socket-provider';
 import { AppThemeProvider } from '~/providers/theme-provider';
 import { NotificationProvider } from '~/providers/notification-provider';
 import { ensureBackgroundNotificationTaskRegistered } from '~/lib/notifications/background-notification-task';
+import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
 import * as Notifications from 'expo-notifications';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -72,6 +74,17 @@ export default function RootLayout() {
         console.warn(
           '[notifications] Failed to register background notification task:',
           registrationError,
+        );
+      },
+    );
+  }, []);
+
+  useEffect(() => {
+    void ensureChatThreadNotificationInfrastructure().catch(
+      (infrastructureError) => {
+        console.warn(
+          '[notifications] Failed to initialize chat thread notification infrastructure:',
+          infrastructureError,
         );
       },
     );

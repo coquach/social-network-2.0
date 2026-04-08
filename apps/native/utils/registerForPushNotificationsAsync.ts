@@ -20,7 +20,7 @@ const isNativePlatform = (
 const getExpoProjectId = () =>
   Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 
-const configureAndroidChannels = async () => {
+const configureExpoNotificationChannels = async () => {
   if (Platform.OS !== 'android') {
     return;
   }
@@ -32,18 +32,6 @@ const configureAndroidChannels = async () => {
     sound: 'general.wav',
     vibrationPattern: [0, 180, 120, 180],
     lightColor: '#0EA5E9',
-    showBadge: true,
-  });
-
-  await Notifications.setNotificationChannelAsync('messages', {
-    name: 'Messages',
-    description: 'Incoming chat message notifications',
-    importance: Notifications.AndroidImportance.MAX,
-    sound: 'message.wav',
-    vibrationPattern: [0, 250, 150, 250],
-    lightColor: '#2563EB',
-    bypassDnd: false,
-    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     showBadge: true,
   });
 };
@@ -102,7 +90,7 @@ export async function registerForPushNotificationsAsync(): Promise<NativePushReg
     );
   }
 
-  await configureAndroidChannels();
+  await configureExpoNotificationChannels();
 
   const permissionStatus = await ensurePermissions();
 

@@ -1,4 +1,5 @@
 import { useAuth } from '@clerk/expo';
+import notifee, { EventType } from '@notifee/react-native';
 import { notificationService } from '@repo/shared';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
@@ -19,11 +20,16 @@ import {
   registerForPushNotificationsAsync,
   type NativePushRegistration,
 } from '../utils/registerForPushNotificationsAsync';
-
-type NotificationData = Record<string, unknown> & {
-  type?: string;
-  conversationId?: string;
-};
+import {
+  getConversationId,
+  isChatMessageNotificationData,
+  type NotificationData,
+} from '~/lib/notifications/notification-payload';
+import {
+  consumePendingChatNavigation,
+  extractConversationIdFromInitialNotification,
+} from '~/lib/notifications/notifee-chat-events';
+import { upsertChatThreadNotificationFromData } from '~/lib/notifications/chat-thread-notifications';
 
 type NotificationContextValue = {
   pushToken: string | null;
@@ -48,21 +54,13 @@ const appId =
 const normalizeError = (error: unknown) =>
   error instanceof Error ? error : new Error(String(error));
 
-const getConversationId = (data: NotificationData | undefined) => {
-  if (!data?.conversationId) {
-    return null;
-  }
-
-  return String(data.conversationId);
-};
-
 const routeFromNotificationData = (
   router: ReturnType<typeof useRouter>,
   data: NotificationData | undefined,
 ) => {
   const conversationId = getConversationId(data);
 
-  if (data?.type === 'message' || conversationId) {
+  if (isChatMessageNotificationData(data)) {
     if (conversationId) {
       router.push(`/chat/${conversationId}`);
       return;
@@ -127,20 +125,34 @@ export const NotificationProvider = ({
 
       const responseId =
         request.identifier ?? JSON.stringify(request.content.data ?? {});
+      const responseData = request.content.data as NotificationData | undefined;
 
       if (handledResponseRef.current === responseId) {
         return;
       }
 
       handledResponseRef.current = responseId;
-      routeFromNotificationData(
-        router,
-        request.content.data as NotificationData | undefined,
-      );
+
+      if (Platform.OS === 'android' && isChatMessageNotificationData(responseData)) {
+        return;
+      }
+
+      routeFromNotificationData(router, responseData);
     };
 
     const notificationListener = Notifications.addNotificationReceivedListener(
       (incomingNotification) => {
+        const incomingData = incomingNotification.request.content.data as
+          | NotificationData
+          | undefined;
+
+        if (Platform.OS === 'android' && isChatMessageNotificationData(incomingData)) {
+          void upsertChatThreadNotificationFromData(incomingData).catch((notificationError) => {
+            setError(normalizeError(notificationError));
+          });
+          return;
+        }
+
         setNotification(incomingNotification);
       },
     );
@@ -160,6 +172,52 @@ export const NotificationProvider = ({
       notificationListener.remove();
       responseListener.remove();
     };
+  }, [router]);
+
+  useEffect(() => {
+    const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
+      if (type !== EventType.PRESS && type !== EventType.ACTION_PRESS) {
+        return;
+      }
+
+      const data = detail.notification?.data as NotificationData | undefined;
+
+      if (!isChatMessageNotificationData(data)) {
+        return;
+      }
+
+      const conversationId = getConversationId(data);
+      if (conversationId) {
+        router.push(`/chat/${conversationId}`);
+      }
+    });
+
+    const resolveInitialNavigation = async () => {
+      try {
+        const [initialNotification, pendingNavigation] = await Promise.all([
+          notifee.getInitialNotification(),
+          consumePendingChatNavigation(),
+        ]);
+
+        const initialConversationId =
+          await extractConversationIdFromInitialNotification(initialNotification);
+
+        if (initialConversationId) {
+          router.push(`/chat/${initialConversationId}`);
+          return;
+        }
+
+        if (pendingNavigation?.conversationId) {
+          router.push(`/chat/${pendingNavigation.conversationId}`);
+        }
+      } catch (initialNotificationError) {
+        setError(normalizeError(initialNotificationError));
+      }
+    };
+
+    void resolveInitialNavigation();
+
+    return unsubscribe;
   }, [router]);
 
   useEffect(() => {
