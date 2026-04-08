@@ -13,7 +13,10 @@
       "~/*": [
         "./*"
       ]
-    }
+    },
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnusedLabels": false
   },
   "include": [
     "**/*.ts",

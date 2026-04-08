@@ -37,7 +37,8 @@
       ],
       "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.sentimeta.app"
+      "package": "com.sentimeta.app",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -94,6 +95,17 @@
             }
           }
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "general",
+          "enableBackgroundRemoteNotifications": true,
+          "sounds": [
+            "./assets/sounds/general.wav",
+            "./assets/sounds/message.wav"
+          ]
+        }
       ]
     ],
     "extra": {
@@ -101,6 +113,7 @@
       "eas": {
         "projectId": "e269aaac-d58b-4520-a4f8-4cf6fc462dad"
       }
-    }
+    },
+    "owner": "vinhco"
   }
 }

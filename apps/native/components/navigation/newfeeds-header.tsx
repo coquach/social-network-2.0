@@ -14,12 +14,12 @@ export const NEWFEEDS_HEADER_BAR_HEIGHT = 52;
 type HeaderAction = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
-  href?: '/chat';
+  href?: '/chat' | '/notifications';
 };
 
 const RIGHT_ACTIONS: HeaderAction[] = [
   { icon: 'search-outline', label: 'Tim kiem' },
-  { icon: 'notifications-outline', label: 'Thong bao' },
+  { icon: 'notifications-outline', label: 'Thong bao', href: '/notifications' },
   { icon: 'chatbubble-outline', label: 'Nhan tin', href: '/chat' },
 ];
 

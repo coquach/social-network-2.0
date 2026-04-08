@@ -265,8 +265,8 @@ export function ChatComposer({
           {fileAttachments.length > 0 ? (
             <View
               className={cn(
-                "flex-row flex-wrap gap-2",
-                mediaAttachments.length > 0 ? "mt-2" : "",
+                'flex-row flex-wrap gap-2',
+                mediaAttachments.length > 0 ? 'mt-2' : '',
               )}
             >
               {fileAttachments.map((attachment) => (
@@ -285,8 +285,8 @@ export function ChatComposer({
         <View className="mb-3 flex-row items-center gap-2 rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-500/10">
           <View className="h-2.5 w-2.5 rounded-full bg-rose-500" />
           <Text className="flex-1 text-sm font-medium text-rose-700 dark:text-rose-200">
-            Đang ghi âm{" "}
-            {formatAttachmentDuration(recordingDurationMs) ?? "0:00"}
+            Đang ghi âm{' '}
+            {formatAttachmentDuration(recordingDurationMs) ?? '0:00'}
           </Text>
           <Text className="text-xs text-rose-600 dark:text-rose-200">
             Nhấn mic để dừng
@@ -294,7 +294,12 @@ export function ChatComposer({
         </View>
       ) : null}
 
-      <View className={cn("flex-row gap-3", isFocused ? "items-end" : "items-center")}>
+      <View
+        className={cn(
+          'flex-row gap-3',
+          isFocused ? 'items-end' : 'items-center',
+        )}
+      >
         {!isFocused || isRecording ? (
           <View className="flex-row gap-2">
             <ComposerActionButton
@@ -316,8 +321,8 @@ export function ChatComposer({
               onPress={onPickFile}
             />
             <ComposerActionButton
-              icon={isRecording ? "stop-circle-outline" : "mic-outline"}
-              label={isRecording ? "Dừng ghi âm" : "Ghi âm"}
+              icon={isRecording ? 'stop-circle-outline' : 'mic-outline'}
+              label={isRecording ? 'Dừng ghi âm' : 'Ghi âm'}
               active={isRecording}
               disabled={disabled}
               onPress={onToggleRecording}
@@ -327,18 +332,12 @@ export function ChatComposer({
 
         <View
           className={cn(
-            "flex-1 flex-row items-end gap-1 border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark",
+            'flex-1 flex-row items-end gap-1 border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark',
             isFocused
-              ? "rounded-[24px] px-3 py-3"
-              : "min-h-12 rounded-full px-3 py-1.5",
+              ? 'rounded-[24px] px-3 py-3'
+              : 'min-h-12 rounded-full px-3 py-1.5',
           )}
         >
-          <EmojiButton
-            disabled={disabled || isRecording}
-            onSelectEmoji={handleSelectEmoji}
-            className={cn("mb-1", !isFocused ? "self-center mb-0" : "")}
-          />
-
           <TextInput
             ref={inputRef}
             multiline
@@ -352,7 +351,6 @@ export function ChatComposer({
               setSelection(event.nativeEvent.selection);
             }}
             keyboardAppearance="default"
-            
             editable={!disabled}
             onFocus={() => {
               setIsFocused(true);
@@ -368,7 +366,10 @@ export function ChatComposer({
             }}
             onContentSizeChange={(event) => {
               const nextHeight = Math.min(
-                Math.max(event.nativeEvent.contentSize.height, minComposerHeight),
+                Math.max(
+                  event.nativeEvent.contentSize.height,
+                  minComposerHeight,
+                ),
                 maxComposerHeight,
               );
               setInputHeight(nextHeight);
@@ -378,23 +379,28 @@ export function ChatComposer({
               minHeight: minComposerHeight,
               height: resolvedInputHeight,
               maxHeight: maxComposerHeight,
-              textAlignVertical: "top",
+              textAlignVertical: 'top',
               fontSize: 15,
               lineHeight: 20,
             }}
             className={cn(
-              "text-app-fg dark:text-app-fg-dark",
-              !isFocused ? "py-0" : "",
-              disabled ? "opacity-60" : "",
+              'text-app-fg dark:text-app-fg-dark',
+              !isFocused ? 'py-0' : '',
+              disabled ? 'opacity-60' : '',
             )}
+          />
+          <EmojiButton
+            disabled={disabled || isRecording}
+            onSelectEmoji={handleSelectEmoji}
+            className={cn('mb-1', !isFocused ? 'self-center mb-0' : '')}
           />
         </View>
 
         <Button
-          variant={isSendDisabled ? "secondary" : "primary"}
+          variant={isSendDisabled ? 'secondary' : 'primary'}
           className={cn(
-            "h-12 w-12 min-h-12 rounded-full px-0",
-            isSendDisabled ? "opacity-70" : "",
+            'h-12 w-12 min-h-12 rounded-full px-0',
+            isSendDisabled ? 'opacity-70' : '',
           )}
           isDisabled={isSendDisabled}
           onPress={onSend}
@@ -402,7 +408,7 @@ export function ChatComposer({
           <Ionicons
             name="paper-plane"
             size={18}
-            color={isSendDisabled ? "#6b8aa1" : "#ffffff"}
+            color={isSendDisabled ? '#6b8aa1' : '#ffffff'}
           />
         </Button>
       </View>
