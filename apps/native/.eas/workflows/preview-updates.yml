@@ -1,6 +1,20 @@
 name: Native Preview Updates
 
 on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - apps/native/app/**
+      - apps/native/components/**
+      - apps/native/constants/**
+      - apps/native/hooks/**
+      - apps/native/lib/**
+      - apps/native/providers/**
+      - apps/native/utils/**
+      - packages/shared/src/**
+      - packages/ui/src/**
+      - !**/*.md
   push:
     branches:
       - develop
@@ -15,7 +29,7 @@ on:
       - packages/shared/src/**
       - packages/ui/src/**
       - !**/*.md
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   publish_preview_update:
