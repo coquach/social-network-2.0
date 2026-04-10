@@ -30,7 +30,6 @@ import {
 import {
   getConversationLastActivity,
   getConversationName,
-  getConversationUnreadState,
   getMessagePreview,
 } from "~/components/chat/chat-helpers";
 import { AppBottomSheet } from "~/components/ui/app-bottom-sheet";
@@ -53,7 +52,10 @@ const sortConversations = (conversations: ConversationDTO[]) => {
   );
 };
 
-const conversationSkeletonItems = Array.from({ length: 7 }, (_, index) => index);
+const conversationSkeletonItems = Array.from(
+  { length: 7 },
+  (_, index) => index,
+);
 
 function ConversationSheetAction({
   icon,
@@ -313,16 +315,6 @@ export default function ChatInboxScreen() {
   );
 
   const hasSearchText = searchText.trim().length > 0;
-  const unreadCount = React.useMemo(
-    () =>
-      allConversations.reduce(
-        (count, conversation) =>
-          count +
-          (getConversationUnreadState(conversation, userId ?? null) ? 1 : 0),
-        0,
-      ),
-    [allConversations, userId],
-  );
 
   const emptyTitle = hasSearchText
     ? "Không tìm thấy cuộc trò chuyện nào"
@@ -391,69 +383,71 @@ export default function ChatInboxScreen() {
 
         {!isLoading ? (
           <>
-        {isLoading ? (
-          <AppLoadingBlock label="Đang tải cuộc trò chuyện..." />
-        ) : (
-          <FlashList
-            data={conversations}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <ChatConversationRow
-                conversation={item}
-                onPress={handleOpenConversation}
-                onLongPress={openConversationActions}
+            {isLoading ? (
+              <AppLoadingBlock label="Đang tải cuộc trò chuyện..." />
+            ) : (
+              <FlashList
+                data={conversations}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => (
+                  <ChatConversationRow
+                    conversation={item}
+                    onPress={handleOpenConversation}
+                    onLongPress={openConversationActions}
+                  />
+                )}
+                contentContainerStyle={{
+                  paddingHorizontal: 16,
+                  paddingBottom: insets.bottom + 28,
+                  paddingTop: 6,
+                  flex: 1,
+                  justifyContent:
+                    conversations.length === 0 ? "center" : "flex-start",
+                }}
+                ItemSeparatorComponent={() => <View className="h-2.5" />}
+                showsVerticalScrollIndicator={false}
+                onRefresh={() => {
+                  void refetch();
+                }}
+                refreshing={isRefetching}
+                onEndReached={() => {
+                  if (hasNextPage && !isFetchingNextPage) {
+                    void fetchNextPage();
+                  }
+                }}
+                onEndReachedThreshold={0.35}
+                ListFooterComponent={
+                  isFetchingNextPage ? (
+                    <View className="py-5">
+                      <AppLoadingBlock label="Đang tải thêm..." />
+                    </View>
+                  ) : (
+                    <View className="h-4" />
+                  )
+                }
+                ListEmptyComponent={
+                  <View className="items-center justify-center px-8 pt-24">
+                    <View className="h-16 w-16 items-center justify-center rounded-[24px] bg-app-primary/12 dark:bg-app-primary-dark/18">
+                      <Ionicons
+                        name={
+                          hasSearchText
+                            ? "search-outline"
+                            : "chatbubbles-outline"
+                        }
+                        size={28}
+                        color="#0ea5e9"
+                      />
+                    </View>
+                    <Text className="mt-5 text-center text-lg font-bold text-app-fg dark:text-app-fg-dark">
+                      {emptyTitle}
+                    </Text>
+                    <Text className="mt-2 max-w-[17rem] text-center text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
+                      {emptyDescription}
+                    </Text>
+                  </View>
+                }
               />
             )}
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingBottom: insets.bottom + 28,
-              paddingTop: 6,
-              flex: 1,
-              justifyContent:
-                conversations.length === 0 ? "center" : "flex-start",
-            }}
-            ItemSeparatorComponent={() => <View className="h-2.5" />}
-            showsVerticalScrollIndicator={false}
-            onRefresh={() => {
-              void refetch();
-            }}
-            refreshing={isRefetching}
-            onEndReached={() => {
-              if (hasNextPage && !isFetchingNextPage) {
-                void fetchNextPage();
-              }
-            }}
-            onEndReachedThreshold={0.35}
-            ListFooterComponent={
-              isFetchingNextPage ? (
-                <View className="py-5">
-                  <AppLoadingBlock label="Đang tải thêm..." />
-                </View>
-              ) : (
-                <View className="h-4" />
-              )
-            }
-            ListEmptyComponent={
-              <View className="items-center justify-center px-8 pt-24">
-                <View className="h-16 w-16 items-center justify-center rounded-[24px] bg-app-primary/12 dark:bg-app-primary-dark/18">
-                  <Ionicons
-                    name={
-                      hasSearchText ? "search-outline" : "chatbubbles-outline"
-                    }
-                    size={28}
-                    color="#0ea5e9"
-                  />
-                </View>
-                <Text className="mt-5 text-center text-lg font-bold text-app-fg dark:text-app-fg-dark">
-                  {emptyTitle}
-                </Text>
-                <Text className="mt-2 max-w-[17rem] text-center text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
-                  {emptyDescription}
-                </Text>
-              </View>
-            }
-          />
-        )}
           </>
         ) : null}
       </View>

@@ -1,31 +1,31 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { RotateCcw, Search } from 'lucide-react';
-import { useDebouncedCallback } from 'use-debounce';
+import * as React from "react";
+import { RotateCcw, Search } from "lucide-react";
+import { useDebouncedCallback } from "use-debounce";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ContentEntryFilter } from '@/lib/actions/admin/content-entry-action';
-import { TargetType } from '@/models/social/enums/social.enum';
-import { ContentStatus } from '@/models/social/post/contentEntryDTO';
+} from "@/components/ui/select";
+import { ContentEntryFilter } from "@/lib/actions/admin/content-entry-action";
+import { TargetType } from "@/models/social/enums/social.enum";
+import { ContentStatus } from "@/models/social/post/contentEntryDTO";
 
 const targetLabels: Record<TargetType, string> = {
-  [TargetType.POST]: 'Bài viết',
-  [TargetType.SHARE]: 'Chia sẻ',
-  [TargetType.COMMENT]: 'Bình luận',
+  [TargetType.POST]: "Bài viết",
+  [TargetType.SHARE]: "Chia sẻ",
+  [TargetType.COMMENT]: "Bình luận",
 };
 
 const statusLabels: Record<ContentStatus, string> = {
-  [ContentStatus.ACTIVE]: 'Đang hiển thị',
-  [ContentStatus.VIOLATED]: 'Vi phạm',
+  [ContentStatus.ACTIVE]: "Đang hiển thị",
+  [ContentStatus.VIOLATED]: "Vi phạm",
 };
 
 type ContentToolbarProps = {
@@ -35,9 +35,9 @@ type ContentToolbarProps = {
 };
 
 function toDateInputValue(d?: Date | string | null) {
-  if (!d) return '';
+  if (!d) return "";
   const date = d instanceof Date ? d : new Date(d);
-  if (Number.isNaN(date.getTime())) return '';
+  if (Number.isNaN(date.getTime())) return "";
   return date.toISOString().slice(0, 10);
 }
 
@@ -46,19 +46,20 @@ export function ContentToolbar({
   onFilterChange,
   onReset,
 }: ContentToolbarProps) {
-  const [keyword, setKeyword] = React.useState(filter.query ?? '');
+  const [keyword, setKeyword] = React.useState(filter.query ?? "");
   const [draftTargetType, setDraftTargetType] = React.useState<string>(
-    filter.targetType ?? TargetType.POST
+    filter.targetType ?? TargetType.POST,
   );
   const [draftStatus, setDraftStatus] = React.useState<string>(
-    filter.status ?? 'all'
+    filter.status ?? "all",
   );
   const [draftCreateAt, setDraftCreateAt] = React.useState<string>(
-    toDateInputValue(filter.createAt as any)
+    toDateInputValue(filter.createAt as any),
   );
+  const latestKeywordRef = React.useRef(keyword);
 
   React.useEffect(() => {
-    setKeyword(filter.query ?? '');
+    setKeyword(filter.query ?? "");
   }, [filter.query]);
 
   React.useEffect(() => {
@@ -66,41 +67,51 @@ export function ContentToolbar({
   }, [filter.targetType]);
 
   React.useEffect(() => {
-    setDraftStatus(filter.status ?? 'all');
+    setDraftStatus(filter.status ?? "all");
   }, [filter.status]);
 
   React.useEffect(() => {
     setDraftCreateAt(toDateInputValue(filter.createAt as any));
   }, [filter.createAt]);
+
+  React.useEffect(() => {
+    latestKeywordRef.current = keyword;
+  }, [keyword]);
+
   const applyFilters = React.useCallback(
     (text: string, target: string, status: string, date: string) => {
       onFilterChange({
         query: text.trim() || undefined,
-        targetType: target === 'all' ? undefined : (target as TargetType),
-        status: status === 'all' ? undefined : (status as ContentStatus),
+        targetType: target === "all" ? undefined : (target as TargetType),
+        status: status === "all" ? undefined : (status as ContentStatus),
         createAt: date ? new Date(date) : undefined,
         page: 1,
       });
     },
-    [onFilterChange]
+    [onFilterChange],
   );
   React.useEffect(() => {
-    applyFilters(keyword, draftTargetType, draftStatus, draftCreateAt);
-  }, [draftTargetType, draftStatus, draftCreateAt, keyword]);
+    applyFilters(
+      latestKeywordRef.current,
+      draftTargetType,
+      draftStatus,
+      draftCreateAt,
+    );
+  }, [applyFilters, draftTargetType, draftStatus, draftCreateAt]);
 
   const debouncedSearch = useDebouncedCallback(
     (text: string) => {
       applyFilters(text, draftTargetType, draftStatus, draftCreateAt);
     },
     300,
-    { maxWait: 800 }
+    { maxWait: 800 },
   );
 
   const reset = () => {
-    setKeyword('');
+    setKeyword("");
     setDraftTargetType(TargetType.POST);
-    setDraftStatus('all');
-    setDraftCreateAt('');
+    setDraftStatus("all");
+    setDraftCreateAt("");
     onReset();
   };
 
@@ -152,7 +163,7 @@ export function ContentToolbar({
 
         <div>
           <div className="mb-1 text-xs font-medium text-slate-500">
-              Trạng thái
+            Trạng thái
           </div>
           <Select
             value={draftStatus}
