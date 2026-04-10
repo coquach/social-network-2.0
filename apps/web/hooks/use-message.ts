@@ -7,6 +7,7 @@ import { uploadMultipleToCloudinary } from '@/lib/actions/cloudinary/upload-acti
 import {
   CursorPageResponse,
   CursorPagination,
+  MessageStatus,
   getStandardNextPageParam,
 } from '@repo/shared';
 import { getQueryClient } from '@/lib/query-client';
@@ -74,7 +75,7 @@ export const useSendMessage = () => {
         senderId: userId ?? 'me',
         conversationId: form.conversationId,
         content: form.content?.trim() || (hasMedia ? 'Đang gửi tệp...' : ''),
-        status: 'sent' as const,
+        status: MessageStatus.SENT,
         seenBy: userId ? [userId] : [],
         reactionStats: {},
         attachments: [],

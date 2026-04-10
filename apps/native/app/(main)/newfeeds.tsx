@@ -20,6 +20,7 @@ import { AppCard } from '~/components/ui/app-card';
 import { AppEyebrow, AppSubtitle, AppTitle } from '~/components/ui/app-text';
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
+import { useNotification } from '~/providers/notification-provider';
 
 const TOP_THRESHOLD = 12;
 const DELTA_THRESHOLD = 8;
@@ -142,6 +143,14 @@ export default function NewfeedsScreen() {
       transform: [{ translateY: headerTranslateY.value }],
     };
   });
+
+  const { notification, pushToken, expoPushToken, error } = useNotification();
+  if (error) { 
+    console.error('Error getting push token:', error);
+  }
+  console.log(
+    JSON.stringify({ notification, pushToken, expoPushToken }, null, 2),
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

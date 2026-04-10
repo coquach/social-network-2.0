@@ -70,6 +70,8 @@ export enum ReactionType {
 export enum MediaType {
   IMAGE = 'IMAGE',
   VIDEO = 'VIDEO',
+  AUDIO = 'AUDIO',
+  FILE = 'FILE',
 }
 
 /**
