@@ -2,7 +2,11 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "build": "turbo run build",
+    "ci": "npm run lint && npm run typecheck && npm run build",
     "se121:build": "npm --prefix ../SE121-microservices run build",
     "se121:start:prod": "npm --prefix ../SE121-microservices run start:prod",
     "se121:start:prod:test": "npm --prefix ../SE121-microservices run start:prod:test",

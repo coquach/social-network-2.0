@@ -7,12 +7,11 @@ import {
 } from "@repo/shared";
 import { router } from "expo-router";
 import { Button } from "heroui-native/button";
-import { Card } from "heroui-native/card";
 import { Tabs } from "heroui-native/tabs";
 import { useToast } from "heroui-native/toast";
 import React from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 
 import { AppBottomSheet } from "~/components/ui/app-bottom-sheet";
 import { AppToast, type AppToastData } from "~/components/ui/app-toast";
@@ -296,8 +295,6 @@ export function CreateConversationSheet({
       }
     >
       <View className="w-full gap-4">
-     
-
         <Tabs
           value={activeTab}
           variant="primary"
