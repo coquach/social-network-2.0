@@ -9,12 +9,12 @@ import type {
 import { FeedList } from './feed-list';
 import { PostCardFull } from '~/components/post/post-card-full';
 import { SharePost } from '~/components/post/share-post';
+import { View } from 'react-native';
 
 type PersonalFeedProps = {
   mainEmotion?: Emotion;
   onScroll: any;
   scrollEnabled: boolean;
-  listHeaderComponent?: React.ReactElement;
   contentContainerStyle: {
     paddingTop: number;
     paddingBottom: number;
@@ -26,7 +26,6 @@ export const PersonalFeed = React.memo(function PersonalFeed({
   mainEmotion,
   onScroll,
   scrollEnabled,
-  listHeaderComponent,
   contentContainerStyle,
 }: PersonalFeedProps) {
   const {
@@ -95,7 +94,11 @@ export const PersonalFeed = React.memo(function PersonalFeed({
       onRefresh={handleRefresh}
       onScroll={onScroll}
       scrollEnabled={scrollEnabled}
-      listHeaderComponent={listHeaderComponent}
+      listHeaderComponent={
+        <View className="pb-2">
+          <View className="h-px bg-app-border/40 mx-2 mb-2" />
+        </View>
+      }
       contentContainerStyle={contentContainerStyle}
       emptyText="Không có bài viết nào trong bảng tin."
       estimatedItemSize={420}

@@ -10,28 +10,17 @@ import {
 import { BottomSheet } from 'heroui-native/bottom-sheet';
 import { useToast } from 'heroui-native/toast';
 import { Ionicons } from '@expo/vector-icons';
-import { useCreateReport, TargetType } from '@repo/shared';
+import { useCreateReport, useReportModalStore } from '@repo/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppToast } from '~/components/ui/app-toast';
 
 const MAX_REASON = 1000;
 
-interface CreateReportModalProps {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  targetId: string;
-  targetType: TargetType;
-}
-
-export function CreateReportModal({
-  open,
-  onOpenChange,
-  targetId,
-  targetType,
-}: CreateReportModalProps) {
+export function CreateReportModal() {
   const { mutateAsync, isPending } = useCreateReport();
   const { toast } = useToast();
   const insets = useSafeAreaInsets();
+  const { isOpen, targetId, targetType, close } = useReportModalStore();
 
   const inputRef = React.useRef<TextInput | null>(null);
 
@@ -42,13 +31,13 @@ export function CreateReportModal({
   }, [targetId, targetType]);
 
   React.useEffect(() => {
-    if (!open) {
+    if (!isOpen) {
       Keyboard.dismiss();
       inputRef.current?.blur();
     } else {
       setTimeout(() => inputRef.current?.focus(), 200);
     }
-  }, [open]);
+  }, [isOpen]);
 
   const handleSubmit = async () => {
     if (!reason.trim()) {
@@ -69,6 +58,10 @@ export function CreateReportModal({
     }
 
     try {
+      if (!targetId || !targetType) {
+        throw new Error('Missing report target');
+      }
+
       await mutateAsync({
         targetId,
         targetType,
@@ -92,7 +85,7 @@ export function CreateReportModal({
       setReason('');
 
       setTimeout(() => {
-        onOpenChange(false);
+        close();
       }, 150);
     } catch (error) {
       const errorMsg =
@@ -121,20 +114,20 @@ export function CreateReportModal({
   const handleClose = () => {
     if (isPending) return;
     setReason('');
-    onOpenChange(false);
+    close();
   };
 
   const isNearLimit = reason.length > MAX_REASON * 0.8;
 
   return (
     <BottomSheet
-      isOpen={open}
+      isOpen={isOpen}
       onOpenChange={(v) => {
         if (!v) {
           Keyboard.dismiss();
           inputRef.current?.blur();
+          close();
         }
-        onOpenChange(v);
       }}
     >
       <BottomSheet.Portal>
@@ -177,7 +170,7 @@ export function CreateReportModal({
                 editable={!isPending}
                 maxLength={MAX_REASON}
                 textAlignVertical="top"
-                className="min-h-[120px] rounded-2xl border border-app-border bg-app-surface-elevated px-4 py-3 text-base text-app-fg dark:border-app-border-dark dark:bg-app-surface-elevated-dark dark:text-app-fg-dark"
+                className="min-h-30 rounded-2xl border border-app-border bg-app-surface-elevated px-4 py-3 text-base text-app-fg dark:border-app-border-dark dark:bg-app-surface-elevated-dark dark:text-app-fg-dark"
               />
 
               {/* counter */}

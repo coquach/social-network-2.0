@@ -1,7 +1,10 @@
 'use client';
 
 import React from 'react';
+import { CreateReportModal } from '../modals/create-report-modal';
+import { PostEditHistoryModal } from '../modals/post-edit-history-modal';
 import { ReactionModal } from '../modals/reaction-modal';
+import { ShareBottomSheet } from '../modals/share-bottom-sheet';
 import { ShareListModal } from '../modals/share-list-modal';
 
 /**
@@ -20,6 +23,9 @@ export function ModalProvider() {
     <>
       <ReactionModal />
       <ShareListModal />
+      <ShareBottomSheet />
+      <CreateReportModal />
+      <PostEditHistoryModal />
     </>
   );
 }

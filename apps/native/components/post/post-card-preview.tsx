@@ -50,7 +50,7 @@ export function PostCardPreview({
   // 👉 navigation centralized
   const goToPost = React.useCallback(() => {
     if (!data?.postId) return;
-    router.push(`/post/${data.postId}` as never);
+    router.push(`/posts/${data.postId}` as never);
   }, [data?.postId, router]);
 
   const handlePressMedia = React.useCallback(() => {
@@ -76,7 +76,6 @@ export function PostCardPreview({
       <PostHeader
         data={data}
         postId={data.postId}
-        author={authorData}
         createdAt={data.createdAt}
         audience={data.audience}
         compact={embedded}

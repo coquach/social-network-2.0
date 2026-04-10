@@ -3,12 +3,12 @@ import { useTrendingFeed } from '@repo/shared';
 import type { Emotion, PostSnapshotDTO } from '@repo/shared';
 import { FeedList } from './feed-list';
 import { PostCardFull } from '~/components/post/post-card-full';
+import { View } from 'react-native';
 
 type TrendingFeedProps = {
   mainEmotion?: Emotion;
   onScroll: any;
   scrollEnabled: boolean;
-  listHeaderComponent?: React.ReactElement;
   contentContainerStyle: {
     paddingTop: number;
     paddingBottom: number;
@@ -20,7 +20,6 @@ export const TrendingFeed = React.memo(function TrendingFeed({
   mainEmotion,
   onScroll,
   scrollEnabled,
-  listHeaderComponent,
   contentContainerStyle,
 }: TrendingFeedProps) {
   const {
@@ -80,7 +79,11 @@ export const TrendingFeed = React.memo(function TrendingFeed({
       onRefresh={handleRefresh}
       onScroll={onScroll}
       scrollEnabled={scrollEnabled}
-      listHeaderComponent={listHeaderComponent}
+      listHeaderComponent={
+        <View className="pb-2">
+          <View className="h-px bg-app-border/40 mx-2 mb-2" />
+        </View>
+      }
       contentContainerStyle={contentContainerStyle}
       emptyText="Không có bài viết xu hướng nào."
       estimatedItemSize={380}

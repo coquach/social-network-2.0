@@ -19,6 +19,31 @@ import {
   normalizeTrendingPost,
 } from '../lib/mapper/feed.mapper';
 
+const personalPageCache = new WeakMap<object, PersonalFeedItem[]>();
+const trendingPageCache = new WeakMap<object, PostSnapshotDTO[]>();
+
+function mapPersonalPageCached(page: { data: FeedDTO[] }) {
+  const cached = personalPageCache.get(page as object);
+  if (cached) {
+    return cached;
+  }
+
+  const mapped = page.data.map(normalizePersonalFeedItem);
+  personalPageCache.set(page as object, mapped);
+  return mapped;
+}
+
+function mapTrendingPageCached(page: { data: PostDTO[] }) {
+  const cached = trendingPageCache.get(page as object);
+  if (cached) {
+    return cached;
+  }
+
+  const mapped = page.data.map(normalizeTrendingPost);
+  trendingPageCache.set(page as object, mapped);
+  return mapped;
+}
+
 /**
  * Hook to get personalized feed (infinite scroll)
  */
@@ -39,9 +64,16 @@ export const useMyFeed = (params?: {
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: undefined,
-    select: (data) =>
-      data.pages.flatMap((page) => page.data.map(normalizePersonalFeedItem)),
-    staleTime: 10 * 1000,
+    select: (data) => {
+      const merged: PersonalFeedItem[] = [];
+      for (const page of data.pages) {
+        merged.push(...mapPersonalPageCached(page));
+      }
+      return merged;
+    },
+    staleTime: 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     refetchInterval: false,
     refetchOnReconnect: true,
   });
@@ -67,9 +99,16 @@ export const useTrendingFeed = (params?: {
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: undefined,
-    select: (data) =>
-      data.pages.flatMap((page) => page.data.map(normalizeTrendingPost)),
-    staleTime: 10 * 1000,
+    select: (data) => {
+      const merged: PostSnapshotDTO[] = [];
+      for (const page of data.pages) {
+        merged.push(...mapTrendingPageCached(page));
+      }
+      return merged;
+    },
+    staleTime: 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     refetchInterval: false,
     refetchOnReconnect: true,
   });

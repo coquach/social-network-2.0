@@ -1,7 +1,7 @@
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, Text, View, ViewStyle } from 'react-native';
-import type { MediaDTO } from '@repo/shared';
+import { MediaType, type MediaDTO } from '@repo/shared';
 
 export interface PostMediaProps {
   media?: MediaDTO[];
@@ -59,7 +59,7 @@ function PostMediaComponent({
         />
 
         {/* VIDEO overlay */}
-        {item.type === 'VIDEO' && (
+        {item.type === MediaType.VIDEO && (
           <View className="absolute inset-0 items-center justify-center bg-black/25">
             <View className="h-11 w-11 items-center justify-center rounded-full bg-black/45">
               <Ionicons name="play" size={18} color="#ffffff" />

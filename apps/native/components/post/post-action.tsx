@@ -7,23 +7,20 @@ import React, {
 } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, Text, View } from 'react-native';
-import { useToast } from 'heroui-native/toast';
 
 import {
-  Audience,
   ReactionType,
   RootType,
   TargetType,
   useReact,
   useDisReact,
-  useSharePost,
+  useShareBottomSheetStore,
 } from '@repo/shared';
 
 import { ReactionPicker, ReactionOption } from '../modals/reaction-picker';
-import { ShareBottomSheet } from '../modals/share-bottom-sheet';
-import { AppToast } from '~/components/ui/app-toast';
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
+import { useRouter } from 'expo-router';
 
 interface PostActionProps {
   reactType?: ReactionType;
@@ -31,9 +28,7 @@ interface PostActionProps {
   rootId: string;
   data: any;
   isShare?: boolean;
-  disableCommentModal?: boolean;
-
-  onPressComments?: (id: string, type: RootType) => void;
+  onPressComment?: () => void;
 }
 
 export const PostAction = React.memo(function PostAction({
@@ -42,12 +37,10 @@ export const PostAction = React.memo(function PostAction({
   rootId,
   data,
   isShare = false,
-  disableCommentModal = false,
-  onPressComments,
+  onPressComment,
 }: PostActionProps) {
   /** ===================== THEME ===================== */
   const { resolvedTheme } = useAppTheme();
-  const { toast } = useToast();
   const colors = appThemeColors[resolvedTheme];
 
   /** ===================== TARGET ===================== */
@@ -58,7 +51,6 @@ export const PostAction = React.memo(function PostAction({
   /** ===================== MUTATIONS ===================== */
   const { mutateAsync: react } = useReact();
   const { mutateAsync: disReact } = useDisReact();
-  const sharePostMutation = useSharePost();
 
   /** ===================== STATE ===================== */
   const [selectedReaction, setSelectedReaction] = useState<
@@ -66,7 +58,6 @@ export const PostAction = React.memo(function PostAction({
   >(reactType);
 
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
   const actionRowRef = useRef<View>(null);
   const [pickerAnchorY, setPickerAnchorY] = useState<number>();
@@ -79,12 +70,12 @@ export const PostAction = React.memo(function PostAction({
   /** ===================== REACTION OPTIONS ===================== */
   const reactionOptions: ReactionOption[] = useMemo(
     () => [
-      { type: ReactionType.LIKE, emoji: '👍', label: 'Like' },
-      { type: ReactionType.LOVE, emoji: '❤️', label: 'Love' },
+      { type: ReactionType.LIKE, emoji: '👍', label: 'Thích' },
+      { type: ReactionType.LOVE, emoji: '❤️', label: 'Yêu thích' },
       { type: ReactionType.HAHA, emoji: '😆', label: 'Haha' },
       { type: ReactionType.WOW, emoji: '😮', label: 'Wow' },
-      { type: ReactionType.SAD, emoji: '😢', label: 'Sad' },
-      { type: ReactionType.ANGRY, emoji: '😡', label: 'Angry' },
+      { type: ReactionType.SAD, emoji: '😢', label: 'Buồn' },
+      { type: ReactionType.ANGRY, emoji: '😡', label: 'Phẫn nộ' },
     ],
     [],
   );
@@ -156,70 +147,33 @@ export const PostAction = React.memo(function PostAction({
     return data?.post?.postId;
   }, [data, rootType]);
 
-  const handleShareSubmit = useCallback(
-    async (payload: { content: string; audience: Audience }) => {
-      if (!resolvedPostId) {
-        throw new Error('Missing postId');
-      }
-
-      await sharePostMutation.mutateAsync({
-        postId: resolvedPostId,
-        content: payload.content,
-        audience: payload.audience,
-      });
-    },
-    [resolvedPostId, sharePostMutation],
-  );
-
-  const handleShareSuccess = useCallback(() => {
-    toast.show({
-      duration: 2500,
-      component: (toastProps) => (
-        <AppToast
-          toast={{
-            title: 'Chia sẻ thành công',
-            message: 'Bài viết đã được chia sẻ.',
-            variant: 'success',
-          }}
-          toastProps={toastProps}
-        />
-      ),
-    });
-  }, [toast]);
-
   /** ===================== UI ===================== */
   const selected = reactionOptions.find((r) => r.type === selectedReaction);
 
+  const router = useRouter();
+
   const handleCommentPress = useCallback(() => {
-    if (!disableCommentModal) {
-      onPressComments?.(rootId, rootType);
+    if (!rootId) return;
+
+    if (onPressComment) {
+      onPressComment();
+      return;
     }
-  }, [disableCommentModal, onPressComments, rootId, rootType]);
+
+    router.push(`/posts/${rootId}?isCommentPressed=true`);
+  }, [onPressComment, rootId, router]);
 
   return (
     <View className="relative border-t border-app-border/50 pt-2">
       {/* Lazy mount overlays to keep feed row render light */}
-      {(pickerOpen || shareSheetOpen) && (
-        <>
-          {pickerOpen && (
-            <ReactionPicker
-              open={pickerOpen}
-              anchorY={pickerAnchorY}
-              options={reactionOptions}
-              onSelectReaction={handleSelectReaction}
-              onClose={() => setPickerOpen(false)}
-            />
-          )}
-
-          {shareSheetOpen && (
-            <ShareBottomSheet
-              isOpen={shareSheetOpen}
-              onOpenChange={setShareSheetOpen}
-              onSubmit={handleShareSubmit}
-              onSubmitSuccess={handleShareSuccess}
-            />
-          )}
-        </>
+      {pickerOpen && (
+        <ReactionPicker
+          open={pickerOpen}
+          anchorY={pickerAnchorY}
+          options={reactionOptions}
+          onSelectReaction={handleSelectReaction}
+          onClose={() => setPickerOpen(false)}
+        />
       )}
 
       <View ref={actionRowRef} className="flex-row items-stretch gap-1.5">
@@ -245,7 +199,7 @@ export const PostAction = React.memo(function PostAction({
                 : 'text-[13px] font-semibold text-app-fg'
             }
           >
-            {selected?.label ?? 'Like'}
+            {selected?.label ?? 'Thích'}
           </Text>
         </Pressable>
 
@@ -259,21 +213,28 @@ export const PostAction = React.memo(function PostAction({
             size={22}
             color={colors.mutedForeground}
           />
-          <Text className="text-[13px] font-semibold text-app-fg">Comment</Text>
+          <Text className="text-[13px] font-semibold text-app-fg">
+            Bình luận
+          </Text>
         </Pressable>
 
         {/* SHARE */}
         {isShare && rootType === RootType.POST && (
           <Pressable
             className="min-h-11 flex-1 flex-row items-center justify-center gap-2 rounded-full bg-transparent px-2.5 py-2.5 active:opacity-70 active:scale-[0.98]"
-            onPress={() => setShareSheetOpen(true)}
+            onPress={() => {
+              if (!resolvedPostId) return;
+              useShareBottomSheetStore.getState().open(resolvedPostId);
+            }}
           >
             <Ionicons
               name="paper-plane-outline"
               size={22}
               color={colors.mutedForeground}
             />
-            <Text className="text-[13px] font-semibold text-app-fg">Share</Text>
+            <Text className="text-[13px] font-semibold text-app-fg">
+              Chia sẻ
+            </Text>
           </Pressable>
         )}
       </View>

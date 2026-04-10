@@ -23,7 +23,7 @@ function PostCardFullComponent({ data, author }: PostCardFullProps) {
   // Navigate to post detail
   const goToPost = React.useCallback(() => {
     if (!data?.postId) return;
-    router.push(`/post/${data.postId}` as never);
+    router.push(`/posts/${data.postId}` as never);
   }, [router, data?.postId]);
 
   // Media click → navigate

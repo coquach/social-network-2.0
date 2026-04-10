@@ -27,7 +27,7 @@ function FeedTabsBase({ tab, onChange }: FeedTabsProps) {
               tab === 'trending' ? 'text-white' : 'text-app-muted-fg/80'
             }`}
           >
-            Trending
+            Xu hướng
           </AppSubtitle>
         </Pressable>
 
@@ -44,7 +44,7 @@ function FeedTabsBase({ tab, onChange }: FeedTabsProps) {
               tab === 'personal' ? 'text-white' : 'text-app-muted-fg/80'
             }`}
           >
-            Personal
+            Cá nhân
           </AppSubtitle>
         </Pressable>
       </View>

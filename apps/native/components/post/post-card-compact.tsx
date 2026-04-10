@@ -17,19 +17,13 @@ export interface PostCardCompactProps {
   author?: UserSnapshotDTO;
 }
 
-export function PostCardCompact({ data, author }: PostCardCompactProps) {
+export function PostCardCompact({ data }: PostCardCompactProps) {
   const router = useRouter();
-
-  const authorData: UserSnapshotDTO = author ?? {
-    id: data.userId,
-    firstName: '',
-    lastName: '',
-  };
 
   // Navigate to post detail
   const goToPost = React.useCallback(() => {
     if (!data?.postId) return;
-    router.push(`/post/${data.postId}` as never);
+    router.push(`/posts/${data.postId}` as never);
   }, [router, data?.postId]);
 
   // Handle click media
@@ -50,7 +44,6 @@ export function PostCardCompact({ data, author }: PostCardCompactProps) {
       <PostHeader
         data={data}
         postId={data.postId}
-        author={authorData}
         createdAt={data.createdAt}
         audience={data.audience}
       />

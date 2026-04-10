@@ -50,7 +50,7 @@ export const postService = {
    * Get single post by ID
    */
   async getPost(postId: string): Promise<PostDTO> {
-    return getApiClient().get(`/posts/post/${postId}`);
+    return getApiClient().get(`/posts/${postId}`);
   },
 
   /**

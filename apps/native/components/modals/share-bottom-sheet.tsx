@@ -12,16 +12,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Audience } from '@repo/shared';
+import { Audience, useShareBottomSheetStore, useSharePost } from '@repo/shared';
 import { PrimaryButton } from '~/components/ui/app-button';
 import { AppToast } from '~/components/ui/app-toast';
-
-export type ShareBottomSheetProps = {
-  isOpen: boolean;
-  onOpenChange: (nextOpen: boolean) => void;
-  onSubmit: (payload: { content: string; audience: Audience }) => Promise<void>;
-  onSubmitSuccess?: () => void;
-};
 
 type ShareAudienceOption = {
   value: Audience;
@@ -33,15 +26,12 @@ const shareAudienceOptions: ShareAudienceOption[] = [
   { value: Audience.FRIENDS, label: 'Bạn bè' },
 ];
 
-export function ShareBottomSheet({
-  isOpen,
-  onOpenChange,
-  onSubmit,
-  onSubmitSuccess,
-}: ShareBottomSheetProps) {
+export function ShareBottomSheet() {
   const { user } = useUser();
   const { toast } = useToast();
   const insets = useSafeAreaInsets();
+  const { isOpen, postId, close } = useShareBottomSheetStore();
+  const sharePostMutation = useSharePost();
   const inputRef = React.useRef<TextInput | null>(null);
 
   const [content, setContent] = React.useState('');
@@ -57,7 +47,6 @@ export function ShareBottomSheet({
       Keyboard.dismiss();
       inputRef.current?.blur();
     } else {
-      // ✨ auto focus nhẹ cho xịn
       setTimeout(() => inputRef.current?.focus(), 200);
     }
   }, [isOpen]);
@@ -94,16 +83,36 @@ export function ShareBottomSheet({
     inputRef.current?.blur();
 
     try {
-      await onSubmit({ content: content.trim(), audience });
+      if (!postId) {
+        throw new Error('Missing postId');
+      }
 
-      onSubmitSuccess?.();
+      await sharePostMutation.mutateAsync({
+        postId,
+        content: content.trim(),
+        audience,
+      });
+
+      toast.show({
+        duration: 2500,
+        component: (toastProps) => (
+          <AppToast
+            toast={{
+              title: 'Chia sẻ thành công',
+              message: 'Bài viết đã được chia sẻ.',
+              variant: 'success',
+            }}
+            toastProps={toastProps}
+          />
+        ),
+      });
 
       setContent('');
       setAudienceMenuOpen(false);
       setErrorMessage(null);
 
       setTimeout(() => {
-        onOpenChange(false);
+        close();
       }, 150);
     } catch (error) {
       const errorMsg =
@@ -129,15 +138,7 @@ export function ShareBottomSheet({
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    audience,
-    canSubmit,
-    content,
-    onOpenChange,
-    onSubmit,
-    onSubmitSuccess,
-    toast,
-  ]);
+  }, [audience, canSubmit, close, content, postId, sharePostMutation, toast]);
 
   return (
     <BottomSheet
@@ -147,8 +148,8 @@ export function ShareBottomSheet({
           Keyboard.dismiss();
           inputRef.current?.blur();
           setAudienceMenuOpen(false);
+          close();
         }
-        onOpenChange(nextOpen);
       }}
     >
       <BottomSheet.Portal>

@@ -19,7 +19,6 @@ import {
   MUSIC_BAR_EXPANDED_HEIGHT,
 } from '~/components/newfeeds/feed-header';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
-import { AppTitle } from '~/components/ui/app-text';
 import { FeedScrollProvider } from '~/contexts/feed-scroll-context';
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
@@ -156,26 +155,14 @@ export default function NewfeedsScreen() {
     [setEmotion],
   );
 
-  // Feed title
-  const intro = React.useMemo(
-    () => (
-      <View className="mt-4 pb-2 pt-1">
-        <AppTitle className="text-3xl">Bảng tin</AppTitle>
-      </View>
-    ),
-    [],
-  );
-
   const contentContainerStyle = React.useMemo(
     () => ({
-      paddingTop: headerHeight + MUSIC_BAR_EXPANDED_HEIGHT + 6,
+      paddingTop: headerHeight + MUSIC_BAR_EXPANDED_HEIGHT + 12,
       paddingBottom: 132,
       paddingHorizontal: 16,
     }),
     [headerHeight],
   );
-
-  const ListHeader = React.useMemo(() => <>{intro}</>, [intro]);
 
   return (
     <FeedScrollProvider value={feedScrollContextValue}>
@@ -207,7 +194,6 @@ export default function NewfeedsScreen() {
             mainEmotion={debouncedEmotion}
             onScroll={onScroll}
             scrollEnabled={scrollEnabled}
-            listHeaderComponent={ListHeader}
             contentContainerStyle={contentContainerStyle}
           />
         ) : (
@@ -215,7 +201,6 @@ export default function NewfeedsScreen() {
             mainEmotion={debouncedEmotion}
             onScroll={onScroll}
             scrollEnabled={scrollEnabled}
-            listHeaderComponent={ListHeader}
             contentContainerStyle={contentContainerStyle}
           />
         )}

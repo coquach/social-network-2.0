@@ -5,23 +5,20 @@ import { BottomSheet } from 'heroui-native/bottom-sheet';
 import React from 'react';
 import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
 import { formatRelativeTime } from '~/utils/format-relative-time';
-import { TargetType } from '@repo/shared';
+import { TargetType, useUser } from '@repo/shared';
 import type {
   Audience,
   PostSnapshotDTO,
   SharePostSnapshotDTO,
-  UserSnapshotDTO,
 } from '@repo/shared';
 
 import {
   useDeletePostModal,
+  usePostEditHistoryModalStore,
+  useReportModalStore,
   useUpdatePostModal,
   useUpdateSharePostModal,
 } from '@repo/shared';
-
-// TODO: sau này move vào shared/native
-import { PostEditHistoryModal } from '../modals/post-edit-history-modal';
-import { CreateReportModal } from '../modals/create-report-modal';
 
 // ─── Menu Item ─────────────────────────────────────────
 
@@ -109,18 +106,10 @@ function PostHeaderComponent({
   const { userId: currentUserId } = useAuth();
   const router = useRouter();
 
-  // Mock User
-  const author = {
-    id: 'some-user-id',
-    firstName: 'Nguyễn',
-    lastName: 'Thanh Sơn',
-    avatarUrl:
-      'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482740TND/anh-mo-ta.png',
-  };
+  // User
+  const { data: author } = useUser(data.userId);
 
   const [openMenu, setOpenMenu] = React.useState(false);
-  const [openHistory, setOpenHistory] = React.useState(false);
-  const [openReportModal, setOpenReportModal] = React.useState(false);
 
   const { openModal: deletePostModalOpen } = useDeletePostModal();
   const { openModal: updatePostModalOpen } = useUpdatePostModal();
@@ -161,8 +150,11 @@ function PostHeaderComponent({
     return undefined;
   }, [data, isShared]);
 
-  const displayName =
-    `${author.firstName ?? ''} ${author.lastName ?? ''}`.trim() || 'Người dùng';
+  const displayName = React.useMemo(() => {
+    const first = author?.firstName?.trim();
+    const last = author?.lastName?.trim();
+    return [first, last].filter(Boolean).join(' ') || 'Người dùng';
+  }, [author?.firstName, author?.lastName]);
 
   const initials = React.useMemo(() => {
     const parts = displayName.split(' ').filter(Boolean);
@@ -172,8 +164,8 @@ function PostHeaderComponent({
   }, [displayName]);
 
   const goToUser = React.useCallback(() => {
-    router.push(`/profile/${author.id}` as never);
-  }, [author.id, router]);
+    router.push(`/profile/${data.userId}` as never);
+  }, [data.userId, router]);
 
   const goToGroup = React.useCallback(() => {
     if (!group?.id) return;
@@ -210,14 +202,31 @@ function PostHeaderComponent({
   }, [close, deletePostModalOpen, isShared, postId, shareId]);
 
   const handleReport = React.useCallback(() => {
-    setOpenReportModal(true);
+    const targetId = isShared ? shareId || '' : postId || '';
+    const targetType = isShared ? TargetType.SHARE : TargetType.POST;
+
+    if (!targetId) {
+      close();
+      return;
+    }
+
+    useReportModalStore.getState().open({
+      targetId,
+      targetType,
+    });
+
     close();
-  }, [close]);
+  }, [close, isShared, postId, shareId]);
 
   const handleHistory = React.useCallback(() => {
-    setOpenHistory(true);
+    if (!postId) {
+      close();
+      return;
+    }
+
+    usePostEditHistoryModalStore.getState().open(postId);
     close();
-  }, [close]);
+  }, [close, postId]);
 
   // ─── UI ──────────────────────────────────────────────
 
@@ -247,7 +256,7 @@ function PostHeaderComponent({
 
                   {/* User avatar overlay */}
                   <View className="absolute -bottom-1 -right-1 h-7 w-7 overflow-hidden rounded-full border border-white">
-                    {author.avatarUrl ? (
+                    {author?.avatarUrl ? (
                       <Image
                         source={{ uri: author.avatarUrl, cache: 'force-cache' }}
                         className="h-full w-full"
@@ -262,7 +271,7 @@ function PostHeaderComponent({
                   </View>
                 </>
               ) : /* CASE 2: Không có group → show author full */
-              author.avatarUrl ? (
+              author?.avatarUrl ? (
                 <Image
                   source={{ uri: author.avatarUrl, cache: 'force-cache' }}
                   className="h-full w-full rounded-full border border-app-border"
@@ -390,24 +399,6 @@ function PostHeaderComponent({
           </BottomSheet>
         )}
       </View>
-
-      {/* Modals */}
-      {openHistory && (
-        <PostEditHistoryModal
-          open={openHistory}
-          onOpenChange={setOpenHistory}
-          postId={postId}
-        />
-      )}
-
-      {openReportModal && (
-        <CreateReportModal
-          open={openReportModal}
-          onOpenChange={setOpenReportModal}
-          targetId={isShared ? shareId || '' : postId || ''}
-          targetType={isShared ? TargetType.SHARE : TargetType.POST}
-        />
-      )}
     </>
   );
 }

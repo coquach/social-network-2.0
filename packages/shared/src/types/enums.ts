@@ -68,8 +68,8 @@ export enum ReactionType {
  * Media types for posts and comments
  */
 export enum MediaType {
-  IMAGE = 'IMAGE',
-  VIDEO = 'VIDEO',
+  IMAGE,
+  VIDEO,
 }
 
 /**

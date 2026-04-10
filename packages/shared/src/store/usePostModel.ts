@@ -126,6 +126,80 @@ export const useShareListModal = create<ShareListModalState>((set) => ({
 }));
 
 /* =========================
+   Share Bottom Sheet Modal
+========================= */
+interface ShareBottomSheetStoreState {
+  isOpen: boolean;
+  postId: string | null;
+
+  open: (postId: string) => void;
+  close: () => void;
+}
+
+export const useShareBottomSheetStore = create<ShareBottomSheetStoreState>(
+  (set) => ({
+    isOpen: false,
+    postId: null,
+
+    open: (postId) => set({ isOpen: true, postId }),
+    close: () => set({ isOpen: false, postId: null }),
+  }),
+);
+
+/* =========================
+   Report Modal
+========================= */
+interface ReportModalStoreState {
+  isOpen: boolean;
+  targetId: string | null;
+  targetType: TargetType | null;
+
+  open: (payload: { targetId: string; targetType: TargetType }) => void;
+  close: () => void;
+}
+
+export const useReportModalStore = create<ReportModalStoreState>((set) => ({
+  isOpen: false,
+  targetId: null,
+  targetType: null,
+
+  open: ({ targetId, targetType }) =>
+    set({ isOpen: true, targetId, targetType }),
+
+  close: () =>
+    set({
+      isOpen: false,
+      targetId: null,
+      targetType: null,
+    }),
+}));
+
+/* =========================
+   Post Edit History Modal
+========================= */
+interface PostEditHistoryModalStoreState {
+  isOpen: boolean;
+  postId: string | null;
+
+  open: (postId: string) => void;
+  close: () => void;
+}
+
+export const usePostEditHistoryModalStore =
+  create<PostEditHistoryModalStoreState>((set) => ({
+    isOpen: false,
+    postId: null,
+
+    open: (postId) => set({ isOpen: true, postId }),
+
+    close: () =>
+      set({
+        isOpen: false,
+        postId: null,
+      }),
+  }));
+
+/* =========================
    Update Post Modal
 ========================= */
 interface UpdatePostModalState {

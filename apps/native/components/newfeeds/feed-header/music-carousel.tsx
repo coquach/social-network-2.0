@@ -40,7 +40,7 @@ const MUSIC_MOCKS: MusicCard[] = [
 function MusicCarouselBase() {
   const renderItem = React.useCallback(({ item }: { item: MusicCard }) => {
     return (
-      <View className="w-40 overflow-hidden rounded-xl border border-app-border/80 bg-app-surface-elevated/90 p-1.5 dark:border-app-border-dark/80 dark:bg-app-surface-elevated-dark/90">
+      <View className="w-40 overflow-hidden rounded-xl border border-app-border/80 p-1.5 dark:border-app-border-dark/80 shadow-none dark:bg-app-surface-dark/95">
         <Image
           source={{ uri: item.thumbnail }}
           className="h-20 w-full rounded-lg"

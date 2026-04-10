@@ -6,6 +6,14 @@
 import type { MediaDTO } from './post.types';
 import type { RootType, ReactionType } from './enums';
 
+export interface GetCommentsQuery {
+  rootId: string;
+  rootType: RootType;
+  parentId?: string;
+  page?: number;
+  limit?: number;
+}
+
 /**
  * Comment statistics/metrics
  */
