@@ -1,23 +1,12 @@
-import z from 'zod';
-import { ReactionType, TargetType } from '../enums/social.enum';
+export {
+  type ReactionDTO,
+} from '@repo/shared';
+export {
+  CreateReactionInputSchema as ReactionSchema,
+  RemoveReactionInputSchema as DisReactionSchema,
+} from '@repo/shared/schemas';
 
-export const ReactionSchema = z.object({
-  targetId: z.uuid(),
-  targetType: z.enum(TargetType),
-  reactionType: z.enum(ReactionType),
-});
-
-export type CreateReactionForm = z.infer<typeof ReactionSchema>;
-
-export const DisReactionSchema = ReactionSchema.pick({
-  targetId: true,
-  targetType: true,
-});
-
-export type DisReactionForm = z.infer<typeof DisReactionSchema>;
-
-export interface ReactionDTO {
-  id: string;
-  userId: string;
-  reactionType: ReactionType;
-}
+export type {
+  CreateReactionInput as CreateReactionForm,
+  RemoveReactionInput as DisReactionForm,
+} from '@repo/shared';

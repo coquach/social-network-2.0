@@ -69,6 +69,8 @@ export const notificationService = {
   async registerDeviceToken(data: {
     token: string;
     platform: 'ios' | 'android' | 'web';
+    provider?: 'fcm';
+    appId?: string;
     deviceId?: string;
     deviceName?: string;
   }): Promise<void> {

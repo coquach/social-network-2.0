@@ -2,12 +2,23 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "build": "turbo run build",
+    "ci": "npm run lint && npm run typecheck && npm run build",
+    "se121:build": "npm --prefix ../SE121-microservices run build",
+    "se121:start:prod": "npm --prefix ../SE121-microservices run start:prod",
+    "se121:start:prod:test": "npm --prefix ../SE121-microservices run start:prod:test",
+    "se121:recommend:prod": "npm --prefix ../SE121-microservices run recommend:prod",
+    "se121:recommend:prod:gateway": "npm --prefix ../SE121-microservices run recommend:prod:gateway",
+    "se121:group:prod": "npm --prefix ../SE121-microservices run group:prod",
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore"
   },
   "devDependencies": {
     "@types/minimatch": "^6.0.0",
+    "next": "15.5.12",
     "prettier": "^3.1.1",
     "react-native-svg": "15.15.3",
     "turbo": "^2.8.14"

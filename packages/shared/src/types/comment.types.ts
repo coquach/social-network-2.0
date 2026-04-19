@@ -40,6 +40,7 @@ export interface CommentDTO {
   content: string;
   media?: MediaDTO;
   commentStat: CommentStatDTO;
+  isOwner?: boolean;
   reactedType?: ReactionType;
   createdAt: Date;
   updatedAt: Date;

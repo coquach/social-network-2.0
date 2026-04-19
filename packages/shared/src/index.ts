@@ -13,6 +13,9 @@ export * from './hooks';
 // Context exports
 export * from './contexts';
 
+// Schema exports
+export * from './schemas';
+
 // Utility exports
 export * from './utils';
 
@@ -21,6 +24,9 @@ export * from './store';
 
 // Constants exports
 export * from './constants';
+
+// Re-export zod to keep a single Zod instance across consumers that import schemas
+export { z } from 'zod';
 
 // Lib exports
 export * from './lib';

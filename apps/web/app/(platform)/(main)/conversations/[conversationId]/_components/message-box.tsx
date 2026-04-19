@@ -118,6 +118,7 @@ export const MessageBox = memo(function MessageBox({
 
 
   const { onOpen: openImageViewer } = useImageViewerModal();
+  const attachments = data.attachments ?? [];
   return (
     <div className={clsx(container, 'group')}>
       <MediumAvatar userId={data.senderId} hasBorder />
@@ -230,22 +231,22 @@ export const MessageBox = memo(function MessageBox({
             </div>
           ) : (
             <>
-              {!!data.attachments?.length && (
+              {attachments.length > 0 && (
                 <div
                   className={clsx(
                     'grid gap-1.5',
-                    data.attachments.length === 1
+                    attachments.length === 1
                       ? 'grid-cols-1'
                       : 'grid-cols-2'
                   )}
                 >
-                  {data.attachments.map((att, i) =>
+                  {attachments.map((att, i) =>
                     att.mimeType?.startsWith('image') ? (
                       <div
                         key={`${att.url}-${i}`}
                         className={clsx(
                           'overflow-hidden rounded-lg border bg-black/5',
-                          data.attachments.length === 1
+                          attachments.length === 1
                             ? 'max-w-[360px]'
                             : 'max-w-[220px]'
                         )}
@@ -264,7 +265,7 @@ export const MessageBox = memo(function MessageBox({
                             loading="lazy"
                             className={clsx(
                               'w-full object-cover',
-                              data.attachments.length === 1 ? 'h-64' : 'h-36'
+                              attachments.length === 1 ? 'h-64' : 'h-36'
                             )}
                           />
                         </button>
@@ -276,7 +277,7 @@ export const MessageBox = memo(function MessageBox({
                         controls
                         className={clsx(
                           'rounded-lg border bg-black/5 object-cover',
-                          data.attachments.length === 1
+                          attachments.length === 1
                             ? 'h-64 max-w-[360px]'
                             : 'h-36 max-w-[220px]'
                         )}

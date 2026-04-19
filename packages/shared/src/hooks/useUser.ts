@@ -19,6 +19,7 @@ import type {
   UserDTO,
   UserProfile,
 } from '../types/user.types';
+import { useAuth } from '../contexts/auth-context';
 import { useUploadOptional } from '../contexts/upload-context';
 import type { UploadableFile } from '../types/upload.types';
 import {
@@ -36,11 +37,18 @@ import { queryKeys } from './query-keys';
  * Get current authenticated user
  */
 export const useCurrentUser = () => {
-  return useQuery<UserDTO>({
+  const { userId } = useAuth();
+
+  return useQuery<UserProfile>({
     queryKey: queryKeys.user.current(),
     queryFn: async () => {
-      return userService.getCurrentUser();
+      if (!userId) {
+        throw new Error('Current user is not available');
+      }
+
+      return userService.getCurrentUser(userId);
     },
+    enabled: !!userId,
     ...queryConfigs.semiStatic, // User profile changes infrequently
   });
 };
@@ -64,7 +72,7 @@ export const useUser = (userId: string, options?: { enabled?: boolean }) => {
  */
 export const useSearchUsers = (query: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
-    queryKey: queryKeys.search.users(query),
+    queryKey: [...queryKeys.search.users(query), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       return userService.searchUsers({
         query,
@@ -85,7 +93,7 @@ export const useSearchUsers = (query: string, params?: QueryParams) => {
  */
 export const useUserFriends = (userId: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
-    queryKey: queryKeys.user.friends(userId),
+    queryKey: [...queryKeys.user.friends(userId), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       return userService.getUserFriends(userId, {
         ...params,

@@ -1,9 +1,6 @@
-import { Card } from 'heroui-native/card';
 import { Spinner } from 'heroui-native/spinner';
 import React from 'react';
-import { View } from 'react-native';
-
-import { AppModal } from '~/components/ui/app-modal';
+import { StyleSheet, Text, View } from 'react-native';
 
 type AppLoadingContentProps = {
   label?: string;
@@ -19,17 +16,17 @@ export function AppLoadingBlock({
   description,
 }: AppLoadingContentProps) {
   return (
-    <Card className="items-center gap-3 rounded-3xl border border-app-border bg-app-surface px-5 py-6 dark:border-app-border-dark dark:bg-app-surface-dark">
+    <View className="items-center justify-center gap-3 flex-1">
       <Spinner size="sm" color="default" />
-      <Card.Title className="text-base font-semibold text-app-fg dark:text-app-fg-dark">
+      <Text className="text-center text-base font-semibold text-app-fg dark:text-app-fg-dark">
         {label}
-      </Card.Title>
+      </Text>
       {description ? (
-        <Card.Description className="text-center text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
+        <Text className="max-w-[18rem] text-center text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
           {description}
-        </Card.Description>
+        </Text>
       ) : null}
-    </Card>
+    </View>
   );
 }
 
@@ -38,11 +35,17 @@ export function AppLoadingOverlay({
   label = 'Dang xu ly',
   description,
 }: AppLoadingOverlayProps) {
+  if (!visible) {
+    return null;
+  }
+
   return (
-    <AppModal visible={visible} onClose={() => {}} dismissible={false}>
-      <View className="w-full max-w-xs">
-        <AppLoadingBlock label={label} description={description} />
-      </View>
-    </AppModal>
+    <View
+      className="items-center justify-center bg-app-bg/78 px-6 dark:bg-app-bg-dark/82"
+      pointerEvents="auto"
+      style={StyleSheet.absoluteFillObject}
+    >
+      <AppLoadingBlock label={label} description={description} />
+    </View>
   );
 }

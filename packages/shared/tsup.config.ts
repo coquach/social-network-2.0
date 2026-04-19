@@ -6,6 +6,7 @@ export default defineConfig({
     'api/index': 'src/api/index.ts',
     'types/index': 'src/types/index.ts',
     'hooks/index': 'src/hooks/index.ts',
+    'schemas/index': 'src/schemas/index.ts',
     'utils/index': 'src/utils/index.ts',
     'store/index': 'src/store/index.ts',
   },

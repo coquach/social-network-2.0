@@ -6,11 +6,39 @@
 import axios from 'axios';
 import type {
   IUploadService,
+  UploadBatchOptions,
   UploadableFile,
   UploadResult,
   UploadOptions,
 } from '@repo/shared';
-import { MediaType } from '@repo/shared';
+import { MediaType, uploadFilesInChunks } from '@repo/shared';
+
+const resourceTypeByMediaType: Record<MediaType, 'image' | 'video' | 'auto'> = {
+  [MediaType.IMAGE]: 'image',
+  [MediaType.VIDEO]: 'video',
+  [MediaType.AUDIO]: 'auto',
+  [MediaType.FILE]: 'auto',
+};
+
+const getMediaTypeFromCloudinary = (
+  resourceType: string | undefined,
+  fallbackType: MediaType,
+): MediaType => {
+  if (fallbackType === MediaType.AUDIO || fallbackType === MediaType.FILE) {
+    return fallbackType;
+  }
+
+  switch (resourceType) {
+    case 'video':
+      return MediaType.VIDEO;
+    case 'image':
+      return MediaType.IMAGE;
+    case 'raw':
+      return MediaType.FILE;
+    default:
+      return fallbackType;
+  }
+};
 
 export class CloudinaryUploadService implements IUploadService {
   private cloudName: string;
@@ -25,12 +53,13 @@ export class CloudinaryUploadService implements IUploadService {
    * Upload a single file to Cloudinary
    */
   async uploadFile(
-    uploadableFile: UploadableFile,
+    uploadableFile: UploadableFile<File>,
     options?: UploadOptions
   ): Promise<UploadResult> {
     const { file, type } = uploadableFile;
     const folder = options?.folder || 'uploads';
-    const resourceType = type === MediaType.VIDEO ? 'video' : 'image';
+    const resourceType =
+      options?.resourceType || resourceTypeByMediaType[type];
 
     const formData = new FormData();
     formData.append('file', file);
@@ -61,9 +90,11 @@ export class CloudinaryUploadService implements IUploadService {
 
       return {
         url: data.secure_url,
-        type: data.resource_type === 'video' ? MediaType.VIDEO : MediaType.IMAGE,
+        type: getMediaTypeFromCloudinary(data.resource_type, type),
         publicId: data.public_id,
         thumbnailUrl: data.thumbnail_url,
+        mimeType: file.type || data.resource_type,
+        fileName: file.name,
         width: data.width,
         height: data.height,
         duration: data.duration,
@@ -79,22 +110,15 @@ export class CloudinaryUploadService implements IUploadService {
    * Upload multiple files with concurrency control
    */
   async uploadMultiple(
-    files: UploadableFile[],
-    options?: UploadOptions & { concurrency?: number }
+    files: UploadableFile<File>[],
+    options?: UploadBatchOptions
   ): Promise<UploadResult[]> {
-    const concurrency = options?.concurrency || 3;
-    const results: UploadResult[] = [];
-
-    // Upload in batches
-    for (let i = 0; i < files.length; i += concurrency) {
-      const batch = files.slice(i, i + concurrency);
-      const batchResults = await Promise.all(
-        batch.map((file) => this.uploadFile(file, options))
-      );
-      results.push(...batchResults);
-    }
-
-    return results;
+    return uploadFilesInChunks(
+      (file, uploadOptions) =>
+        this.uploadFile(file as UploadableFile<File>, uploadOptions),
+      files,
+      options,
+    );
   }
 
   /**

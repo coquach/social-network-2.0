@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { useGetUser } from '@/hooks/use-user-hook';
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
-import { ensureLastSeenMap } from '@/utils/ensure-last-seen-map';
-import { useAuth } from '@clerk/nextjs';
-import clsx from 'clsx';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { useRouter } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
-import { DirectAvatar } from './direct-avatar';
-import { GroupAvatar } from './group-avatar';
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGetUser } from "@/hooks/use-user-hook";
+import { ConversationDTO } from "@/models/conversation/conversationDTO";
+import { ensureLastSeenMap } from "@/utils/ensure-last-seen-map";
+import { useAuth } from "@clerk/nextjs";
+import clsx from "clsx";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo } from "react";
+import { DirectAvatar } from "./direct-avatar";
+import { GroupAvatar } from "./group-avatar";
 
 interface ConversationBoxProps {
   data: ConversationDTO;
@@ -37,10 +37,10 @@ export const ConversationBox = ({ data, selected }: ConversationBoxProps) => {
     return other || undefined;
   }, [isGroup, data.participants, currentUserId]);
 
-  const { data: otherUser } = useGetUser(otherUserId ?? '');
+  const { data: otherUser } = useGetUser(otherUserId ?? "");
 
   /** ----------- SENDER INFO ----------- */
-  const { data: senderUser } = useGetUser(lastMessage?.senderId ?? '');
+  const { data: senderUser } = useGetUser(lastMessage?.senderId ?? "");
 
   /** ----------- CLICK ----------- */
   const handleClick = useCallback(() => {
@@ -57,23 +57,28 @@ export const ConversationBox = ({ data, selected }: ConversationBoxProps) => {
     const lastSeenId = map.get(currentUserId);
 
     return lastSeenId === lastMessage._id;
-  }, [currentUserId, lastMessage?._id, data.lastSeenMessageId]);
+  }, [
+    currentUserId,
+    lastMessage?._id,
+    lastMessage?.senderId,
+    data.lastSeenMessageId,
+  ]);
 
   /** ----------- LAST MESSAGE TEXT ----------- */
   const lastMessageText = useMemo(() => {
     if (!lastMessage) {
       return isGroup
-        ? 'Tạo nhóm để bắt đầu trò chuyện'
-        : 'Bắt đầu cuộc trò chuyện';
+        ? "Tạo nhóm để bắt đầu trò chuyện"
+        : "Bắt đầu cuộc trò chuyện";
     }
 
     const isMe = lastMessage.senderId === currentUserId;
     const senderName = isMe
-      ? 'Tôi'
+      ? "Tôi"
       : senderUser
-      ? `${senderUser.firstName ?? ''} ${senderUser.lastName ?? ''}`.trim() ||
-        'Người khác'
-      : 'Người khác';
+        ? `${senderUser.firstName ?? ""} ${senderUser.lastName ?? ""}`.trim() ||
+          "Người khác"
+        : "Người khác";
 
     if (lastMessage.isDeleted) return `${senderName}: Đã xóa tin nhắn`;
 
@@ -81,26 +86,26 @@ export const ConversationBox = ({ data, selected }: ConversationBoxProps) => {
       return `${senderName}: Đã gửi tệp đính kèm`;
     }
 
-    const raw = lastMessage.content ?? '';
+    const raw = lastMessage.content ?? "";
     const truncated = raw.length > 80 ? `${raw.slice(0, 80)}…` : raw;
 
-    return `${senderName}: ${truncated || 'Đã gửi tin nhắn'}`;
+    return `${senderName}: ${truncated || "Đã gửi tin nhắn"}`;
   }, [lastMessage, currentUserId, senderUser, isGroup]);
 
   /** ----------- TITLE & SUBTITLE ----------- */
   const title = useMemo(() => {
-    if (isGroup) return data.groupName || 'Nhóm không tên';
+    if (isGroup) return data.groupName || "Nhóm không tên";
     if (otherUser) {
       return (
-        `${otherUser.firstName ?? ''} ${otherUser.lastName ?? ''}`.trim() ||
-        'Cuộc trò chuyện'
+        `${otherUser.firstName ?? ""} ${otherUser.lastName ?? ""}`.trim() ||
+        "Cuộc trò chuyện"
       );
     }
-    return 'Cuộc trò chuyện';
+    return "Cuộc trò chuyện";
   }, [isGroup, otherUser, data.groupName]);
 
   const subtitle = useMemo(() => {
-    if (isHiddenForMe) return 'Cuộc trò chuyện đang bị ẩn';
+    if (isHiddenForMe) return "Cuộc trò chuyện đang bị ẩn";
 
     return lastMessageText;
   }, [isHiddenForMe, lastMessageText]);
@@ -109,10 +114,10 @@ export const ConversationBox = ({ data, selected }: ConversationBoxProps) => {
     <div
       onClick={handleClick}
       className={clsx(
-        'w-full relative flex flex-col rounded-lg transition p-2 cursor-pointer',
+        "w-full relative flex flex-col rounded-lg transition p-2 cursor-pointer",
         isHiddenForMe
-          ? 'bg-neutral-50 opacity-70'
-          : clsx(selected ? 'bg-gray-100' : 'bg-white hover:bg-gray-100')
+          ? "bg-neutral-50 opacity-70"
+          : clsx(selected ? "bg-gray-100" : "bg-white hover:bg-gray-100"),
       )}
     >
       {/* Top row: avatar + title + time */}
@@ -133,12 +138,12 @@ export const ConversationBox = ({ data, selected }: ConversationBoxProps) => {
 
             <span
               className={clsx(
-                'text-xs truncate',
+                "text-xs truncate",
                 isHiddenForMe
-                  ? 'text-gray-500'
+                  ? "text-gray-500"
                   : hasSeen
-                  ? 'text-gray-500'
-                  : 'text-black font-medium'
+                    ? "text-gray-500"
+                    : "text-black font-medium",
               )}
             >
               {subtitle}
@@ -149,7 +154,7 @@ export const ConversationBox = ({ data, selected }: ConversationBoxProps) => {
         {/* Time */}
         {lastMessage?.createdAt && (
           <p className="ml-2 shrink-0 text-[11px] text-gray-500">
-            {format(new Date(lastMessage.createdAt), 'HH:mm', { locale: vi })}
+            {format(new Date(lastMessage.createdAt), "HH:mm", { locale: vi })}
           </p>
         )}
       </div>

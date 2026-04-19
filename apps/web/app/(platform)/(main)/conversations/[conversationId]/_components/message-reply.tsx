@@ -7,6 +7,7 @@ import Image from 'next/image';
 export const MessageReply = ({ replyTo }: { replyTo: MessageDTO | null }) => {
 
   if (!replyTo) return null;
+  const attachments = replyTo.attachments ?? [];
 
   const handleScroll = (id: string) => {
     const element = document.getElementById(id);
@@ -26,9 +27,9 @@ export const MessageReply = ({ replyTo }: { replyTo: MessageDTO | null }) => {
       {/* reply content */}
       {replyTo.content ? (
         <p className="wrap-break-word whitespace-pre-line">{replyTo.content}</p>
-      ) : replyTo.attachments?.length > 0 ? (
+      ) : attachments.length > 0 ? (
         <div className="flex gap-1">
-          {replyTo.attachments
+          {attachments
             .filter((att) => att.mimeType === 'image')
             .slice(0, 1)
             .map((att, i) => (
