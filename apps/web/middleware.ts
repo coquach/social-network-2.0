@@ -6,7 +6,6 @@
     '/marketing',
     '/sign-in(.*)',
     '/sign-up(.*)',
-    '/api/webhooks(.*)',
   ]);
   const isAdminRoute = createRouteMatcher(['/admin(.*)']);
 
