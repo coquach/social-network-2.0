@@ -7,30 +7,15 @@ import {
   View,
   type LayoutRectangle,
 } from 'react-native';
-import Animated, {
-  Extrapolation,
-  interpolate,
-  useAnimatedStyle,
-  type SharedValue,
-} from 'react-native-reanimated';
 
 import { FeedTabs } from './feed-tabs';
-import { MusicCarousel } from './music-carousel';
 import type { FeedEmotion, FeedTab } from './types';
 
-const COLLAPSE_DISTANCE = 92;
-const CAROUSEL_MAX_HEIGHT = 116;
-
-export const MUSIC_BAR_COLLAPSED_HEIGHT = 50;
-export const MUSIC_BAR_EXPANDED_HEIGHT =
-  MUSIC_BAR_COLLAPSED_HEIGHT + CAROUSEL_MAX_HEIGHT + 10;
-
-type MusicBarProps = {
+type FeedHeaderProps = {
   tab: FeedTab;
   emotion: FeedEmotion;
   onTabChange: (tab: FeedTab) => void;
   onEmotionChange: (emotion: FeedEmotion) => void;
-  scrollY: SharedValue<number>;
 };
 
 function FeedHeaderComponent({
@@ -38,8 +23,7 @@ function FeedHeaderComponent({
   emotion,
   onTabChange,
   onEmotionChange,
-  scrollY,
-}: MusicBarProps) {
+}: FeedHeaderProps) {
   const [pickerVisible, setPickerVisible] = React.useState(false);
   const [buttonLayout, setButtonLayout] =
     React.useState<LayoutRectangle | null>(null);
@@ -98,44 +82,11 @@ function FeedHeaderComponent({
     };
   }, [buttonLayout]);
 
-  const collapseProgress = useAnimatedStyle(() => {
-    const progress = interpolate(
-      scrollY.value,
-      [0, COLLAPSE_DISTANCE],
-      [0, 1],
-      Extrapolation.CLAMP,
-    );
-
-    return {
-      paddingTop: interpolate(progress, [0, 1], [8, 4]),
-      paddingBottom: interpolate(progress, [0, 1], [8, 4]),
-    };
-  });
-
-  const carouselStyle = useAnimatedStyle(() => {
-    const progress = interpolate(
-      scrollY.value,
-      [0, COLLAPSE_DISTANCE],
-      [0, 1],
-      Extrapolation.CLAMP,
-    );
-
-    return {
-      height: interpolate(progress, [0, 1], [CAROUSEL_MAX_HEIGHT, 0]),
-      opacity: interpolate(progress, [0, 1], [1, 0]),
-      marginTop: interpolate(progress, [0, 1], [8, 0]),
-      transform: [
-        { translateY: interpolate(progress, [0, 1], [0, -20]) },
-        { scale: interpolate(progress, [0, 1], [1, 0.96]) },
-      ],
-    };
-  });
-
   return (
     <>
-      <Animated.View
+      <View
         className="border-b border-app-border bg-app-background px-4 dark:border-app-border-dark dark:bg-app-background-dark"
-        style={collapseProgress}
+        style={{ paddingTop: 8, paddingBottom: 8 }}
       >
         <View className="flex-row items-center gap-2">
           <View className="flex-1">
@@ -158,10 +109,6 @@ function FeedHeaderComponent({
             </Text>
           </Pressable>
         </View>
-
-        <Animated.View style={[carouselStyle, { overflow: 'hidden' }]}>
-          <MusicCarousel />
-        </Animated.View>
 
         <Modal
           transparent
@@ -201,7 +148,7 @@ function FeedHeaderComponent({
             </View>
           </Pressable>
         </Modal>
-      </Animated.View>
+      </View>
     </>
   );
 }

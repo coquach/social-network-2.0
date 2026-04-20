@@ -304,7 +304,7 @@ function PostHeaderComponent({
               </Pressable>
 
               {isShared && (
-                <Text className="text-[11px] text-app-muted-fg">
+                <Text className="text-[12px] text-app-muted-fg">
                   đã chia sẻ
                 </Text>
               )}
@@ -317,7 +317,7 @@ function PostHeaderComponent({
                     <Text
                       numberOfLines={1}
                       ellipsizeMode="tail"
-                      className="text-[13px] font-semibold text-app-fg"
+                      className="text-[14px] font-semibold text-app-fg"
                     >
                       {group.name}
                     </Text>
@@ -327,18 +327,18 @@ function PostHeaderComponent({
             </View>
 
             <View className="flex-row flex-wrap items-center gap-x-1.5 gap-y-0.5">
-              <Text className="text-[11px] text-app-muted-fg">
+              <Text className="text-[12px] text-app-muted-fg">
                 {createdText}
               </Text>
 
-              <Text className="text-[11px] text-app-muted-fg">•</Text>
+              <Text className="text-[12px] text-app-muted-fg">•</Text>
 
               <Ionicons name={audienceInfo.icon} size={11} color="#64748b" />
 
-              <Text className="text-[11px] text-app-muted-fg">•</Text>
+              <Text className="text-[12px] text-app-muted-fg">•</Text>
 
               {mainEmotion && (
-                <Text className="text-[11px] text-app-muted-fg">
+                <Text className="text-[12px] text-app-muted-fg">
                   {mainEmotion}
                 </Text>
               )}

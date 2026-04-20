@@ -1,20 +1,45 @@
 import React from 'react';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Text,
+  type StyleProp,
+  type ViewStyle,
+  View,
+  type FlatListProps,
+} from 'react-native';
 
 import { RootType, useComments, type CommentDTO } from '@repo/shared';
 
 import { CommentItem } from './comment-item';
 
+/** ================= PROPS ================= */
 type CommentListProps = {
   rootId: string;
   rootType: RootType;
-  listHeaderComponent: React.ReactElement;
-};
+  listHeaderComponent?: React.ReactElement | null;
+  style?: StyleProp<ViewStyle>;
+} & Pick<
+  FlatListProps<CommentDTO>,
+  'contentContainerStyle' | 'ListFooterComponent'
+>;
 
+/** ================= COMPONENT ================= */
 export const CommentList = React.forwardRef<
   FlatList<CommentDTO>,
   CommentListProps
->(function CommentList({ rootId, rootType, listHeaderComponent }, ref) {
+>(function CommentList(
+  {
+    rootId,
+    rootType,
+    listHeaderComponent,
+    style,
+    contentContainerStyle,
+    ListFooterComponent,
+  },
+  ref,
+) {
+  /** ================= DATA ================= */
   const {
     data,
     isLoading,
@@ -25,7 +50,6 @@ export const CommentList = React.forwardRef<
     refetch,
   } = useComments({ rootId, rootType });
 
-  /** ================= DATA ================= */
   const comments = React.useMemo(() => {
     const all = data?.pages.flatMap((page) => page.data) ?? [];
     return all.filter((item) => !item.parentId);
@@ -45,8 +69,8 @@ export const CommentList = React.forwardRef<
 
   const keyExtractor = React.useCallback((item: CommentDTO) => item.id, []);
 
-  /** ================= FOOTER ================= */
-  const listFooter = React.useMemo(
+  /** ================= DEFAULT FOOTER ================= */
+  const defaultFooter = React.useMemo(
     () => (
       <View className="pb-6">
         {hasNextPage && (
@@ -109,14 +133,15 @@ export const CommentList = React.forwardRef<
   return (
     <FlatList
       ref={ref}
-      className="flex-1 bg-app-bg dark:bg-app-bg-dark"
+      style={style}
       data={comments}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       ListHeaderComponent={listHeaderComponent}
       ListEmptyComponent={listEmpty}
-      ListFooterComponent={listFooter}
-      contentContainerClassName="pb-2"
+      ListFooterComponent={ListFooterComponent ?? defaultFooter}
+      contentContainerStyle={contentContainerStyle}
+      className="bg-app-bg dark:bg-app-bg-dark"
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       onEndReachedThreshold={0.6}

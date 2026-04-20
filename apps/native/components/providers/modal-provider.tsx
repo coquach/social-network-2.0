@@ -1,11 +1,10 @@
-'use client';
-
 import React from 'react';
 import { CreateReportModal } from '../modals/create-report-modal';
 import { PostEditHistoryModal } from '../modals/post-edit-history-modal';
 import { ReactionModal } from '../modals/reaction-modal';
 import { ShareBottomSheet } from '../modals/share-bottom-sheet';
 import { ShareListModal } from '../modals/share-list-modal';
+import { CreatePostSheet } from '../create-post/create-post-sheet';
 
 /**
  * Global ModalProvider - mounts all post-related global modals once at root level.
@@ -26,6 +25,7 @@ export function ModalProvider() {
       <ShareBottomSheet />
       <CreateReportModal />
       <PostEditHistoryModal />
+      <CreatePostSheet />
     </>
   );
 }

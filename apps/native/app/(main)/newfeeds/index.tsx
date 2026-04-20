@@ -14,10 +14,7 @@ import {
   NEWFEEDS_HEADER_BAR_HEIGHT,
   NewfeedsHeader,
 } from '~/components/navigation/newfeeds-header';
-import {
-  FeedHeader,
-  MUSIC_BAR_EXPANDED_HEIGHT,
-} from '~/components/newfeeds/feed-header';
+import { FeedHeader } from '~/components/newfeeds/feed-header';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { FeedScrollProvider } from '~/contexts/feed-scroll-context';
 import { appThemeColors } from '~/constants/theme';
@@ -46,7 +43,6 @@ export default function NewfeedsScreen() {
   const headerOpacity = useSharedValue(1);
   const lastScrollY = useSharedValue(0);
   const lastForwardedOffset = useSharedValue(0);
-  const musicBarScrollY = useSharedValue(0);
 
   const [scrollEnabled, setScrollEnabled] = React.useState(true);
   const feedType = useFeedFilterStore((state) => state.feedType);
@@ -84,14 +80,12 @@ export default function NewfeedsScreen() {
       headerOpacity.value = 1;
       lastScrollY.value = 0;
       lastForwardedOffset.value = 0;
-      musicBarScrollY.value = 0;
     }, []),
   );
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
       const nextOffset = Math.max(0, event.contentOffset.y);
-      musicBarScrollY.value = nextOffset;
       const delta = nextOffset - lastScrollY.value;
 
       if (nextOffset <= TOP_THRESHOLD) {
@@ -157,7 +151,7 @@ export default function NewfeedsScreen() {
 
   const contentContainerStyle = React.useMemo(
     () => ({
-      paddingTop: headerHeight + MUSIC_BAR_EXPANDED_HEIGHT + 12,
+      paddingTop: headerHeight + 70,
       paddingBottom: 132,
       paddingHorizontal: 16,
     }),
@@ -184,7 +178,6 @@ export default function NewfeedsScreen() {
             emotion={emotion}
             onTabChange={onTabChange}
             onEmotionChange={onEmotionChange}
-            scrollY={musicBarScrollY}
           />
         </Animated.View>
 

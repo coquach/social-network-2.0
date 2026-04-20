@@ -1,7 +1,6 @@
 import React, { memo, useCallback, useMemo } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Pressable, View } from 'react-native';
-import { getQueryClient } from '~/lib/query-client';
 import { useRouter } from 'expo-router';
 import { cn } from '~/lib/cn';
 import { AvatarImage } from './avatar-image';
@@ -12,6 +11,7 @@ import {
   AvatarProvider,
   type AvatarSize,
 } from './avatar-context';
+import { getSharedQueryClient } from '@repo/shared';
 
 type AvatarRootProps = {
   userId: string;
@@ -51,7 +51,7 @@ const AvatarRootComponent = ({
   onBeforeNavigate,
 }: AvatarRootProps) => {
   const router = useRouter();
-  const queryClient = getQueryClient();
+  const queryClient = getSharedQueryClient();
 
   const handlePress = useCallback(() => {
     onBeforeNavigate?.();

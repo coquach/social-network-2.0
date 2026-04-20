@@ -4,6 +4,7 @@ import type { Emotion, PostSnapshotDTO } from '@repo/shared';
 import { FeedList } from './feed-list';
 import { PostCardFull } from '~/components/post/post-card-full';
 import { View } from 'react-native';
+import { MusicCarousel } from '~/components/newfeeds/feed-header/music-carousel';
 
 type TrendingFeedProps = {
   mainEmotion?: Emotion;
@@ -81,7 +82,10 @@ export const TrendingFeed = React.memo(function TrendingFeed({
       scrollEnabled={scrollEnabled}
       listHeaderComponent={
         <View className="pb-2">
-          <View className="h-px bg-app-border/40 mx-2 mb-2" />
+          <View className="mb-3">
+            <MusicCarousel />
+          </View>
+          <View className="h-px bg-app-border/40 mx-2" />
         </View>
       }
       contentContainerStyle={contentContainerStyle}
