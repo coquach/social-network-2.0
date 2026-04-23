@@ -111,12 +111,6 @@ export function CreateReportModal() {
     }
   };
 
-  const handleClose = () => {
-    if (isPending) return;
-    setReason('');
-    close();
-  };
-
   const isNearLimit = reason.length > MAX_REASON * 0.8;
 
   return (

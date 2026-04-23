@@ -55,6 +55,15 @@ jobs:
           if [ ! -f apps/web/.env ]; then
             cp apps/web/.env.example apps/web/.env
           fi
+          if ! grep -q '^NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_' apps/web/.env; then
+            echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_ZHVtbXktMTIzLmNsZXJrLmFjY291bnRzLmRldiQ" >> apps/web/.env
+          fi
+          if ! grep -q '^CLERK_SECRET_KEY=sk_' apps/web/.env; then
+            echo "CLERK_SECRET_KEY=sk_test_ci_dummy_key" >> apps/web/.env
+          fi
+          if ! grep -q '^CLERK_WEBHOOK_SIGNING_SECRET=whsec_' apps/web/.env; then
+            echo "CLERK_WEBHOOK_SIGNING_SECRET=whsec_ci_dummy_key" >> apps/web/.env
+          fi
 
       - name: Lint
         run: npm run lint
@@ -86,6 +95,15 @@ jobs:
         run: |
           if [ ! -f apps/web/.env ]; then
             cp apps/web/.env.example apps/web/.env
+          fi
+          if ! grep -q '^NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_' apps/web/.env; then
+            echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_ZHVtbXktMTIzLmNsZXJrLmFjY291bnRzLmRldiQ" >> apps/web/.env
+          fi
+          if ! grep -q '^CLERK_SECRET_KEY=sk_' apps/web/.env; then
+            echo "CLERK_SECRET_KEY=sk_test_ci_dummy_key" >> apps/web/.env
+          fi
+          if ! grep -q '^CLERK_WEBHOOK_SIGNING_SECRET=whsec_' apps/web/.env; then
+            echo "CLERK_WEBHOOK_SIGNING_SECRET=whsec_ci_dummy_key" >> apps/web/.env
           fi
 
       - name: Build workspaces

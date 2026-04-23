@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Dimensions, Modal, Pressable, Text, View } from 'react-native';
 
 import { ReactionType } from '@repo/shared';
