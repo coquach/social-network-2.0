@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View } from 'react-native';
 import { RootType, TargetType } from '@repo/shared';
 import { AppCard } from '~/components/ui/app-card';
@@ -18,7 +18,7 @@ export interface SharePostProps {
 
 function SharePostComponent({
   data,
-  author,
+  author: _author,
   originalAuthor,
   compact = false,
 }: SharePostProps) {
@@ -28,7 +28,6 @@ function SharePostComponent({
         compact ? 'gap-2 rounded-2xl p-3' : 'gap-2.5 rounded-3xl p-3.5'
       }
     >
-      {/* HEADER (người share) */}
       <PostHeader
         data={data}
         postId={data.post.postId}
@@ -38,15 +37,12 @@ function SharePostComponent({
         isShared
       />
 
-      {/* CONTENT */}
       <PostContent text={data.content} isShared collapsedLines={2} />
 
-      {/* ORIGINAL POST PREVIEW */}
       <View className="pt-0.5">
         <SharePostReview post={data.post} author={originalAuthor} />
       </View>
 
-      {/* STATS */}
       <PostStats
         targetId={data.shareId}
         targetType={TargetType.SHARE}
@@ -55,7 +51,6 @@ function SharePostComponent({
         isShare
       />
 
-      {/* ACTIONS */}
       <PostAction
         reactType={data.reactedType}
         rootId={data.shareId}

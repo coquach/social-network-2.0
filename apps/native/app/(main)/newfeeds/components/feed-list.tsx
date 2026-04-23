@@ -100,7 +100,7 @@ export function FeedList<TItem>({
   }, [emptyText, errorMessage, isError, isLoading]);
 
   const keyExtractorAdapter = React.useCallback(
-    (item: unknown, index: number) => keyExtractor(item as TItem),
+    (item: unknown) => keyExtractor(item as TItem),
     [keyExtractor],
   );
 
@@ -110,8 +110,7 @@ export function FeedList<TItem>({
   );
 
   const getItemTypeAdapter = React.useCallback(
-    (item: unknown, index: number, extraData?: unknown) =>
-      getItemType?.(item as TItem),
+    (item: unknown) => getItemType?.(item as TItem),
     [getItemType],
   );
 
