@@ -136,6 +136,18 @@ export const queryKeys = {
       [...queryKeys.search.all, 'groups', query] as const,
   },
 
+  // ==================== Chatbot ====================
+  chatbot: {
+    all: ['chatbot'] as const,
+    history: (userId: string, pageSize?: number) =>
+      [
+        ...queryKeys.chatbot.all,
+        'history',
+        userId,
+        ...(typeof pageSize === 'number' ? [pageSize] : []),
+      ] as const,
+  },
+
   // ==================== Groups ====================
   groups: {
     all: ['groups'] as const,

@@ -51,6 +51,9 @@ export * from './useSearch';
 // Report hooks
 export * from './useReport';
 
+// Chatbot hooks
+export * from './useChatbot';
+
 // UI utility hooks (web-only, requires DOM)
 // Note: Import these directly from './useUI' in web apps only
 // export * from './useUI';
