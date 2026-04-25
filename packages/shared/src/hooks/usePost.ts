@@ -72,7 +72,7 @@ export const useMyPosts = (params?: { feeling?: Emotion }) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     ...queryConfigs.standard,
   });
@@ -94,7 +94,7 @@ export const useUserPosts = (
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
     ...queryConfigs.standard,
@@ -119,7 +119,7 @@ export const useGroupPosts = (
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     enabled: !!groupId,
     ...queryConfigs.standard,
@@ -148,7 +148,7 @@ export const usePostEditHistory = (
 /**
  * Create a new post
  * With optimistic updates for immediate feedback
- * 
+ *
  * @example
  * const createPost = useCreatePost();
  * // With media files
@@ -185,7 +185,7 @@ export const useCreatePost = () => {
 
           return postService.createPost({ ...input, media });
         } catch (uploadError) {
-          console.error('File upload failed:', uploadError);
+          // console.error('File upload failed:', uploadError);
           throw new Error('Failed to upload files. Please try again.');
         }
       }
@@ -217,7 +217,7 @@ export const useCreatePost = () => {
 
 /**
  * Create post in group (may require approval)
- * 
+ *
  * @example
  * const createPostInGroup = useCreatePostInGroup();
  * createPostInGroup.mutate({
@@ -254,7 +254,7 @@ export const useCreatePostInGroup = () => {
 
           return postService.createPostInGroup({ ...input, media });
         } catch (uploadError) {
-          console.error('File upload failed:', uploadError);
+          // console.error('File upload failed:', uploadError);
           throw new Error('Failed to upload files. Please try again.');
         }
       }

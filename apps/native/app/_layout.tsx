@@ -23,6 +23,8 @@ import { NotificationProvider } from '~/providers/notification-provider';
 import { ensureBackgroundNotificationTaskRegistered } from '~/lib/notifications/background-notification-task';
 import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
 import * as Notifications from 'expo-notifications';
+import { ModalProvider } from '~/components/providers/modal-provider';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -53,8 +55,6 @@ Notifications.setNotificationHandler({
   }),
 });
 SplashScreen.preventAutoHideAsync();
-
-
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -106,13 +106,17 @@ export default function RootLayout() {
                     <NativePresenceProvider>
                       <HeroUINativeProvider config={heroUIConfig}>
                         <AppThemeProvider>
-                          <Stack screenOptions={{ headerShown: false }}>
-                            <Stack.Screen name="index" />
-                            <Stack.Screen name="(onboarding)" />
-                            <Stack.Screen name="(auth)" />
-                            <Stack.Screen name="(main)" />
-                            <Stack.Screen name="chat" />
-                          </Stack>
+                          <BottomSheetModalProvider>
+                            <Stack screenOptions={{ headerShown: false }}>
+                              <Stack.Screen name="index" />
+                              <Stack.Screen name="(onboarding)" />
+                              <Stack.Screen name="(auth)" />
+                              <Stack.Screen name="(main)" />
+                              <Stack.Screen name="chat" />
+                              <Stack.Screen name="(stack)" />
+                            </Stack>
+                            <ModalProvider />
+                          </BottomSheetModalProvider>
                         </AppThemeProvider>
                       </HeroUINativeProvider>
                     </NativePresenceProvider>

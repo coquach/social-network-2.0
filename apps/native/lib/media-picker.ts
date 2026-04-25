@@ -1,5 +1,7 @@
-import * as ImagePicker from "expo-image-picker";
-import { Alert } from "react-native";
+import * as ImagePicker from 'expo-image-picker';
+import { Alert } from 'react-native';
+
+import { MediaType } from '@repo/shared';
 
 type PermissionAlertOptions = {
   title: string;
@@ -7,7 +9,7 @@ type PermissionAlertOptions = {
 };
 
 type PickSingleImageOptions = {
-  source: "camera" | "library";
+  source: 'camera' | 'library';
   permissionAlert: PermissionAlertOptions;
   allowsEditing?: boolean;
   aspect?: [number, number];
@@ -16,18 +18,18 @@ type PickSingleImageOptions = {
 
 type PickLibraryMediaOptions = {
   permissionAlert: PermissionAlertOptions;
-  mediaTypes: Array<"images" | "videos">;
+  mediaTypes: Array<'images' | 'videos'>;
   allowsMultipleSelection?: boolean;
   selectionLimit?: number;
   quality?: number;
 };
 
 async function ensurePermission(
-  source: "camera" | "library",
+  source: 'camera' | 'library',
   permissionAlert: PermissionAlertOptions,
 ) {
   const permission =
-    source === "camera"
+    source === 'camera'
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -52,15 +54,15 @@ export async function pickSingleImage({
   }
 
   const result =
-    source === "camera"
+    source === 'camera'
       ? await ImagePicker.launchCameraAsync({
-          mediaTypes: ["images"],
+          mediaTypes: ['images'],
           allowsEditing,
           aspect,
           quality,
         })
       : await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ["images"],
+          mediaTypes: ['images'],
           allowsEditing,
           aspect,
           quality,
@@ -80,7 +82,7 @@ export async function pickLibraryMediaAssets({
   selectionLimit,
   quality = 1,
 }: PickLibraryMediaOptions) {
-  const hasPermission = await ensurePermission("library", permissionAlert);
+  const hasPermission = await ensurePermission('library', permissionAlert);
   if (!hasPermission) {
     return [];
   }
@@ -97,4 +99,57 @@ export async function pickLibraryMediaAssets({
   }
 
   return result.assets;
+}
+
+type PickComposerMediaOptions = {
+  mediaType: 'images' | 'videos';
+  selectionLimit?: number;
+  permissionAlert: PermissionAlertOptions;
+};
+
+type PickedComposerMediaItem = {
+  key: string;
+  preview: string;
+  fileName: string;
+  file: {
+    uri: string;
+    name: string;
+    type: string;
+  };
+  type: MediaType;
+};
+
+export async function pickComposerMediaAssets({
+  mediaType,
+  selectionLimit,
+  permissionAlert,
+}: PickComposerMediaOptions): Promise<PickedComposerMediaItem[]> {
+  const assets = await pickLibraryMediaAssets({
+    permissionAlert,
+    mediaTypes: [mediaType],
+    allowsMultipleSelection: true,
+    selectionLimit,
+    quality: 0.9,
+  });
+
+  return assets.map((asset, index) => {
+    const type = mediaType === 'videos' ? MediaType.VIDEO : MediaType.IMAGE;
+    const fallbackName = `${mediaType === 'videos' ? 'video' : 'image'}-${Date.now()}-${index}`;
+    const fileName = asset.fileName?.trim() || fallbackName;
+    const fileType =
+      asset.mimeType?.trim() ||
+      (type === MediaType.VIDEO ? 'video/mp4' : 'image/jpeg');
+
+    return {
+      key: `${fileName}-${asset.fileSize ?? 'na'}-${asset.assetId ?? asset.uri}`,
+      preview: asset.uri,
+      fileName,
+      file: {
+        uri: asset.uri,
+        name: fileName,
+        type: fileType,
+      },
+      type,
+    };
+  });
 }

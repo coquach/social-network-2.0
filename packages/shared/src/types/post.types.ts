@@ -30,6 +30,20 @@ export interface PostStatDTO {
 }
 
 /**
+ * Share statistics/metrics
+ */
+export interface ShareStatDTO {
+  reactions: number;
+  likes: number;
+  loves: number;
+  hahas: number;
+  wows: number;
+  angrys: number;
+  sads: number;
+  comments: number;
+}
+
+/**
  * Group info embedded in posts
  */
 export interface GroupInfoDTO {
@@ -70,6 +84,17 @@ export interface PostSnapshotDTO {
   postStat?: PostStatDTO;
   reactedType?: ReactionType;
   createdAt: Date;
+}
+
+export interface ShareSnapshotDTO {
+  shareId: string;
+  userId: string;
+  audience: Audience;
+  content?: string;
+  createdAt: Date;
+  post: PostSnapshotDTO;
+  shareStat: ShareStatDTO;
+  reactedType?: ReactionType;
 }
 
 /**

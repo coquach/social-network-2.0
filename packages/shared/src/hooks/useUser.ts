@@ -13,10 +13,7 @@ import {
 } from '@tanstack/react-query';
 import { friendService } from '../api/services/friend.service';
 import { userService } from '../api/services/user.service';
-import type {
-  CursorPageResponse,
-  QueryParams,
-} from '../types/common.types';
+import type { CursorPageResponse, QueryParams } from '../types/common.types';
 import type {
   UpdateUserInput,
   UserDTO,
@@ -84,7 +81,7 @@ export const useSearchUsers = (query: string, params?: QueryParams) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     enabled: query.length > 0,
     ...queryConfigs.standard,
@@ -104,7 +101,7 @@ export const useUserFriends = (userId: string, params?: QueryParams) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
     ...queryConfigs.semiStatic,
@@ -116,7 +113,7 @@ export const useUserFriends = (userId: string, params?: QueryParams) => {
 /**
  * Update user profile
  * With optimistic updates
- * 
+ *
  * @example
  * const updateProfile = useUpdateProfile();
  * updateProfile.mutate({

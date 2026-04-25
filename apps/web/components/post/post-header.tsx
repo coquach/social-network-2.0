@@ -146,7 +146,7 @@ export default function PostHeader({
                 className={cn(
                   'text-[15px] font-semibold text-slate-800',
                   'hover:underline underline-offset-2',
-                  'truncate max-w-[220px] sm:max-w-[320px]'
+                  'truncate max-w-55 sm:max-w-[320px]',
                 )}
                 title={displayName}
               >
@@ -164,7 +164,7 @@ export default function PostHeader({
                   onClick={goToGroup}
                   className={cn(
                     'mt-0.5 inline-flex items-center gap-2 min-w-0',
-                    'text-xs text-neutral-600 hover:underline underline-offset-2'
+                    'text-xs text-neutral-600 hover:underline underline-offset-2',
                   )}
                 >
                   <span>trong</span>
@@ -177,7 +177,7 @@ export default function PostHeader({
                     />
                   </span>
                   <span
-                    className="font-medium text-neutral-800 truncate max-w-[200px] sm:max-w-[260px]"
+                    className="font-medium text-neutral-800 truncate max-w-50 sm:max-w-65"
                     title={group.name}
                   >
                     {group.name}
@@ -222,7 +222,7 @@ export default function PostHeader({
                 aria-label="Tuỳ chọn bài viết"
                 className={cn(
                   'shrink-0 rounded-full p-2',
-                  'hover:bg-gray-100 active:bg-gray-200 transition'
+                  'hover:bg-gray-100 active:bg-gray-200 transition',
                 )}
               >
                 <MoreHorizontal size={18} className="text-gray-600" />
@@ -257,14 +257,12 @@ export default function PostHeader({
                   </DropdownMenuItem>
                 </>
               ) : (
-               
-                  <DropdownMenuItem
-                    className="flex items-center gap-2 text-red-600 focus:text-red-600"
-                    onClick={() => setOpenReportModal(true)}
-                  >
-                    <Flag size={16} className="text-red-600" /> Báo cáo
-                  </DropdownMenuItem>
-                
+                <DropdownMenuItem
+                  className="flex items-center gap-2 text-red-600 focus:text-red-600"
+                  onClick={() => setOpenReportModal(true)}
+                >
+                  <Flag size={16} className="text-red-600" /> Báo cáo
+                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -287,4 +285,3 @@ export default function PostHeader({
     </>
   );
 }
-

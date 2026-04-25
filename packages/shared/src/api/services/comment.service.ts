@@ -11,17 +11,20 @@ import type {
   CreateReactionInput,
   RemoveReactionInput,
   CursorPageResponse,
+  GetCommentsQuery,
+  PageResponse,
 } from '../../types';
 
 export const commentService = {
   /**
-   * Get comments for a post or share (paginated)
+   * Get comments (page-based)
    */
   async getComments(
-    rootId: string,
-    params?: { cursor?: string; limit?: number }
-  ): Promise<CursorPageResponse<CommentDTO>> {
-    return getApiClient().getCursorPage(`/posts/${rootId}/comments`, { params });
+    query: GetCommentsQuery,
+  ): Promise<PageResponse<CommentDTO>> {
+    return getApiClient().get(`/comments`, {
+      params: query,
+    });
   },
 
   /**
@@ -36,9 +39,11 @@ export const commentService = {
    */
   async getReplies(
     commentId: string,
-    params?: { cursor?: string; limit?: number }
+    params?: { cursor?: string; limit?: number },
   ): Promise<CursorPageResponse<CommentDTO>> {
-    return getApiClient().getCursorPage(`/comments/${commentId}/replies`, { params });
+    return getApiClient().getCursorPage(`/comments/${commentId}/replies`, {
+      params,
+    });
   },
 
   /**
@@ -53,7 +58,7 @@ export const commentService = {
    */
   async updateComment(
     commentId: string,
-    data: UpdateCommentInput
+    data: UpdateCommentInput,
   ): Promise<CommentDTO> {
     return getApiClient().patch(`/comments/${commentId}`, data);
   },
@@ -86,8 +91,10 @@ export const commentService = {
    */
   async getCommentReactions(
     commentId: string,
-    params?: { reactionType?: string; cursor?: string; limit?: number }
+    params?: { reactionType?: string; cursor?: string; limit?: number },
   ): Promise<CursorPageResponse<any>> {
-    return getApiClient().getCursorPage(`/comments/${commentId}/reactions`, { params });
+    return getApiClient().getCursorPage(`/comments/${commentId}/reactions`, {
+      params,
+    });
   },
 };
