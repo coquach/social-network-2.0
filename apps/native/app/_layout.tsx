@@ -25,6 +25,7 @@ import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/
 import * as Notifications from 'expo-notifications';
 import { ModalProvider } from '~/components/providers/modal-provider';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -116,6 +117,7 @@ export default function RootLayout() {
                               <Stack.Screen name="(stack)" />
                             </Stack>
                             <ModalProvider />
+                            <AssistantOverlay />
                           </BottomSheetModalProvider>
                         </AppThemeProvider>
                       </HeroUINativeProvider>
