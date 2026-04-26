@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { initializeWebApiClient } from '@/lib/api-client-init';
 
 /**
@@ -10,11 +10,21 @@ import { initializeWebApiClient } from '@/lib/api-client-init';
  */
 export function ApiClientProvider({ children }: { children: React.ReactNode }) {
   const { getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Initialize API client once on mount
-    initializeWebApiClient(getToken);
+    getTokenRef.current = getToken;
   }, [getToken]);
+
+  useEffect(() => {
+    initializeWebApiClient(() => getTokenRef.current());
+    setIsReady(true);
+  }, []);
+
+  if (!isReady) {
+    return null;
+  }
 
   return <>{children}</>;
 }

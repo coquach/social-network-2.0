@@ -1,11 +1,19 @@
 import React from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { FlashList } from '@shopify/flash-list';
 import { PostCardFullSkeleton } from '~/components/post/post-card-full';
 import { AppSubtitle } from '~/components/ui/app-text';
+import type { StyleProp, ViewStyle } from 'react-native';
+
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as typeof FlashList;
+
+const ItemSeparator = () => <View style={{ height: 10 }} />;
 
 type FeedListProps<TItem> = {
-  data: TItem[];
+  items: TItem[];
   keyExtractor: (item: TItem) => string;
   renderItem: ({ item }: { item: TItem }) => React.ReactElement | null;
   isLoading: boolean;
@@ -16,17 +24,17 @@ type FeedListProps<TItem> = {
   onLoadMore: () => void;
   onScroll: any;
   scrollEnabled: boolean;
+  refreshing?: boolean;
+  onRefresh?: () => void;
   listHeaderComponent?: React.ReactElement;
-  contentContainerStyle: {
-    paddingTop: number;
-    paddingBottom: number;
-    paddingHorizontal: number;
-  };
+  contentContainerStyle: StyleProp<ViewStyle>;
   emptyText: string;
+  estimatedItemSize: number;
+  getItemType?: (item: TItem) => string | number;
 };
 
 export function FeedList<TItem>({
-  data,
+  items,
   keyExtractor,
   renderItem,
   isLoading,
@@ -37,9 +45,13 @@ export function FeedList<TItem>({
   onLoadMore,
   onScroll,
   scrollEnabled,
+  refreshing = false,
+  onRefresh,
   listHeaderComponent,
   contentContainerStyle,
   emptyText,
+  estimatedItemSize,
+  getItemType,
 }: FeedListProps<TItem>) {
   const handleEndReached = React.useCallback(() => {
     if (!hasNextPage || isFetchingNextPage || isLoading || isError) {
@@ -87,25 +99,47 @@ export function FeedList<TItem>({
     );
   }, [emptyText, errorMessage, isError, isLoading]);
 
+  const keyExtractorAdapter = React.useCallback(
+    (item: unknown) => keyExtractor(item as TItem),
+    [keyExtractor],
+  );
+
+  const renderItemAdapter = React.useCallback(
+    ({ item }: { item: unknown }) => renderItem({ item: item as TItem }),
+    [renderItem],
+  );
+
+  const getItemTypeAdapter = React.useCallback(
+    (item: unknown) => getItemType?.(item as TItem),
+    [getItemType],
+  );
+
   return (
-    <Animated.FlatList
+    <AnimatedFlashList
       style={{ flex: 1 }}
-      data={data}
-      keyExtractor={keyExtractor}
-      renderItem={renderItem}
+      data={items as unknown[]}
+      keyExtractor={keyExtractorAdapter}
+      renderItem={renderItemAdapter}
       ListHeaderComponent={listHeaderComponent ?? null}
       ListEmptyComponent={empty}
-      ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+      ItemSeparatorComponent={ItemSeparator}
       ListFooterComponent={footer}
       contentContainerStyle={contentContainerStyle}
-      contentInsetAdjustmentBehavior="never"
-      keyboardShouldPersistTaps="handled"
       onScroll={onScroll}
+      scrollEventThrottle={16}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.6}
       scrollEnabled={scrollEnabled}
-      scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
+      drawDistance={estimatedItemSize * 4}
+      removeClippedSubviews={false}
+      overrideProps={{
+        initialDrawBatchSize: 8,
+        estimatedItemSize: estimatedItemSize,
+      }}
+      getItemType={getItemTypeAdapter}
     />
   );
 }

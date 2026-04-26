@@ -22,7 +22,7 @@ export function SharePostReview({ post, author }: SharePostReviewProps) {
   // navigation centralized (giống web)
   const goToPost = React.useCallback(() => {
     if (!post?.postId) return;
-    router.push(`/post/${post.postId}` as never);
+    router.push(`/posts/${post.postId}` as never);
   }, [post?.postId, router]);
 
   // giới hạn chiều cao preview

@@ -75,10 +75,14 @@ export interface UserPreferences {
  * Input types for user operations
  */
 export interface CreateUserInput {
+  id?: string;
   email: string;
   firstName: string;
   lastName: string;
   password?: string;
+  avatarUrl?: string;
+  coverImageUrl?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateUserInput {
@@ -92,6 +96,7 @@ export interface UpdateUserInput {
   interests?: string[];
   avatarUrl?: string;
   coverImageUrl?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateProfileInput extends UpdateUserInput {

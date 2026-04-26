@@ -1,13 +1,27 @@
-import React, { useMemo } from 'react';
-import { BottomSheet } from 'heroui-native/bottom-sheet';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 
-import { usePostShares, useShareListModal } from '@repo/shared';
+import {
+  BottomSheetModal,
+  BottomSheetFlatList,
+  BottomSheetBackdrop,
+} from '@gorhom/bottom-sheet';
+
+import {
+  SharePostSnapshotDTO,
+  usePostShares,
+  useShareListModal,
+} from '@repo/shared';
+import { Avatar } from '../avatar';
 
 // ─────────────────────────────────────────
 
 export function ShareListModal() {
   const { isOpen, closeModal, postId } = useShareListModal();
+
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  const snapPoints = useMemo(() => ['60%'], []);
 
   const {
     data,
@@ -19,79 +33,121 @@ export function ShareListModal() {
   } = usePostShares(postId ?? '', {});
 
   const shares = useMemo(
-    () => data?.pages.flatMap((p) => p.data) ?? [],
+    () => data?.pages.flatMap((p: any) => p.data) ?? [],
     [data],
   );
 
-  const handleScroll = (e: any) => {
-    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+  // open / close
+  useEffect(() => {
+    if (isOpen) bottomSheetRef.current?.present();
+    else bottomSheetRef.current?.dismiss();
+  }, [isOpen]);
 
-    const isNearBottom =
-      layoutMeasurement.height + contentOffset.y >= contentSize.height - 50;
+  // ─────────────────────────────────────────
 
-    if (isNearBottom && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
+  // ─────────────────────────────────────────
+  // backdrop (dim background kiểu Facebook)
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        opacity={0.3}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
+
+  // ─────────────────────────────────────────
+
+  const renderItem = ({ item }: { item: SharePostSnapshotDTO }) => (
+    <View className="py-3 border-b border-gray-200">
+      <View className="flex-row items-center gap-3">
+        <Avatar
+          userId={item.userId}
+          size="medium"
+          showName
+          className="flex-1"
+          onBeforeNavigate={closeModal}
+        >
+          <Avatar.Image showOnlineStatus />
+
+          <View className="flex-1">
+            <Avatar.Name />
+
+            {item.content ? (
+              <Text
+                className="text-sm mt-1 text-gray-600"
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {item.content}
+              </Text>
+            ) : null}
+          </View>
+        </Avatar>
+      </View>
+    </View>
+  );
+
+  // ─────────────────────────────────────────
 
   return (
-    <BottomSheet isOpen={isOpen} onOpenChange={closeModal}>
-      <BottomSheet.Portal>
-        <BottomSheet.Overlay className="bg-black/40" />
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      snapPoints={snapPoints}
+      onDismiss={closeModal}
+      enablePanDownToClose
+      enableDynamicSizing={false}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{ borderRadius: 24 }}
+    >
+      <View className="flex-1 px-4">
+        {/* Header */}
+        <View className="pt-2 pb-2">
+          <Text className="text-lg font-semibold">Danh sách chia sẻ</Text>
+        </View>
 
-        <BottomSheet.Content
-          enableDynamicSizing
-          backgroundClassName="rounded-t-[24px] bg-app-bg"
-          contentContainerClassName="pb-8 pt-2"
-        >
-          <View className="px-4">
-            <Text className="text-lg font-semibold">Danh sách chia sẻ</Text>
-
-            {isLoading ? (
-              <View className="py-8 items-center">
-                <ActivityIndicator />
-              </View>
-            ) : isError ? (
-              <View className="py-8 items-center">
-                <Text>Lỗi load shares</Text>
-              </View>
-            ) : shares.length === 0 ? (
-              <View className="py-8 items-center">
-                <Text>Chưa có ai chia sẻ</Text>
-              </View>
-            ) : (
-              <ScrollView
-                className="mt-3 max-h-96"
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-              >
-                {shares.map((share) => (
-                  <View
-                    key={share.shareId}
-                    className="py-3 border-b border-gray-200"
-                  >
-                    <Text className="font-medium">
-                      User {share.userId.slice(0, 6)}
-                    </Text>
-
-                    {share.content ? (
-                      <Text className="text-sm mt-1 text-gray-600">
-                        {share.content}
-                      </Text>
-                    ) : null}
-                  </View>
-                ))}
-
-                {isFetchingNextPage && (
-                  <View className="py-4 items-center">
-                    <ActivityIndicator />
-                  </View>
-                )}
-              </ScrollView>
-            )}
+        {/* Content */}
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator />
           </View>
-        </BottomSheet.Content>
-      </BottomSheet.Portal>
-    </BottomSheet>
+        ) : isError ? (
+          <View className="flex-1 items-center justify-center">
+            <Text>Lỗi load shares</Text>
+          </View>
+        ) : shares.length === 0 ? (
+          <View className="flex-1 items-center justify-center">
+            <Text>Chưa có ai chia sẻ</Text>
+          </View>
+        ) : (
+          <BottomSheetFlatList
+            data={shares}
+            keyExtractor={(item: SharePostSnapshotDTO) => item.shareId}
+            renderItem={renderItem}
+            contentContainerStyle={{
+              paddingBottom: 20,
+            }}
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+              }
+            }}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <View className="py-4 items-center">
+                  <ActivityIndicator />
+                </View>
+              ) : null
+            }
+          />
+        )}
+      </View>
+    </BottomSheetModal>
   );
 }

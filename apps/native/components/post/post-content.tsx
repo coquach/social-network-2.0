@@ -8,7 +8,7 @@ export interface PostContentProps {
   defaultExpanded?: boolean;
 }
 
-export function PostContent({
+function PostContentComponent({
   text,
   isShared = false,
   collapsedLines = 4,
@@ -16,6 +16,22 @@ export function PostContent({
 }: PostContentProps) {
   const [expanded, setExpanded] = React.useState(defaultExpanded);
   const [isTruncated, setIsTruncated] = React.useState(false);
+  const lastTruncatedRef = React.useRef(false);
+  const handleTextLayout = React.useCallback(
+    (
+      e: Parameters<
+        NonNullable<React.ComponentProps<typeof Text>['onTextLayout']>
+      >[0],
+    ) => {
+      if (expanded) return;
+      const nextTruncated = e.nativeEvent.lines.length > collapsedLines;
+      if (lastTruncatedRef.current !== nextTruncated) {
+        lastTruncatedRef.current = nextTruncated;
+        setIsTruncated(nextTruncated);
+      }
+    },
+    [collapsedLines, expanded],
+  );
 
   const content = (text ?? '').toString();
   const hasContent = content.trim().length > 0;
@@ -26,12 +42,8 @@ export function PostContent({
     <View className="gap-1.5">
       <Text
         numberOfLines={expanded ? undefined : collapsedLines}
-        // Detect truncation based on measured lines when collapsed.
-        onTextLayout={(e) => {
-          if (expanded) return;
-          const lineCount = e.nativeEvent.lines.length;
-          setIsTruncated(lineCount > collapsedLines);
-        }}
+        // Avoid setState on every layout callback to reduce row rerenders.
+        onTextLayout={handleTextLayout}
         className={
           isShared
             ? 'text-base leading-6 text-app-muted-fg dark:text-app-muted-fg-dark'
@@ -57,3 +69,5 @@ export function PostContent({
     </View>
   );
 }
+
+export const PostContent = React.memo(PostContentComponent);

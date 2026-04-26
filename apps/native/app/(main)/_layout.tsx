@@ -37,6 +37,7 @@ export default function TabsLayout() {
             backgroundColor: colors.background,
           },
           tabBarShowLabel: false,
+          animation: 'fade',
         }}
         tabBar={(props) => <FloatingTabBar {...props} />}
       >

@@ -1,26 +1,21 @@
 import React from 'react';
 import { FeedType, useMyFeed } from '@repo/shared';
 import type {
-  FeedDTO,
-  PostDTO,
+  Emotion,
+  PersonalFeedItem,
   PostSnapshotDTO,
-  SharePostDTO,
   SharePostSnapshotDTO,
 } from '@repo/shared';
 import { FeedList } from './feed-list';
-import {
-  isPostFeed,
-  isShareFeed,
-  toPostSnapshot,
-  toShareSnapshot,
-} from './feed-mappers';
 import { PostCardFull } from '~/components/post/post-card-full';
 import { SharePost } from '~/components/post/share-post';
+import { View } from 'react-native';
+import { MusicCarousel } from '~/components/newfeeds/feed-header/music-carousel';
 
 type PersonalFeedProps = {
+  mainEmotion?: Emotion;
   onScroll: any;
   scrollEnabled: boolean;
-  listHeaderComponent?: React.ReactElement;
   contentContainerStyle: {
     paddingTop: number;
     paddingBottom: number;
@@ -28,10 +23,10 @@ type PersonalFeedProps = {
   };
 };
 
-export function PersonalFeed({
+export const PersonalFeed = React.memo(function PersonalFeed({
+  mainEmotion,
   onScroll,
   scrollEnabled,
-  listHeaderComponent,
   contentContainerStyle,
 }: PersonalFeedProps) {
   const {
@@ -39,34 +34,35 @@ export function PersonalFeed({
     isLoading,
     isError,
     error,
+    isRefetching,
+    refetch,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useMyFeed({ limit: 10 });
+  } = useMyFeed({ mainEmotion, limit: 10 });
 
-  console.log('🔥 useMyFeed data:', JSON.stringify(data, null, 2));
+  const feedItems = data ?? [];
 
-  const feedItems = React.useMemo<FeedDTO[]>(() => {
-    return data?.pages.flatMap((page) => page.data as FeedDTO[]) ?? [];
-  }, [data]);
+  const keyExtractor = React.useCallback(
+    (item: PersonalFeedItem) => item.id,
+    [],
+  );
 
-  const keyExtractor = React.useCallback((item: FeedDTO) => item.id, []);
+  const renderItem = React.useCallback(
+    ({ item }: { item: PersonalFeedItem }) => {
+      if (item.type === FeedType.SHARE) {
+        return <SharePost data={item.data as SharePostSnapshotDTO} />;
+      }
 
-  const renderItem = React.useCallback(({ item }: { item: FeedDTO }) => {
-    if (isPostFeed(item)) {
-      const post = toPostSnapshot(item.item as PostSnapshotDTO | PostDTO);
-      return <PostCardFull data={post} />;
-    }
+      return <PostCardFull data={item.data as PostSnapshotDTO} />;
+    },
+    [],
+  );
 
-    if (isShareFeed(item) || item.type === FeedType.SHARE) {
-      const share = toShareSnapshot(
-        item.item as unknown as SharePostSnapshotDTO | SharePostDTO,
-      );
-      return <SharePost data={share} />;
-    }
-
-    return null;
-  }, []);
+  const getItemType = React.useCallback(
+    (item: PersonalFeedItem) => item.type,
+    [],
+  );
 
   const handleLoadMore = React.useCallback(() => {
     fetchNextPage().catch((err: unknown) => {
@@ -74,9 +70,19 @@ export function PersonalFeed({
     });
   }, [fetchNextPage]);
 
+  const handleRefresh = React.useCallback(async () => {
+    try {
+      await refetch({
+        refetchPage: (_page: unknown, index: number) => index === 0,
+      } as never);
+    } catch (err: unknown) {
+      console.log('Refresh personal feed failed:', err);
+    }
+  }, [refetch]);
+
   return (
     <FeedList
-      data={feedItems}
+      items={feedItems}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       isLoading={isLoading}
@@ -85,11 +91,22 @@ export function PersonalFeed({
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={Boolean(hasNextPage)}
       onLoadMore={handleLoadMore}
+      refreshing={isRefetching}
+      onRefresh={handleRefresh}
       onScroll={onScroll}
       scrollEnabled={scrollEnabled}
-      listHeaderComponent={listHeaderComponent}
+      listHeaderComponent={
+        <View className="pb-2">
+          <View className="mb-3">
+            <MusicCarousel />
+          </View>
+          <View className="h-px bg-app-border/40 mx-2" />
+        </View>
+      }
       contentContainerStyle={contentContainerStyle}
       emptyText="Không có bài viết nào trong bảng tin."
+      estimatedItemSize={420}
+      getItemType={getItemType}
     />
   );
-}
+});

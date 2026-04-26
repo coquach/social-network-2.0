@@ -7,7 +7,10 @@
       "@repo/shared": ["../../packages/shared/src/index.ts"],
       "@repo/shared/*": ["../../packages/shared/src/*"],
       "~/*": ["./*"]
-    }
+    },
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnusedLabels": false
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"]
 }

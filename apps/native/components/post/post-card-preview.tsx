@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { AppCard } from '~/components/ui/app-card';
@@ -11,46 +11,31 @@ import type { PostSnapshotDTO, UserSnapshotDTO } from '@repo/shared';
 export interface PostCardPreviewProps {
   data: PostSnapshotDTO;
   author?: UserSnapshotDTO;
-
   embedded?: boolean;
   showSettings?: boolean;
-
   collapsedLines?: number;
   mediaSize?: 'default' | 'compact';
-
   maxHeight?: number;
   disableCardPress?: boolean;
-
   className?: string;
 }
 
 export function PostCardPreview({
   data,
-  author,
-
+  author: _author,
   embedded = false,
   showSettings = true,
-
   collapsedLines,
   mediaSize = 'default',
-
   maxHeight,
   disableCardPress = false,
-
   className,
 }: PostCardPreviewProps) {
   const router = useRouter();
 
-  const authorData: UserSnapshotDTO = author ?? {
-    id: data.userId,
-    firstName: '',
-    lastName: '',
-  };
-
-  // 👉 navigation centralized
   const goToPost = React.useCallback(() => {
     if (!data?.postId) return;
-    router.push(`/post/${data.postId}` as never);
+    router.push(`/posts/${data.postId}` as never);
   }, [data?.postId, router]);
 
   const handlePressMedia = React.useCallback(() => {
@@ -65,18 +50,13 @@ export function PostCardPreview({
   );
 
   const contentLines =
-    typeof collapsedLines === 'number'
-      ? collapsedLines
-      : embedded
-        ? 2
-        : undefined;
+    typeof collapsedLines === 'number' ? collapsedLines : embedded ? 2 : undefined;
 
   const card = (
     <AppCard className={cardClassName}>
       <PostHeader
         data={data}
         postId={data.postId}
-        author={authorData}
         createdAt={data.createdAt}
         audience={data.audience}
         compact={embedded}

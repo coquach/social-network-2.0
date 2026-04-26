@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -14,11 +14,15 @@ import {
   NEWFEEDS_HEADER_BAR_HEIGHT,
   NewfeedsHeader,
 } from '~/components/navigation/newfeeds-header';
+import { FeedHeader } from '~/components/newfeeds/feed-header';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
-import { AppEyebrow, AppSubtitle, AppTitle } from '~/components/ui/app-text';
 import { FeedScrollProvider } from '~/contexts/feed-scroll-context';
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
+import {
+  mapFeedEmotionToApiEmotion,
+  useFeedFilterStore,
+} from '~/store/feed-filter-store';
 
 import { PersonalFeed } from './components/personal-feed';
 import { TrendingFeed } from './components/trending-feed';
@@ -27,8 +31,7 @@ const TOP_THRESHOLD = 12;
 const DELTA_THRESHOLD = 8;
 const HEADER_SHOW_DURATION = 240;
 const HEADER_HIDE_DURATION = 200;
-
-type FeedTab = 'trending' | 'personal';
+const EMOTION_DEBOUNCE_MS = 200;
 
 export default function NewfeedsScreen() {
   const insets = useSafeAreaInsets();
@@ -39,9 +42,30 @@ export default function NewfeedsScreen() {
   const headerTranslateY = useSharedValue(0);
   const headerOpacity = useSharedValue(1);
   const lastScrollY = useSharedValue(0);
+  const lastForwardedOffset = useSharedValue(0);
 
   const [scrollEnabled, setScrollEnabled] = React.useState(true);
-  const [tab, setTab] = React.useState<FeedTab>('trending');
+  const feedType = useFeedFilterStore((state) => state.feedType);
+  const emotion = useFeedFilterStore((state) => state.emotion);
+  const setFeedType = useFeedFilterStore((state) => state.setFeedType);
+  const setEmotion = useFeedFilterStore((state) => state.setEmotion);
+
+  const [debouncedEmotion, setDebouncedEmotion] = React.useState(() =>
+    mapFeedEmotionToApiEmotion(emotion),
+  );
+
+  const selectedApiEmotion = React.useMemo(
+    () => mapFeedEmotionToApiEmotion(emotion),
+    [emotion],
+  );
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedEmotion(selectedApiEmotion);
+    }, EMOTION_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [selectedApiEmotion]);
 
   const feedScrollContextValue = React.useMemo(
     () => ({ scrollEnabled, setScrollEnabled }),
@@ -55,6 +79,7 @@ export default function NewfeedsScreen() {
       headerTranslateY.value = 0;
       headerOpacity.value = 1;
       lastScrollY.value = 0;
+      lastForwardedOffset.value = 0;
     }, []),
   );
 
@@ -72,6 +97,7 @@ export default function NewfeedsScreen() {
         });
         lastScrollY.value = nextOffset;
         scheduleOnRN(handleOffsetChange, nextOffset);
+        lastForwardedOffset.value = nextOffset;
         return;
       }
 
@@ -92,7 +118,11 @@ export default function NewfeedsScreen() {
       }
 
       lastScrollY.value = nextOffset;
-      scheduleOnRN(handleOffsetChange, nextOffset);
+
+      if (Math.abs(nextOffset - lastForwardedOffset.value) >= DELTA_THRESHOLD) {
+        scheduleOnRN(handleOffsetChange, nextOffset);
+        lastForwardedOffset.value = nextOffset;
+      }
     },
   });
 
@@ -101,76 +131,31 @@ export default function NewfeedsScreen() {
     transform: [{ translateY: headerTranslateY.value }],
   }));
 
-  // Intro text
-  const intro = React.useMemo(
-    () => (
-      <View className="gap-2 pb-3">
-        <AppEyebrow>Bảng tin</AppEyebrow>
-        <AppTitle className="text-3xl">Newfeeds hôm nay</AppTitle>
-        <AppSubtitle>
-          Theo dõi bài viết xu hướng và bảng tin cá nhân theo thời gian thực.
-        </AppSubtitle>
-      </View>
-    ),
-    [],
+  const stickyMusicBarStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: headerTranslateY.value }],
+  }));
+
+  const onTabChange = React.useCallback(
+    (tab: 'trending' | 'personal') => {
+      setFeedType(tab);
+    },
+    [setFeedType],
   );
 
-  // Segmented control
-  const segmented = (
-    <View className="pb-2">
-      <View className="mt-1 rounded-full border border-app-border bg-app-surface-elevated p-1 dark:border-app-border-dark dark:bg-app-surface-elevated-dark">
-        <View className="flex-row">
-          <Pressable
-            onPress={() => setTab('trending')}
-            className={`flex-1 items-center rounded-full py-2 ${
-              tab === 'trending' ? 'bg-app-primary' : ''
-            }`}
-          >
-            <AppSubtitle
-              className={`text-sm font-semibold ${
-                tab === 'trending' ? 'text-white' : 'text-app-muted-fg'
-              }`}
-            >
-              Trending
-            </AppSubtitle>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setTab('personal')}
-            className={`flex-1 items-center rounded-full py-2 ${
-              tab === 'personal' ? 'bg-app-primary' : ''
-            }`}
-          >
-            <AppSubtitle
-              className={`text-sm font-semibold ${
-                tab === 'personal' ? 'text-white' : 'text-app-muted-fg'
-              }`}
-            >
-              For You
-            </AppSubtitle>
-          </Pressable>
-        </View>
-      </View>
-    </View>
+  const onEmotionChange = React.useCallback(
+    (nextEmotion: Parameters<typeof setEmotion>[0]) => {
+      setEmotion(nextEmotion);
+    },
+    [setEmotion],
   );
 
   const contentContainerStyle = React.useMemo(
     () => ({
-      paddingTop: headerHeight + 10,
+      paddingTop: headerHeight + 70,
       paddingBottom: 132,
       paddingHorizontal: 16,
     }),
     [headerHeight],
-  );
-
-  const ListHeader = React.useMemo(
-    () => (
-      <>
-        {intro}
-        {segmented}
-      </>
-    ),
-    [intro, segmented],
   );
 
   return (
@@ -184,19 +169,31 @@ export default function NewfeedsScreen() {
           <NewfeedsHeader />
         </Animated.View>
 
+        <Animated.View
+          className="absolute left-0 right-0 z-10"
+          style={[stickyMusicBarStyle, { top: headerHeight }]}
+        >
+          <FeedHeader
+            tab={feedType}
+            emotion={emotion}
+            onTabChange={onTabChange}
+            onEmotionChange={onEmotionChange}
+          />
+        </Animated.View>
+
         {/* Feed */}
-        {tab === 'trending' ? (
+        {feedType === 'trending' ? (
           <TrendingFeed
+            mainEmotion={debouncedEmotion}
             onScroll={onScroll}
             scrollEnabled={scrollEnabled}
-            listHeaderComponent={ListHeader}
             contentContainerStyle={contentContainerStyle}
           />
         ) : (
           <PersonalFeed
+            mainEmotion={debouncedEmotion}
             onScroll={onScroll}
             scrollEnabled={scrollEnabled}
-            listHeaderComponent={ListHeader}
             contentContainerStyle={contentContainerStyle}
           />
         )}

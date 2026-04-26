@@ -1,14 +1,15 @@
 import React from 'react';
 import { useTrendingFeed } from '@repo/shared';
-import type { PostDTO, PostSnapshotDTO } from '@repo/shared';
+import type { Emotion, PostSnapshotDTO } from '@repo/shared';
 import { FeedList } from './feed-list';
-import { toPostSnapshot } from './feed-mappers';
 import { PostCardFull } from '~/components/post/post-card-full';
+import { View } from 'react-native';
+import { MusicCarousel } from '~/components/newfeeds/feed-header/music-carousel';
 
 type TrendingFeedProps = {
+  mainEmotion?: Emotion;
   onScroll: any;
   scrollEnabled: boolean;
-  listHeaderComponent?: React.ReactElement;
   contentContainerStyle: {
     paddingTop: number;
     paddingBottom: number;
@@ -16,10 +17,10 @@ type TrendingFeedProps = {
   };
 };
 
-export function TrendingFeed({
+export const TrendingFeed = React.memo(function TrendingFeed({
+  mainEmotion,
   onScroll,
   scrollEnabled,
-  listHeaderComponent,
   contentContainerStyle,
 }: TrendingFeedProps) {
   const {
@@ -27,15 +28,14 @@ export function TrendingFeed({
     isLoading,
     isError,
     error,
+    isRefetching,
+    refetch,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useTrendingFeed({ limit: 10 });
+  } = useTrendingFeed({ mainEmotion, limit: 10 });
 
-  const posts = React.useMemo<PostSnapshotDTO[]>(() => {
-    const raw = data?.pages.flatMap((page) => page.data as PostDTO[]) ?? [];
-    return raw.map((post) => toPostSnapshot(post));
-  }, [data]);
+  const posts = data ?? [];
 
   const renderItem = React.useCallback(
     ({ item }: { item: PostSnapshotDTO }) => <PostCardFull data={item} />,
@@ -47,15 +47,27 @@ export function TrendingFeed({
     [],
   );
 
+  const getItemType = React.useCallback(() => 'post', []);
+
   const handleLoadMore = React.useCallback(() => {
     fetchNextPage().catch((err: unknown) => {
       console.log('Load more trending failed:', err);
     });
   }, [fetchNextPage]);
 
+  const handleRefresh = React.useCallback(async () => {
+    try {
+      await refetch({
+        refetchPage: (_page: unknown, index: number) => index === 0,
+      } as never);
+    } catch (err: unknown) {
+      console.log('Refresh trending failed:', err);
+    }
+  }, [refetch]);
+
   return (
     <FeedList
-      data={posts}
+      items={posts}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       isLoading={isLoading}
@@ -64,11 +76,22 @@ export function TrendingFeed({
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={Boolean(hasNextPage)}
       onLoadMore={handleLoadMore}
+      refreshing={isRefetching}
+      onRefresh={handleRefresh}
       onScroll={onScroll}
       scrollEnabled={scrollEnabled}
-      listHeaderComponent={listHeaderComponent}
+      listHeaderComponent={
+        <View className="pb-2">
+          <View className="mb-3">
+            <MusicCarousel />
+          </View>
+          <View className="h-px bg-app-border/40 mx-2" />
+        </View>
+      }
       contentContainerStyle={contentContainerStyle}
       emptyText="Không có bài viết xu hướng nào."
+      estimatedItemSize={380}
+      getItemType={getItemType}
     />
   );
-}
+});

@@ -6,7 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { SkipLink } from '@/components/ui/skip-link';
 import { siteConfig } from '@/config/site';
 import { ClerkProvider } from '@clerk/nextjs';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
@@ -33,8 +33,35 @@ export const metadata: Metadata = {
       url: '/logo.svg',
     },
   ],
+  openGraph: {
+    title: siteConfig.name,
+    description: siteConfig.description,
+    url: 'https://sentimeta.vercel.app',
+    siteName: siteConfig.name,
+    images: [
+      {
+        url: '/124599.jpg',
+        width: 1200,
+        height: 630,
+        alt: siteConfig.name,
+      },
+    ],
+  },
+  alternates: {
+    canonical: 'https://sentimeta.vercel.app',
+  },
+  metadataBase: new URL('https://sentimeta.vercel.app'),
+  robots: {
+    index: true,
+    follow: true,
+  },
+ 
 };
 
+export const viewPort: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 export default function RootLayout({
   children,
 }: Readonly<{
