@@ -8,10 +8,11 @@ import { HeroUINativeProvider, type HeroUINativeConfig } from 'heroui-native/pro
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppThemeProvider } from '~/providers/theme-provider';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+const queryClient = new QueryClient();
 
 if (!publishableKey) {
   throw new Error('Add your Clerk Publishable Key to the .env file');
@@ -50,16 +51,18 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-        <SafeAreaProvider>
-          <HeroUINativeProvider config={heroUIConfig}>
-            <AppThemeProvider>
-              <Slot />
-            </AppThemeProvider>
-          </HeroUINativeProvider>
-        </SafeAreaProvider>
-      </ClerkProvider>
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+          <SafeAreaProvider>
+            <HeroUINativeProvider config={heroUIConfig}>
+              <AppThemeProvider>
+                <Slot />
+              </AppThemeProvider>
+            </HeroUINativeProvider>
+          </SafeAreaProvider>
+        </ClerkProvider>
+      </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }
