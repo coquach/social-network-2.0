@@ -30,15 +30,15 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
   const [isPendingInfoOpen, setIsPendingInfoOpen] = React.useState(false);
 
   return (
-    <View className="rounded-b-[40px] bg-white pb-4 dark:bg-slate-900">
-      <View className="h-40 w-full bg-slate-200 dark:bg-slate-800">
+    <View className="rounded-3xl bg-app-surface pb-4 dark:bg-app-surface-dark">
+      <View className="h-44 w-full overflow-hidden rounded-t-3xl bg-slate-200 dark:bg-slate-800">
         {group.coverImageUrl ? (
           <Image source={{ uri: group.coverImageUrl }} className="h-full w-full" resizeMode="cover" />
         ) : null}
       </View>
 
       <View className="px-4">
-        <View className="-mt-12 h-24 w-24 overflow-hidden rounded-3xl border-4 border-white bg-slate-100 shadow-sm dark:border-slate-900">
+        <View className="-mt-12 h-24 w-24 overflow-hidden rounded-3xl border-4 border-app-surface bg-slate-100 shadow-sm dark:border-app-surface-dark">
           <Image source={{ uri: group.avatarUrl }} className="h-full w-full" />
         </View>
 
@@ -52,11 +52,11 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
           </View>
         </View>
 
-        <View className="mt-5 flex-row flex-wrap gap-2">
+        <View className="mt-5 gap-2">
           {group.membershipStatus === MembershipStatus.NONE ? (
             <TouchableOpacity
               onPress={() => joinGroup(group.id)}
-              className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600"
+              className="h-11 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600"
             >
               <Ionicons name="person-add" size={18} color="white" />
               <Text className="font-bold text-white">Tham gia nhóm</Text>
@@ -66,7 +66,7 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
           {group.membershipStatus === MembershipStatus.PENDING_APPROVAL ? (
             <TouchableOpacity
               onPress={() => setIsPendingInfoOpen(true)}
-              className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-amber-100 dark:bg-amber-900/30"
+              className="h-11 flex-row items-center justify-center gap-2 rounded-xl bg-amber-100 dark:bg-amber-900/30"
             >
               <Ionicons name="time" size={18} color="#d97706" />
               <Text className="font-bold text-amber-600">Đang chờ duyệt</Text>
@@ -74,7 +74,7 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
           ) : null}
 
           {group.membershipStatus === MembershipStatus.INVITED ? (
-            <View className="flex-1 flex-row gap-2">
+            <View className="flex-row gap-2">
               <TouchableOpacity
                 onPress={() => acceptInvite(group.id)}
                 className="h-11 flex-1 flex-row items-center justify-center rounded-xl bg-blue-600"
@@ -92,50 +92,69 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
 
           {group.membershipStatus === MembershipStatus.MEMBER ? (
             <>
-              {can(GroupPermission.INVITE_MEMBERS) ? (
-                <TouchableOpacity className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600">
-                  <Ionicons name="share-social" size={18} color="white" />
-                  <Text className="font-bold text-white">Mời</Text>
-                </TouchableOpacity>
-              ) : null}
+              <View className="flex-row gap-2">
+                {can(GroupPermission.INVITE_MEMBERS) ? (
+                  <TouchableOpacity className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600">
+                    <Ionicons name="share-social" size={18} color="white" />
+                    <Text className="font-bold text-white">Mời thành viên</Text>
+                  </TouchableOpacity>
+                ) : null}
 
-              <TouchableOpacity
-                onPress={() => router.push(`/(main)/groups/${group.id}/members`)}
-                className="h-11 rounded-xl bg-slate-100 px-4 dark:bg-slate-800"
-              >
-                <View className="h-full flex-row items-center gap-2">
-                  <Ionicons name="people-outline" size={18} color="#64748b" />
-                  <Text className="font-bold text-slate-600 dark:text-slate-300">Thành viên</Text>
-                </View>
-              </TouchableOpacity>
-
-              {can(GroupPermission.MANAGE_JOIN_REQUESTS) ? (
                 <TouchableOpacity
-                  onPress={() => router.push(`/(main)/groups/${group.id}/requests`)}
+                  onPress={() => setIsLeaveModalOpen(true)}
+                  className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+                >
+                  <Ionicons name="log-out-outline" size={20} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              <View className="flex-row flex-wrap gap-2">
+                <TouchableOpacity
+                  onPress={() => router.push(`/(main)/groups/${group.id}/members`)}
                   className="h-11 rounded-xl bg-slate-100 px-4 dark:bg-slate-800"
                 >
                   <View className="h-full flex-row items-center gap-2">
-                    <Ionicons name="checkmark-done-outline" size={18} color="#64748b" />
-                    <Text className="font-bold text-slate-600 dark:text-slate-300">Duyệt</Text>
+                    <Ionicons name="people-outline" size={18} color="#64748b" />
+                    <Text className="font-bold text-slate-600 dark:text-slate-300">Thành viên</Text>
                   </View>
                 </TouchableOpacity>
-              ) : null}
 
-              {can(GroupPermission.UPDATE_GROUP) ? (
-                <TouchableOpacity
-                  onPress={() => router.push(`/(main)/groups/${group.id}/settings`)}
-                  className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
-                >
-                  <Ionicons name="settings-outline" size={20} color="#64748b" />
-                </TouchableOpacity>
-              ) : null}
+                {can(GroupPermission.MANAGE_JOIN_REQUESTS) ? (
+                  <TouchableOpacity
+                    onPress={() => router.push(`/(main)/groups/${group.id}/requests`)}
+                    className="h-11 rounded-xl bg-slate-100 px-4 dark:bg-slate-800"
+                  >
+                    <View className="h-full flex-row items-center gap-2">
+                      <Ionicons name="checkmark-done-outline" size={18} color="#64748b" />
+                      <Text className="font-bold text-slate-600 dark:text-slate-300">Yêu cầu</Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : null}
 
-              <TouchableOpacity
-                onPress={() => setIsLeaveModalOpen(true)}
-                className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
-              >
-                <Ionicons name="log-out-outline" size={20} color="#64748b" />
-              </TouchableOpacity>
+                {can(GroupPermission.MANAGE_GROUP) ? (
+                  <TouchableOpacity
+                    onPress={() => router.push(`/(main)/groups/${group.id}/logs`)}
+                    className="h-11 rounded-xl bg-slate-100 px-4 dark:bg-slate-800"
+                  >
+                    <View className="h-full flex-row items-center gap-2">
+                      <Ionicons name="time-outline" size={18} color="#64748b" />
+                      <Text className="font-bold text-slate-600 dark:text-slate-300">Nhật ký</Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : null}
+
+                {can(GroupPermission.UPDATE_GROUP_SETTINGS) ? (
+                  <TouchableOpacity
+                    onPress={() => router.push(`/(main)/groups/${group.id}/settings`)}
+                    className="h-11 rounded-xl bg-slate-100 px-4 dark:bg-slate-800"
+                  >
+                    <View className="h-full flex-row items-center gap-2">
+                      <Ionicons name="settings-outline" size={18} color="#64748b" />
+                      <Text className="font-bold text-slate-600 dark:text-slate-300">Cài đặt</Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             </>
           ) : null}
 

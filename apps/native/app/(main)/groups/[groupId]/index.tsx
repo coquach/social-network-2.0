@@ -7,9 +7,9 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { toPostSnapshot } from '~/app/(main)/newfeeds/components/feed-mappers';
 import { FeedList } from '~/app/(main)/newfeeds/components/feed-list';
 import { GroupHeader } from '~/components/groups/group-header';
-import { GroupPageHeader } from '~/components/groups/group-page-header';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { PostCardFull } from '~/components/post/post-card-full';
+import { AppHeader } from '~/components/ui/app-header';
 
 export default function GroupDetailScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -70,7 +70,7 @@ export default function GroupDetailScreen() {
         scrollEnabled
         listHeaderComponent={
           <View>
-            <GroupPageHeader title="Chi tiết nhóm" />
+            <AppHeader title="Chi tiết nhóm" subtitle="Cập nhật thảo luận và hoạt động nhóm" variant="bordered" />
             <GroupHeader group={group} />
           </View>
         }

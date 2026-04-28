@@ -1,14 +1,18 @@
-﻿import { useGroupSettings, useUpdateGroupSettings } from '@repo/shared/hooks';
+﻿import { useGroupSettings, useUpdateGroupSettings, useGroup } from '@repo/shared/hooks';
 import { useLocalSearchParams } from 'expo-router';
 import { Switch } from 'heroui-native/switch';
 import React from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 
-import { GroupPageHeader } from '~/components/groups/group-page-header';
+import { GroupPermission, useGroupPermission } from '@repo/shared';
+import { AppHeader } from '~/components/ui/app-header';
 import { AppTitle } from '~/components/ui/app-text';
 
 export default function GroupSettingsScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const { data: group, isLoading: isGroupLoading } = useGroup(groupId ?? '');
+  const { can } = useGroupPermission(group);
+
   const { data, isLoading, isError, error, refetch } = useGroupSettings(groupId ?? '');
   const { mutateAsync: updateSettings, isPending } = useUpdateGroupSettings();
 
@@ -35,10 +39,23 @@ export default function GroupSettingsScreen() {
     });
   }, [allowMemberInvite, groupId, requireAdminApprovalToJoin, requiredPostApproval, updateSettings]);
 
-  if (isLoading) {
+  if (isGroupLoading || isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
         <ActivityIndicator size="small" color="#0ea5e9" />
+      </View>
+    );
+  }
+
+  if (!can(GroupPermission.UPDATE_GROUP_SETTINGS)) {
+    return (
+      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
+        <AppHeader title="Cài đặt nhóm" subtitle="Bạn không có quyền chỉnh sửa cài đặt" variant="bordered" />
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="text-center text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
+            Tài khoản của bạn không đủ quyền để cập nhật cài đặt nhóm.
+          </Text>
+        </View>
       </View>
     );
   }
@@ -60,7 +77,7 @@ export default function GroupSettingsScreen() {
 
   return (
     <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-      <GroupPageHeader title="Cài đặt nhóm" />
+      <AppHeader title="Cài đặt nhóm" subtitle="Thiết lập quyền và kiểm duyệt" variant="bordered" />
       <View className="flex-1 px-4 pt-2">
         <AppTitle className="mb-3 text-2xl">Cài đặt nhóm</AppTitle>
 
