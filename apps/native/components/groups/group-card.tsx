@@ -1,8 +1,9 @@
-import { GroupDTO, GroupPrivacy, MembershipStatus } from '@repo/shared/types';
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
+
+import { GroupDTO, GroupPrivacy, MembershipStatus } from '@repo/shared/types';
 
 interface GroupCardProps {
   group: GroupDTO;

@@ -1,17 +1,22 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { FlashList } from '@shopify/flash-list';
+import React from 'react';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
 import { useGroupPermission } from '@repo/shared';
 import {
   useAcceptGroupInvite,
   useDeclineGroupInvite,
+  useFriends,
+  useInviteUserToGroup,
   useLeaveGroup,
   useRequestToJoinGroup,
 } from '@repo/shared/hooks';
 import { GroupDTO, GroupPermission, MembershipStatus } from '@repo/shared/types';
-import React from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
 
 import { AppModal } from '~/components/ui/app-modal';
+import { AppLoadingBlock } from '~/components/ui/app-loading';
 
 interface GroupHeaderProps {
   group: GroupDTO;
@@ -25,9 +30,20 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
   const { mutate: leaveGroup } = useLeaveGroup();
   const { mutate: acceptInvite } = useAcceptGroupInvite();
   const { mutate: declineInvite } = useDeclineGroupInvite();
+  const { mutate: inviteUser, isPending: isInviting } = useInviteUserToGroup();
+  const { data: friendsData, isLoading: isLoadingFriends, refetch: refetchFriends } = useFriends(undefined, {
+    limit: 30,
+  });
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = React.useState(false);
-  const [isPendingInfoOpen, setIsPendingInfoOpen] = React.useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = React.useState(false);
+  const [inviteeId, setInviteeId] = React.useState('');
+  const [selectedFriendId, setSelectedFriendId] = React.useState<string | null>(null);
+
+  const friendIds = React.useMemo(() => {
+    const rawIds = (friendsData?.pages ?? []).flatMap((page) => page.data ?? []);
+    return [...new Set(rawIds)].filter(Boolean);
+  }, [friendsData?.pages]);
 
   return (
     <View className="rounded-3xl bg-app-surface pb-4 dark:bg-app-surface-dark">
@@ -64,13 +80,10 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
           ) : null}
 
           {group.membershipStatus === MembershipStatus.PENDING_APPROVAL ? (
-            <TouchableOpacity
-              onPress={() => setIsPendingInfoOpen(true)}
-              className="h-11 flex-row items-center justify-center gap-2 rounded-xl bg-amber-100 dark:bg-amber-900/30"
-            >
+            <View className="h-11 flex-row items-center justify-center gap-2 rounded-xl bg-amber-100 dark:bg-amber-900/30">
               <Ionicons name="time" size={18} color="#d97706" />
-              <Text className="font-bold text-amber-600">Đang chờ duyệt</Text>
-            </TouchableOpacity>
+              <Text className="font-bold text-amber-600">Yêu cầu tham gia đang chờ duyệt</Text>
+            </View>
           ) : null}
 
           {group.membershipStatus === MembershipStatus.INVITED ? (
@@ -94,7 +107,13 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
             <>
               <View className="flex-row gap-2">
                 {can(GroupPermission.INVITE_MEMBERS) ? (
-                  <TouchableOpacity className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600">
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsInviteModalOpen(true);
+                      void refetchFriends();
+                    }}
+                    className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600"
+                  >
                     <Ionicons name="share-social" size={18} color="white" />
                     <Text className="font-bold text-white">Mời thành viên</Text>
                   </TouchableOpacity>
@@ -194,20 +213,105 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
       />
 
       <AppModal
-        visible={isPendingInfoOpen}
-        onClose={() => setIsPendingInfoOpen(false)}
-        variant="warning"
-        title="Chưa hỗ trợ"
-        description="Hiện tại API detail chưa trả requestId để hủy yêu cầu tham gia. Sẽ nối ngay khi backend bổ sung field này."
+        visible={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        title="Mời thành viên"
+        description="Chọn nhanh từ danh sách bạn bè hoặc nhập user id để gửi lời mời."
         footer={
-          <TouchableOpacity
-            onPress={() => setIsPendingInfoOpen(false)}
-            className="h-11 items-center justify-center rounded-xl bg-amber-500"
-          >
-            <Text className="font-semibold text-white">Đã hiểu</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              onPress={() => setIsInviteModalOpen(false)}
+              className="h-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+            >
+              <Text className="font-semibold text-slate-700 dark:text-slate-300">Hủy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              disabled={(!inviteeId.trim() && !selectedFriendId) || isInviting}
+              onPress={() => {
+                const targetUserId = inviteeId.trim() || selectedFriendId;
+                if (!targetUserId) return;
+                inviteUser({ groupId: group.id, userId: targetUserId });
+                setInviteeId('');
+                setSelectedFriendId(null);
+                setIsInviteModalOpen(false);
+              }}
+              className="h-11 items-center justify-center rounded-xl bg-sky-500 disabled:opacity-60"
+            >
+              <Text className="font-semibold text-white">{isInviting ? 'Đang gửi...' : 'Gửi lời mời'}</Text>
+            </TouchableOpacity>
+          </>
         }
-      />
+      >
+        <View className="mb-3">
+          <Text className="mb-2 text-xs font-semibold uppercase tracking-wide text-app-muted-fg dark:text-app-muted-fg-dark">
+            Chọn từ bạn bè
+          </Text>
+          <View className="h-44 rounded-xl border border-app-border bg-app-bg p-2 dark:border-app-border-dark dark:bg-app-bg-dark">
+            {isLoadingFriends ? (
+              <View className="flex-1 items-center justify-center">
+                <AppLoadingBlock label="Đang tải bạn bè" size="sm" variant="muted" />
+              </View>
+            ) : friendIds.length > 0 ? (
+              <FlashList
+                data={friendIds}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => {
+                  const isSelected = selectedFriendId === item;
+                  return (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedFriendId(item);
+                        setInviteeId(item);
+                      }}
+                      className={`mb-2 rounded-lg border px-3 py-2 ${
+                        isSelected
+                          ? 'border-sky-500 bg-sky-500/10'
+                          : 'border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark'
+                      }`}
+                    >
+                      <Text
+                        numberOfLines={1}
+                        className={`text-xs font-semibold ${
+                          isSelected ? 'text-sky-600 dark:text-sky-400' : 'text-app-fg dark:text-app-fg-dark'
+                        }`}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            ) : (
+              <View className="flex-1 items-center justify-center">
+                <Text className="text-center text-xs text-app-muted-fg dark:text-app-muted-fg-dark">
+                  Chưa có dữ liệu bạn bè để chọn nhanh.
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View className="mb-3">
+          <Text className="mb-2 text-xs font-semibold uppercase tracking-wide text-app-muted-fg dark:text-app-muted-fg-dark">
+            Hoặc nhập User ID
+          </Text>
+          <TextInput
+            value={inviteeId}
+            onChangeText={(value) => {
+              setInviteeId(value);
+              if (value !== selectedFriendId) {
+                setSelectedFriendId(null);
+              }
+            }}
+            placeholder="Nhập user id"
+            placeholderTextColor="#94a3b8"
+            autoCapitalize="none"
+            className="rounded-xl border border-app-border bg-app-bg px-3 py-2.5 text-sm text-app-fg dark:border-app-border-dark dark:bg-app-bg-dark dark:text-app-fg-dark"
+          />
+        </View>
+      </AppModal>
     </View>
   );
 };
+
+

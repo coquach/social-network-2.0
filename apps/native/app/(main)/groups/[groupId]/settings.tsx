@@ -2,10 +2,11 @@
 import { useLocalSearchParams } from 'expo-router';
 import { Switch } from 'heroui-native/switch';
 import React from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { GroupPermission, useGroupPermission } from '@repo/shared';
 import { AppHeader } from '~/components/ui/app-header';
+import { AppLoadingBlock } from '~/components/ui/app-loading';
 import { AppTitle } from '~/components/ui/app-text';
 
 export default function GroupSettingsScreen() {
@@ -42,7 +43,7 @@ export default function GroupSettingsScreen() {
   if (isGroupLoading || isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
-        <ActivityIndicator size="small" color="#0ea5e9" />
+        <AppLoadingBlock label="Đang tải cài đặt" />
       </View>
     );
   }
@@ -113,3 +114,4 @@ export default function GroupSettingsScreen() {
     </View>
   );
 }
+

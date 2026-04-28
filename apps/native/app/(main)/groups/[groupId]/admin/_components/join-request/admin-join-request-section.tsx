@@ -1,16 +1,19 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { AppInlineLoading } from '~/components/ui/app-loading';
+import { Ionicons } from '@expo/vector-icons';
+
 import { useApproveJoinRequest, useGroupJoinRequests, useRejectJoinRequest } from '@repo/shared/hooks';
 import { JoinRequestSortBy, JoinRequestStatus } from '@repo/shared/types';
-import { Ionicons } from '@expo/vector-icons';
+
 import { JoinRequestRow } from './join-request-row';
 
 const STATUS_FILTER_OPTIONS = [
-  { value: JoinRequestStatus.PENDING, label: '�ang ch?' },
-  { value: JoinRequestStatus.APPROVED, label: '�� duy?t' },
-  { value: JoinRequestStatus.REJECTED, label: 'T? ch?i' },
-  { value: JoinRequestStatus.CANCELLED, label: '�� h?y' },
+  { value: JoinRequestStatus.PENDING, label: 'Đang chờ' },
+  { value: JoinRequestStatus.APPROVED, label: 'Đã duyệt' },
+  { value: JoinRequestStatus.REJECTED, label: 'Từ chối' },
+  { value: JoinRequestStatus.CANCELLED, label: 'Đã hủy' },
 ];
 
 export const GroupAdminJoinRequestsSection = ({ groupId }: { groupId: string }) => {
@@ -30,8 +33,8 @@ export const GroupAdminJoinRequestsSection = ({ groupId }: { groupId: string }) 
   const renderHeader = () => (
     <View className="mb-4 mt-1 px-4">
       <View className="rounded-2xl border border-sky-100 bg-sky-50 p-4 dark:border-sky-800 dark:bg-sky-900/20">
-        <Text className="text-lg font-bold text-sky-700 dark:text-sky-400">Y�u c?u tham gia</Text>
-        <Text className="mt-1 text-xs text-sky-600 dark:text-sky-500/80">Qu?n l� th�nh vi�n dang ch? ph� duy?t</Text>
+        <Text className="text-lg font-bold text-sky-700 dark:text-sky-400">Yêu cầu tham gia</Text>
+        <Text className="mt-1 text-xs text-sky-600 dark:text-sky-500/80">Quản lý thành viên đang chờ phê duyệt</Text>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 flex-row">
           {STATUS_FILTER_OPTIONS.map((opt) => (
@@ -73,12 +76,12 @@ export const GroupAdminJoinRequestsSection = ({ groupId }: { groupId: string }) 
       onEndReachedThreshold={0.5}
       refreshing={isLoading}
       onRefresh={refetch}
-      ListFooterComponent={isFetchingNextPage ? <ActivityIndicator className="my-4" /> : null}
+      ListFooterComponent={isFetchingNextPage ? <AppInlineLoading label="Đang tải thêm..." className="my-4" /> : null}
       ListEmptyComponent={
         !isLoading ? (
           <View className="items-center py-10">
             <Ionicons name="mail-open-outline" size={48} color="#94a3b8" />
-            <Text className="mt-2 text-slate-400">Kh�ng c� y�u c?u n�o</Text>
+            <Text className="mt-2 text-slate-400">Không có yêu cầu nào</Text>
           </View>
         ) : null
       }

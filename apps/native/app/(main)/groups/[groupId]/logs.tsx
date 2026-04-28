@@ -1,12 +1,13 @@
 ﻿import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { GroupPermission, useGroupPermission } from '@repo/shared';
 import { useGroup } from '@repo/shared/hooks';
 
 import { GroupAdminLogsSection } from './admin/_components/logs/admin-logs-section';
 import { AppHeader } from '~/components/ui/app-header';
+import { AppLoadingBlock } from '~/components/ui/app-loading';
 
 export default function GroupLogsScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -16,7 +17,7 @@ export default function GroupLogsScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
-        <ActivityIndicator size="small" color="#0ea5e9" />
+        <AppLoadingBlock label="Đang tải nhóm" />
       </View>
     );
   }
@@ -51,3 +52,4 @@ export default function GroupLogsScreen() {
     </View>
   );
 }
+

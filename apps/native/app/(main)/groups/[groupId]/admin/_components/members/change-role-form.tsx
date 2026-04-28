@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { AppInlineLoading } from '~/components/ui/app-loading';
 import { Ionicons } from '@expo/vector-icons';
 import { GroupMemberDTO, GroupRole } from '@repo/shared/types';
 import { roleLabel } from './admin-members-section';
@@ -92,9 +93,11 @@ export const ChangeRoleForm = ({
             isSubmitting || selectedRole === member.role ? 'bg-sky-200 dark:bg-sky-900/40' : 'bg-sky-500 shadow-lg shadow-sky-200'
           }`}
         >
-          {isSubmitting ? <ActivityIndicator color="white" /> : <Text className="text-lg font-bold text-white">Lưu thay đổi</Text>}
+          {isSubmitting ? <AppInlineLoading label="Đang lưu..." /> : <Text className="text-lg font-bold text-white">Lưu thay đổi</Text>}
         </TouchableOpacity>
       </View>
     </View>
   );
 };
+
+

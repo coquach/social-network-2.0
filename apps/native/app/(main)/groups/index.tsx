@@ -41,6 +41,17 @@ export default function GroupsScreen() {
     [activeQuery.data?.pages],
   );
 
+  const onRefresh = React.useCallback(() => {
+    void activeQuery.refetch();
+  }, [activeQuery]);
+
+  const onLoadMore = React.useCallback(() => {
+    if (!activeQuery.hasNextPage || activeQuery.isFetchingNextPage) return;
+    void activeQuery.fetchNextPage();
+  }, [activeQuery]);
+
+  const keyExtractor = React.useCallback((item: { id: string }) => item.id, []);
+
   const renderHeader = () => (
     <View className="bg-app-bg pb-2 dark:bg-app-bg-dark">
       <AppHeader
@@ -93,7 +104,7 @@ export default function GroupsScreen() {
     <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
       <FlashList
         data={groups}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
         renderItem={({ item }) => (
           <View className="px-4 py-1.5">
             {activeTab === GroupTab.INVITATIONS ? (
@@ -105,15 +116,12 @@ export default function GroupsScreen() {
         )}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={<View className="h-28" />}
-        onEndReached={() => {
-          if (!activeQuery.hasNextPage || activeQuery.isFetchingNextPage) return;
-          void activeQuery.fetchNextPage();
-        }}
+        onEndReached={onLoadMore}
         onEndReachedThreshold={0.6}
         refreshControl={
           <RefreshControl
             refreshing={activeQuery.isRefetching}
-            onRefresh={() => void activeQuery.refetch()}
+            onRefresh={onRefresh}
             tintColor="#0ea5e9"
           />
         }

@@ -1,5 +1,6 @@
 ﻿import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, SectionList, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, SectionList, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { AppInlineLoading } from '~/components/ui/app-loading';
 import { useGroupMembers } from '@repo/shared/hooks';
 import { GroupMemberStatus, GroupRole } from '@repo/shared/types';
 import { GroupAdminMemberRow } from './member-row';
@@ -94,7 +95,7 @@ export const GroupAdminMembersSection = ({ groupId }: { groupId: string }) => {
       onEndReached={() => hasNextPage && fetchNextPage()}
       refreshing={isLoading}
       onRefresh={refetch}
-      ListFooterComponent={isFetchingNextPage ? <ActivityIndicator className="my-4" /> : <View className="h-20" />}
+      ListFooterComponent={isFetchingNextPage ? <AppInlineLoading label="Đang tải thêm..." className="my-4" /> : <View className="h-20" />}
       stickySectionHeadersEnabled={false}
       contentContainerStyle={{ paddingBottom: 20 }}
       ListEmptyComponent={
@@ -107,3 +108,5 @@ export const GroupAdminMembersSection = ({ groupId }: { groupId: string }) => {
     />
   );
 };
+
+

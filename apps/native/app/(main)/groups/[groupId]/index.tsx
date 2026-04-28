@@ -2,7 +2,7 @@
 import type { PostDTO } from '@repo/shared/types';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { toPostSnapshot } from '~/app/(main)/newfeeds/components/feed-mappers';
 import { FeedList } from '~/app/(main)/newfeeds/components/feed-list';
@@ -10,6 +10,7 @@ import { GroupHeader } from '~/components/groups/group-header';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { PostCardFull } from '~/components/post/post-card-full';
 import { AppHeader } from '~/components/ui/app-header';
+import { AppLoadingBlock } from '~/components/ui/app-loading';
 
 export default function GroupDetailScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -37,7 +38,7 @@ export default function GroupDetailScreen() {
   if (isGroupLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
-        <ActivityIndicator size="small" color="#0ea5e9" />
+        <AppLoadingBlock label="Đang tải nhóm" />
       </View>
     );
   }
@@ -82,3 +83,4 @@ export default function GroupDetailScreen() {
     </View>
   );
 }
+
