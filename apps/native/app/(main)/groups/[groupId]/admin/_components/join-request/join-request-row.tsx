@@ -1,10 +1,38 @@
-﻿import React from 'react';
+﻿import { useToast } from 'heroui-native/toast';
+import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 
-import { AppModal } from '~/components/ui/app-modal';
+import { JoinRequestResponseDTO } from '@repo/shared/types';
 
-export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApprove, onReject }: any) => {
+import { AppModal } from '~/components/ui/app-modal';
+import { AppToast } from '~/components/ui/app-toast';
+
+type JoinRequestRowProps = {
+  request: JoinRequestResponseDTO;
+  canManage: boolean;
+  approving: boolean;
+  rejecting: boolean;
+  onApprove: () => void;
+  onReject: () => void;
+};
+
+export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApprove, onReject }: JoinRequestRowProps) => {
+  const { toast } = useToast();
   const [confirmAction, setConfirmAction] = React.useState<'approve' | 'reject' | null>(null);
+
+  const pending = approving || rejecting;
+
+  const showToast = (title: string, message: string, variant: 'success' | 'error' | 'info') => {
+    toast.show({      component: (toastProps) => <AppToast toast={{ title, message, variant }} toastProps={toastProps} />,
+    });
+  };
+
+  const statusLabelMap: Record<string, string> = {
+    PENDING: 'Đang chờ',
+    APPROVED: 'Đã duyệt',
+    REJECTED: 'Đã từ chối',
+    CANCELLED: 'Đã hủy',
+  };
 
   return (
     <View className="mb-2 flex-row items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -16,7 +44,7 @@ export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApp
           <Text className="text-sm font-bold text-slate-900 dark:text-white" numberOfLines={1}>
             ID: {request.inviteeId.substring(0, 8)}...
           </Text>
-          <Text className="text-[10px] uppercase text-slate-500">{request.status}</Text>
+          <Text className="text-[10px] uppercase text-slate-500">{statusLabelMap[request.status] ?? request.status}</Text>
         </View>
       </View>
 
@@ -24,15 +52,15 @@ export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApp
         <View className="flex-row gap-2">
           <TouchableOpacity
             onPress={() => setConfirmAction('approve')}
-            disabled={approving || rejecting}
-            className="rounded-xl bg-sky-500 px-3 py-2"
+            disabled={pending}
+            className="rounded-xl bg-sky-500 px-3 py-2 disabled:opacity-70"
           >
             <Text className="text-xs font-bold text-white">Duyệt</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setConfirmAction('reject')}
-            disabled={approving || rejecting}
-            className="rounded-xl bg-slate-100 px-3 py-2 dark:bg-slate-800"
+            disabled={pending}
+            className="rounded-xl bg-slate-100 px-3 py-2 dark:bg-slate-800 disabled:opacity-70"
           >
             <Text className="text-xs font-bold text-slate-600 dark:text-slate-400">Bỏ</Text>
           </TouchableOpacity>
@@ -58,15 +86,18 @@ export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApp
               <Text className="font-semibold text-slate-700 dark:text-slate-300">Hủy</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              disabled={pending}
               onPress={() => {
                 if (confirmAction === 'approve') {
                   onApprove();
+                  showToast('Đã duyệt yêu cầu', 'Thành viên đã được thêm vào nhóm.', 'success');
                 } else {
                   onReject();
+                  showToast('Đã từ chối yêu cầu', 'Yêu cầu tham gia đã bị từ chối.', 'info');
                 }
                 setConfirmAction(null);
               }}
-              className={`h-11 items-center justify-center rounded-xl ${
+              className={`h-11 items-center justify-center rounded-xl disabled:opacity-70 ${
                 confirmAction === 'approve' ? 'bg-emerald-600' : 'bg-rose-500'
               }`}
             >
@@ -78,3 +109,5 @@ export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApp
     </View>
   );
 };
+
+

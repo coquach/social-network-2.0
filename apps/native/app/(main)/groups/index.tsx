@@ -56,8 +56,7 @@ export default function GroupsScreen() {
     <View className="bg-app-bg pb-2 dark:bg-app-bg-dark">
       <AppHeader
         title="Nhóm"
-        subtitle="Theo dõi cộng đồng bạn quan tâm và duyệt lời mời nhanh"
-        variant="bordered"
+        variant="default"
         leading={<View className="h-11 w-11" />}
         trailing={
           <AppHeaderIconButton

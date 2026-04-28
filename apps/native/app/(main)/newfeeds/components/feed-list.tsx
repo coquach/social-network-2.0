@@ -31,6 +31,7 @@ type FeedListProps<TItem> = {
   emptyText: string;
   estimatedItemSize: number;
   getItemType?: (item: TItem) => string | number;
+  bodyHorizontalPadding?: number;
 };
 
 export function FeedList<TItem>({
@@ -52,6 +53,7 @@ export function FeedList<TItem>({
   emptyText,
   estimatedItemSize,
   getItemType,
+  bodyHorizontalPadding = 0,
 }: FeedListProps<TItem>) {
   const handleEndReached = React.useCallback(() => {
     if (!hasNextPage || isFetchingNextPage || isLoading || isError) {
@@ -63,19 +65,19 @@ export function FeedList<TItem>({
   const footer = React.useMemo(() => {
     if (isFetchingNextPage) {
       return (
-        <View className="gap-3 pt-2">
+        <View className="gap-3 pt-2" style={{ paddingHorizontal: bodyHorizontalPadding }}>
           <PostCardFullSkeleton />
         </View>
       );
     }
 
     return <View style={{ height: 12 }} />;
-  }, [isFetchingNextPage]);
+  }, [bodyHorizontalPadding, isFetchingNextPage]);
 
   const empty = React.useMemo(() => {
     if (isLoading) {
       return (
-        <View className="gap-3 pt-2">
+        <View className="gap-3 pt-2" style={{ paddingHorizontal: bodyHorizontalPadding }}>
           <PostCardFullSkeleton />
           <PostCardFullSkeleton />
         </View>
@@ -97,7 +99,7 @@ export function FeedList<TItem>({
         <AppSubtitle className="text-center">{emptyText}</AppSubtitle>
       </View>
     );
-  }, [emptyText, errorMessage, isError, isLoading]);
+  }, [bodyHorizontalPadding, emptyText, errorMessage, isError, isLoading]);
 
   const keyExtractorAdapter = React.useCallback(
     (item: unknown) => keyExtractor(item as TItem),
@@ -105,8 +107,12 @@ export function FeedList<TItem>({
   );
 
   const renderItemAdapter = React.useCallback(
-    ({ item }: { item: unknown }) => renderItem({ item: item as TItem }),
-    [renderItem],
+    ({ item }: { item: unknown }) => (
+      <View style={{ paddingHorizontal: bodyHorizontalPadding }}>
+        {renderItem({ item: item as TItem })}
+      </View>
+    ),
+    [bodyHorizontalPadding, renderItem],
   );
 
   const getItemTypeAdapter = React.useCallback(

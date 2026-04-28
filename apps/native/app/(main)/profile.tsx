@@ -381,7 +381,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark px-4">
+      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
         <FeedList
           items={feedItems}
           keyExtractor={keyExtractor}
@@ -405,6 +405,7 @@ export default function ProfileScreen() {
           emptyText={activePostTab === 'posts' ? 'Chưa có bài viết nào.' : 'Chưa có bài chia sẻ nào.'}
           estimatedItemSize={420}
           getItemType={(item) => item.type}
+          bodyHorizontalPadding={16}
         />
       </View>
 

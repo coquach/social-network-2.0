@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCreateGroup } from '@repo/shared/hooks';
 import { CreateGroupInput, GroupPrivacy } from '@repo/shared/types';
@@ -13,6 +14,7 @@ interface CreateGroupFormProps {
 }
 
 export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
+  const insets = useSafeAreaInsets();
   const { mutate: createGroup, isPending } = useCreateGroup();
   const [formAlert, setFormAlert] = useState<{
     title: string;
@@ -89,7 +91,10 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
-      <View className="flex-row items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <View
+        className="flex-row items-center justify-between border-b border-slate-100 px-5 pb-4 dark:border-slate-800"
+        style={{ paddingTop: Math.max(insets.top, 16) }}
+      >
         <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="close" size={26} color="#64748b" />
         </TouchableOpacity>
