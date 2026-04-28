@@ -11,7 +11,6 @@ import {
 } from "~/components/chatbot/assistant-message-list";
 import { AppModal } from "~/components/ui/app-modal";
 import { KeyboardAwareContainer } from "~/components/ui/keyboard-aware-container";
-import { getChatDateMs } from "~/lib/chat-date-utils";
 
 type AssistantChatModalProps = {
   visible: boolean;
@@ -21,6 +20,7 @@ type AssistantChatModalProps = {
 export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps) {
   const { userId } = useAuth();
   const [input, setInput] = React.useState("");
+  const fallbackTimestampBaseRef = React.useRef(Date.now());
   const {
     messages: historyMessages,
     isLoading,
@@ -34,18 +34,45 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
     error,
     isHistoryError,
     retryHistory,
+    refreshHistory,
+    isRefreshingHistory,
+    isSyncingHistory,
     resetError,
   } = useAssistantChatSession(userId ?? "", { limit: 20, enabled: visible });
 
   const messages = React.useMemo(() => {
-    const fallbackBase = Date.now();
+    const fallbackBase = fallbackTimestampBaseRef.current;
+    const toTimestamp = (value: string | number | Date | null | undefined) => {
+      if (value === null || value === undefined) {
+        return Number.NaN;
+      }
+
+      if (value instanceof Date) {
+        return value.getTime();
+      }
+
+      if (typeof value === "number") {
+        return Number.isFinite(value) ? value : Number.NaN;
+      }
+
+      const parsed = Date.parse(value);
+      return Number.isFinite(parsed) ? parsed : Number.NaN;
+    };
+    const toStableFallbackTimestamp = (messageId: string, offset: number) => {
+      let hash = 0;
+      for (let index = 0; index < messageId.length; index += 1) {
+        hash = (hash * 33 + messageId.charCodeAt(index)) >>> 0;
+      }
+
+      return fallbackBase + (hash % 86_400_000) + offset;
+    };
 
     return historyMessages.map((message, index) => {
-      const parsedCreatedAt = getChatDateMs(message.createdAt);
+      const parsedCreatedAt = toTimestamp(message.createdAt);
       const createdAt =
         Number.isFinite(parsedCreatedAt) && parsedCreatedAt > 0
           ? parsedCreatedAt
-          : fallbackBase + index;
+          : toStableFallbackTimestamp(message.id, index);
 
       return {
         id: `server:${message.id}`,
@@ -56,6 +83,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
       } satisfies AssistantMessageItem;
     });
   }, [historyMessages]);
+  const isChatBusy = isResponding || isSyncingHistory;
 
   const handleSend = React.useCallback(async () => {
     if (!userId) {
@@ -63,7 +91,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
     }
 
     const message = input.trim();
-    if (!message || isResponding) {
+    if (!message || isChatBusy) {
       return;
     }
 
@@ -75,10 +103,10 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
     } catch (sendError) {
       console.error("[assistant] send failed:", sendError);
     }
-  }, [input, isResponding, sendMessage, userId]);
+  }, [input, isChatBusy, sendMessage, userId]);
 
   const handleClearHistory = React.useCallback(async () => {
-    if (!userId || isClearing) {
+    if (!userId || isClearing || isChatBusy) {
       return;
     }
 
@@ -87,7 +115,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
     } catch (clearError) {
       console.error("[assistant] clear history failed:", clearError);
     }
-  }, [clearHistory, isClearing, userId]);
+  }, [clearHistory, isChatBusy, isClearing, userId]);
 
   return (
     <AppModal
@@ -125,11 +153,24 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
             </View>
           ) : null}
 
-          <View className="mb-2">
+          <View className="mb-2 flex-row items-center justify-end gap-2">
             <Button
               variant="secondary"
-              className="self-end rounded-full px-4"
-              isDisabled={isClearing || messages.length === 0}
+              className="rounded-full px-4"
+              isDisabled={isRefreshingHistory}
+              onPress={() => {
+                void refreshHistory();
+              }}
+            >
+              <AntDesign name="reload" size={14} color="#0ea5e9" />
+              <Text className="ml-2 text-sm font-semibold text-app-fg dark:text-app-fg-dark">
+                {isRefreshingHistory ? "Đang làm mới..." : "Làm mới"}
+              </Text>
+            </Button>
+            <Button
+              variant="secondary"
+              className="rounded-full px-4"
+              isDisabled={isClearing || isChatBusy || messages.length === 0}
               onPress={() => {
                 void handleClearHistory();
               }}
@@ -164,6 +205,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
                 placeholderTextColor="#6b8aa1"
                 className="text-sm text-app-fg dark:text-app-fg-dark"
                 style={{ minHeight: 34, maxHeight: 100 }}
+                editable={!isChatBusy}
                 returnKeyType="send"
     
                 onSubmitEditing={() => {
@@ -174,7 +216,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
             <Button
               variant="primary"
               className="h-11 w-11 rounded-full px-0"
-              isDisabled={!input.trim() || isResponding}
+              isDisabled={!input.trim() || isChatBusy}
               onPress={() => {
                 void handleSend();
               }}

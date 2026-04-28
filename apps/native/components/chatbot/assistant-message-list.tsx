@@ -1,6 +1,7 @@
 ﻿import { AntDesign } from "@expo/vector-icons";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Button } from "heroui-native/button";
+import { Spinner } from "heroui-native/spinner";
 import React from "react";
 import {
   type NativeScrollEvent,
@@ -24,89 +25,6 @@ type AssistantMessageListProps = {
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onFetchNextPage?: () => void;
-};
-
-type MessageListRow =
-  | {
-      id: string;
-      type: "date";
-      label: string;
-    }
-  | {
-      id: string;
-      type: "message";
-      message: AssistantMessageItem;
-    };
-
-const toDateKey = (timestamp: number) => {
-  if (!Number.isFinite(timestamp) || timestamp <= 0) {
-    return "";
-  }
-
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const isSameDay = (a: Date, b: Date) => {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-};
-
-const formatDayLabel = (timestamp: number) => {
-  if (!Number.isFinite(timestamp) || timestamp <= 0) {
-    return "";
-  }
-
-  const date = new Date(timestamp);
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (isSameDay(date, now)) {
-    return "Hôm nay";
-  }
-
-  if (isSameDay(date, yesterday)) {
-    return "Hôm qua";
-  }
-
-  return date.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-const buildRows = (messages: AssistantMessageItem[]): MessageListRow[] => {
-  const rows: MessageListRow[] = [];
-  let previousDateKey: string | null = null;
-
-  for (const message of messages) {
-    const currentDateKey = toDateKey(message.createdAt);
-
-    if (currentDateKey !== previousDateKey) {
-      rows.push({
-        id: `date:${currentDateKey}`,
-        type: "date",
-        label: formatDayLabel(message.createdAt),
-      });
-      previousDateKey = currentDateKey;
-    }
-
-    rows.push({
-      id: `message:${message.id}:${message.createdAt}`,
-      type: "message",
-      message,
-    });
-  }
-
-  return rows;
 };
 
 function AssistantMessageSkeleton() {
@@ -142,60 +60,69 @@ export function AssistantMessageList({
   isFetchingNextPage = false,
   onFetchNextPage,
 }: AssistantMessageListProps) {
-  const orderedMessages = React.useMemo(() => {
-    return [...messages].sort((a, b) => {
-     if (a.createdAt !== b.createdAt) {
-       return b.createdAt - a.createdAt;
-     }
-     if (a.role !== b.role) {
-       return a.role === 'assistant' ? -1 : 1;
-     }
-     return b.id.localeCompare(a.id);
-    });
-  }, [messages]);
-  const rows = React.useMemo(() => buildRows(orderedMessages), [orderedMessages]);
-  const listRef = React.useRef<FlashListRef<MessageListRow>>(null);
-  const prevMessageCountRef = React.useRef(0);
+  // Dữ liệu từ hook đã được chuẩn hóa theo thứ tự cũ -> mới.
+  const orderedMessages = React.useMemo(() => messages, [messages]);
+  const listRef = React.useRef<FlashListRef<AssistantMessageItem>>(null);
   const isAtBottomRef = React.useRef(true);
-  const hasPendingMessage = React.useMemo(
-    () => messages.some((message) => message.isPending),
-    [messages],
-  );
+  const hasInitialScrollRef = React.useRef(false);
+  const previousLastMessageIdRef = React.useRef<string | null>(null);
   const [showScrollToBottom, setShowScrollToBottom] = React.useState(false);
 
+  const lastMessage = orderedMessages.at(-1) ?? null;
+
+  const scrollToBottom = React.useCallback((animated: boolean) => {
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToEnd({ animated });
+    });
+  }, []);
+
   React.useEffect(() => {
-    if (messages.length === 0) {
-      prevMessageCountRef.current = 0;
+    if (orderedMessages.length === 0) {
+      hasInitialScrollRef.current = false;
+      previousLastMessageIdRef.current = null;
       isAtBottomRef.current = true;
       setShowScrollToBottom(false);
       return;
     }
 
-    const shouldAnimate =
-      prevMessageCountRef.current > 0 && isAtBottomRef.current;
-    const hasNewMessages = messages.length > prevMessageCountRef.current;
-    prevMessageCountRef.current = messages.length;
+    if (!hasInitialScrollRef.current) {
+      hasInitialScrollRef.current = true;
+      previousLastMessageIdRef.current = lastMessage?.id ?? null;
+      scrollToBottom(false);
+    }
+  }, [lastMessage?.id, orderedMessages.length, scrollToBottom]);
 
-    if (!hasNewMessages) {
+  React.useEffect(() => {
+    if (!lastMessage?.id) {
       return;
     }
 
+    const previousLastMessageId = previousLastMessageIdRef.current;
+    if (!previousLastMessageId) {
+      previousLastMessageIdRef.current = lastMessage.id;
+      return;
+    }
+
+    if (previousLastMessageId === lastMessage.id) {
+      return;
+    }
+
+    previousLastMessageIdRef.current = lastMessage.id;
+
     if (isAtBottomRef.current) {
-      requestAnimationFrame(() => {
-        listRef.current?.scrollToEnd({ animated: shouldAnimate });
-      });
       setShowScrollToBottom(false);
+      scrollToBottom(true);
     } else {
       setShowScrollToBottom(true);
     }
-  }, [messages.length]);
+  }, [lastMessage?.id, scrollToBottom]);
 
   const handleScroll = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
       const distanceToBottom =
         contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      const isAtBottom = distanceToBottom < 56;
+      const isAtBottom = distanceToBottom < 72;
 
       isAtBottomRef.current = isAtBottom;
 
@@ -214,28 +141,40 @@ export function AssistantMessageList({
         ) : (
           <FlashList
             ref={listRef}
-            data={rows}
-            keyExtractor={(item: MessageListRow) => item.id}
+            data={orderedMessages}
+            keyExtractor={(item: AssistantMessageItem) => item.id}
+            maintainVisibleContentPosition={{
+              startRenderingFromBottom: true,
+              autoscrollToBottomThreshold: 0.2,
+              animateAutoScrollToBottom: true,
+            }}
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ flexGrow: 1 }}
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent:
+                orderedMessages.length === 0 ? "center" : "flex-end",
+              paddingTop: 14,
+              paddingBottom: 24,
+            }}
             onScroll={handleScroll}
             scrollEventThrottle={16}
-            renderItem={({ item }: { item: MessageListRow }) => {
-              if (item.type === "date") {
-                return (
-                  <View className="items-center py-2">
-                    <View className="rounded-full bg-app-surface px-3 py-1 dark:bg-app-surface-dark">
-                      <Text className="text-[11px] font-semibold text-app-muted-fg dark:text-app-muted-fg-dark">
-                        {item.label}
-                      </Text>
-                    </View>
-                  </View>
-                );
+            onStartReached={() => {
+              if (hasNextPage && !isFetchingNextPage) {
+                onFetchNextPage?.();
               }
-
-              const message = item.message;
+            }}
+            onStartReachedThreshold={0.08}
+            ListHeaderComponent={
+              isFetchingNextPage ? (
+                <View className="pb-4 pt-2">
+                  <Spinner size="sm" color="default" />
+                </View>
+              ) : null
+            }
+            renderItem={({ item }: { item: AssistantMessageItem }) => {
+              const message = item;
               const isUser = message.role === "user";
 
               return (
@@ -273,26 +212,25 @@ export function AssistantMessageList({
           />
         )}
 
-        {isResponding && !hasPendingMessage ? (
+        {isResponding ? (
           <Text className="mt-2 text-xs italic text-app-muted-fg dark:text-app-muted-fg-dark">
             Trợ lý đang trả lời...
           </Text>
         ) : null}
-
-        
       </View>
 
-      {hasNextPage ? (
+      {showScrollToBottom ? (
         <Button
-          variant="ghost"
-          className="mt-3 self-start rounded-full px-3"
-          isDisabled={isFetchingNextPage}
+          variant="secondary"
+          className="mt-3 self-end rounded-full px-3"
           onPress={() => {
-            onFetchNextPage?.();
+            setShowScrollToBottom(false);
+            scrollToBottom(true);
           }}
         >
-          <Text className="text-xs font-semibold text-app-muted-fg dark:text-app-muted-fg-dark">
-            {isFetchingNextPage ? "Đang tải..." : "Tải hội thoại cũ hơn"}
+          <AntDesign name="down" size={12} color="#0ea5e9" />
+          <Text className="ml-1 text-xs font-semibold text-app-muted-fg dark:text-app-muted-fg-dark">
+            Về tin nhắn mới
           </Text>
         </Button>
       ) : null}

@@ -74,6 +74,13 @@ type UseAssistantChatSessionOptions = {
   enabled?: boolean;
 };
 
+const LOCAL_CACHE_SOURCE = 'local-cache';
+const LOCAL_PENDING_SOURCE = 'local-pending';
+const LOCAL_RECONCILE_WINDOW_MS = 2 * 60 * 1000;
+const LOCAL_RECONCILE_CLOCK_SKEW_MS = 5 * 1000;
+const HISTORY_PERSISTENCE_CHECK_MAX_ATTEMPTS = 5;
+const HISTORY_PERSISTENCE_CHECK_DELAY_MS = 350;
+
 const toMessageTimestamp = (createdAt: string): number => {
   const parsed = Date.parse(createdAt);
   if (Number.isFinite(parsed)) {
@@ -88,25 +95,131 @@ const toMessageTimestamp = (createdAt: string): number => {
   return Number.NaN;
 };
 
-const compareHistoryMessages = (
-  a: ChatbotHistoryMessageDTO,
-  b: ChatbotHistoryMessageDTO,
-) => {
-  const aTimestamp = toMessageTimestamp(a.createdAt);
-  const bTimestamp = toMessageTimestamp(b.createdAt);
-  const aValid = Number.isFinite(aTimestamp);
-  const bValid = Number.isFinite(bTimestamp);
+const normalizeMessageContent = (content: string): string => {
+  return content.trim().replace(/\s+/g, ' ');
+};
 
-  if (aValid && bValid) {
-    const timestampDiff = aTimestamp - bTimestamp;
-    if (timestampDiff !== 0) {
-      return timestampDiff;
+const sleep = (ms: number): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
+
+const getMessageSource = (
+  message: ChatbotHistoryMessageDTO,
+): string | undefined => {
+  const source = message.metadata?.source;
+  return typeof source === 'string' ? source : undefined;
+};
+
+const isLocalMessage = (message: ChatbotHistoryMessageDTO): boolean => {
+  return message.id.startsWith('local:');
+};
+
+const hasMatchingServerMessage = (
+  localMessage: ChatbotHistoryMessageDTO,
+  serverMessages: ChatbotHistoryMessageDTO[],
+): boolean => {
+  const localTimestamp = toMessageTimestamp(localMessage.createdAt);
+  const localContent = normalizeMessageContent(localMessage.content);
+
+  return serverMessages.some((serverMessage) => {
+    if (serverMessage.role !== localMessage.role) {
+      return false;
     }
-  } else if (aValid !== bValid) {
-    return aValid ? -1 : 1;
+
+    if (normalizeMessageContent(serverMessage.content) !== localContent) {
+      return false;
+    }
+
+    const serverTimestamp = toMessageTimestamp(serverMessage.createdAt);
+    if (!Number.isFinite(localTimestamp) || !Number.isFinite(serverTimestamp)) {
+      return true;
+    }
+
+    // Do not match with an older server row when user sends the same text again.
+    if (serverTimestamp + LOCAL_RECONCILE_CLOCK_SKEW_MS < localTimestamp) {
+      return false;
+    }
+
+    return Math.abs(serverTimestamp - localTimestamp) <= LOCAL_RECONCILE_WINDOW_MS;
+  });
+};
+
+const reconcileHistoryMessages = (
+  rawMessages: ChatbotHistoryMessageDTO[],
+): ChatbotHistoryMessageDTO[] => {
+  // Backend pages are newest -> oldest. Keep that invariant for cache operations,
+  // then reverse once for UI (oldest -> newest).
+  const uniqueNewestFirst: ChatbotHistoryMessageDTO[] = [];
+  const seenIds = new Set<string>();
+
+  for (const message of rawMessages) {
+    if (seenIds.has(message.id)) {
+      continue;
+    }
+
+    seenIds.add(message.id);
+    uniqueNewestFirst.push(message);
   }
 
-  return a.id.localeCompare(b.id);
+  const serverMessages = uniqueNewestFirst.filter(
+    (message) => !isLocalMessage(message),
+  );
+  const reconciledNewestFirst = uniqueNewestFirst.filter((message) => {
+    if (!isLocalMessage(message)) {
+      return true;
+    }
+
+    const source = getMessageSource(message);
+    if (source !== LOCAL_CACHE_SOURCE && source !== LOCAL_PENDING_SOURCE) {
+      return true;
+    }
+
+    if (source === LOCAL_PENDING_SOURCE) {
+      return true;
+    }
+
+    return !hasMatchingServerMessage(message, serverMessages);
+  });
+
+  return [...reconciledNewestFirst].reverse();
+};
+
+const hasPersistedAssistantReply = (
+  serverMessages: ChatbotHistoryMessageDTO[],
+  reply: string,
+): boolean => {
+  const normalizedReply = normalizeMessageContent(reply);
+  return serverMessages.some((message) => {
+    return (
+      message.role === 'assistant' &&
+      normalizeMessageContent(message.content) === normalizedReply
+    );
+  });
+};
+
+const waitForAssistantReplyPersistence = async (
+  userId: string,
+  reply: string,
+  pageSize: number,
+): Promise<boolean> => {
+  for (let attempt = 0; attempt < HISTORY_PERSISTENCE_CHECK_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const page = await chatbotService.getHistory(userId, { limit: pageSize });
+      if (hasPersistedAssistantReply(page.data, reply)) {
+        return true;
+      }
+    } catch {
+      // Ignore transient check errors and continue retrying.
+    }
+
+    if (attempt < HISTORY_PERSISTENCE_CHECK_MAX_ATTEMPTS - 1) {
+      await sleep(HISTORY_PERSISTENCE_CHECK_DELAY_MS);
+    }
+  }
+
+  return false;
 };
 
 const createLocalHistoryMessage = (
@@ -145,6 +258,7 @@ export const useAssistantChatSession = (
   const historyLimit = options?.limit ?? 20;
   const historyEnabled = options?.enabled ?? true;
   const [lastError, setLastError] = useState<Error | null>(null);
+  const [isSyncingHistory, setIsSyncingHistory] = useState(false);
   const isSendingMessageRef = useRef(false);
   const historyQueryKey = queryKeys.chatbot.history(userId, historyLimit);
 
@@ -154,7 +268,7 @@ export const useAssistantChatSession = (
 
   const historyMessages = useMemo(() => {
     const raw = historyQuery.data?.pages.flatMap((page) => page.data) ?? [];
-    return [...raw].sort(compareHistoryMessages);
+    return reconcileHistoryMessages(raw);
   }, [historyQuery.data?.pages]);
 
   const sendMessage = useCallback(
@@ -164,7 +278,9 @@ export const useAssistantChatSession = (
         !normalizedMessage ||
         !userId ||
         respondMutation.isPending ||
-        isSendingMessageRef.current
+        clearMutation.isPending ||
+        isSendingMessageRef.current ||
+        isSyncingHistory
       ) {
         return;
       }
@@ -177,12 +293,12 @@ export const useAssistantChatSession = (
         role: 'user',
         content: normalizedMessage,
         metadata: {
-          source: 'local-pending',
+          source: LOCAL_PENDING_SOURCE,
           isPending: true,
         },
       });
 
-      // Always insert local pending at the end (newest message position).
+      // Keep cache order as newest -> oldest (same as backend).
       queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
         historyQueryKey,
         (old) => {
@@ -210,7 +326,7 @@ export const useAssistantChatSession = (
             pages: [
               {
                 ...firstPage,
-                data: [...firstPage.data, optimisticUserMessage],
+                data: [optimisticUserMessage, ...firstPage.data],
               },
               ...old.pages.slice(1),
             ],
@@ -223,15 +339,14 @@ export const useAssistantChatSession = (
           message: normalizedMessage,
         });
 
-        const userHistoryMessage = createLocalHistoryMessage(
-          {
-            userId,
-            role: 'user',
-            content: normalizedMessage,
-            metadata: { source: 'local-cache' },
+        const confirmedUserMessage: ChatbotHistoryMessageDTO = {
+          ...optimisticUserMessage,
+          metadata: {
+            ...optimisticUserMessage.metadata,
+            source: LOCAL_CACHE_SOURCE,
+            isPending: false,
           },
-          0,
-        );
+        };
         const assistantHistoryMessage = createLocalHistoryMessage(
           {
             userId,
@@ -239,7 +354,7 @@ export const useAssistantChatSession = (
             content: result.reply,
             sources: result.sources ?? [],
             metadata: {
-              source: 'local-cache',
+              source: LOCAL_CACHE_SOURCE,
               model: result.model,
               provider: result.provider,
             },
@@ -247,7 +362,7 @@ export const useAssistantChatSession = (
           1,
         );
 
-        // Remove pending local then append real messages at the end.
+        // Remove pending local then prepend latest assistant/user into newest-first cache.
         queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
           historyQueryKey,
           (old) => {
@@ -255,7 +370,7 @@ export const useAssistantChatSession = (
               return {
                 pages: [
                   {
-                    data: [userHistoryMessage, assistantHistoryMessage],
+                    data: [assistantHistoryMessage, confirmedUserMessage],
                     nextCursor: null,
                     hasNextPage: false,
                   },
@@ -275,13 +390,21 @@ export const useAssistantChatSession = (
               pages: [
                 {
                   ...firstPage,
-                  data: [
-                    ...firstPage.data.filter(
+                  data: (() => {
+                    const withoutPending = firstPage.data.filter(
                       (item) => item.id !== optimisticUserMessage.id,
-                    ),
-                    userHistoryMessage,
-                    assistantHistoryMessage,
-                  ],
+                    );
+                    const hadPending = firstPage.data.some(
+                      (item) => item.id === optimisticUserMessage.id,
+                    );
+                    return hadPending
+                      ? [
+                          assistantHistoryMessage,
+                          confirmedUserMessage,
+                          ...withoutPending,
+                        ]
+                      : [assistantHistoryMessage, confirmedUserMessage, ...withoutPending];
+                  })(),
                 },
                 ...old.pages.slice(1),
               ],
@@ -289,9 +412,25 @@ export const useAssistantChatSession = (
           },
         );
 
-        void queryClient.invalidateQueries({
-          queryKey: historyQueryKey,
-        });
+        setIsSyncingHistory(true);
+        void (async () => {
+          try {
+            const hasPersistedReply = await waitForAssistantReplyPersistence(
+              userId,
+              result.reply,
+              historyLimit,
+            );
+            if (!hasPersistedReply) {
+              return;
+            }
+
+            await queryClient.invalidateQueries({
+              queryKey: historyQueryKey,
+            });
+          } finally {
+            setIsSyncingHistory(false);
+          }
+        })();
       } catch (error) {
         queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
           historyQueryKey,
@@ -325,11 +464,24 @@ export const useAssistantChatSession = (
         isSendingMessageRef.current = false;
       }
     },
-    [historyQueryKey, queryClient, respondMutation, userId],
+    [
+      clearMutation.isPending,
+      historyLimit,
+      historyQueryKey,
+      isSyncingHistory,
+      queryClient,
+      respondMutation,
+      userId,
+    ],
   );
 
   const clearHistory = useCallback(async () => {
-    if (!userId || clearMutation.isPending) {
+    if (
+      !userId ||
+      clearMutation.isPending ||
+      respondMutation.isPending ||
+      isSyncingHistory
+    ) {
       return;
     }
 
@@ -340,7 +492,7 @@ export const useAssistantChatSession = (
     } catch (error) {
       setLastError(error as Error);
     }
-  }, [clearMutation, userId]);
+  }, [clearMutation, isSyncingHistory, respondMutation.isPending, userId]);
 
   const resetError = useCallback(() => {
     setLastError(null);
@@ -351,6 +503,14 @@ export const useAssistantChatSession = (
   const retryHistory = useCallback(async () => {
     await historyQuery.refetch();
   }, [historyQuery]);
+  const refreshHistory = useCallback(async () => {
+    setLastError(null);
+    await historyQuery.refetch();
+  }, [historyQuery]);
+  const isRefreshingHistory =
+    historyQuery.isRefetching &&
+    !historyQuery.isFetchingNextPage &&
+    !historyQuery.isLoading;
 
   const error =
     lastError ??
@@ -368,6 +528,9 @@ export const useAssistantChatSession = (
     isFetchingNextPage: historyQuery.isFetchingNextPage,
     fetchNextPage: historyQuery.fetchNextPage,
     retryHistory,
+    refreshHistory,
+    isRefreshingHistory,
+    isSyncingHistory,
     isResponding: respondMutation.isPending,
     isClearing: clearMutation.isPending,
     error,
