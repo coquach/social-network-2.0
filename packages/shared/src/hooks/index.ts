@@ -51,8 +51,13 @@ export * from './useSearch';
 // Report hooks
 export * from './useReport';
 
+
 // Chatbot hooks
 export * from './useChatbot';
+
+// Group permission hooks
+export * from './use-group-permissions'
+
 
 // UI utility hooks (web-only, requires DOM)
 // Note: Import these directly from './useUI' in web apps only
