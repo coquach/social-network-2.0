@@ -27,7 +27,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
 import React from "react";
-import { KeyboardAvoidingView, Platform, View } from "react-native";
+import { Platform, View } from "react-native";
 
 import {
   type ChatComposerAttachment,
@@ -50,6 +50,7 @@ import { AppAlert, type AppAlertVariant } from "~/components/ui/app-alert";
 import { AppModal } from "~/components/ui/app-modal";
 import { AppScreen } from "~/components/ui/app-screen";
 import { AppToast, type AppToastData } from "~/components/ui/app-toast";
+import { KeyboardAwareContainer } from "~/components/ui/keyboard-aware-container";
 import { pickLibraryMediaAssets, pickSingleImage } from "~/lib/media-picker";
 import { useNativeConversationRealtime } from "~/providers/chat-realtime-provider";
 import { usePresenceChannel } from "~/providers/presence-provider";
@@ -597,8 +598,9 @@ export default function ChatConversationScreen() {
 
   return (
     <AppScreen className="px-0 py-0">
-      <KeyboardAvoidingView
+      <KeyboardAwareContainer
         behavior={Platform.OS === "ios" ? "padding" : undefined}
+        withKeyboardHeightPadding={Platform.OS === "android"}
         className="flex-1 bg-app-bg dark:bg-app-bg-dark"
       >
         <View className="flex-1">
@@ -726,7 +728,7 @@ export default function ChatConversationScreen() {
             }
           />
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareContainer>
     </AppScreen>
   );
 }

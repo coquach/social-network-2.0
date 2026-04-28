@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+﻿import { AntDesign } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
 import React from "react";
 import { Keyboard, Pressable, View, useWindowDimensions } from "react-native";
@@ -15,7 +15,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AssistantChatSheet } from "~/components/chatbot/assistant-chat-sheet";
+import { AssistantChatModal } from "~/components/chatbot/assistant-chat-modal";
 import { useAppTheme } from "~/providers/theme-provider";
 import { getItem, setItem } from "~/utils/storage";
 
@@ -62,7 +62,8 @@ export function AssistantOverlay() {
   const [isKeyboardVisible, setIsKeyboardVisible] = React.useState(false);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
 
-  const canShow = isLoaded && isSignedIn && isAllowedPathname(pathname) && !isKeyboardVisible;
+  const canRenderOverlay = isLoaded && isSignedIn && isAllowedPathname(pathname);
+  const shouldShowBubble = !isKeyboardVisible && !isSheetOpen;
 
   const minX = BUBBLE_MARGIN;
   const maxX = Math.max(BUBBLE_MARGIN, width - BUBBLE_SIZE - BUBBLE_MARGIN);
@@ -164,8 +165,14 @@ export function AssistantOverlay() {
         bubbleScale.value = withSpring(1.08, SNAP_SPRING);
       })
       .onUpdate((event) => {
-        const nextX = clamp(startX.value + event.translationX, minX, maxX);
-        const nextY = clamp(startY.value + event.translationY, minY, maxY);
+        const nextX = Math.min(
+          Math.max(startX.value + event.translationX, minX),
+          maxX,
+        );
+        const nextY = Math.min(
+          Math.max(startY.value + event.translationY, minY),
+          maxY,
+        );
 
         translateX.value = nextX;
         translateY.value = nextY;
@@ -183,7 +190,7 @@ export function AssistantOverlay() {
 
         const centerX = translateX.value + BUBBLE_SIZE / 2;
         const targetX = centerX < width / 2 ? minX : maxX;
-        const targetY = clamp(translateY.value, minY, maxY);
+        const targetY = Math.min(Math.max(translateY.value, minY), maxY);
 
         translateX.value = withSpring(targetX, SNAP_SPRING, (finished) => {
           if (finished) {
@@ -220,37 +227,39 @@ export function AssistantOverlay() {
     };
   });
 
-  if (!canShow) {
+  if (!canRenderOverlay) {
     return null;
   }
 
   return (
     <>
-      <View pointerEvents="box-none" className="absolute inset-0 z-[60]">
-        <GestureDetector gesture={panGesture}>
-          <Animated.View className="absolute" style={bubbleStyle}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Open AI assistant"
-              className="items-center justify-center rounded-full"
-              style={{
-                width: BUBBLE_SIZE,
-                height: BUBBLE_SIZE,
-                backgroundColor: colors.primary,
-                shadowColor: "#0f172a",
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.24,
-                shadowRadius: 14,
-                elevation: 8,
-              }}
-            >
-              <Ionicons name="sparkles" size={24} color="#ffffff" />
-            </Pressable>
-          </Animated.View>
-        </GestureDetector>
-      </View>
+      {shouldShowBubble ? (
+        <View pointerEvents="box-none" className="absolute inset-0 z-[60]">
+          <GestureDetector gesture={panGesture}>
+            <Animated.View className="absolute" style={bubbleStyle}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Mở trợ lý AI"
+                className="items-center justify-center rounded-full"
+                style={{
+                  width: BUBBLE_SIZE,
+                  height: BUBBLE_SIZE,
+                  backgroundColor: colors.primary,
+                  shadowColor: "#0f172a",
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.24,
+                  shadowRadius: 14,
+                  elevation: 8,
+                }}
+              >
+                <AntDesign name="robot" size={24} color="#ffffff" />
+              </Pressable>
+            </Animated.View>
+          </GestureDetector>
+        </View>
+      ) : null}
 
-      <AssistantChatSheet
+      <AssistantChatModal
         visible={isSheetOpen}
         onClose={() => {
           setIsSheetOpen(false);

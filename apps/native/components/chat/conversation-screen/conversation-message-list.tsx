@@ -17,10 +17,7 @@ import {
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { ChatMessageBubble } from "~/components/chat/chat-message-bubble";
-import {
-  formatMessageDateLabel,
-  getChatDayKey,
-} from "~/components/chat/chat-helpers";
+import { formatMessageDateLabel, getChatDayKey } from "~/lib/chat-date-utils";
 import { AppCard } from "~/components/ui/app-card";
 
 type ParticipantVisual = {

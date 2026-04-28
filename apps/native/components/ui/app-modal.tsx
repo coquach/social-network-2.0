@@ -75,7 +75,7 @@ export function AppModal({
         />
         <Dialog.Content
           className={cn(
-            'w-full max-w-md rounded-[28px] border p-5',
+            'self-center w-full max-w-md rounded-[28px] border p-5',
             styles.content,
             contentClassName,
           )}

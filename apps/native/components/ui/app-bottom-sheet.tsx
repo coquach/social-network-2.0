@@ -17,6 +17,9 @@ type AppBottomSheetProps = {
   footerClassName?: string;
   titleClassName?: string;
   descriptionClassName?: string;
+  keyboardBehavior?: "interactive" | "extend" | "fillParent";
+  keyboardBlurBehavior?: "none" | "restore";
+  androidKeyboardInputMode?: "adjustPan" | "adjustResize";
 };
 
 export function AppBottomSheet({
@@ -31,6 +34,9 @@ export function AppBottomSheet({
   footerClassName,
   titleClassName,
   descriptionClassName,
+  keyboardBehavior = "interactive",
+  keyboardBlurBehavior = "restore",
+  androidKeyboardInputMode = "adjustPan",
 }: AppBottomSheetProps) {
   const insets = useSafeAreaInsets();
 
@@ -47,6 +53,9 @@ export function AppBottomSheet({
         <BottomSheet.Content
           enableDynamicSizing
           enablePanDownToClose={dismissible}
+          keyboardBehavior={keyboardBehavior}
+          keyboardBlurBehavior={keyboardBlurBehavior}
+          android_keyboardInputMode={androidKeyboardInputMode}
           backgroundClassName="rounded-t-[32px] border border-b-0 border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark"
           contentContainerClassName="px-5 pt-3"
           handleIndicatorClassName="bg-app-border dark:bg-app-border-dark"
