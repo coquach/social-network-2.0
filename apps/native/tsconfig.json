@@ -12,5 +12,5 @@
     "noUnusedParameters": true,
     "allowUnusedLabels": false
   },
-  "include": ["**/*.ts", "**/*.tsx", "uniwind-types.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"]
 }
