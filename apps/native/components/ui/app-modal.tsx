@@ -84,7 +84,7 @@ export function AppModal({
           {title ? (
             <Dialog.Title
               className={cn(
-                'text-2xl font-extrabold tracking-tight',
+                'text-2xl font-extrabold tracking-tight text-center',
                 styles.title,
                 titleClassName,
               )}

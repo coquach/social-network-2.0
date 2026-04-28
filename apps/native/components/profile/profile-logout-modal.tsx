@@ -1,9 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AppModal } from '~/components/ui/app-modal';
 
-import { styles } from './profile-styles';
 import type { ProfilePalette } from './profile-types';
 
 type ProfileLogoutModalProps = {
@@ -17,7 +16,7 @@ type ProfileLogoutModalProps = {
 export function ProfileLogoutModal({
   visible,
   isSigningOut,
-  colors,
+  colors: _colors,
   onClose,
   onConfirm,
 }: ProfileLogoutModalProps) {
@@ -25,43 +24,30 @@ export function ProfileLogoutModal({
     <AppModal
       visible={visible}
       onClose={onClose}
+      variant="danger"
       title="Xác nhận đăng xuất"
       description="Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng tài khoản này."
       dismissible={!isSigningOut}
       footer={
-        <View style={styles.modalActions}>
+        <View className="gap-2">
           <Pressable
             onPress={onConfirm}
             disabled={isSigningOut}
-            style={({ pressed }) => [
-              styles.modalPrimaryButton,
-              {
-                backgroundColor: colors.primary,
-              },
-              pressed && styles.pressed,
-              isSigningOut && styles.disabledButton,
-            ]}
+            className="min-h-11 items-center justify-center rounded-xl bg-rose-500 active:opacity-90 disabled:opacity-60 dark:bg-rose-500"
           >
             {isSigningOut ? (
-              <ActivityIndicator size="small" color={colors.primaryForeground} />
+              <ActivityIndicator size="small" color="#ffffff" />
             ) : (
-              <Text style={[styles.modalPrimaryText, { color: colors.primaryForeground }]}>Đăng xuất</Text>
+              <Text className="text-[15px] font-semibold text-white">Đăng xuất</Text>
             )}
           </Pressable>
 
           <Pressable
             onPress={onClose}
             disabled={isSigningOut}
-            style={({ pressed }) => [
-              styles.modalSecondaryButton,
-              {
-                backgroundColor: colors.surfaceLow,
-              },
-              pressed && styles.pressed,
-              isSigningOut && styles.disabledButton,
-            ]}
+            className="min-h-11 items-center justify-center rounded-xl bg-app-surface-elevated active:opacity-90 disabled:opacity-60 dark:bg-app-surface-elevated-dark"
           >
-            <Text style={[styles.modalSecondaryText, { color: colors.onSurface }]}>Hủy</Text>
+            <Text className="text-[15px] font-semibold text-app-fg dark:text-app-fg-dark">Hủy</Text>
           </Pressable>
         </View>
       }
