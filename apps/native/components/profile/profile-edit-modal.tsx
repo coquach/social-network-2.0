@@ -1,6 +1,6 @@
 ﻿import { Button } from 'heroui-native/button';
 import React from 'react';
-import { Image, Text, TextInput, View } from 'react-native';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import type { NativeUploadFileDescriptor } from '@repo/shared';
 
@@ -43,6 +43,8 @@ export function ProfileEditModal({
   const [lastName, setLastName] = React.useState(defaultLastName);
   const [bio, setBio] = React.useState(defaultBio);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [isAvatarSheetOpen, setIsAvatarSheetOpen] = React.useState(false);
+  const [isCoverSheetOpen, setIsCoverSheetOpen] = React.useState(false);
 
   const avatarPicker = useSingleImageSourcePicker({
     permissionAlert: {
@@ -132,7 +134,6 @@ export function ProfileEditModal({
       visible={visible}
       onClose={onClose}
       title="Chỉnh sửa hồ sơ"
-      description="Cập nhật thông tin cá nhân, ảnh đại diện và ảnh bìa."
       dismissible={!isSaving}
       footer={
         <View className="gap-2">
@@ -157,22 +158,41 @@ export function ProfileEditModal({
     >
       <View className="gap-4">
         <View className="items-center">
-          <View className="relative">
-            <Image source={{ uri: avatarPreview }} className="h-24 w-24 rounded-full" resizeMode="cover" />
+          <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-app-muted-fg dark:text-app-muted-fg-dark">
+            Ảnh đại diện
+          </Text>
+          <TouchableOpacity
+            onPress={() => setIsAvatarSheetOpen(true)}
+            activeOpacity={0.9}
+            className="relative"
+          >
+            <Image
+              source={{ uri: avatarPreview }}
+              className="h-24 w-24 rounded-full"
+              resizeMode="cover"
+            />
             <View className="absolute inset-0 items-center justify-center rounded-full bg-black/30">
               <Text className="text-xs font-semibold text-white">Đổi ảnh</Text>
             </View>
-          </View>
+          </TouchableOpacity>
           <View className="mt-2">
+            {avatarPicker.selectedImage ? (
+              <Button
+                variant="ghost"
+                className="min-h-10 rounded-full px-4"
+                onPress={avatarPicker.clearImage}
+              >
+                Xóa ảnh
+              </Button>
+            ) : null}
             <ImageSourceActions
+              visible={isAvatarSheetOpen}
+              onClose={() => setIsAvatarSheetOpen(false)}
               onPick={(source) => {
                 void avatarPicker.pickImage(source);
               }}
-              onClear={avatarPicker.clearImage}
-              showClear={Boolean(avatarPicker.selectedImage)}
-              libraryLabel="Thư viện"
-              cameraLabel="Chụp ảnh"
-              clearLabel="Bỏ ảnh"
+              libraryLabel="Chọn ảnh từ thư viện"
+              cameraLabel="Chụp ảnh đại diện"
             />
           </View>
         </View>
@@ -181,22 +201,40 @@ export function ProfileEditModal({
           <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-app-muted-fg dark:text-app-muted-fg-dark">
             Ảnh bìa
           </Text>
-          <View className="overflow-hidden rounded-xl">
-            <Image source={{ uri: coverPreview }} className="h-28 w-full" resizeMode="cover" />
+          <TouchableOpacity
+            onPress={() => setIsCoverSheetOpen(true)}
+            activeOpacity={0.9}
+            className="overflow-hidden rounded-xl"
+          >
+            <Image
+              source={{ uri: coverPreview }}
+              className="h-28 w-full"
+              resizeMode="cover"
+            />
             <View className="absolute inset-0 items-center justify-center bg-black/25">
-              <Text className="text-sm font-semibold text-white">Đổi ảnh bìa</Text>
+              <Text className="text-sm font-semibold text-white">
+                Đổi ảnh bìa
+              </Text>
             </View>
-          </View>
+          </TouchableOpacity>
           <View className="mt-2">
+            {coverPicker.selectedImage ? (
+              <Button
+                variant="ghost"
+                className="min-h-10 rounded-full px-4"
+                onPress={coverPicker.clearImage}
+              >
+                Xóa ảnh
+              </Button>
+            ) : null}
             <ImageSourceActions
+              visible={isCoverSheetOpen}
+              onClose={() => setIsCoverSheetOpen(false)}
               onPick={(source) => {
                 void coverPicker.pickImage(source);
               }}
-              onClear={coverPicker.clearImage}
-              showClear={Boolean(coverPicker.selectedImage)}
-              libraryLabel="Thư viện"
-              cameraLabel="Chụp ảnh"
-              clearLabel="Bỏ ảnh"
+              libraryLabel="Chọn ảnh bìa từ thư viện"
+              cameraLabel="Chụp ảnh bìa"
             />
           </View>
         </View>
@@ -246,9 +284,10 @@ export function ProfileEditModal({
           </Text>
         </View>
 
-        {errorMessage ? <Text className="text-sm text-red-500">{errorMessage}</Text> : null}
+        {errorMessage ? (
+          <Text className="text-sm text-red-500">{errorMessage}</Text>
+        ) : null}
       </View>
     </AppModal>
   );
 }
-

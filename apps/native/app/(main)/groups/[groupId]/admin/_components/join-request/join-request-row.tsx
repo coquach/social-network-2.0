@@ -1,56 +1,80 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, Alert } from 'react-native';
-import { InviteStatus } from '@repo/shared/types';
+﻿import React from 'react';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
+
+import { AppModal } from '~/components/ui/app-modal';
 
 export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApprove, onReject }: any) => {
+  const [confirmAction, setConfirmAction] = React.useState<'approve' | 'reject' | null>(null);
 
-    const handleApprove = () => {
-        Alert.alert('Chấp nhận', 'Bạn có chắc chắn muốn cho thành viên này vào nhóm?', [
-            { text: 'Hủy', style: 'cancel' },
-            { text: 'Đồng ý', onPress: onApprove }
-        ]);
-    };
-
-    const handleReject = () => {
-        Alert.alert('Từ chối', 'Từ chối yêu cầu tham gia của thành viên này?', [
-            { text: 'Hủy', style: 'cancel' },
-            { text: 'Từ chối', style: 'destructive', onPress: onReject }
-        ]);
-    };
-
-    return (
-        <View className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl flex-row items-center justify-between mb-2 shadow-sm">
-            <View className="flex-row items-center flex-1">
-                {/* Giả sử bạn có avatarUrl trong request, nếu không dùng inviteeId để fetch */}
-                <View className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                    <Image source={{ uri: `https://api.dicebear.com/7.x/avataaars/svg?seed=${request.inviteeId}` }} className="w-full h-full" />
-                </View>
-                <View className="ml-3 flex-1">
-                    <Text className="text-sm font-bold text-slate-900 dark:text-white" numberOfLines={1}>
-                        ID: {request.inviteeId.substring(0, 8)}...
-                    </Text>
-                    <Text className="text-[10px] text-slate-500 uppercase">{request.status}</Text>
-                </View>
-            </View>
-
-            {request.status === 'PENDING' && canManage && (
-                <View className="flex-row gap-2">
-                    <TouchableOpacity
-                        onPress={handleApprove}
-                        disabled={approving || rejecting}
-                        className="bg-sky-500 px-3 py-2 rounded-xl"
-                    >
-                        <Text className="text-white text-xs font-bold">Duyệt</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={handleReject}
-                        disabled={approving || rejecting}
-                        className="bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl"
-                    >
-                        <Text className="text-slate-600 dark:text-slate-400 text-xs font-bold">Bỏ</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
+  return (
+    <View className="mb-2 flex-row items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <View className="flex-1 flex-row items-center">
+        <View className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
+          <Image source={{ uri: `https://api.dicebear.com/7.x/avataaars/svg?seed=${request.inviteeId}` }} className="h-full w-full" />
         </View>
-    );
+        <View className="ml-3 flex-1">
+          <Text className="text-sm font-bold text-slate-900 dark:text-white" numberOfLines={1}>
+            ID: {request.inviteeId.substring(0, 8)}...
+          </Text>
+          <Text className="text-[10px] uppercase text-slate-500">{request.status}</Text>
+        </View>
+      </View>
+
+      {request.status === 'PENDING' && canManage ? (
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={() => setConfirmAction('approve')}
+            disabled={approving || rejecting}
+            className="rounded-xl bg-sky-500 px-3 py-2"
+          >
+            <Text className="text-xs font-bold text-white">Duyệt</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setConfirmAction('reject')}
+            disabled={approving || rejecting}
+            className="rounded-xl bg-slate-100 px-3 py-2 dark:bg-slate-800"
+          >
+            <Text className="text-xs font-bold text-slate-600 dark:text-slate-400">Bỏ</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      <AppModal
+        visible={Boolean(confirmAction)}
+        onClose={() => setConfirmAction(null)}
+        variant={confirmAction === 'approve' ? 'success' : 'danger'}
+        title={confirmAction === 'approve' ? 'Chấp nhận yêu cầu' : 'Từ chối yêu cầu'}
+        description={
+          confirmAction === 'approve'
+            ? 'Bạn có chắc chắn muốn cho thành viên này vào nhóm?'
+            : 'Bạn có chắc chắn muốn từ chối yêu cầu tham gia này?'
+        }
+        footer={
+          <>
+            <TouchableOpacity
+              onPress={() => setConfirmAction(null)}
+              className="h-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+            >
+              <Text className="font-semibold text-slate-700 dark:text-slate-300">Hủy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                if (confirmAction === 'approve') {
+                  onApprove();
+                } else {
+                  onReject();
+                }
+                setConfirmAction(null);
+              }}
+              className={`h-11 items-center justify-center rounded-xl ${
+                confirmAction === 'approve' ? 'bg-emerald-600' : 'bg-rose-500'
+              }`}
+            >
+              <Text className="font-semibold text-white">Xác nhận</Text>
+            </TouchableOpacity>
+          </>
+        }
+      />
+    </View>
+  );
 };

@@ -381,7 +381,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
+      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark px-4">
         <FeedList
           items={feedItems}
           keyExtractor={keyExtractor}

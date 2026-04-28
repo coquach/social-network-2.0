@@ -50,7 +50,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="groups"
           options={{
-            title: 'Nhóm',
+            headerShown: false,
           }}
         />
         <Tabs.Screen

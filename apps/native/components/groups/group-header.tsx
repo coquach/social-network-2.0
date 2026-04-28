@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useGroupPermission } from '@repo/shared';
 import {
@@ -9,7 +9,9 @@ import {
 } from '@repo/shared/hooks';
 import { GroupDTO, GroupPermission, MembershipStatus } from '@repo/shared/types';
 import React from 'react';
-import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
+
+import { AppModal } from '~/components/ui/app-modal';
 
 interface GroupHeaderProps {
   group: GroupDTO;
@@ -24,20 +26,8 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
   const { mutate: acceptInvite } = useAcceptGroupInvite();
   const { mutate: declineInvite } = useDeclineGroupInvite();
 
-  const handleLeaveGroup = () => {
-    Alert.alert('Rời nhóm', 'Bạn có chắc chắn muốn rời khỏi nhóm này không?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Rời nhóm', style: 'destructive', onPress: () => leaveGroup(group.id) },
-    ]);
-  };
-
-  const handleCancelPending = () => {
-    Alert.alert(
-      'Chưa hỗ trợ',
-      'Hiện tại chưa có requestId từ API detail để hủy yêu cầu tham gia. Mình sẽ nối ngay khi backend trả field này.',
-      [{ text: 'Đã hiểu' }],
-    );
-  };
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = React.useState(false);
+  const [isPendingInfoOpen, setIsPendingInfoOpen] = React.useState(false);
 
   return (
     <View className="rounded-b-[40px] bg-white pb-4 dark:bg-slate-900">
@@ -75,7 +65,7 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
 
           {group.membershipStatus === MembershipStatus.PENDING_APPROVAL ? (
             <TouchableOpacity
-              onPress={handleCancelPending}
+              onPress={() => setIsPendingInfoOpen(true)}
               className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-amber-100 dark:bg-amber-900/30"
             >
               <Ionicons name="time" size={18} color="#d97706" />
@@ -141,7 +131,7 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
               ) : null}
 
               <TouchableOpacity
-                onPress={handleLeaveGroup}
+                onPress={() => setIsLeaveModalOpen(true)}
                 className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
               >
                 <Ionicons name="log-out-outline" size={20} color="#64748b" />
@@ -156,6 +146,49 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
           ) : null}
         </View>
       </View>
+
+      <AppModal
+        visible={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        variant="warning"
+        title="Rời nhóm"
+        description="Bạn có chắc chắn muốn rời khỏi nhóm này không?"
+        footer={
+          <>
+            <TouchableOpacity
+              onPress={() => setIsLeaveModalOpen(false)}
+              className="h-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+            >
+              <Text className="font-semibold text-slate-700 dark:text-slate-300">Hủy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setIsLeaveModalOpen(false);
+                leaveGroup(group.id);
+              }}
+              className="h-11 items-center justify-center rounded-xl bg-rose-500"
+            >
+              <Text className="font-semibold text-white">Rời nhóm</Text>
+            </TouchableOpacity>
+          </>
+        }
+      />
+
+      <AppModal
+        visible={isPendingInfoOpen}
+        onClose={() => setIsPendingInfoOpen(false)}
+        variant="warning"
+        title="Chưa hỗ trợ"
+        description="Hiện tại API detail chưa trả requestId để hủy yêu cầu tham gia. Sẽ nối ngay khi backend bổ sung field này."
+        footer={
+          <TouchableOpacity
+            onPress={() => setIsPendingInfoOpen(false)}
+            className="h-11 items-center justify-center rounded-xl bg-amber-500"
+          >
+            <Text className="font-semibold text-white">Đã hiểu</Text>
+          </TouchableOpacity>
+        }
+      />
     </View>
   );
 };

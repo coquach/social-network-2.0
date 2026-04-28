@@ -6,7 +6,7 @@ import { Label } from "heroui-native/label";
 import { TextField } from "heroui-native/text-field";
 import React from "react";
 import { Controller, type Control } from "react-hook-form";
-import { Image, ScrollView, View } from "react-native";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { ImageSourceActions } from "~/components/ui/image-source-actions";
 import type { SelectedUploadImage } from "~/lib/use-single-image-source-picker";
@@ -55,6 +55,8 @@ export function CreateGroupConversationTab({
   selectedAvatar,
   selectedUsers,
 }: CreateGroupConversationTabProps) {
+  const [isAvatarSheetOpen, setIsAvatarSheetOpen] = React.useState(false);
+
   return (
     <ScrollView
       className="w-full"
@@ -77,10 +79,25 @@ export function CreateGroupConversationTab({
               )}
             </View>
 
+            <View className="items-center gap-2">
+              <TouchableOpacity
+                onPress={() => setIsAvatarSheetOpen(true)}
+                className="rounded-full bg-app-surface-elevated px-4 py-2 dark:bg-app-surface-elevated-dark"
+              >
+                <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">
+                  Đổi ảnh nhóm
+                </Text>
+              </TouchableOpacity>
+              {selectedAvatar ? (
+                <TouchableOpacity onPress={onClearAvatar}>
+                  <Text className="text-xs font-semibold text-rose-500">Bỏ ảnh</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
             <ImageSourceActions
+              visible={isAvatarSheetOpen}
+              onClose={() => setIsAvatarSheetOpen(false)}
               onPick={onPickAvatar}
-              onClear={onClearAvatar}
-              showClear={Boolean(selectedAvatar)}
             />
           </View>
         </Card.Body>

@@ -98,6 +98,7 @@ export function ConversationInfoSheet({
   const [pendingAction, setPendingAction] =
     React.useState<PendingConversationAction>(null);
   const [draftGroupName, setDraftGroupName] = React.useState("");
+  const [isAvatarSheetOpen, setIsAvatarSheetOpen] = React.useState(false);
 
   const isGroup = Boolean(conversation?.isGroup);
   const isAdmin = Boolean(
@@ -365,12 +366,30 @@ export function ConversationInfoSheet({
                   onChangeText={setDraftGroupName}
                 />
                 <ImageSourceActions
+                  visible={isAvatarSheetOpen}
+                  onClose={() => setIsAvatarSheetOpen(false)}
                   onPick={(source) => {
                     void pickImage(source);
                   }}
-                  onClear={clearImage}
-                  showClear={Boolean(selectedImage)}
                 />
+                <View className="mt-2 items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    className="rounded-full shadow-none"
+                    onPress={() => setIsAvatarSheetOpen(true)}
+                  >
+                    Đổi ảnh nhóm
+                  </Button>
+                  {selectedImage ? (
+                    <Button
+                      variant="ghost"
+                      className="rounded-full shadow-none"
+                      onPress={clearImage}
+                    >
+                      Bỏ ảnh
+                    </Button>
+                  ) : null}
+                </View>
                 <View className="flex-row gap-2">
                   <Button
                     variant="secondary"

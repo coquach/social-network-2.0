@@ -1,48 +1,58 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Button } from 'heroui-native/button';
+﻿import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+
+import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
 
 type ImageSourceActionsProps = {
+  visible: boolean;
+  onClose: () => void;
   onPick: (source: 'library' | 'camera') => void;
-  onClear?: () => void;
-  showClear?: boolean;
   libraryLabel?: string;
   cameraLabel?: string;
-  clearLabel?: string;
 };
 
 export function ImageSourceActions({
+  visible,
+  onClose,
   onPick,
-  onClear,
-  showClear = false,
-  libraryLabel = 'Thư viện',
+  libraryLabel = 'Chọn từ thư viện',
   cameraLabel = 'Chụp ảnh',
-  clearLabel = 'Bỏ ảnh',
 }: ImageSourceActionsProps) {
+  const handlePick = (source: 'library' | 'camera') => {
+    onPick(source);
+    onClose();
+  };
+
   return (
-    <View className="flex-row flex-wrap justify-center gap-2">
-      <Button
-        variant="secondary"
-        className="rounded-full px-4"
-        onPress={() => onPick('library')}
+    <AppBottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Chọn nguồn ảnh"
+      titleClassName='text-center'
+      description="Bạn muốn lấy ảnh từ đâu?"
+      descriptionClassName='text-center'
+      bodyClassName="gap-2"
+    >
+      <Pressable
+        onPress={() => handlePick('camera')}
+        className="flex-row items-center gap-3 rounded-2xl bg-app-surface-elevated px-4 py-3 active:opacity-80 dark:bg-app-surface-elevated-dark"
       >
-        <Ionicons name="images-outline" size={16} color="#0ea5e9" />
-        <Button.Label>{libraryLabel}</Button.Label>
-      </Button>
-      <Button
-        variant="secondary"
-        className="rounded-full px-4"
-        onPress={() => onPick('camera')}
+        <View className="h-9 w-9 items-center justify-center rounded-full bg-sky-500/15">
+          <Ionicons name="camera-outline" size={18} color="#0ea5e9" />
+        </View>
+        <Text className="text-base font-semibold text-app-fg dark:text-app-fg-dark">{cameraLabel}</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={() => handlePick('library')}
+        className="flex-row items-center gap-3 rounded-2xl bg-app-surface-elevated px-4 py-3 active:opacity-80 dark:bg-app-surface-elevated-dark"
       >
-        <Ionicons name="camera-outline" size={16} color="#0ea5e9" />
-        <Button.Label>{cameraLabel}</Button.Label>
-      </Button>
-      {showClear && onClear ? (
-        <Button variant="ghost" className="rounded-full px-4" onPress={onClear}>
-          {clearLabel}
-        </Button>
-      ) : null}
-    </View>
+        <View className="h-9 w-9 items-center justify-center rounded-full bg-sky-500/15">
+          <Ionicons name="images-outline" size={18} color="#0ea5e9" />
+        </View>
+        <Text className="text-base font-semibold text-app-fg dark:text-app-fg-dark">{libraryLabel}</Text>
+      </Pressable>
+    </AppBottomSheet>
   );
 }

@@ -1,4 +1,4 @@
-import { useGroup, useGroupPosts } from '@repo/shared/hooks';
+﻿import { useGroup, useGroupPosts } from '@repo/shared/hooks';
 import type { PostDTO } from '@repo/shared/types';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -6,8 +6,9 @@ import { ActivityIndicator, Text, View } from 'react-native';
 
 import { toPostSnapshot } from '~/app/(main)/newfeeds/components/feed-mappers';
 import { FeedList } from '~/app/(main)/newfeeds/components/feed-list';
-import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { GroupHeader } from '~/components/groups/group-header';
+import { GroupPageHeader } from '~/components/groups/group-page-header';
+import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { PostCardFull } from '~/components/post/post-card-full';
 
 export default function GroupDetailScreen() {
@@ -67,7 +68,12 @@ export default function GroupDetailScreen() {
         onRefresh={() => void refetch()}
         onScroll={handleScroll}
         scrollEnabled
-        listHeaderComponent={<GroupHeader group={group} />}
+        listHeaderComponent={
+          <View>
+            <GroupPageHeader title="Chi tiết nhóm" />
+            <GroupHeader group={group} />
+          </View>
+        }
         contentContainerStyle={{ paddingBottom: 110, paddingTop: 0, paddingHorizontal: 12 }}
         emptyText="Nhóm này chưa có bài viết nào."
         estimatedItemSize={420}

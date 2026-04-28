@@ -1,7 +1,11 @@
-import { useGroupSettings, useUpdateGroupSettings } from '@repo/shared/hooks';
+﻿import { useGroupSettings, useUpdateGroupSettings } from '@repo/shared/hooks';
 import { useLocalSearchParams } from 'expo-router';
+import { Switch } from 'heroui-native/switch';
 import React from 'react';
-import { ActivityIndicator, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+
+import { GroupPageHeader } from '~/components/groups/group-page-header';
+import { AppTitle } from '~/components/ui/app-text';
 
 export default function GroupSettingsScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -55,35 +59,40 @@ export default function GroupSettingsScreen() {
   const rowClass = 'mb-2 flex-row items-center justify-between rounded-2xl bg-app-surface px-4 py-3 dark:bg-app-surface-dark';
 
   return (
-    <View className="flex-1 bg-app-bg px-4 pt-4 dark:bg-app-bg-dark">
-      <View className={rowClass}>
-        <View className="flex-1 pr-3">
-          <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Thành viên được mời người khác</Text>
-        </View>
-        <Switch value={allowMemberInvite} onValueChange={setAllowMemberInvite} />
-      </View>
+    <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
+      <GroupPageHeader title="Cài đặt nhóm" />
+      <View className="flex-1 px-4 pt-2">
+        <AppTitle className="mb-3 text-2xl">Cài đặt nhóm</AppTitle>
 
-      <View className={rowClass}>
-        <View className="flex-1 pr-3">
-          <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Bài viết cần duyệt</Text>
+        <View className={rowClass}>
+          <View className="flex-1 pr-3">
+            <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Thành viên được mời người khác</Text>
+          </View>
+          <Switch isSelected={allowMemberInvite} onSelectedChange={setAllowMemberInvite} />
         </View>
-        <Switch value={requiredPostApproval} onValueChange={setRequiredPostApproval} />
-      </View>
 
-      <View className={rowClass}>
-        <View className="flex-1 pr-3">
-          <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Tham gia cần admin duyệt</Text>
+        <View className={rowClass}>
+          <View className="flex-1 pr-3">
+            <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Bài viết cần duyệt</Text>
+          </View>
+          <Switch isSelected={requiredPostApproval} onSelectedChange={setRequiredPostApproval} />
         </View>
-        <Switch value={requireAdminApprovalToJoin} onValueChange={setRequireAdminApprovalToJoin} />
-      </View>
 
-      <TouchableOpacity
-        disabled={isPending}
-        onPress={() => void onSave()}
-        className="mt-4 items-center rounded-2xl bg-app-primary py-3 disabled:opacity-60"
-      >
-        <Text className="font-semibold text-white">{isPending ? 'Đang lưu...' : 'Lưu thay đổi'}</Text>
-      </TouchableOpacity>
+        <View className={rowClass}>
+          <View className="flex-1 pr-3">
+            <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Tham gia cần admin duyệt</Text>
+          </View>
+          <Switch isSelected={requireAdminApprovalToJoin} onSelectedChange={setRequireAdminApprovalToJoin} />
+        </View>
+
+        <TouchableOpacity
+          disabled={isPending}
+          onPress={() => void onSave()}
+          className="mt-4 items-center rounded-2xl bg-app-primary py-3 disabled:opacity-60"
+        >
+          <Text className="font-semibold text-white">{isPending ? 'Đang lưu...' : 'Lưu thay đổi'}</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

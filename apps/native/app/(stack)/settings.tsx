@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useClerk } from '@clerk/expo';
-import { useRouter } from 'expo-router';
 import { Switch } from 'heroui-native/switch';
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -10,6 +9,7 @@ import { ProfileLogoutModal } from '~/components/profile/profile-logout-modal';
 import { INDIGO_ETHER } from '~/components/profile/profile-theme';
 import { useProfileLogout } from '~/components/profile/use-profile-logout';
 import { AppCard } from '~/components/ui/app-card';
+import { AppHeader } from '~/components/ui/app-header';
 import { useAppTheme } from '~/providers/theme-provider';
 
 const settingsItems = [
@@ -21,7 +21,6 @@ const settingsItems = [
 ] as const;
 
 export default function SettingsScreen() {
-  const router = useRouter();
   const { signOut } = useClerk();
   const insets = useSafeAreaInsets();
   const { resolvedTheme, setThemePreference } = useAppTheme();
@@ -44,28 +43,15 @@ export default function SettingsScreen() {
   return (
     <>
       <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
+        <AppHeader title="Cài đặt" variant="default" />
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
-            paddingTop: insets.top + 10,
             paddingBottom: Math.max(insets.bottom + 24, 32),
             paddingHorizontal: 16,
+            paddingTop: 12,
           }}
         >
-          <View className="mb-4 flex-row items-center gap-3">
-            <Pressable
-              onPress={() => router.back()}
-              className="h-10 w-10 items-center justify-center rounded-full bg-sky-500/12 active:bg-sky-500/20 dark:bg-sky-400/20 dark:active:bg-sky-400/30"
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <Ionicons name="arrow-back" size={20} color={resolvedTheme === 'dark' ? '#dbeafe' : '#334155'} />
-            </Pressable>
-            <Text className="text-[24px] font-extrabold tracking-tight text-app-fg dark:text-app-fg-dark">
-              Settings
-            </Text>
-          </View>
-
           <AppCard className="rounded-3xl p-2">
             <View>
               <View className="flex-row items-center gap-3 rounded-2xl px-3 py-3">
