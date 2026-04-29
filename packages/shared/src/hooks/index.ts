@@ -54,6 +54,7 @@ export * from './useReport';
 
 // Chatbot hooks
 export * from './useChatbot';
+export * from './useMusic';
 
 // Group permission hooks
 export * from './use-group-permissions'

@@ -91,6 +91,24 @@ export const queryKeys = {
       [...queryKeys.feed.all, 'trending', emotion ?? 'ALL'] as const,
   },
 
+  // ==================== Music ====================
+  music: {
+    all: ['music'] as const,
+    recommendations: (query?: unknown) =>
+      [
+        ...queryKeys.music.all,
+        'recommendations',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    list: (query?: unknown) =>
+      [
+        ...queryKeys.music.all,
+        'list',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    detail: (id: string) => [...queryKeys.music.all, 'detail', id] as const,
+  },
+
   // ==================== Friends ====================
   friends: {
     all: ['friends'] as const,
