@@ -195,7 +195,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
             />
           </View>
 
-          <View className="mt-2 flex-row items-end gap-2">
+          <View className="mt-2 flex-row items-center gap-2">
             <View className="flex-1 rounded-[18px] border border-app-border bg-app-surface-elevated px-3 py-2 dark:border-app-border-dark dark:bg-app-surface-elevated-dark">
               <TextInput
                 multiline
@@ -221,7 +221,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
                 void handleSend();
               }}
             >
-              <AntDesign name="arrow-up" size={16} color="#ffffff" />
+              <AntDesign name="send" size={16} color="#ffffff" />
             </Button>
           </View>
         </View>
