@@ -15,6 +15,7 @@ import {
   NewfeedsHeader,
 } from '~/components/navigation/newfeeds-header';
 import { FeedHeader } from '~/components/newfeeds/feed-header';
+import { RecommendedMusicSection } from '~/components/newfeeds/recommended-music-section';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { FeedScrollProvider } from '~/contexts/feed-scroll-context';
 import { appThemeColors } from '~/constants/theme';
@@ -32,6 +33,8 @@ const DELTA_THRESHOLD = 8;
 const HEADER_SHOW_DURATION = 240;
 const HEADER_HIDE_DURATION = 200;
 const EMOTION_DEBOUNCE_MS = 200;
+const MUSIC_SECTION_HEIGHT = 170;
+const FEED_FILTER_HEIGHT = 92;
 
 export default function NewfeedsScreen() {
   const insets = useSafeAreaInsets();
@@ -151,7 +154,7 @@ export default function NewfeedsScreen() {
 
   const contentContainerStyle = React.useMemo(
     () => ({
-      paddingTop: headerHeight + 70,
+      paddingTop: headerHeight + MUSIC_SECTION_HEIGHT + FEED_FILTER_HEIGHT,
       paddingBottom: 132,
       paddingHorizontal: 16,
     }),
@@ -172,6 +175,15 @@ export default function NewfeedsScreen() {
         <Animated.View
           className="absolute left-0 right-0 z-10"
           style={[stickyMusicBarStyle, { top: headerHeight }]}
+        >
+          <View className="px-4 py-2">
+            <RecommendedMusicSection />
+          </View>
+        </Animated.View>
+
+        <Animated.View
+          className="absolute left-0 right-0 z-[9]"
+          style={[stickyMusicBarStyle, { top: headerHeight + MUSIC_SECTION_HEIGHT }]}
         >
           <FeedHeader
             tab={feedType}

@@ -541,7 +541,3 @@ export const useAssistantChatSession = (
   };
 };
 
-function setTimeout(resolve: (value: void | PromiseLike<void>) => void, ms: number) {
-  throw new Error('Function not implemented.');
-}
-

@@ -3,8 +3,6 @@ import { useTrendingFeed } from '@repo/shared';
 import type { Emotion, PostSnapshotDTO } from '@repo/shared';
 import { FeedList } from './feed-list';
 import { PostCardFull } from '~/components/post/post-card-full';
-import { View } from 'react-native';
-import { MusicCarousel } from '~/components/newfeeds/feed-header/music-carousel';
 
 type TrendingFeedProps = {
   mainEmotion?: Emotion;
@@ -80,16 +78,8 @@ export const TrendingFeed = React.memo(function TrendingFeed({
       onRefresh={handleRefresh}
       onScroll={onScroll}
       scrollEnabled={scrollEnabled}
-      listHeaderComponent={
-        <View className="pb-2">
-          <View className="mb-3">
-            <MusicCarousel />
-          </View>
-          <View className="h-px bg-app-border/40 mx-2" />
-        </View>
-      }
       contentContainerStyle={contentContainerStyle}
-      emptyText="Không có bài viết xu hướng nào."
+      emptyText="Khong co bai viet xu huong nao."
       estimatedItemSize={380}
       getItemType={getItemType}
     />
