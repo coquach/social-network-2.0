@@ -1,4 +1,6 @@
-﻿/**
+"use client";
+
+/**
  * Chatbot-related React Query hooks
  *
  * Platform-agnostic hooks for assistant/chatbot endpoints.
@@ -538,3 +540,4 @@ export const useAssistantChatSession = (
     resetError,
   };
 };
+
