@@ -113,6 +113,10 @@ export function CreateReportModal() {
 
   const isNearLimit = reason.length > MAX_REASON * 0.8;
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <BottomSheet
       isOpen={isOpen}

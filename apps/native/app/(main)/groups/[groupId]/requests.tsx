@@ -5,7 +5,7 @@ import { Text, View } from 'react-native';
 import { GroupPermission, useGroupPermission } from '@repo/shared';
 import { useGroup } from '@repo/shared/hooks';
 
-import { GroupAdminJoinRequestsSection } from './admin/_components/join-request/admin-join-request-section';
+import { GroupAdminJoinRequestsSection } from '~/components/group-admin/join-request/admin-join-request-section';
 import { AppHeader } from '~/components/ui/app-header';
 import { AppLoadingBlock } from '~/components/ui/app-loading';
 
@@ -52,4 +52,7 @@ export default function GroupRequestsScreen() {
     </View>
   );
 }
+
+
+
 

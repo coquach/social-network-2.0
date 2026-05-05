@@ -1,8 +1,9 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTrendingFeed } from '@repo/shared';
 import type { Emotion, PostSnapshotDTO } from '@repo/shared';
-import { FeedList } from './feed-list';
+
 import { PostCardFull } from '~/components/post/post-card-full';
+import { FeedList } from './feed-list';
 
 type TrendingFeedProps = {
   mainEmotion?: Emotion;
@@ -85,3 +86,4 @@ export const TrendingFeed = React.memo(function TrendingFeed({
     />
   );
 });
+

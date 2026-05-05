@@ -46,7 +46,7 @@ export const useCurrentUser = () => {
         throw new Error('Current user is not available');
       }
 
-      return userService.getCurrentUser(userId);
+      return userService.getUser(userId);
     },
     enabled: !!userId,
     ...queryConfigs.semiStatic, // User profile changes infrequently
@@ -95,10 +95,25 @@ export const useUserFriends = (userId: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
     queryKey: [...queryKeys.user.friends(userId), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
-      return userService.getUserFriends(userId, {
+      const friendIdsPage = await friendService.getFriends(userId, {
         ...params,
         cursor: pageParam as string | undefined,
       });
+
+      const users = await Promise.all(
+        (friendIdsPage.data ?? []).map(async (friendId) => {
+          try {
+            return await userService.getUser(friendId);
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      return {
+        ...friendIdsPage,
+        data: users.filter((item): item is UserDTO => item !== null),
+      };
     },
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,

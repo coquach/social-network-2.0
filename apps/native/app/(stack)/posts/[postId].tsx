@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -23,7 +23,7 @@ import { PostHeader } from '~/components/post/post-header';
 import { PostStats } from '~/components/post/post-stats';
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
-import { MediaCarousel } from './_components/media-carousel';
+import { MediaCarousel } from '~/components/posts/media-carousel';
 
 /** ================= KEYBOARD HANDLER ================= */
 function useKeyboardHeight() {
@@ -219,7 +219,7 @@ function PostDetailScreenContent() {
           style={{ flex: 1 }}
         />
 
-        {/* INPUT (FIX CHUẨN) */}
+        {/* INPUT (FIX CHUáº¨N) */}
         <View
           style={{
             position: 'absolute',
@@ -243,7 +243,7 @@ function PostDetailScreenContent() {
 function PostNotFound() {
   return (
     <View className="flex-1 items-center justify-center">
-      <Text>Không tìm thấy bài viết</Text>
+      <Text>KhÃ´ng tÃ¬m tháº¥y bÃ i viáº¿t</Text>
     </View>
   );
 }
@@ -252,3 +252,7 @@ function PostNotFound() {
 export default function PostDetailScreen() {
   return <PostDetailScreenContent />;
 }
+
+
+
+

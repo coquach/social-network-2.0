@@ -26,6 +26,7 @@ import type {
   EditHistoryDTO,
   MediaDTO,
   PostDTO,
+  PostSnapshotDTO,
   UpdatePostInput,
 } from '../types/post.types';
 import { useUploadOptional } from '../contexts/upload-context';
@@ -63,7 +64,7 @@ export const usePost = (postId: string, options?: { enabled?: boolean }) => {
  * Get current user's posts with infinite scroll
  */
 export const useMyPosts = (params?: { feeling?: Emotion }) => {
-  return useInfiniteQuery<CursorPageResponse<PostDTO>>({
+  return useInfiniteQuery<CursorPageResponse<PostSnapshotDTO>>({
     queryKey: queryKeys.posts.myPosts(),
     queryFn: async ({ pageParam }) => {
       return postService.getMyPosts({

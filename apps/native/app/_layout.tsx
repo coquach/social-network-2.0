@@ -10,6 +10,7 @@ import {
   type HeroUINativeConfig,
 } from 'heroui-native/provider';
 import { useEffect } from 'react';
+import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeChatRealtimeProvider } from '~/providers/chat-realtime-provider';
@@ -28,7 +29,6 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
-
 
 if (!publishableKey) {
   throw new Error('Add your Clerk Publishable Key to the .env file');
@@ -49,7 +49,6 @@ const heroUIConfig: HeroUINativeConfig = {
 };
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: false,
@@ -63,6 +62,8 @@ export default function RootLayout() {
     'Inter-Regular': require('../assets/fonts/Inter-Regular.ttf'),
     'Inter-Bold': require('../assets/fonts/Inter-Bold.ttf'),
   });
+
+
 
   useEffect(() => {
     if (loaded || error) {

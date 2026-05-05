@@ -3,7 +3,8 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { AppInlineLoading } from '~/components/ui/app-loading';
 import { Ionicons } from '@expo/vector-icons';
 import { GroupMemberDTO, GroupRole } from '@repo/shared/types';
-import { roleLabel } from './admin-members-section';
+import { roleLabel } from './role-labels';
+
 
 type ChangeRoleFormProps = {
   member: GroupMemberDTO;
@@ -13,13 +14,13 @@ type ChangeRoleFormProps = {
   onClose: () => void;
 };
 
-export const ChangeRoleForm = ({
+export function ChangeRoleForm({
   member,
   currentUserRole,
   isSubmitting,
   onSubmit,
   onClose,
-}: ChangeRoleFormProps) => {
+}: ChangeRoleFormProps) {
   const [selectedRole, setSelectedRole] = useState<GroupRole>(member.role);
 
   const allowedRoles = React.useMemo(() => {
@@ -98,6 +99,7 @@ export const ChangeRoleForm = ({
       </View>
     </View>
   );
-};
+}
+
 
 

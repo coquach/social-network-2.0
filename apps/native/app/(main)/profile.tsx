@@ -1,14 +1,16 @@
 ﻿import {
   MediaType,
+  useFriendUsers,
   useCurrentUser,
   useMyPosts,
   useMyShares,
   useUpdateProfile,
-  useUserFriends,
   type NativeUploadFileDescriptor,
   type PostDTO,
+  type PostSnapshotDTO,
   type SharePostSnapshotDTO,
   type UploadableFile,
+  toPostSnapshot,
 } from '@repo/shared';
 import { useRouter } from 'expo-router';
 import { useToast } from 'heroui-native/toast';
@@ -17,8 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FeedList } from '~/app/(main)/newfeeds/components/feed-list';
-import { toPostSnapshot } from '~/app/(main)/newfeeds/components/feed-mappers';
+
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { PostCardFull } from '~/components/post/post-card-full';
 import { SharePost } from '~/components/post/share-post';
@@ -28,13 +29,18 @@ import {
 } from '~/components/profile/profile-edit-modal';
 import { AppCard } from '~/components/ui/app-card';
 import { AppToast } from '~/components/ui/app-toast';
+import { FeedList } from '~/components/newfeeds/feed/feed-list';
 
-const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=e2e8f0&color=0f172a&size=256';
-const DEFAULT_COVER = 'https://images.unsplash.com/photo-1519682337058-a94d519337bc?q=80&w=1400&auto=format&fit=crop';
+const DEFAULT_AVATAR = Image.resolveAssetSource(
+  require('~/assets/images/placeholder.png'),
+).uri;
+const DEFAULT_COVER = Image.resolveAssetSource(
+  require('~/assets/images/placeholder-bg.png'),
+).uri;
 const DEFAULT_BIO = 'Chưa cập nhật tiểu sử.';
 
 type ProfileFeedItem =
-  | { type: 'post'; data: PostDTO }
+  | { type: 'post'; data: PostSnapshotDTO }
   | { type: 'share'; data: SharePostSnapshotDTO };
 
 export default function ProfileScreen() {
@@ -50,9 +56,11 @@ export default function ProfileScreen() {
     data: friendsData,
     isLoading: isFriendsLoading,
     isError: isFriendsError,
-  } = useUserFriends(currentUser?.id ?? '', { limit: 6 });
+  } = useFriendUsers(currentUser?.id ?? '', { limit: 6 });
 
-  const [activePostTab, setActivePostTab] = React.useState<'posts' | 'shares'>('posts');
+  const [activePostTab, setActivePostTab] = React.useState<'posts' | 'shares'>(
+    'posts',
+  );
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
   const {
@@ -86,7 +94,8 @@ export default function ProfileScreen() {
   }, [currentUser?.firstName, currentUser?.lastName]);
 
   const profileAvatar = currentUser?.avatarUrl || DEFAULT_AVATAR;
-  const coverImage = currentUser?.coverImage?.url || currentUser?.coverImageUrl || DEFAULT_COVER;
+  const coverImage =
+    currentUser?.coverImage?.url || currentUser?.coverImageUrl || DEFAULT_COVER;
   const bioText = currentUser?.bio?.trim() || DEFAULT_BIO;
 
   const myPostItems = React.useMemo(
@@ -103,31 +112,24 @@ export default function ProfileScreen() {
     const friends = (friendsData?.pages ?? []).flatMap((page) => page.data);
     return friends.slice(0, 3).map((friend) => ({
       id: friend.id,
-      name: [friend.firstName, friend.lastName].filter(Boolean).join(' ') || 'Người dùng',
+      name:
+        [friend.firstName, friend.lastName].filter(Boolean).join(' ') ||
+        'Người dùng',
       avatar: friend.avatarUrl || DEFAULT_AVATAR,
     }));
   }, [friendsData?.pages]);
 
-  const photoItems = React.useMemo(() => {
-    const urls: string[] = [];
 
-    for (const post of myPostItems) {
-      for (const media of post.media ?? []) {
-        if (media.type === MediaType.IMAGE && media.url) {
-          urls.push(media.url);
-        }
-      }
-    }
-
-    return Array.from(new Set(urls)).slice(0, 9);
-  }, [myPostItems]);
 
   const showToast = React.useCallback(
     (title: string, message: string, variant: 'success' | 'error') => {
       toast.show({
         duration: 2200,
         component: (toastProps) => (
-          <AppToast toast={{ title, message, variant }} toastProps={toastProps} />
+          <AppToast
+            toast={{ title, message, variant }}
+            toastProps={toastProps}
+          />
         ),
       });
     },
@@ -162,7 +164,11 @@ export default function ProfileScreen() {
       });
 
       setIsEditModalOpen(false);
-      showToast('Cập nhật hồ sơ thành công', 'Thông tin của bạn đã được lưu.', 'success');
+      showToast(
+        'Cập nhật hồ sơ thành công',
+        'Thông tin của bạn đã được lưu.',
+        'success',
+      );
     },
     [showToast, toUploadableImage, updateProfile],
   );
@@ -180,20 +186,26 @@ export default function ProfileScreen() {
       return myPostItems.map((post) => ({ type: 'post' as const, data: post }));
     }
 
-    return myShareItems.map((share) => ({ type: 'share' as const, data: share }));
+    return myShareItems.map((share) => ({
+      type: 'share' as const,
+      data: share,
+    }));
   }, [activePostTab, myPostItems, myShareItems]);
 
-  const isLoading = activePostTab === 'posts' ? isMyPostsLoading : isMySharesLoading;
+  const isLoading =
+    activePostTab === 'posts' ? isMyPostsLoading : isMySharesLoading;
   const isError = activePostTab === 'posts' ? isMyPostsError : isMySharesError;
   const errorMessage = React.useMemo(() => {
     const error = activePostTab === 'posts' ? myPostsError : mySharesError;
     return error instanceof Error ? error.message : undefined;
   }, [activePostTab, myPostsError, mySharesError]);
 
-  const hasNextPage = activePostTab === 'posts' ? Boolean(hasNextPosts) : Boolean(hasNextShares);
+  const hasNextPage =
+    activePostTab === 'posts' ? Boolean(hasNextPosts) : Boolean(hasNextShares);
   const isFetchingNextPage =
     activePostTab === 'posts' ? isFetchingNextPosts : isFetchingNextShares;
-  const refreshing = activePostTab === 'posts' ? isRefetchingMyPosts : isRefetchingMyShares;
+  const refreshing =
+    activePostTab === 'posts' ? isRefetchingMyPosts : isRefetchingMyShares;
 
   const handleRefresh = React.useCallback(async () => {
     if (activePostTab === 'posts') {
@@ -217,30 +229,47 @@ export default function ProfileScreen() {
     void fetchNextShares();
   }, [activePostTab, fetchNextPosts, fetchNextShares]);
 
-  const renderItem = React.useCallback(({ item }: { item: ProfileFeedItem }) => {
-    if (item.type === 'post') {
-      return <PostCardFull data={toPostSnapshot(item.data)} />;
-    }
+  const renderItem = React.useCallback(
+    ({ item }: { item: ProfileFeedItem }) => {
+      if (item.type === 'post') {
+        return <PostCardFull data={toPostSnapshot(item.data)} />;
+      }
 
-    return <SharePost data={item.data} />;
-  }, []);
+      return <SharePost data={item.data} />;
+    },
+    [],
+  );
 
   const keyExtractor = React.useCallback((item: ProfileFeedItem) => {
-    return item.type === 'post' ? `post-${item.data.id}` : `share-${item.data.shareId}`;
+    if (item.type === 'post') {
+      const post = item.data as PostDTO | PostSnapshotDTO;
+      const postId = 'postId' in post ? post.postId : post.id;
+      return `post-${postId}`;
+    }
+
+    return `share-${item.data.shareId}`;
   }, []);
 
   const header = React.useMemo(
     () => (
       <View>
         <View>
-          <Image source={{ uri: coverImage }} className="h-52 w-full" resizeMode="cover" />
+          <Image
+            source={{ uri: coverImage }}
+            className="h-52 w-full"
+            resizeMode="cover"
+          />
           <View className="absolute inset-0 bg-black/12 dark:bg-black/30" />
         </View>
 
         <View className="px-4">
           <View className="-mt-14">
             <View className="h-28 w-28 rounded-full border-4 border-app-bg bg-app-bg p-1 dark:border-app-bg-dark dark:bg-app-bg-dark">
-              <Image source={{ uri: profileAvatar }} className="h-full w-full rounded-full" resizeMode="cover" />
+              <Image
+                source={{ uri: profileAvatar }}
+                className="h-full w-full rounded-full"
+                resizeMode="cover"
+              />
             </View>
           </View>
 
@@ -257,7 +286,9 @@ export default function ProfileScreen() {
               className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-app-primary active:opacity-85 dark:bg-app-primary-dark"
             >
               <Ionicons name="create-outline" size={18} color="#ffffff" />
-              <Text className="text-[15px] font-semibold text-white">Chỉnh sửa hồ sơ</Text>
+              <Text className="text-[15px] font-semibold text-white">
+                Chỉnh sửa hồ sơ
+              </Text>
             </Pressable>
 
             <Pressable
@@ -271,9 +302,13 @@ export default function ProfileScreen() {
           <View className="mt-5">
             <AppCard className="gap-3 rounded-3xl p-4">
               <View className="flex-row items-center justify-between">
-                <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">Bạn bè</Text>
+                <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
+                  Bạn bè
+                </Text>
                 <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
-                  {currentUser?.friendCount ? `${currentUser.friendCount}` : 'Xem tất cả'}
+                  {currentUser?.friendCount
+                    ? `${currentUser.friendCount}`
+                    : 'Xem tất cả'}
                 </Text>
               </View>
 
@@ -340,24 +375,34 @@ export default function ProfileScreen() {
           </View> */}
 
           <View className="mt-4 mb-3">
-            <Text className="mb-3 text-[20px] font-bold text-app-fg dark:text-app-fg-dark">Bài viết</Text>
+            <Text className="mb-3 text-[20px] font-bold text-app-fg dark:text-app-fg-dark">
+              Bài viết
+            </Text>
 
             <View className="mb-1 flex-row rounded-2xl bg-app-surface-elevated p-1 dark:bg-app-surface-elevated-dark">
               <Pressable
                 onPress={() => setActivePostTab('posts')}
                 className={`h-10 flex-1 items-center justify-center rounded-xl ${
-                  activePostTab === 'posts' ? 'bg-app-surface dark:bg-app-surface-dark' : ''
+                  activePostTab === 'posts'
+                    ? 'bg-app-surface dark:bg-app-surface-dark'
+                    : ''
                 }`}
               >
-                <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Của tôi</Text>
+                <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">
+                  Của tôi
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => setActivePostTab('shares')}
                 className={`h-10 flex-1 items-center justify-center rounded-xl ${
-                  activePostTab === 'shares' ? 'bg-app-surface dark:bg-app-surface-dark' : ''
+                  activePostTab === 'shares'
+                    ? 'bg-app-surface dark:bg-app-surface-dark'
+                    : ''
                 }`}
               >
-                <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Chia sẻ</Text>
+                <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">
+                  Chia sẻ
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -373,7 +418,6 @@ export default function ProfileScreen() {
       friendItems,
       isFriendsError,
       isFriendsLoading,
-      photoItems,
       profileAvatar,
       router,
     ],
@@ -402,7 +446,11 @@ export default function ProfileScreen() {
             paddingHorizontal: 0,
             paddingTop: insets.top + 8,
           }}
-          emptyText={activePostTab === 'posts' ? 'Chưa có bài viết nào.' : 'Chưa có bài chia sẻ nào.'}
+          emptyText={
+            activePostTab === 'posts'
+              ? 'Chưa có bài viết nào.'
+              : 'Chưa có bài chia sẻ nào.'
+          }
           estimatedItemSize={420}
           getItemType={(item) => item.type}
           bodyHorizontalPadding={16}
@@ -423,3 +471,6 @@ export default function ProfileScreen() {
     </>
   );
 }
+
+
+

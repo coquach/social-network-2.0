@@ -5,7 +5,7 @@ import { Text, View } from 'react-native';
 import { GroupPermission, useGroupPermission } from '@repo/shared';
 import { useGroup } from '@repo/shared/hooks';
 
-import { GroupAdminMembersSection } from './admin/_components/members/admin-members-section';
+import { GroupAdminMembersSection } from '~/components/group-admin/members/admin-members-section';
 import { AppHeader } from '~/components/ui/app-header';
 import { AppLoadingBlock } from '~/components/ui/app-loading';
 
@@ -17,7 +17,7 @@ export default function GroupMembersScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
-        <AppLoadingBlock label="Đang tải nhóm" />
+        <AppLoadingBlock label="Äang táº£i nhÃ³m" />
       </View>
     );
   }
@@ -26,7 +26,7 @@ export default function GroupMembersScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg px-6 dark:bg-app-bg-dark">
         <Text className="text-center text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-          Không thể tải dữ liệu nhóm.
+          KhÃ´ng thá»ƒ táº£i dá»¯ liá»‡u nhÃ³m.
         </Text>
       </View>
     );
@@ -35,10 +35,15 @@ export default function GroupMembersScreen() {
   if (!can(GroupPermission.MANAGE_MEMBERS)) {
     return (
       <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-        <AppHeader title="Thành viên" subtitle="Bạn không có quyền quản trị thành viên" variant="bordered" />
+        <AppHeader
+          title="ThÃ nh viÃªn"
+          subtitle="Báº¡n khÃ´ng cÃ³ quyá»n quáº£n trá»‹ thÃ nh viÃªn"
+          variant="bordered"
+        />
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-center text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-            Tài khoản của bạn không đủ quyền để xem và chỉnh sửa danh sách thành viên.
+            TÃ i khoáº£n cá»§a báº¡n khÃ´ng Ä‘á»§ quyá»n Ä‘á»ƒ xem vÃ  chá»‰nh sá»­a danh sÃ¡ch thÃ nh
+            viÃªn.
           </Text>
         </View>
       </View>
@@ -47,9 +52,17 @@ export default function GroupMembersScreen() {
 
   return (
     <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-      <AppHeader title="Thành viên" subtitle="Quản lý vai trò và quyền thành viên" variant="bordered" />
+      <AppHeader
+        title="ThÃ nh viÃªn"
+        subtitle="Quáº£n lÃ½ vai trÃ² vÃ  quyá»n thÃ nh viÃªn"
+        variant="bordered"
+      />
       <GroupAdminMembersSection groupId={groupId ?? ''} />
     </View>
   );
 }
+
+
+
+
 

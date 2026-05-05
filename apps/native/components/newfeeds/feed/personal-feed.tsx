@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { FeedType, useMyFeed } from '@repo/shared';
 import type {
   Emotion,
@@ -6,9 +6,10 @@ import type {
   PostSnapshotDTO,
   SharePostSnapshotDTO,
 } from '@repo/shared';
-import { FeedList } from './feed-list';
+
 import { PostCardFull } from '~/components/post/post-card-full';
 import { SharePost } from '~/components/post/share-post';
+import { FeedList } from './feed-list';
 
 type PersonalFeedProps = {
   mainEmotion?: Emotion;
@@ -100,3 +101,4 @@ export const PersonalFeed = React.memo(function PersonalFeed({
     />
   );
 });
+

@@ -16,7 +16,7 @@ type JoinRequestRowProps = {
   onReject: () => void;
 };
 
-export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApprove, onReject }: JoinRequestRowProps) => {
+export function JoinRequestRow({ request, canManage, approving, rejecting, onApprove, onReject }: JoinRequestRowProps) {
   const { toast } = useToast();
   const [confirmAction, setConfirmAction] = React.useState<'approve' | 'reject' | null>(null);
 
@@ -108,6 +108,6 @@ export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApp
       />
     </View>
   );
-};
+}
 
 

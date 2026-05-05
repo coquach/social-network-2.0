@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { AppInlineLoading } from '~/components/ui/app-loading';
@@ -23,7 +23,7 @@ const EVENT_FILTER_OPTIONS: EventFilterOption[] = [
   { value: GroupEventLog.MEMBER_ROLE_CHANGED, label: 'Vai trò' },
 ];
 
-export const GroupAdminLogsSection = ({ groupId }: { groupId: string }) => {
+export function GroupAdminLogsSection({ groupId }: { groupId: string }) {
   const [eventFilter, setEventFilter] = React.useState<'ALL' | GroupEventLog>('ALL');
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isRefetching, refetch } = useGroupLogs(
@@ -90,6 +90,6 @@ export const GroupAdminLogsSection = ({ groupId }: { groupId: string }) => {
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
     />
   );
-};
+}
 
 

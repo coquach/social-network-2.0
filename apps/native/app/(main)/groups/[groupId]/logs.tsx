@@ -5,7 +5,7 @@ import { Text, View } from 'react-native';
 import { GroupPermission, useGroupPermission } from '@repo/shared';
 import { useGroup } from '@repo/shared/hooks';
 
-import { GroupAdminLogsSection } from './admin/_components/logs/admin-logs-section';
+import { GroupAdminLogsSection } from '~/components/group-admin/logs/admin-logs-section';
 import { AppHeader } from '~/components/ui/app-header';
 import { AppLoadingBlock } from '~/components/ui/app-loading';
 
@@ -52,4 +52,7 @@ export default function GroupLogsScreen() {
     </View>
   );
 }
+
+
+
 

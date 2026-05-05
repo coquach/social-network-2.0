@@ -25,7 +25,8 @@ import {
   type FriendSuggestionDTO,
   type RelationshipStatusResponse,
 } from '../api/services';
-import type { CursorPageResponse } from '../types';
+import { userService } from '../api/services/user.service';
+import type { CursorPageResponse, QueryParams, UserDTO } from '../types';
 import { cancelQueries, invalidateQueries } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
 import { mutationKeys, queryKeys } from './query-keys';
@@ -78,6 +79,42 @@ export const useFriends = (userId?: string, params?: { limit?: number }) => {
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
+    ...queryConfigs.semiStatic,
+  });
+};
+
+/**
+ * Hook to get a user's friend profiles (UserDTO list).
+ * This is useful for profile/group UIs that need avatar/name directly.
+ */
+export const useFriendUsers = (userId: string, params?: QueryParams) => {
+  return useInfiniteQuery<CursorPageResponse<UserDTO>>({
+    queryKey: [...queryKeys.user.friends(userId), params ?? {}] as const,
+    queryFn: async ({ pageParam }) => {
+      const friendIdsPage = await friendService.getFriends(userId, {
+        ...params,
+        cursor: pageParam as string | undefined,
+      });
+
+      const users = await Promise.all(
+        (friendIdsPage.data ?? []).map(async (friendId) => {
+          try {
+            return await userService.getUser(friendId);
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      return {
+        ...friendIdsPage,
+        data: users.filter((item): item is UserDTO => item !== null),
+      };
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+    initialPageParam: undefined,
+    enabled: !!userId,
     ...queryConfigs.semiStatic,
   });
 };

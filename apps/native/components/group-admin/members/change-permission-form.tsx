@@ -3,7 +3,7 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { GroupPermission } from '@repo/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 
-export const ChangePermissionForm = ({ member, onClose, onSubmit }: any) => {
+export function ChangePermissionForm({ member, onClose, onSubmit }: any) {
   const [selected, setSelected] = useState<Set<GroupPermission>>(new Set(member.customPermissions || []));
 
   const permissions = Object.values(GroupPermission);
@@ -55,4 +55,4 @@ export const ChangePermissionForm = ({ member, onClose, onSubmit }: any) => {
       </TouchableOpacity>
     </View>
   );
-};
+}

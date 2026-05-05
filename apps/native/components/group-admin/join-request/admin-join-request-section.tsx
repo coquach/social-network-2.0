@@ -16,7 +16,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: JoinRequestStatus.CANCELLED, label: 'Đã hủy' },
 ];
 
-export const GroupAdminJoinRequestsSection = ({ groupId }: { groupId: string }) => {
+export function GroupAdminJoinRequestsSection({ groupId }: { groupId: string }) {
   const [statusFilter, setStatusFilter] = useState<JoinRequestStatus>(JoinRequestStatus.PENDING);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useGroupJoinRequests(groupId, {
@@ -88,6 +88,6 @@ export const GroupAdminJoinRequestsSection = ({ groupId }: { groupId: string }) 
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
     />
   );
-};
+}
 
 

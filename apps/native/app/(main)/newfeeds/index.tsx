@@ -1,4 +1,4 @@
-import { useFocusEffect } from '@react-navigation/native';
+﻿import { useFocusEffect } from '@react-navigation/native';
 import React from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -25,8 +25,8 @@ import {
   useFeedFilterStore,
 } from '~/store/feed-filter-store';
 
-import { PersonalFeed } from './components/personal-feed';
-import { TrendingFeed } from './components/trending-feed';
+import { PersonalFeed } from '~/components/newfeeds/feed/personal-feed';
+import { TrendingFeed } from '~/components/newfeeds/feed/trending-feed';
 
 const TOP_THRESHOLD = 12;
 const DELTA_THRESHOLD = 8;
@@ -213,3 +213,7 @@ export default function NewfeedsScreen() {
     </FeedScrollProvider>
   );
 }
+
+
+
+

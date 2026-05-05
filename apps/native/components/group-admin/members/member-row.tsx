@@ -18,12 +18,13 @@ import {
 
 import { AppModal } from '~/components/ui/app-modal';
 import { AppToast } from '~/components/ui/app-toast';
-
-import { roleLabel } from './admin-members-section';
-import { ChangePermissionForm } from './change-permission-form';
 import { ChangeRoleForm } from './change-role-form';
+import { ChangePermissionForm } from './change-permission-form';
+import { roleLabel } from './role-labels';
 
-export const GroupAdminMemberRow = ({ member, groupId }: { member: GroupMemberDTO; groupId: string }) => {
+
+
+export function GroupAdminMemberRow({ member, groupId }: { member: GroupMemberDTO; groupId: string }) {
   const { toast } = useToast();
 
   const [modalType, setModalType] = useState<'NONE' | 'ROLE' | 'PERM'>('NONE');
@@ -179,6 +180,7 @@ export const GroupAdminMemberRow = ({ member, groupId }: { member: GroupMemberDT
       />
     </View>
   );
-};
+}
+
 
 

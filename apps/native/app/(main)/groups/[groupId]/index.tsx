@@ -4,8 +4,8 @@ import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { toPostSnapshot } from '~/app/(main)/newfeeds/components/feed-mappers';
-import { FeedList } from '~/app/(main)/newfeeds/components/feed-list';
+import { toPostSnapshot } from '~/components/newfeeds/feed/feed-mappers';
+import { FeedList } from '~/components/newfeeds/feed/feed-list';
 import { GroupHeader } from '~/components/groups/group-header';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { PostCardFull } from '~/components/post/post-card-full';
@@ -38,7 +38,7 @@ export default function GroupDetailScreen() {
   if (isGroupLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
-        <AppLoadingBlock label="Đang tải nhóm" />
+        <AppLoadingBlock label="Ðang t?i nhóm" />
       </View>
     );
   }
@@ -47,7 +47,7 @@ export default function GroupDetailScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg px-6 dark:bg-app-bg-dark">
         <Text className="text-center text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-          Không thể tải thông tin nhóm.
+          Không th? t?i thông tin nhóm.
         </Text>
       </View>
     );
@@ -71,16 +71,20 @@ export default function GroupDetailScreen() {
         scrollEnabled
         listHeaderComponent={
           <View>
-            <AppHeader title="Chi tiết nhóm" subtitle="Cập nhật thảo luận và hoạt động nhóm" variant="bordered" />
+            <AppHeader title="Chi ti?t nhóm" subtitle="C?p nh?t th?o lu?n và ho?t d?ng nhóm" variant="bordered" />
             <GroupHeader group={group} />
           </View>
         }
         contentContainerStyle={{ paddingBottom: 110, paddingTop: 0, paddingHorizontal: 12 }}
-        emptyText="Nhóm này chưa có bài viết nào."
+        emptyText="Nhóm này chua có bài vi?t nào."
         estimatedItemSize={420}
         getItemType={() => 'post'}
       />
     </View>
   );
 }
+
+
+
+
 

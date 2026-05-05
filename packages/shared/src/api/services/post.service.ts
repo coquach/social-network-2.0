@@ -15,6 +15,7 @@ import type {
   Emotion,
   PostGroupStatus,
   EditHistoryDTO,
+  PostSnapshotDTO,
 } from '../../types';
 
 /**
@@ -58,7 +59,7 @@ export const postService = {
    */
   async getMyPosts(
     params?: GetPostQueryParams,
-  ): Promise<CursorPageResponse<PostDTO>> {
+  ): Promise<CursorPageResponse<PostSnapshotDTO>> {
     return getApiClient().getCursorPage('/posts/me', { params });
   },
 

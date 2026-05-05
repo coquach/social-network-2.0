@@ -1,10 +1,11 @@
 import React from 'react';
-import { useMusicRecommendations } from '@repo/shared';
+import { useMusicFeatures, useMusicRecommendations } from '@repo/shared';
 import {
   setAudioModeAsync,
   useAudioPlayer,
   useAudioPlayerStatus,
 } from 'expo-audio';
+import { Text, View } from 'react-native';
 import { Card } from 'heroui-native/card';
 
 import { useAppTheme } from '~/providers/theme-provider';
@@ -13,8 +14,14 @@ import { MusicRecommendationPlayer } from './music/music-recommendation-player';
 
 export function RecommendedMusicSection() {
   const { colors, resolvedTheme } = useAppTheme();
-  const { data } = useMusicRecommendations({ page: 1, limit: 20 });
-  const tracks = data?.data ?? [];
+  const recommendationsQuery = useMusicRecommendations({ page: 1, limit: 20 });
+  const fallbackQuery = useMusicFeatures({ page: 1, limit: 20 });
+  const recommendedTracks = recommendationsQuery.data?.data ?? [];
+  const fallbackTracks = fallbackQuery.data?.data ?? [];
+  const tracks = React.useMemo(() => {
+    const source = recommendedTracks.length > 0 ? recommendedTracks : fallbackTracks;
+    return source.filter((track) => Boolean(track.audio?.url));
+  }, [fallbackTracks, recommendedTracks]);
 
   const [isListOpen, setIsListOpen] = React.useState(false);
   const [activeIndex, setActiveIndex] = React.useState(0);
@@ -22,6 +29,13 @@ export function RecommendedMusicSection() {
   const player = useAudioPlayer(null, { updateInterval: 250 });
   const status = useAudioPlayerStatus(player);
   const activeTrack = tracks[activeIndex] ?? null;
+  const currentTrackUrlRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (activeIndex >= tracks.length) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, tracks.length]);
 
   React.useEffect(() => {
     void setAudioModeAsync({
@@ -42,6 +56,21 @@ export function RecommendedMusicSection() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
+  const startPlayback = React.useCallback(
+    async (uri: string) => {
+      try {
+        if (currentTrackUrlRef.current !== uri) {
+          player.replace({ uri });
+          currentTrackUrlRef.current = uri;
+        }
+        player.play();
+      } catch (error) {
+        console.error('[music] playback failed:', error);
+      }
+    },
+    [player],
+  );
+
   const playTrackAt = React.useCallback(
     (index: number) => {
       const track = tracks[index];
@@ -51,25 +80,24 @@ export function RecommendedMusicSection() {
       }
 
       setActiveIndex(index);
-      player.replace({ uri });
-      player.play();
+      void startPlayback(uri);
     },
-    [player, tracks],
+    [startPlayback, tracks],
   );
 
   const handleTogglePlay = React.useCallback(() => {
-    if (!activeTrack?.audio?.url) {
+    const uri = activeTrack?.audio?.url;
+    if (!uri) {
       return;
     }
 
-    if (!status.isLoaded || !status.playing) {
-      player.replace({ uri: activeTrack.audio.url });
-      player.play();
+    if (status.playing) {
+      player.pause();
       return;
     }
 
-    player.pause();
-  }, [activeTrack?.audio?.url, player, status.isLoaded, status.playing]);
+    void startPlayback(uri);
+  }, [activeTrack?.audio?.url, player, startPlayback, status.playing]);
 
   const handlePrevious = React.useCallback(() => {
     if (tracks.length === 0) {
@@ -132,6 +160,14 @@ export function RecommendedMusicSection() {
         style={{ backgroundColor: palette.bg }}
       >
         <Card.Body className="px-0 py-0">
+          {recommendationsQuery.isError && fallbackQuery.isError ? (
+            <View className="px-2.5 py-2.5">
+              <Text className="text-xs text-red-500">
+                Không tải được nhạc đề xuất.
+              </Text>
+            </View>
+          ) : null}
+
           <MusicRecommendationPlayer
             track={activeTrack ?? tracks[0] ?? null}
             status={status}

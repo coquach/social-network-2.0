@@ -82,12 +82,12 @@ export function ProfileEditModal({
     coverPicker.clearImage();
     setErrorMessage(null);
   }, [
-    avatarPicker,
-    coverPicker,
     defaultBio,
     defaultFirstName,
     defaultLastName,
     visible,
+    avatarPicker.clearImage,
+    coverPicker.clearImage,
   ]);
 
   const avatarPreview = avatarPicker.selectedImage?.previewUri ?? defaultAvatarUrl;

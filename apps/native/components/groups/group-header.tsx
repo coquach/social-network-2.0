@@ -1,4 +1,4 @@
-﻿import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { useToast } from 'heroui-native/toast';
@@ -59,26 +59,41 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
 
   const { mutate: joinGroup, isPending: isJoining } = useRequestToJoinGroup();
   const { mutate: leaveGroup, isPending: isLeaving } = useLeaveGroup();
-  const { mutate: acceptInvite, isPending: isAcceptingInvite } = useAcceptGroupInvite();
-  const { mutate: declineInvite, isPending: isDecliningInvite } = useDeclineGroupInvite();
+  const { mutate: acceptInvite, isPending: isAcceptingInvite } =
+    useAcceptGroupInvite();
+  const { mutate: declineInvite, isPending: isDecliningInvite } =
+    useDeclineGroupInvite();
   const { mutate: inviteUser, isPending: isInviting } = useInviteUserToGroup();
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = React.useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = React.useState(false);
   const [searchKeyword, setSearchKeyword] = React.useState('');
-  const [selectedFriend, setSelectedFriend] = React.useState<UserDTO | null>(null);
+  const [selectedFriend, setSelectedFriend] = React.useState<UserDTO | null>(
+    null,
+  );
 
   const showToast = React.useCallback(
-    (title: string, message: string, variant: 'success' | 'error' | 'warning' | 'info') => {
+    (
+      title: string,
+      message: string,
+      variant: 'success' | 'error' | 'warning' | 'info',
+    ) => {
       toast.show({
-        component: (toastProps) => <AppToast toast={{ title, message, variant }} toastProps={toastProps} />,
+        component: (toastProps) => (
+          <AppToast
+            toast={{ title, message, variant }}
+            toastProps={toastProps}
+          />
+        ),
       });
     },
     [toast],
   );
 
   const friends = React.useMemo(() => {
-    const merged = (friendsData?.pages ?? []).flatMap((page) => page.data ?? []);
+    const merged = (friendsData?.pages ?? []).flatMap(
+      (page) => page.data ?? [],
+    );
     const dedup = new Map<string, UserDTO>();
     merged.forEach((user) => dedup.set(user.id, user));
     return Array.from(dedup.values());
@@ -94,7 +109,9 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
   }, [friends, searchKeyword]);
 
   const activeMemberIds = React.useMemo(() => {
-    const ids = (memberData?.pages ?? []).flatMap((p) => p.data ?? []).map((member) => member.userId);
+    const ids = (memberData?.pages ?? [])
+      .flatMap((p) => p.data ?? [])
+      .map((member) => member.userId);
     return new Set(ids);
   }, [memberData?.pages]);
 
@@ -111,10 +128,15 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
     label: string,
     onPress: () => void,
   ) => (
-    <TouchableOpacity onPress={onPress} className="h-11 rounded-xl bg-slate-100 px-4 dark:bg-slate-800">
+    <TouchableOpacity
+      onPress={onPress}
+      className="h-11 rounded-xl bg-slate-100 px-4 dark:bg-slate-800"
+    >
       <View className="h-full flex-row items-center gap-2">
         <Ionicons name={icon} size={18} color="#64748b" />
-        <Text className="font-bold text-slate-600 dark:text-slate-300">{label}</Text>
+        <Text className="font-bold text-slate-600 dark:text-slate-300">
+          {label}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -123,7 +145,11 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
     <View className="rounded-3xl bg-app-surface pb-4 dark:bg-app-surface-dark">
       <View className="h-44 w-full overflow-hidden rounded-t-3xl bg-slate-200 dark:bg-slate-800">
         {group.coverImageUrl ? (
-          <Image source={{ uri: group.coverImageUrl }} className="h-full w-full" resizeMode="cover" />
+          <Image
+            source={{ uri: group.coverImageUrl }}
+            className="h-full w-full"
+            resizeMode="cover"
+          />
         ) : null}
       </View>
 
@@ -133,11 +159,18 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
         </View>
 
         <View className="mt-3">
-          <Text className="text-2xl font-bold text-slate-900 dark:text-white">{group.name}</Text>
+          <Text className="text-2xl font-bold text-slate-900 dark:text-white">
+            {group.name}
+          </Text>
           <View className="mt-1 flex-row items-center gap-1">
-            <Ionicons name={group.privacy === 'PUBLIC' ? 'earth' : 'lock-closed'} size={14} color="#64748b" />
+            <Ionicons
+              name={group.privacy === 'PUBLIC' ? 'earth' : 'lock-closed'}
+              size={14}
+              color="#64748b"
+            />
             <Text className="text-sm text-slate-500">
-              {group.privacy === 'PUBLIC' ? 'Nhóm công khai' : 'Nhóm riêng tư'} • {group.members} thành viên
+              {group.privacy === 'PUBLIC' ? 'Nhóm công khai' : 'Nhóm riêng tư'}{' '}
+              • {group.members} thành viên
             </Text>
           </View>
         </View>
@@ -148,21 +181,33 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
               disabled={isJoining}
               onPress={() =>
                 joinGroup(group.id, {
-                  onSuccess: () => showToast('Đã gửi yêu cầu', 'Thao tác tham gia nhóm thành công.', 'success'),
-                  onError: (error) => showToast('Tham gia thất bại', error.message, 'error'),
+                  onSuccess: () =>
+                    showToast(
+                      'Đã gửi yêu cầu',
+                      'Thao tác tham gia nhóm thành công.',
+                      'success',
+                    ),
+                  onError: (error) =>
+                    showToast('Tham gia thất bại', error.message, 'error'),
                 })
               }
               className="h-11 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600 disabled:opacity-70"
             >
-              {isJoining ? null : <Ionicons name="person-add" size={18} color="white" />}
-              <Text className="font-bold text-white">{isJoining ? 'Đang xử lý...' : 'Tham gia nhóm'}</Text>
+              {isJoining ? null : (
+                <Ionicons name="person-add" size={18} color="white" />
+              )}
+              <Text className="font-bold text-white">
+                {isJoining ? 'Đang xử lý...' : 'Tham gia nhóm'}
+              </Text>
             </TouchableOpacity>
           ) : null}
 
           {group.membershipStatus === MembershipStatus.PENDING_APPROVAL ? (
             <View className="h-11 flex-row items-center justify-center gap-2 rounded-xl bg-amber-100 dark:bg-amber-900/30">
               <Ionicons name="time" size={18} color="#d97706" />
-              <Text className="font-bold text-amber-600">Yêu cầu tham gia đang chờ duyệt</Text>
+              <Text className="font-bold text-amber-600">
+                Yêu cầu tham gia đang chờ duyệt
+              </Text>
             </View>
           ) : null}
 
@@ -172,8 +217,14 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
                 disabled={isAcceptingInvite || isDecliningInvite}
                 onPress={() =>
                   acceptInvite(group.id, {
-                    onSuccess: () => showToast('Đã tham gia nhóm', 'Bạn đã chấp nhận lời mời.', 'success'),
-                    onError: (error) => showToast('Không thể chấp nhận', error.message, 'error'),
+                    onSuccess: () =>
+                      showToast(
+                        'Đã tham gia nhóm',
+                        'Bạn đã chấp nhận lời mời.',
+                        'success',
+                      ),
+                    onError: (error) =>
+                      showToast('Không thể chấp nhận', error.message, 'error'),
                   })
                 }
                 className="h-11 flex-1 flex-row items-center justify-center rounded-xl bg-blue-600 disabled:opacity-70"
@@ -184,13 +235,21 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
                 disabled={isAcceptingInvite || isDecliningInvite}
                 onPress={() =>
                   declineInvite(group.id, {
-                    onSuccess: () => showToast('Đã từ chối', 'Bạn đã từ chối lời mời vào nhóm.', 'info'),
-                    onError: (error) => showToast('Không thể từ chối', error.message, 'error'),
+                    onSuccess: () =>
+                      showToast(
+                        'Đã từ chối',
+                        'Bạn đã từ chối lời mời vào nhóm.',
+                        'info',
+                      ),
+                    onError: (error) =>
+                      showToast('Không thể từ chối', error.message, 'error'),
                   })
                 }
                 className="h-11 flex-1 flex-row items-center justify-center rounded-xl bg-slate-200 dark:bg-slate-800 disabled:opacity-70"
               >
-                <Text className="font-bold text-slate-700 dark:text-slate-300">Từ chối</Text>
+                <Text className="font-bold text-slate-700 dark:text-slate-300">
+                  Từ chối
+                </Text>
               </TouchableOpacity>
             </View>
           ) : null}
@@ -222,14 +281,18 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
               </View>
 
               <View className="flex-row flex-wrap gap-2">
-                {renderQuickAction('people-outline', 'Thành viên', () => router.push(`/(main)/groups/${group.id}/members`))}
+                {renderQuickAction('people-outline', 'Thành viên', () =>
+                  router.push(`/(main)/groups/${group.id}/members`),
+                )}
                 {can(GroupPermission.MANAGE_JOIN_REQUESTS)
                   ? renderQuickAction('checkmark-done-outline', 'Yêu cầu', () =>
                       router.push(`/(main)/groups/${group.id}/requests`),
                     )
                   : null}
                 {can(GroupPermission.MANAGE_GROUP)
-                  ? renderQuickAction('time-outline', 'Nhật ký', () => router.push(`/(main)/groups/${group.id}/logs`))
+                  ? renderQuickAction('time-outline', 'Nhật ký', () =>
+                      router.push(`/(main)/groups/${group.id}/logs`),
+                    )
                   : null}
                 {can(GroupPermission.UPDATE_GROUP_SETTINGS)
                   ? renderQuickAction('settings-outline', 'Cài đặt', () =>
@@ -242,7 +305,9 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
 
           {group.membershipStatus === MembershipStatus.BANNED ? (
             <View className="h-11 flex-1 flex-row items-center justify-center rounded-xl bg-red-100">
-              <Text className="font-bold text-red-600">Bạn đã bị chặn khỏi nhóm</Text>
+              <Text className="font-bold text-red-600">
+                Bạn đã bị chặn khỏi nhóm
+              </Text>
             </View>
           ) : null}
         </View>
@@ -260,14 +325,22 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
               onPress={() => setIsLeaveModalOpen(false)}
               className="h-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
             >
-              <Text className="font-semibold text-slate-700 dark:text-slate-300">Hủy</Text>
+              <Text className="font-semibold text-slate-700 dark:text-slate-300">
+                Hủy
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               disabled={isLeaving}
               onPress={() => {
                 leaveGroup(group.id, {
-                  onSuccess: () => showToast('Đã rời nhóm', 'Bạn đã rời nhóm thành công.', 'success'),
-                  onError: (error) => showToast('Không thể rời nhóm', error.message, 'error'),
+                  onSuccess: () =>
+                    showToast(
+                      'Đã rời nhóm',
+                      'Bạn đã rời nhóm thành công.',
+                      'success',
+                    ),
+                  onError: (error) =>
+                    showToast('Không thể rời nhóm', error.message, 'error'),
                 });
                 setIsLeaveModalOpen(false);
               }}
@@ -290,7 +363,9 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
               onPress={() => setIsInviteModalOpen(false)}
               className="h-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
             >
-              <Text className="font-semibold text-slate-700 dark:text-slate-300">Hủy</Text>
+              <Text className="font-semibold text-slate-700 dark:text-slate-300">
+                Hủy
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               disabled={!selectedFriend || isInviting}
@@ -300,8 +375,18 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
                 inviteUser(
                   { groupId: group.id, userId: targetUserId },
                   {
-                    onSuccess: () => showToast('Đã gửi lời mời', 'Lời mời tham gia nhóm đã được gửi.', 'success'),
-                    onError: (error) => showToast('Không thể mời thành viên', error.message, 'error'),
+                    onSuccess: () =>
+                      showToast(
+                        'Đã gửi lời mời',
+                        'Lời mời tham gia nhóm đã được gửi.',
+                        'success',
+                      ),
+                    onError: (error) =>
+                      showToast(
+                        'Không thể mời thành viên',
+                        error.message,
+                        'error',
+                      ),
                   },
                 );
                 setSearchKeyword('');
@@ -310,7 +395,9 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
               }}
               className="h-11 items-center justify-center rounded-xl bg-sky-500 disabled:opacity-60"
             >
-              <Text className="font-semibold text-white">{isInviting ? 'Đang gửi...' : 'Gửi lời mời'}</Text>
+              <Text className="font-semibold text-white">
+                {isInviting ? 'Đang gửi...' : 'Gửi lời mời'}
+              </Text>
             </TouchableOpacity>
           </>
         }
@@ -334,7 +421,11 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
           </Text>
           <View className="h-48 rounded-xl border border-app-border bg-app-bg p-2 dark:border-app-border-dark dark:bg-app-bg-dark">
             {isLoadingFriends || isRefetchingFriends ? (
-              <AppLoadingBlock label="Đang tải bạn bè" size="sm" variant="muted" />
+              <AppLoadingBlock
+                label="Đang tải bạn bè"
+                size="sm"
+                variant="muted"
+              />
             ) : filteredFriends.length > 0 ? (
               <FlashList
                 data={filteredFriends}
@@ -345,7 +436,11 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
                   const isAlreadyMember = activeMemberIds.has(item.id);
                   const isAlreadyInvited = pendingInviteIds.has(item.id);
                   const isDisabled = isAlreadyMember || isAlreadyInvited;
-                  const statusLabel = isAlreadyMember ? 'Đã là thành viên' : isAlreadyInvited ? 'Đã mời' : '';
+                  const statusLabel = isAlreadyMember
+                    ? 'Đã là thành viên'
+                    : isAlreadyInvited
+                      ? 'Đã mời'
+                      : '';
 
                   return (
                     <TouchableOpacity
@@ -361,12 +456,17 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
                             : 'border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark'
                       }`}
                     >
-                      <Image source={{ uri: item.avatarUrl }} className="h-8 w-8 rounded-full bg-slate-200" />
+                      <Image
+                        source={{ uri: item.avatarUrl }}
+                        className="h-8 w-8 rounded-full bg-slate-200"
+                      />
                       <View className="ml-3 flex-1">
                         <Text
                           numberOfLines={1}
                           className={`text-sm font-semibold ${
-                            isSelected ? 'text-sky-600 dark:text-sky-400' : 'text-app-fg dark:text-app-fg-dark'
+                            isSelected
+                              ? 'text-sky-600 dark:text-sky-400'
+                              : 'text-app-fg dark:text-app-fg-dark'
                           }`}
                         >
                           {fullName}
