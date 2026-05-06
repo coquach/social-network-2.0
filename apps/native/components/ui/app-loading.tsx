@@ -1,48 +1,99 @@
-import { Card } from 'heroui-native/card';
-import { Spinner } from 'heroui-native/spinner';
+﻿import { Spinner } from 'heroui-native/spinner';
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { AppModal } from '~/components/ui/app-modal';
+import { cn } from '~/lib/cn';
+
+type AppLoadingSize = 'sm' | 'md' | 'lg';
+type AppLoadingVariant = 'default' | 'muted';
 
 type AppLoadingContentProps = {
   label?: string;
   description?: string;
+  size?: AppLoadingSize;
+  variant?: AppLoadingVariant;
+  icon?: React.ReactNode;
+  className?: string;
+  contentClassName?: string;
+};
+
+type AppInlineLoadingProps = {
+  label?: string;
+  size?: AppLoadingSize;
+  className?: string;
 };
 
 type AppLoadingOverlayProps = AppLoadingContentProps & {
   visible: boolean;
 };
 
-export function AppLoadingBlock({
-  label = 'Dang xu ly',
-  description,
-}: AppLoadingContentProps) {
+export function AppInlineLoading({ label = 'Đang tải...', size = 'sm', className }: AppInlineLoadingProps) {
   return (
-    <Card className="items-center gap-3 rounded-3xl border border-app-border bg-app-surface px-5 py-6 dark:border-app-border-dark dark:bg-app-surface-dark">
-      <Spinner size="sm" color="default" />
-      <Card.Title className="text-base font-semibold text-app-fg dark:text-app-fg-dark">
-        {label}
-      </Card.Title>
-      {description ? (
-        <Card.Description className="text-center text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
-          {description}
-        </Card.Description>
-      ) : null}
-    </Card>
+    <View className={cn('flex-row items-center justify-center gap-2', className)}>
+      <Spinner size={size} color="default" />
+      <Text className="text-sm font-medium text-app-muted-fg dark:text-app-muted-fg-dark">{label}</Text>
+    </View>
+  );
+}
+
+export function AppLoadingBlock({
+  label = 'Đang xử lý',
+  description,
+  size = 'sm',
+  variant = 'default',
+  icon,
+  className,
+  contentClassName,
+}: AppLoadingContentProps) {
+  const titleClass =
+    variant === 'muted'
+      ? 'text-app-muted-fg dark:text-app-muted-fg-dark'
+      : 'text-app-fg dark:text-app-fg-dark';
+
+  return (
+    <View className={cn('flex-1 items-center justify-center', className)}>
+      <View className={cn('items-center justify-center gap-3', contentClassName)}>
+        {icon ?? <Spinner size={size} color="default" />}
+        <Text className={cn('text-center text-base font-semibold', titleClass)}>{label}</Text>
+        {description ? (
+          <Text className="max-w-[18rem] text-center text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
+            {description}
+          </Text>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
 export function AppLoadingOverlay({
   visible,
-  label = 'Dang xu ly',
+  label = 'Đang xử lý',
   description,
+  size = 'sm',
+  variant = 'default',
+  icon,
+  className,
+  contentClassName,
 }: AppLoadingOverlayProps) {
+  if (!visible) {
+    return null;
+  }
+
   return (
-    <AppModal visible={visible} onClose={() => {}} dismissible={false}>
-      <View className="w-full max-w-xs">
-        <AppLoadingBlock label={label} description={description} />
-      </View>
-    </AppModal>
+    <View
+      className="items-center justify-center bg-app-bg/78 px-6 dark:bg-app-bg-dark/82"
+      pointerEvents="auto"
+      style={StyleSheet.absoluteFillObject}
+    >
+      <AppLoadingBlock
+        label={label}
+        description={description}
+        size={size}
+        variant={variant}
+        icon={icon}
+        className={className}
+        contentClassName={contentClassName}
+      />
+    </View>
   );
 }

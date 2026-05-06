@@ -1,144 +1,476 @@
-import { useClerk, useUser } from '@clerk/expo';
-import { Ionicons } from '@expo/vector-icons';
+﻿import {
+  MediaType,
+  useFriendUsers,
+  useCurrentUser,
+  useMyPosts,
+  useMyShares,
+  useUpdateProfile,
+  type NativeUploadFileDescriptor,
+  type PostDTO,
+  type PostSnapshotDTO,
+  type SharePostSnapshotDTO,
+  type UploadableFile,
+  toPostSnapshot,
+} from '@repo/shared';
+import { useRouter } from 'expo-router';
+import { useToast } from 'heroui-native/toast';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PrimaryButton, SecondaryButton } from '~/components/ui/app-button';
+
+import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
+import { PostCardFull } from '~/components/post/post-card-full';
+import { SharePost } from '~/components/post/share-post';
+import {
+  ProfileEditModal,
+  type ProfileEditFormValues,
+} from '~/components/profile/profile-edit-modal';
 import { AppCard } from '~/components/ui/app-card';
-import { AppModal } from '~/components/ui/app-modal';
-import { AppScrollScreen } from '~/components/ui/app-screen';
-import { AppEyebrow, AppSubtitle, AppTitle } from '~/components/ui/app-text';
+import { AppToast } from '~/components/ui/app-toast';
+import { FeedList } from '~/components/newfeeds/feed/feed-list';
 
-const profileStats = [
-  { label: 'Bài viết đã lưu', value: '48', icon: 'bookmark-outline' as const },
-  { label: 'Nhóm đang theo dõi', value: '12', icon: 'people-outline' as const },
-  { label: 'Thông báo mới', value: '7', icon: 'notifications-outline' as const },
-  { label: 'Chuỗi đăng nhập', value: '16 ngày', icon: 'flame-outline' as const },
-];
+const DEFAULT_AVATAR = Image.resolveAssetSource(
+  require('~/assets/images/placeholder.png'),
+).uri;
+const DEFAULT_COVER = Image.resolveAssetSource(
+  require('~/assets/images/placeholder-bg.png'),
+).uri;
+const DEFAULT_BIO = 'Chưa cập nhật tiểu sử.';
 
-const accountSections = [
-  { title: 'Bảo mật', detail: 'Đổi mật khẩu, thiết bị tin cậy và xác thực đa lớp.' },
-  { title: 'Thông báo', detail: 'Chọn loại cảnh báo bạn muốn nhận theo thời gian thực.' },
-  { title: 'Nội dung đã lưu', detail: 'Xem lại các bài viết, phân tích và nhóm bạn đánh dấu.' },
-  { title: 'Quyền riêng tư', detail: 'Kiểm soát hồ sơ công khai và khả năng được tìm thấy.' },
-  { title: 'Thiết bị', detail: 'Theo dõi nơi tài khoản đang đăng nhập và phiên còn hoạt động.' },
-  { title: 'Trợ giúp', detail: 'Báo lỗi, gửi phản hồi hoặc liên hệ đội hỗ trợ sản phẩm.' },
-];
+type ProfileFeedItem =
+  | { type: 'post'; data: PostSnapshotDTO }
+  | { type: 'share'; data: SharePostSnapshotDTO };
 
 export default function ProfileScreen() {
-  const { user } = useUser();
-  const { signOut } = useClerk();
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
-  const [isSigningOut, setIsSigningOut] = React.useState(false);
+  const router = useRouter();
+  const { handleScroll } = useTabBarAutoHide();
+  const insets = useSafeAreaInsets();
+  const { toast } = useToast();
 
-  async function handleConfirmLogout() {
-    if (isSigningOut) {
+  const { data: currentUser } = useCurrentUser();
+  const updateProfile = useUpdateProfile();
+
+  const {
+    data: friendsData,
+    isLoading: isFriendsLoading,
+    isError: isFriendsError,
+  } = useFriendUsers(currentUser?.id ?? '', { limit: 6 });
+
+  const [activePostTab, setActivePostTab] = React.useState<'posts' | 'shares'>(
+    'posts',
+  );
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+
+  const {
+    data: myPostsData,
+    isLoading: isMyPostsLoading,
+    isError: isMyPostsError,
+    error: myPostsError,
+    fetchNextPage: fetchNextPosts,
+    hasNextPage: hasNextPosts,
+    isFetchingNextPage: isFetchingNextPosts,
+    refetch: refetchMyPosts,
+    isRefetching: isRefetchingMyPosts,
+  } = useMyPosts();
+
+  const {
+    data: mySharesData,
+    isLoading: isMySharesLoading,
+    isError: isMySharesError,
+    error: mySharesError,
+    fetchNextPage: fetchNextShares,
+    hasNextPage: hasNextShares,
+    isFetchingNextPage: isFetchingNextShares,
+    refetch: refetchMyShares,
+    isRefetching: isRefetchingMyShares,
+  } = useMyShares();
+
+  const displayName = React.useMemo(() => {
+    const first = currentUser?.firstName?.trim() ?? '';
+    const last = currentUser?.lastName?.trim() ?? '';
+    return [first, last].filter(Boolean).join(' ') || 'Người dùng';
+  }, [currentUser?.firstName, currentUser?.lastName]);
+
+  const profileAvatar = currentUser?.avatarUrl || DEFAULT_AVATAR;
+  const coverImage =
+    currentUser?.coverImage?.url || currentUser?.coverImageUrl || DEFAULT_COVER;
+  const bioText = currentUser?.bio?.trim() || DEFAULT_BIO;
+
+  const myPostItems = React.useMemo(
+    () => (myPostsData?.pages ?? []).flatMap((page) => page.data),
+    [myPostsData?.pages],
+  );
+
+  const myShareItems = React.useMemo(
+    () => (mySharesData?.pages ?? []).flatMap((page) => page.data),
+    [mySharesData?.pages],
+  );
+
+  const friendItems = React.useMemo(() => {
+    const friends = (friendsData?.pages ?? []).flatMap((page) => page.data);
+    return friends.slice(0, 3).map((friend) => ({
+      id: friend.id,
+      name:
+        [friend.firstName, friend.lastName].filter(Boolean).join(' ') ||
+        'Người dùng',
+      avatar: friend.avatarUrl || DEFAULT_AVATAR,
+    }));
+  }, [friendsData?.pages]);
+
+
+
+  const showToast = React.useCallback(
+    (title: string, message: string, variant: 'success' | 'error') => {
+      toast.show({
+        duration: 2200,
+        component: (toastProps) => (
+          <AppToast
+            toast={{ title, message, variant }}
+            toastProps={toastProps}
+          />
+        ),
+      });
+    },
+    [toast],
+  );
+
+  const toUploadableImage = React.useCallback(
+    (
+      file: NativeUploadFileDescriptor | null,
+    ): UploadableFile<NativeUploadFileDescriptor> | undefined => {
+      if (!file) {
+        return undefined;
+      }
+
+      return {
+        file,
+        type: MediaType.IMAGE,
+        previewUri: file.uri,
+      };
+    },
+    [],
+  );
+
+  const handleSaveProfile = React.useCallback(
+    async (values: ProfileEditFormValues) => {
+      await updateProfile.mutateAsync({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        bio: values.bio,
+        uploadAvatar: toUploadableImage(values.avatarFile),
+        uploadCover: toUploadableImage(values.coverFile),
+      });
+
+      setIsEditModalOpen(false);
+      showToast(
+        'Cập nhật hồ sơ thành công',
+        'Thông tin của bạn đã được lưu.',
+        'success',
+      );
+    },
+    [showToast, toUploadableImage, updateProfile],
+  );
+
+  React.useEffect(() => {
+    if (!updateProfile.error) {
       return;
     }
 
-    setIsSigningOut(true);
+    showToast('Cập nhật thất bại', updateProfile.error.message, 'error');
+  }, [showToast, updateProfile.error]);
 
-    try {
-      await signOut();
-    } finally {
-      setIsSigningOut(false);
-      setIsLogoutModalOpen(false);
+  const feedItems = React.useMemo<ProfileFeedItem[]>(() => {
+    if (activePostTab === 'posts') {
+      return myPostItems.map((post) => ({ type: 'post' as const, data: post }));
     }
-  }
+
+    return myShareItems.map((share) => ({
+      type: 'share' as const,
+      data: share,
+    }));
+  }, [activePostTab, myPostItems, myShareItems]);
+
+  const isLoading =
+    activePostTab === 'posts' ? isMyPostsLoading : isMySharesLoading;
+  const isError = activePostTab === 'posts' ? isMyPostsError : isMySharesError;
+  const errorMessage = React.useMemo(() => {
+    const error = activePostTab === 'posts' ? myPostsError : mySharesError;
+    return error instanceof Error ? error.message : undefined;
+  }, [activePostTab, myPostsError, mySharesError]);
+
+  const hasNextPage =
+    activePostTab === 'posts' ? Boolean(hasNextPosts) : Boolean(hasNextShares);
+  const isFetchingNextPage =
+    activePostTab === 'posts' ? isFetchingNextPosts : isFetchingNextShares;
+  const refreshing =
+    activePostTab === 'posts' ? isRefetchingMyPosts : isRefetchingMyShares;
+
+  const handleRefresh = React.useCallback(async () => {
+    if (activePostTab === 'posts') {
+      await refetchMyPosts({
+        refetchPage: (_page: unknown, index: number) => index === 0,
+      } as never);
+      return;
+    }
+
+    await refetchMyShares({
+      refetchPage: (_page: unknown, index: number) => index === 0,
+    } as never);
+  }, [activePostTab, refetchMyPosts, refetchMyShares]);
+
+  const handleLoadMore = React.useCallback(() => {
+    if (activePostTab === 'posts') {
+      void fetchNextPosts();
+      return;
+    }
+
+    void fetchNextShares();
+  }, [activePostTab, fetchNextPosts, fetchNextShares]);
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: ProfileFeedItem }) => {
+      if (item.type === 'post') {
+        return <PostCardFull data={toPostSnapshot(item.data)} />;
+      }
+
+      return <SharePost data={item.data} />;
+    },
+    [],
+  );
+
+  const keyExtractor = React.useCallback((item: ProfileFeedItem) => {
+    if (item.type === 'post') {
+      const post = item.data as PostDTO | PostSnapshotDTO;
+      const postId = 'postId' in post ? post.postId : post.id;
+      return `post-${postId}`;
+    }
+
+    return `share-${item.data.shareId}`;
+  }, []);
+
+  const header = React.useMemo(
+    () => (
+      <View>
+        <View>
+          <Image
+            source={{ uri: coverImage }}
+            className="h-52 w-full"
+            resizeMode="cover"
+          />
+          <View className="absolute inset-0 bg-black/12 dark:bg-black/30" />
+        </View>
+
+        <View className="px-4">
+          <View className="-mt-14">
+            <View className="h-28 w-28 rounded-full border-4 border-app-bg bg-app-bg p-1 dark:border-app-bg-dark dark:bg-app-bg-dark">
+              <Image
+                source={{ uri: profileAvatar }}
+                className="h-full w-full rounded-full"
+                resizeMode="cover"
+              />
+            </View>
+          </View>
+
+          <Text className="mt-3 text-[28px] font-extrabold tracking-tight text-app-fg dark:text-app-fg-dark">
+            {displayName}
+          </Text>
+          <Text className="mt-1 text-[14px] leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
+            {bioText}
+          </Text>
+
+          <View className="mt-4 flex-row gap-2">
+            <Pressable
+              onPress={() => setIsEditModalOpen(true)}
+              className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-app-primary active:opacity-85 dark:bg-app-primary-dark"
+            >
+              <Ionicons name="create-outline" size={18} color="#ffffff" />
+              <Text className="text-[15px] font-semibold text-white">
+                Chỉnh sửa hồ sơ
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => router.push('/(stack)/settings')}
+              className="h-11 w-11 items-center justify-center rounded-xl bg-app-surface-elevated active:opacity-85 dark:bg-app-surface-elevated-dark"
+            >
+              <Ionicons name="settings-outline" size={18} color="#334155" />
+            </Pressable>
+          </View>
+
+          <View className="mt-5">
+            <AppCard className="gap-3 rounded-3xl p-4">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
+                  Bạn bè
+                </Text>
+                <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
+                  {currentUser?.friendCount
+                    ? `${currentUser.friendCount}`
+                    : 'Xem tất cả'}
+                </Text>
+              </View>
+
+              {isFriendsLoading ? (
+                <View className="py-3">
+                  <ActivityIndicator size="small" color="#0ea5e9" />
+                </View>
+              ) : isFriendsError ? (
+                <Text className="text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
+                  Không tải được danh sách bạn bè.
+                </Text>
+              ) : friendItems.length === 0 ? (
+                <Text className="text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
+                  Chưa có bạn bè hiển thị.
+                </Text>
+              ) : (
+                <View className="flex-row justify-between">
+                  {friendItems.map((friend) => (
+                    <View key={friend.id} className="w-[31.8%]">
+                      <Image
+                        source={{ uri: friend.avatar }}
+                        className="aspect-square w-full rounded-xl"
+                        resizeMode="cover"
+                      />
+                      <Text
+                        numberOfLines={1}
+                        className="mt-2 text-center text-[12px] text-app-fg dark:text-app-fg-dark"
+                      >
+                        {friend.name}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </AppCard>
+          </View>
+
+          {/* <View className="mt-4">
+            <AppCard className="gap-3 rounded-3xl p-4">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">Ảnh</Text>
+                <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
+                  {photoItems.length > 0 ? `${photoItems.length} ảnh` : 'Chưa có ảnh'}
+                </Text>
+              </View>
+
+              {photoItems.length === 0 ? (
+                <Text className="text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
+                  Chưa có ảnh từ bài viết.
+                </Text>
+              ) : (
+                <View className="flex-row flex-wrap justify-between gap-y-2">
+                  {photoItems.slice(0, 6).map((imageUrl, index) => (
+                    <Image
+                      key={`${imageUrl}-${index}`}
+                      source={{ uri: imageUrl }}
+                      className="aspect-square w-[32%] rounded-lg"
+                      resizeMode="cover"
+                    />
+                  ))}
+                </View>
+              )}
+            </AppCard>
+          </View> */}
+
+          <View className="mt-4 mb-3">
+            <Text className="mb-3 text-[20px] font-bold text-app-fg dark:text-app-fg-dark">
+              Bài viết
+            </Text>
+
+            <View className="mb-1 flex-row rounded-2xl bg-app-surface-elevated p-1 dark:bg-app-surface-elevated-dark">
+              <Pressable
+                onPress={() => setActivePostTab('posts')}
+                className={`h-10 flex-1 items-center justify-center rounded-xl ${
+                  activePostTab === 'posts'
+                    ? 'bg-app-surface dark:bg-app-surface-dark'
+                    : ''
+                }`}
+              >
+                <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">
+                  Của tôi
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setActivePostTab('shares')}
+                className={`h-10 flex-1 items-center justify-center rounded-xl ${
+                  activePostTab === 'shares'
+                    ? 'bg-app-surface dark:bg-app-surface-dark'
+                    : ''
+                }`}
+              >
+                <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">
+                  Chia sẻ
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </View>
+    ),
+    [
+      activePostTab,
+      bioText,
+      coverImage,
+      currentUser?.friendCount,
+      displayName,
+      friendItems,
+      isFriendsError,
+      isFriendsLoading,
+      profileAvatar,
+      router,
+    ],
+  );
 
   return (
     <>
-      <AppScrollScreen>
-        <View className="gap-4 pb-28">
-          <AppEyebrow>Cá nhân</AppEyebrow>
-          <AppTitle className="text-3xl">Hồ sơ của bạn</AppTitle>
-          <AppSubtitle>
-            Quản lý phiên đăng nhập, theo dõi danh tính hiển thị và các thiết lập tài khoản
-            cốt lõi.
-          </AppSubtitle>
-
-          <AppCard className="gap-4">
-            <View className="flex-row items-center gap-4">
-              <View className="h-16 w-16 items-center justify-center rounded-[24px] bg-app-primary/15 dark:bg-app-primary-dark/20">
-                <Ionicons name="person-outline" size={30} color="#0ea5e9" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-xl font-bold text-app-fg dark:text-app-fg-dark">
-                  {user?.fullName ?? 'Sentimeta Member'}
-                </Text>
-                <Text className="mt-1 text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-                  {user?.primaryEmailAddress?.emailAddress ?? 'Bạn đã đăng nhập thành công'}
-                </Text>
-              </View>
-            </View>
-
-            <PrimaryButton label="Chỉnh sửa hồ sơ" onPress={() => {}} />
-            <SecondaryButton label="Đăng xuất" onPress={() => setIsLogoutModalOpen(true)} />
-          </AppCard>
-
-          <View className="flex-row flex-wrap gap-3">
-            {profileStats.map((item) => (
-              <AppCard key={item.label} className="w-[48%] gap-3">
-                <View className="h-11 w-11 items-center justify-center rounded-2xl bg-app-primary/10 dark:bg-app-primary-dark/15">
-                  <Ionicons name={item.icon} size={20} color="#0ea5e9" />
-                </View>
-                <Text className="text-xl font-bold text-app-fg dark:text-app-fg-dark">
-                  {item.value}
-                </Text>
-                <Text className="text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-                  {item.label}
-                </Text>
-              </AppCard>
-            ))}
-          </View>
-
-          <AppCard className="gap-3">
-            <Text className="text-lg font-bold text-app-fg dark:text-app-fg-dark">
-              Khu vực tài khoản
-            </Text>
-            {accountSections.map((section) => (
-              <View
-                key={section.title}
-                className="rounded-2xl border border-app-border/70 p-4 dark:border-app-border-dark/70"
-              >
-                <Text className="text-base font-semibold text-app-fg dark:text-app-fg-dark">
-                  {section.title}
-                </Text>
-                <Text className="mt-2 text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-                  {section.detail}
-                </Text>
-              </View>
-            ))}
-          </AppCard>
-        </View>
-      </AppScrollScreen>
-
-      <AppModal
-        visible={isLogoutModalOpen}
-        onClose={() => {
-          if (!isSigningOut) {
-            setIsLogoutModalOpen(false);
+      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
+        <FeedList
+          items={feedItems}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          isLoading={isLoading}
+          isError={isError}
+          errorMessage={errorMessage}
+          isFetchingNextPage={isFetchingNextPage}
+          hasNextPage={hasNextPage}
+          onLoadMore={handleLoadMore}
+          refreshing={refreshing}
+          onRefresh={() => void handleRefresh()}
+          onScroll={handleScroll}
+          scrollEnabled
+          listHeaderComponent={header}
+          contentContainerStyle={{
+            paddingBottom: Math.max(insets.bottom + 110, 130),
+            paddingHorizontal: 0,
+            paddingTop: insets.top + 8,
+          }}
+          emptyText={
+            activePostTab === 'posts'
+              ? 'Chưa có bài viết nào.'
+              : 'Chưa có bài chia sẻ nào.'
           }
-        }}
-        title="Xác nhận đăng xuất"
-        description="Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng tài khoản này."
-        dismissible={!isSigningOut}
-        footer={
-          <>
-            <PrimaryButton
-              label="Đăng xuất"
-              onPress={() => void handleConfirmLogout()}
-              loading={isSigningOut}
-              disabled={isSigningOut}
-            />
-            <SecondaryButton
-              label="Hủy"
-              onPress={() => setIsLogoutModalOpen(false)}
-              disabled={isSigningOut}
-            />
-          </>
-        }
+          estimatedItemSize={420}
+          getItemType={(item) => item.type}
+          bodyHorizontalPadding={16}
+        />
+      </View>
+
+      <ProfileEditModal
+        visible={isEditModalOpen}
+        defaultFirstName={currentUser?.firstName ?? ''}
+        defaultLastName={currentUser?.lastName ?? ''}
+        defaultBio={currentUser?.bio ?? ''}
+        defaultAvatarUrl={profileAvatar}
+        defaultCoverUrl={coverImage}
+        isSaving={updateProfile.isPending}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={(values) => void handleSaveProfile(values)}
       />
     </>
   );
 }
+
+
+

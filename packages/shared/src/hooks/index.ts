@@ -1,6 +1,6 @@
 /**
  * React Query Hooks for @repo/shared
- * 
+ *
  * Platform-agnostic hooks that work with React Query.
  * These hooks use the services layer and provide caching, optimistic updates,
  * and automatic refetching.
@@ -51,8 +51,14 @@ export * from './useSearch';
 // Report hooks
 export * from './useReport';
 
+
+// Chatbot hooks
+export * from './useChatbot';
+export * from './useMusic';
+
 // Group permission hooks
 export * from './use-group-permissions'
+
 
 // UI utility hooks (web-only, requires DOM)
 // Note: Import these directly from './useUI' in web apps only

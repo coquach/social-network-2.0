@@ -1,63 +1,90 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+﻿import { useGroup, useGroupPosts } from '@repo/shared/hooks';
+import type { PostDTO } from '@repo/shared/types';
 import { useLocalSearchParams } from 'expo-router';
-import { AppScrollScreen } from '~/components/ui/app-screen';
-import { GroupHeader } from '~/components/groups/group-header';
-import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { Text, View } from 'react-native';
 
-// Import Mock Data
-import { MOCK_GROUP_DETAIL, MOCK_POSTS } from '~/constants/mock-group';
+import { toPostSnapshot } from '~/components/newfeeds/feed/feed-mappers';
+import { FeedList } from '~/components/newfeeds/feed/feed-list';
+import { GroupHeader } from '~/components/groups/group-header';
+import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
+import { PostCardFull } from '~/components/post/post-card-full';
+import { AppHeader } from '~/components/ui/app-header';
+import { AppLoadingBlock } from '~/components/ui/app-loading';
 
 export default function GroupDetailScreen() {
-    const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const { handleScroll } = useTabBarAutoHide();
 
-    // Giả sử isLoading = false để hiện UI ngay
-    const group = MOCK_GROUP_DETAIL;
+  const { data: group, isLoading: isGroupLoading, isError: isGroupError } = useGroup(groupId ?? '');
 
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isRefetching,
+  } = useGroupPosts(groupId ?? '');
+
+  const posts = React.useMemo<PostDTO[]>(
+    () => (data?.pages ?? []).flatMap((page) => page.data ?? []),
+    [data?.pages],
+  );
+
+  if (isGroupLoading) {
     return (
-        <AppScrollScreen>
-            <View className="pb-20">
-                {/* 1. Header Nhóm */}
-                <GroupHeader group={group} />
-
-                {/* 2. Phần Post Feed */}
-                <View className="p-4 gap-4">
-                    {/* Thanh Create Post giả */}
-                    <View className="bg-white dark:bg-slate-900 p-4 rounded-2xl flex-row items-center gap-3 border border-slate-100 dark:border-slate-800">
-                        <Image source={{ uri: 'https://i.pravatar.cc/150?u=me' }} className="h-10 w-10 rounded-full" />
-                        <Text className="text-slate-400 flex-1">Bạn đang nghĩ gì...</Text>
-                        <Ionicons name="images-outline" size={20} color="#64748b" />
-                    </View>
-
-                    {/* Danh sách bài viết mock */}
-                    {MOCK_POSTS.map((post) => (
-                        <View key={post.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                            <View className="flex-row items-center gap-3 mb-3">
-                                <Image source={{ uri: post.avatar }} className="h-10 w-10 rounded-full" />
-                                <View>
-                                    <Text className="font-bold text-slate-900 dark:text-white">{post.author}</Text>
-                                    <Text className="text-xs text-slate-500">{post.time}</Text>
-                                </View>
-                            </View>
-
-                            <Text className="text-slate-800 dark:text-slate-200 leading-5">
-                                {post.content}
-                            </Text>
-
-                            <View className="flex-row mt-4 pt-4 border-t border-slate-50 dark:border-slate-800 gap-6">
-                                <View className="flex-row items-center gap-1">
-                                    <Ionicons name="heart-outline" size={18} color="#64748b" />
-                                    <Text className="text-slate-500 text-xs">{post.likes}</Text>
-                                </View>
-                                <View className="flex-row items-center gap-1">
-                                    <Ionicons name="chatbubble-outline" size={18} color="#64748b" />
-                                    <Text className="text-slate-500 text-xs">{post.comments}</Text>
-                                </View>
-                            </View>
-                        </View>
-                    ))}
-                </View>
-            </View>
-        </AppScrollScreen>
+      <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
+        <AppLoadingBlock label="Ðang t?i nhóm" />
+      </View>
     );
+  }
+
+  if (!group || isGroupError) {
+    return (
+      <View className="flex-1 items-center justify-center bg-app-bg px-6 dark:bg-app-bg-dark">
+        <Text className="text-center text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
+          Không th? t?i thông tin nhóm.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
+      <FeedList
+        items={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <PostCardFull data={toPostSnapshot(item)} />}
+        isLoading={isLoading}
+        isError={isError}
+        errorMessage={error instanceof Error ? error.message : undefined}
+        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={Boolean(hasNextPage)}
+        onLoadMore={() => void fetchNextPage()}
+        refreshing={isRefetching}
+        onRefresh={() => void refetch()}
+        onScroll={handleScroll}
+        scrollEnabled
+        listHeaderComponent={
+          <View>
+            <AppHeader title="Chi ti?t nhóm" subtitle="C?p nh?t th?o lu?n và ho?t d?ng nhóm" variant="bordered" />
+            <GroupHeader group={group} />
+          </View>
+        }
+        contentContainerStyle={{ paddingBottom: 110, paddingTop: 0, paddingHorizontal: 12 }}
+        emptyText="Nhóm này chua có bài vi?t nào."
+        estimatedItemSize={420}
+        getItemType={() => 'post'}
+      />
+    </View>
+  );
 }
+
+
+
+
+

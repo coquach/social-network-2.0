@@ -26,6 +26,7 @@ import type {
   EditHistoryDTO,
   MediaDTO,
   PostDTO,
+  PostSnapshotDTO,
   UpdatePostInput,
 } from '../types/post.types';
 import { useUploadOptional } from '../contexts/upload-context';
@@ -41,6 +42,7 @@ import {
 } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
 import { queryKeys } from './query-keys';
+import { getRecommendedUploadBatchOptions } from '../utils/upload.utils';
 
 // ==================== Query Hooks ====================
 
@@ -62,7 +64,7 @@ export const usePost = (postId: string, options?: { enabled?: boolean }) => {
  * Get current user's posts with infinite scroll
  */
 export const useMyPosts = (params?: { feeling?: Emotion }) => {
-  return useInfiniteQuery<CursorPageResponse<PostDTO>>({
+  return useInfiniteQuery<CursorPageResponse<PostSnapshotDTO>>({
     queryKey: queryKeys.posts.myPosts(),
     queryFn: async ({ pageParam }) => {
       return postService.getMyPosts({
@@ -71,7 +73,7 @@ export const useMyPosts = (params?: { feeling?: Emotion }) => {
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     ...queryConfigs.standard,
   });
@@ -93,7 +95,7 @@ export const useUserPosts = (
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
     ...queryConfigs.standard,
@@ -118,7 +120,7 @@ export const useGroupPosts = (
       });
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     enabled: !!groupId,
     ...queryConfigs.standard,
@@ -147,7 +149,7 @@ export const usePostEditHistory = (
 /**
  * Create a new post
  * With optimistic updates for immediate feedback
- * 
+ *
  * @example
  * const createPost = useCreatePost();
  * // With media files
@@ -169,10 +171,12 @@ export const useCreatePost = () => {
       // Upload files if provided and upload service available
       if (uploadFiles && uploadFiles.length > 0 && uploadService) {
         try {
-          const uploadResults = await uploadService.uploadMultiple(uploadFiles, {
-            folder: 'posts',
-            concurrency: 3,
-          });
+          const uploadResults = await uploadService.uploadMultiple(
+            uploadFiles,
+            getRecommendedUploadBatchOptions(uploadFiles, {
+              folder: 'posts',
+            }),
+          );
 
           const media: MediaDTO[] = uploadResults.map((result) => ({
             type: result.type,
@@ -182,7 +186,7 @@ export const useCreatePost = () => {
 
           return postService.createPost({ ...input, media });
         } catch (uploadError) {
-          console.error('File upload failed:', uploadError);
+          // console.error('File upload failed:', uploadError);
           throw new Error('Failed to upload files. Please try again.');
         }
       }
@@ -214,7 +218,7 @@ export const useCreatePost = () => {
 
 /**
  * Create post in group (may require approval)
- * 
+ *
  * @example
  * const createPostInGroup = useCreatePostInGroup();
  * createPostInGroup.mutate({
@@ -236,10 +240,12 @@ export const useCreatePostInGroup = () => {
       // Upload files if provided and upload service available
       if (uploadFiles && uploadFiles.length > 0 && uploadService) {
         try {
-          const uploadResults = await uploadService.uploadMultiple(uploadFiles, {
-            folder: input.groupId ? `groups/${input.groupId}/posts` : 'posts',
-            concurrency: 3,
-          });
+          const uploadResults = await uploadService.uploadMultiple(
+            uploadFiles,
+            getRecommendedUploadBatchOptions(uploadFiles, {
+              folder: input.groupId ? `groups/${input.groupId}/posts` : 'posts',
+            }),
+          );
 
           const media: MediaDTO[] = uploadResults.map((result) => ({
             type: result.type,
@@ -249,7 +255,7 @@ export const useCreatePostInGroup = () => {
 
           return postService.createPostInGroup({ ...input, media });
         } catch (uploadError) {
-          console.error('File upload failed:', uploadError);
+          // console.error('File upload failed:', uploadError);
           throw new Error('Failed to upload files. Please try again.');
         }
       }

@@ -18,6 +18,7 @@ import type {
 } from '../types/common.types';
 import type {
   ConversationDTO,
+  ConversationWithParticipantsDTO,
   CreateConversationInput,
   UpdateConversationInput,
 } from '../types/conversation.types';
@@ -31,9 +32,12 @@ import { queryKeys } from './query-keys';
 /**
  * Get conversation list with infinite scroll
  */
-export const useConversations = (params?: QueryParams) => {
+export const useConversations = (
+  params?: QueryParams,
+  options?: { enabled?: boolean },
+) => {
   return useInfiniteQuery<CursorPageResponse<ConversationDTO>>({
-    queryKey: queryKeys.conversations.list(),
+    queryKey: [...queryKeys.conversations.list(), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       return conversationService.getConversations({
         ...params,
@@ -42,6 +46,7 @@ export const useConversations = (params?: QueryParams) => {
     },
     getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
     staleTime: 10_000, // 10 seconds
     gcTime: 60_000, // 1 minute
   });
@@ -54,7 +59,7 @@ export const useConversation = (
   conversationId: string,
   options?: { enabled?: boolean },
 ) => {
-  return useQuery<ConversationDTO>({
+  return useQuery<ConversationWithParticipantsDTO>({
     queryKey: queryKeys.conversations.detail(conversationId),
     queryFn: async () => {
       return conversationService.getConversation(conversationId);

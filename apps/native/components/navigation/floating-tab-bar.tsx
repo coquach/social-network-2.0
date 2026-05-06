@@ -12,10 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
 
-import { CreatePostSheet } from './create-post-sheet';
 import { CreatePostTabButton } from './create-post-tab-button';
 import { TabBarButton } from './tab-bar-button';
 import { useTabBarVisibility } from './tab-bar-visibility-context';
+import { useCreatePostModal } from '@repo/shared/store/useCreatePostModal';
 
 const TAB_BAR_SHOW_DURATION = 320;
 const TAB_BAR_HIDE_DURATION = 500;
@@ -40,7 +40,12 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const { resolvedTheme } = useAppTheme();
   const { isVisible } = useTabBarVisibility();
   const colors = appThemeColors[resolvedTheme];
-  const [isCreateSheetOpen, setIsCreateSheetOpen] = React.useState(false);
+  const isCreateSheetOpen = useCreatePostModal((state) => state.isOpen);
+  const openCreatePost = React.useCallback(() => {
+    if (!useCreatePostModal.getState().isOpen) {
+      useCreatePostModal.getState().open();
+    }
+  }, []);
   const tabBarVisibility = useSharedValue(1);
 
   React.useEffect(() => {
@@ -62,7 +67,12 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
 
   const routesByName = React.useMemo(() => {
     return state.routes.reduce<
-      Partial<Record<keyof typeof TAB_META, { index: number; key: string; name: string; params?: object }>>
+      Partial<
+        Record<
+          keyof typeof TAB_META,
+          { index: number; key: string; name: string; params?: object }
+        >
+      >
     >((accumulator, route, index) => {
       if (isKnownTab(route.name)) {
         accumulator[route.name] = {
@@ -112,7 +122,7 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
           key={route.key}
           label={meta.label}
           icon={meta.icon}
-          avatarUrl={name === 'profile' ? user?.imageUrl ?? null : null}
+          avatarUrl={name === 'profile' ? (user?.imageUrl ?? null) : null}
           activeColor={colors.primary}
           inactiveColor={colors.mutedForeground}
           isFocused={focused}
@@ -121,13 +131,20 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
         />
       );
     },
-    [colors.mutedForeground, colors.primary, navigation, routesByName, state.index, user?.imageUrl],
+    [
+      colors.mutedForeground,
+      colors.primary,
+      navigation,
+      routesByName,
+      state.index,
+      user?.imageUrl,
+    ],
   );
 
   return (
     <>
       <Animated.View
-        pointerEvents={isVisible ? 'box-none' : 'none'}
+        pointerEvents={isVisible && !isCreateSheetOpen ? 'box-none' : 'none'}
         className="absolute bottom-0 left-0 right-0"
         style={[
           { paddingBottom: Math.max(insets.bottom, 10) },
@@ -148,9 +165,7 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
             </View>
             <CreatePostTabButton
               isActive={isCreateSheetOpen}
-              onPress={() => {
-                setIsCreateSheetOpen((current) => !current);
-              }}
+              onPress={openCreatePost}
             />
             <View className="flex-1 flex-row items-end justify-between pl-2">
               {RIGHT_TABS.map(renderTab)}
@@ -158,12 +173,6 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
           </View>
         </View>
       </Animated.View>
-      <CreatePostSheet
-        visible={isCreateSheetOpen}
-        onClose={() => {
-          setIsCreateSheetOpen(false);
-        }}
-      />
     </>
   );
 }

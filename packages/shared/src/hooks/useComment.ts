@@ -1,11 +1,17 @@
 /**
  * Comment-related React Query hooks
- * 
+ *
  * Platform-agnostic hooks for comments with optimistic updates.
  * These hooks use the commentService and provide type-safe queries and mutations.
  */
 
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  type InfiniteData,
+} from '@tanstack/react-query';
 import { commentService } from '../api/services/comment.service';
 import { queryKeys } from './query-keys';
 import { useUploadOptional } from '../contexts/upload-context';
@@ -24,8 +30,9 @@ import type {
   CommentDTO,
   CreateCommentInput,
   UpdateCommentInput,
-  CursorPageResponse,
   MediaDTO,
+  PageResponse,
+  GetCommentsQuery,
 } from '../types';
 
 // ==================== Query Hooks ====================
@@ -33,8 +40,10 @@ import type {
 /**
  * Get single comment by ID
  */
-export const useComment = (commentId: string, options?: { enabled?: boolean }) => {
-  
+export const useComment = (
+  commentId: string,
+  options?: { enabled?: boolean },
+) => {
   return useQuery<CommentDTO>({
     queryKey: queryKeys.comments.detail(commentId),
     queryFn: async () => {
@@ -46,54 +55,65 @@ export const useComment = (commentId: string, options?: { enabled?: boolean }) =
 };
 
 /**
- * Get comments for a post or share (infinite scroll)
+ * Get comments for a post or share (infinite scroll - page based)
  */
-export const useComments = (rootId: string, params?: { limit?: number }) => {
+export const useComments = (query: GetCommentsQuery) => {
+  return useInfiniteQuery<
+    PageResponse<CommentDTO>,
+    Error,
+    InfiniteData<PageResponse<CommentDTO>>,
+    (string | number | undefined)[],
+    number
+  >({
+    queryKey: ['comments', query.rootId, query.rootType, query.parentId],
 
-  
-  return useInfiniteQuery<CursorPageResponse<CommentDTO>>({
-    queryKey: queryKeys.comments.byPost(rootId),
-    queryFn: async ({ pageParam }) => {
-      return commentService.getComments(rootId, {
-        ...params,
-        cursor: pageParam as string | undefined,
+    queryFn: async ({ pageParam = 1 }) => {
+      return commentService.getComments({
+        ...query,
+        page: pageParam,
       });
     },
-    getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
-    initialPageParam: undefined,
-    enabled: !!rootId,
-    ...queryConfigs.realtime, // Comments need to be fresh
+
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+
+    initialPageParam: 1,
+
+    enabled: !!query.rootId,
+
+    staleTime: 60_000,
+    gcTime: 120_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 
 /**
  * Get replies to a comment (infinite scroll)
  */
-export const useReplies = (commentId: string, params?: { limit?: number }) => {
-
-  
-  return useInfiniteQuery<CursorPageResponse<CommentDTO>>({
-    queryKey: queryKeys.comments.replies(commentId),
-    queryFn: async ({ pageParam }) => {
-    
-      return commentService.getReplies(commentId, {
-        ...params,
-        cursor: pageParam as string | undefined,
-      });
-    },
-    getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
-    initialPageParam: undefined,
-    enabled: !!commentId,
-    ...queryConfigs.realtime,
-  });
-};
+// export const useReplies = (commentId: string, params?: { limit?: number }) => {
+//   return useInfiniteQuery<CursorPageResponse<CommentDTO>>({
+//     queryKey: queryKeys.comments.replies(commentId),
+//     queryFn: async ({ pageParam }) => {
+//       return commentService.getReplies(commentId, {
+//         ...params,
+//         cursor: pageParam as string | undefined,
+//       });
+//     },
+//     getNextPageParam: (lastPage) =>
+//       lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
+//     initialPageParam: undefined,
+//     enabled: !!commentId,
+//     ...queryConfigs.realtime,
+//   });
+// };
 
 // ==================== Mutation Hooks ====================
 
 /**
  * Create a new comment
  * With optimistic updates
- * 
+ *
  * @example
  * const createComment = useCreateComment();
  * // With media
@@ -129,7 +149,6 @@ export const useCreateComment = () => {
 
           return commentService.createComment({ ...input, media });
         } catch (uploadError) {
-          console.error('File upload failed:', uploadError);
           throw new Error('Failed to upload file. Please try again.');
         }
       }
@@ -140,21 +159,17 @@ export const useCreateComment = () => {
       // Add to detail cache
       queryClient.setQueryData<CommentDTO>(
         queryKeys.comments.detail(newComment.id),
-        newComment
+        newComment,
       );
-      
+
       // Determine target query key (post comments or comment replies)
       const targetKey = newComment.parentId
-        ? [...queryKeys.comments.replies(newComment.parentId)] as unknown[]
-        : [...queryKeys.comments.byPost(newComment.rootId)] as unknown[];
-      
+        ? ([...queryKeys.comments.replies(newComment.parentId)] as unknown[])
+        : ([...queryKeys.comments.byPost(newComment.rootId)] as unknown[]);
+
       // Add to list cache
-      addItemToInfiniteCache(
-        queryClient,
-        targetKey,
-        newComment
-      );
-      
+      addItemToInfiniteCache(queryClient, targetKey, newComment);
+
       // Invalidate related queries
       invalidateQueries(queryClient, [
         [...queryKeys.comments.all] as unknown[],
@@ -169,12 +184,10 @@ export const useCreateComment = () => {
  * With optimistic updates
  */
 export const useUpdateComment = (commentId: string) => {
-
   const queryClient = useQueryClient();
 
   return useMutation<CommentDTO, Error, UpdateCommentInput>({
     mutationFn: async (input) => {
-  
       return commentService.updateComment(commentId, input);
     },
     onMutate: async (updatedComment) => {
@@ -183,36 +196,35 @@ export const useUpdateComment = (commentId: string) => {
         [...queryKeys.comments.detail(commentId)] as unknown[],
         [...queryKeys.comments.all] as unknown[],
       ]);
-      
+
       // Snapshot for rollback
-      const context = snapshotQueryData<CommentDTO>(
-        queryClient,
-        [...queryKeys.comments.detail(commentId)] as unknown[]
-      );
-      
+      const context = snapshotQueryData<CommentDTO>(queryClient, [
+        ...queryKeys.comments.detail(commentId),
+      ] as unknown[]);
+
       // Optimistically update detail cache
       queryClient.setQueryData<CommentDTO>(
         queryKeys.comments.detail(commentId),
-        (old) => old ? { ...old, ...updatedComment } : old
+        (old) => (old ? { ...old, ...updatedComment } : old),
       );
-      
+
       return context;
     },
     onSuccess: (updatedComment) => {
       // Update detail cache
       queryClient.setQueryData<CommentDTO>(
         queryKeys.comments.detail(commentId),
-        updatedComment
+        updatedComment,
       );
-      
+
       // Update in all list caches
       updateItemInInfiniteCache(
         queryClient,
         [...queryKeys.comments.all] as unknown[],
         updatedComment,
-        (item, updated) => item.id === updated.id
+        (item, updated) => item.id === updated.id,
       );
-      
+
       // Invalidate related queries
       invalidateQueries(queryClient, [
         [...queryKeys.comments.lists()] as unknown[],
@@ -224,7 +236,7 @@ export const useUpdateComment = (commentId: string) => {
         restoreQueryData(
           queryClient,
           [...queryKeys.comments.detail(commentId)] as unknown[],
-          context
+          context,
         );
       }
     },
@@ -236,12 +248,10 @@ export const useUpdateComment = (commentId: string) => {
  * With optimistic removal
  */
 export const useDeleteComment = () => {
- 
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
     mutationFn: async (commentId) => {
-     
       return commentService.deleteComment(commentId);
     },
     onMutate: async (commentId) => {
@@ -250,26 +260,27 @@ export const useDeleteComment = () => {
         [...queryKeys.comments.detail(commentId)] as unknown[],
         [...queryKeys.comments.all] as unknown[],
       ]);
-      
+
       // Snapshot for rollback
-      const context = snapshotQueryData<CommentDTO>(
-        queryClient,
-        [...queryKeys.comments.detail(commentId)] as unknown[]
-      );
-      
+      const context = snapshotQueryData<CommentDTO>(queryClient, [
+        ...queryKeys.comments.detail(commentId),
+      ] as unknown[]);
+
       // Optimistically remove from cache
       removeItemFromInfiniteCache(
         queryClient,
         [...queryKeys.comments.all] as unknown[],
-        (item: CommentDTO) => item.id === commentId
+        (item: CommentDTO) => item.id === commentId,
       );
-      
+
       return context;
     },
     onSuccess: (_, commentId) => {
       // Remove from detail cache
-      queryClient.removeQueries({ queryKey: queryKeys.comments.detail(commentId) });
-      
+      queryClient.removeQueries({
+        queryKey: queryKeys.comments.detail(commentId),
+      });
+
       // Invalidate lists to update counts
       invalidateQueries(queryClient, [
         [...queryKeys.comments.lists()] as unknown[],
@@ -282,10 +293,10 @@ export const useDeleteComment = () => {
         restoreQueryData(
           queryClient,
           [...queryKeys.comments.detail(commentId)] as unknown[],
-          context
+          context,
         );
       }
-      
+
       // Re-fetch to restore accurate state
       invalidateQueries(queryClient, [
         [...queryKeys.comments.lists()] as unknown[],

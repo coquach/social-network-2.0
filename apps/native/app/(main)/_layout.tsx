@@ -37,6 +37,7 @@ export default function TabsLayout() {
             backgroundColor: colors.background,
           },
           tabBarShowLabel: false,
+          animation: 'fade',
         }}
         tabBar={(props) => <FloatingTabBar {...props} />}
       >
@@ -49,7 +50,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="groups"
           options={{
-            title: 'Nhóm',
+            headerShown: false,
           }}
         />
         <Tabs.Screen
@@ -61,7 +62,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Cá nhân',
+            headerShown: false,
           }}
         />
       </Tabs>
