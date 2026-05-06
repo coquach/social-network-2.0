@@ -23,12 +23,20 @@
       "bundleIdentifier": "com.sentimeta.app",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Sentimeta needs microphone access so you can record and send voice messages."
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "icon": {
+        "dark": "./assests/icons/ios-dark.png",
+        "light": "./assests/icons/ios-light.png",
+        "tinted": "./assests/icons/ios-tinted.png"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "monochromeImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icons/adaptive-icon.png",
+        "monochromeImage": "./assets/icons/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -50,13 +58,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
-          "image": "./assets/splash.png",
+          "backgroundColor": "#ffffff",
+          "image": "./assets/icons/splash-icon-dark.png",
           "imageWidth": 200,
+          "resizeMode": "contain",
           "darkMode": {
             "backgroundColor": "#000000",
-            "image": "./assets/splash.png",
-            "imageWidth": 200
+            "image": "./assets/icons/splash-icon-light.png"
           }
         }
       ],
