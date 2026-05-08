@@ -6,7 +6,9 @@ import { AppLoadingOverlay } from '~/components/ui/app-loading';
 import { hasSeenOnboarding } from '~/utils/storage';
 
 export default function IndexScreen() {
+  console.log('🔥 IndexScreen rendering');
   const { isLoaded, isSignedIn } = useAuth();
+  console.log('🔥 Auth state:', { isLoaded, isSignedIn });
   const [onboardingLoaded, setOnboardingLoaded] = React.useState(false);
   const [seenOnboarding, setSeenOnboarding] = React.useState(false);
 
