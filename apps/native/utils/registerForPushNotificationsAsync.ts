@@ -38,14 +38,14 @@ const configureExpoNotificationChannels = async () => {
 
 const ensurePermissions = async () => {
   const existingPermissions = await Notifications.getPermissionsAsync();
-  let finalStatus = existingPermissions.status;
+  let finalStatus = (existingPermissions as any).status;
 
   if (finalStatus !== 'granted') {
     const requestedPermissions = await Notifications.requestPermissionsAsync();
-    finalStatus = requestedPermissions.status;
+    finalStatus = (requestedPermissions as any).status;
   }
 
-  return finalStatus;
+  return finalStatus as Notifications.PermissionStatus;
 };
 
 const getExpoPushToken = async () => {

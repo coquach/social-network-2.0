@@ -247,6 +247,12 @@ export const queryKeys = {
       ] as const,
     analytics: () => [...queryKeys.emotionJournal.all, 'analytics'] as const,
   },
+
+  // ==================== Calls ====================
+  calls: {
+    all: ['calls'] as const,
+    detail: (callId: string) => [...queryKeys.calls.all, callId] as const,
+  },
 } as const;
 
 /**

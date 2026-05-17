@@ -22,7 +22,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.sentimeta.app",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Sentimeta needs microphone access so you can record and send voice messages."
+        "NSMicrophoneUsageDescription": "Sentimeta needs microphone access so you can record and send voice messages, and make calls.",
+        "NSCameraUsageDescription": "Sentimeta needs camera access so you can take photos and make video calls."
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -40,9 +41,17 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
+        "CAMERA",
         "RECORD_AUDIO",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "MODIFY_AUDIO_SETTINGS",
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_CONNECT",
+        "ACCESS_NETWORK_STATE",
+        "WAKE_LOCK",
+        "READ_PHONE_STATE",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_PHONE_CALL"
       ],
       "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false,
@@ -82,26 +91,31 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow Sentimeta to access your microphone so you can record and send voice messages.",
+          "microphonePermission": "Allow Sentimeta to access your microphone so you can record and send voice messages, and make calls.",
           "recordAudioAndroid": true,
-          "enableBackgroundPlayback": false
+          "enableBackgroundPlayback": true
         }
       ],
       "@clerk/expo",
       "expo-secure-store",
       "expo-web-browser",
       [
+        "@stream-io/video-react-native-sdk",
+        {
+          "addVoipBackgroundMode": true
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "minSdkVersion": 24,
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34
           },
           "ios": {
-            "infoPlist": {
-              "NSAppTransportSecurity": {
-                "NSAllowsArbitraryLoads": true
-              }
-            }
+            "deploymentTarget": "15.1"
           }
         }
       ],

@@ -59,6 +59,9 @@ export * from './useMusic';
 // Group permission hooks
 export * from './use-group-permissions'
 
+// Call hooks
+export * from './useCall';
+
 
 // UI utility hooks (web-only, requires DOM)
 // Note: Import these directly from './useUI' in web apps only

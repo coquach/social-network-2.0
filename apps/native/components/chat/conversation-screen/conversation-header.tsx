@@ -16,6 +16,7 @@ import {
   AppHeaderIconButton,
 } from "~/components/ui/app-header";
 import { cn } from "~/lib/cn";
+import { CallType } from "@repo/shared";
 
 type PresenceLike = {
   status?: "online" | "offline" | "away";
@@ -28,6 +29,7 @@ type ConversationHeaderProps = {
   directAvatarUrl?: string;
   presence?: PresenceLike;
   onOpenDrawer: () => void;
+  onStartCall?: (type: CallType) => void;
 };
 
 const getPresenceDotClassName = (status?: PresenceLike["status"]) => {
@@ -48,6 +50,7 @@ export function ConversationHeader({
   directAvatarUrl,
   presence,
   onOpenDrawer,
+  onStartCall,
 }: ConversationHeaderProps) {
   const subtitle = conversation?.isGroup
     ? getGroupConversationSubtitle(conversation.participants.length)
@@ -58,12 +61,26 @@ export function ConversationHeader({
       variant="bordered"
       leading={<AppBackButton />}
       trailing={
-        <AppHeaderIconButton
-          icon="ellipsis-horizontal"
-          variant="ghost"
-          iconSize={18}
-          onPress={onOpenDrawer}
-        />
+        <View className="flex-row items-center gap-1">
+          <AppHeaderIconButton
+            icon="call-outline"
+            variant="ghost"
+            iconSize={20}
+            onPress={() => onStartCall?.(CallType.VOICE)}
+          />
+          <AppHeaderIconButton
+            icon="videocam-outline"
+            variant="ghost"
+            iconSize={22}
+            onPress={() => onStartCall?.(CallType.VIDEO)}
+          />
+          <AppHeaderIconButton
+            icon="ellipsis-horizontal"
+            variant="ghost"
+            iconSize={18}
+            onPress={onOpenDrawer}
+          />
+        </View>
       }
       contentClassName="flex-row items-center gap-3"
       className="bg-app-surface dark:bg-app-surface-dark"

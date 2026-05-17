@@ -13,6 +13,7 @@ import {
   useSendMessage,
   useUploadOptional,
   useUser,
+  CallType,
 } from "@repo/shared";
 import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
@@ -54,6 +55,7 @@ import { KeyboardAwareContainer } from "~/components/ui/keyboard-aware-container
 import { pickLibraryMediaAssets, pickSingleImage } from "~/lib/media-picker";
 import { useNativeConversationRealtime } from "~/providers/chat-realtime-provider";
 import { usePresenceChannel } from "~/providers/presence-provider";
+import { useCallActions } from "~/hooks/use-call-actions";
 
 const MAX_ATTACHMENTS = 6;
 
@@ -167,6 +169,16 @@ export default function ChatConversationScreen() {
     fetchedMessages,
     markConversationAsRead,
   });
+
+  const { startCall } = useCallActions();
+
+  const handleStartCall = React.useCallback(
+    (type: CallType) => {
+      if (!conversationId) return;
+      void startCall(conversationId, type);
+    },
+    [conversationId, startCall],
+  );
 
   const otherParticipant = React.useMemo(() => {
     if (!conversation) {
@@ -612,6 +624,7 @@ export default function ChatConversationScreen() {
             onOpenDrawer={() => {
               setDrawerOpen(true);
             }}
+            onStartCall={handleStartCall}
           />
 
           {isConversationLoading ? (

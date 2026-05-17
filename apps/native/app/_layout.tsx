@@ -1,4 +1,6 @@
+import 'react-native-get-random-values';
 import 'react-native-gesture-handler';
+import 'expo-keep-awake';
 import '../global.css';
 import '../lib/notifications/notifee-chat-events';
 import { ClerkProvider } from '@clerk/expo';
@@ -10,7 +12,6 @@ import {
   type HeroUINativeConfig,
 } from 'heroui-native/provider';
 import { useEffect } from 'react';
-import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeChatRealtimeProvider } from '~/providers/chat-realtime-provider';
@@ -27,6 +28,9 @@ import * as Notifications from 'expo-notifications';
 import { ModalProvider } from '~/components/providers/modal-provider';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
+import { CallProvider } from '~/providers/call-provider';
+import { CallRealtimeProvider } from '~/providers/call-realtime-provider';
+import { CallOverlay } from '~/components/chat/call-overlay';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -106,24 +110,30 @@ export default function RootLayout() {
               <NotificationProvider>
                 <NativeSocketProvider>
                   <NativeChatRealtimeProvider>
-                    <NativePresenceProvider>
-                      <HeroUINativeProvider config={heroUIConfig}>
-                        <AppThemeProvider>
-                          <BottomSheetModalProvider>
-                            <Stack screenOptions={{ headerShown: false }}>
-                              <Stack.Screen name="index" />
-                              <Stack.Screen name="(onboarding)" />
-                              <Stack.Screen name="(auth)" />
-                              <Stack.Screen name="(main)" />
-                              <Stack.Screen name="chat" />
-                              <Stack.Screen name="(stack)" />
-                            </Stack>
-                            <ModalProvider />
-                            <AssistantOverlay />
-                          </BottomSheetModalProvider>
-                        </AppThemeProvider>
-                      </HeroUINativeProvider>
-                    </NativePresenceProvider>
+                    <CallStoreBootstrap />
+                    <CallProvider>
+                      <CallRealtimeProvider>
+                        <NativePresenceProvider>
+                          <HeroUINativeProvider config={heroUIConfig}>
+                            <AppThemeProvider>
+                              <BottomSheetModalProvider>
+                                <Stack screenOptions={{ headerShown: false }}>
+                                  <Stack.Screen name="index" />
+                                  <Stack.Screen name="(onboarding)" />
+                                  <Stack.Screen name="(auth)" />
+                                  <Stack.Screen name="(main)" />
+                                  <Stack.Screen name="chat" />
+                                  <Stack.Screen name="(stack)" />
+                                </Stack>
+                                <ModalProvider />
+                                <AssistantOverlay />
+                                <CallOverlay />
+                              </BottomSheetModalProvider>
+                            </AppThemeProvider>
+                          </HeroUINativeProvider>
+                        </NativePresenceProvider>
+                      </CallRealtimeProvider>
+                    </CallProvider>
                   </NativeChatRealtimeProvider>
                 </NativeSocketProvider>
               </NotificationProvider>
@@ -133,4 +143,9 @@ export default function RootLayout() {
       </ClerkProvider>
     </GestureHandlerRootView>
   );
+}
+
+function CallStoreBootstrap() {
+  // Currently nothing to bootstrap in store, but good to have if we need listeners
+  return null;
 }
