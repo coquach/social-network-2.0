@@ -1,35 +1,10 @@
-import type { NotificationDTO } from '@repo/shared';
+import {
+  type NotificationDTO,
+  type NotificationData,
+  getNotificationRoute as sharedGetNotificationRoute,
+} from '@repo/shared';
 
-export type NotificationData = Record<string, string | undefined> & {
-  type?: string;
-  conversationId?: string;
-  messageId?: string;
-  senderId?: string;
-  senderName?: string;
-  conversationName?: string;
-  senderAvatar?: string;
-  preview?: string;
-  unreadCount?: string;
-  sentAt?: string;
-  
-  // Regular notification specific fields
-  targetType?: string;
-  targetId?: string;
-  actorId?: string;
-  actorName?: string;
-  actorAvatar?: string;
-  title?: string;
-  body?: string;
-
-  // Call / Video call specific fields
-  callId?: string;
-  callType?: 'video' | 'voice' | string;
-  callerId?: string;
-  callerName?: string;
-  callerAvatar?: string;
-  isGroup?: 'true' | 'false' | string;
-  userId?: string;
-};
+export type { NotificationData };
 
 export type ChatNotificationPayload = {
   conversationId: string;
@@ -123,51 +98,5 @@ export const toChatNotificationPayload = (
 export const getNotificationRoute = (
   data: NotificationData | NotificationDTO | undefined,
 ): string => {
-  if (!data) {
-    return '/notifications';
-  }
-
-  // 1. Extract type
-  const type = typeof data.type === 'string' ? data.type : '';
-  if (!type) {
-    return '/notifications';
-  }
-
-  // 2. Extract conversationId and targetId based on whether it is a NotificationDTO or flat NotificationData
-  let conversationId: string | undefined;
-  let targetId: string | undefined;
-
-  if ('payload' in data && data.payload && typeof data.payload === 'object') {
-    const payload = data.payload as Record<string, unknown>;
-    conversationId = typeof payload.conversationId === 'string' ? payload.conversationId : undefined;
-    targetId = typeof payload.targetId === 'string' ? payload.targetId : undefined;
-  } else {
-    const flatData = data as NotificationData;
-    conversationId = typeof flatData.conversationId === 'string' ? flatData.conversationId : undefined;
-    targetId = typeof flatData.targetId === 'string' ? flatData.targetId : undefined;
-  }
-
-  // 3. Chat notifications
-  if (type === 'message' || (!targetId && conversationId)) {
-    return conversationId ? `/chat/${conversationId}` : '/notifications';
-  }
-
-  // 4. Regular notifications
-  switch (type) {
-    case 'friendship_request':
-    case 'friendship_accept':
-    case 'friend':
-    case 'follow':
-      return '/profile';
-    case 'comment':
-    case 'reply_comment':
-    case 'reaction':
-    case 'share':
-      return targetId ? `/posts/${targetId}` : '/notifications';
-    case 'group_noti':
-    case 'join_request_approved':
-      return targetId ? `/groups/${targetId}` : '/groups';
-    default:
-      return '/notifications';
-  }
+  return sharedGetNotificationRoute(data, 'native');
 };
