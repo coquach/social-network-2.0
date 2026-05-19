@@ -1,3 +1,5 @@
+import type { NotificationDTO } from '@repo/shared';
+
 export type NotificationData = Record<string, unknown> & {
   type?: string;
   conversationId?: string;
@@ -122,22 +124,38 @@ export const toChatNotificationPayload = (
  * Aligned with apps/web/lib/notification-type-links.ts
  */
 export const getNotificationRoute = (
-  data: NotificationData | undefined,
+  data: NotificationData | NotificationDTO | undefined,
 ): string => {
   if (!data) {
     return '/notifications';
   }
 
-  // 1. Chat notifications
-  if (isChatMessageNotificationData(data)) {
-    const conversationId = getConversationId(data);
+  // 1. Extract type
+  const type = typeof data.type === 'string' ? data.type : '';
+  if (!type) {
+    return '/notifications';
+  }
+
+  // 2. Extract conversationId and targetId based on whether it is a NotificationDTO or flat NotificationData
+  let conversationId: string | undefined;
+  let targetId: string | undefined;
+
+  if ('payload' in data && data.payload && typeof data.payload === 'object') {
+    const payload = data.payload as Record<string, unknown>;
+    conversationId = typeof payload.conversationId === 'string' ? payload.conversationId : undefined;
+    targetId = typeof payload.targetId === 'string' ? payload.targetId : undefined;
+  } else {
+    const flatData = data as NotificationData;
+    conversationId = typeof flatData.conversationId === 'string' ? flatData.conversationId : undefined;
+    targetId = typeof flatData.targetId === 'string' ? flatData.targetId : undefined;
+  }
+
+  // 3. Chat notifications
+  if (type === 'message' || (!targetId && conversationId)) {
     return conversationId ? `/chat/${conversationId}` : '/notifications';
   }
 
-  // 2. Regular notifications
-  const targetId = typeof data.targetId === 'string' ? data.targetId : undefined;
-  const type = typeof data.type === 'string' ? data.type : '';
-
+  // 4. Regular notifications
   switch (type) {
     case 'friendship_request':
     case 'friendship_accept':
