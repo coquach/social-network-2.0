@@ -1,6 +1,6 @@
 import type { NotificationDTO } from '@repo/shared';
 
-export type NotificationData = Record<string, unknown> & {
+export type NotificationData = Record<string, string | undefined> & {
   type?: string;
   conversationId?: string;
   messageId?: string;
@@ -9,8 +9,8 @@ export type NotificationData = Record<string, unknown> & {
   conversationName?: string;
   senderAvatar?: string;
   preview?: string;
-  unreadCount?: string | number;
-  sentAt?: string | number;
+  unreadCount?: string;
+  sentAt?: string;
   
   // Regular notification specific fields
   targetType?: string;
@@ -27,7 +27,7 @@ export type NotificationData = Record<string, unknown> & {
   callerId?: string;
   callerName?: string;
   callerAvatar?: string;
-  isGroup?: string | boolean;
+  isGroup?: 'true' | 'false' | string;
   userId?: string;
 };
 
@@ -111,11 +111,8 @@ export const toChatNotificationPayload = (
     preview: typeof data?.preview === 'string' ? data.preview : '',
     unreadCount:
       Number.isFinite(unreadCount) && unreadCount > 0 ? unreadCount : 1,
-    isGroup: data?.isGroup === 'true' || data?.isGroup === true,
-    sentAt:
-      typeof data?.sentAt === 'string' || typeof data?.sentAt === 'number'
-        ? data.sentAt
-        : undefined,
+    isGroup: data?.isGroup === 'true',
+    sentAt: typeof data?.sentAt === 'string' ? data.sentAt : undefined,
   };
 };
 
