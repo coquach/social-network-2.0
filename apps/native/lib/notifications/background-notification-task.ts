@@ -3,11 +3,15 @@ import messaging from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import {
   isChatMessageNotificationData,
+  isCallNotificationData,
+  isCallCancelledNotificationData,
   type NotificationData,
 } from './notification-payload';
 import {
   upsertChatThreadNotificationFromData,
   displayRegularNotification,
+  displayCallNotification,
+  cancelCallNotification,
 } from './chat-thread-notifications';
 
 export const LAST_BACKGROUND_NOTIFICATION_KEY =
@@ -20,6 +24,23 @@ if (isNativePlatform) {
     console.log('[notifications] Message handled in the background!', remoteMessage);
     try {
       const notificationData = remoteMessage.data as NotificationData | undefined;
+
+      // Handle VoIP high-priority Call Push Notifications
+      if (isCallNotificationData(notificationData)) {
+        if (notificationData) {
+          await displayCallNotification(notificationData);
+        }
+        return;
+      }
+
+      if (isCallCancelledNotificationData(notificationData)) {
+        const callId = notificationData?.callId;
+        if (typeof callId === 'string') {
+          await cancelCallNotification(callId);
+        }
+        return;
+      }
+
       const kind = isChatMessageNotificationData(notificationData)
         ? 'chat'
         : 'regular';

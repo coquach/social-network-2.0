@@ -47,7 +47,23 @@ export const isChatMessageNotificationData = (
     return false;
   }
 
+  if (data.type === 'call' || data.type === 'call_cancelled') {
+    return false;
+  }
+
   return data.type === 'message' || Boolean(getConversationId(data));
+};
+
+export const isCallNotificationData = (
+  data: NotificationData | undefined,
+): boolean => {
+  return data?.type === 'call';
+};
+
+export const isCallCancelledNotificationData = (
+  data: NotificationData | undefined,
+): boolean => {
+  return data?.type === 'call_cancelled';
 };
 
 export const toChatNotificationPayload = (

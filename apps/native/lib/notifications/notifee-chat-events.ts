@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee, { EventType, type InitialNotification } from 'react-native-notify-kit';
+import { callService } from '@repo/shared';
 
 import {
   getConversationId,
@@ -79,7 +80,47 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
     return;
   }
 
-  await storePendingChatNavigation(
-    detail.notification?.data as NotificationData | undefined,
-  );
+  const data = detail.notification?.data as NotificationData | undefined;
+
+  if (detail.pressAction?.id === 'answer_call') {
+    const callId = data?.callId;
+    const conversationId = data?.conversationId;
+    if (typeof callId === 'string' && typeof conversationId === 'string') {
+      try {
+        await callService.acceptCall(callId);
+      } catch (err) {
+        console.error('[notifications] Failed to accept call in background:', err);
+      }
+      await storePendingChatNavigation({
+        type: 'message',
+        conversationId,
+        messageId: 'call_nav',
+        senderId: 'system',
+        senderName: 'System',
+        preview: 'Call answering',
+        unreadCount: '0',
+      });
+    }
+    if (detail.notification?.id) {
+      await notifee.cancelNotification(detail.notification.id);
+    }
+    return;
+  }
+
+  if (detail.pressAction?.id === 'reject_call') {
+    const callId = data?.callId;
+    if (typeof callId === 'string') {
+      try {
+        await callService.rejectCall(callId);
+      } catch (err) {
+        console.error('[notifications] Failed to reject call in background:', err);
+      }
+    }
+    if (detail.notification?.id) {
+      await notifee.cancelNotification(detail.notification.id);
+    }
+    return;
+  }
+
+  await storePendingChatNavigation(data);
 });

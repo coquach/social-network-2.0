@@ -22,6 +22,8 @@ import {
 } from '../utils/registerForPushNotificationsAsync';
 import {
   isChatMessageNotificationData,
+  isCallNotificationData,
+  isCallCancelledNotificationData,
   getNotificationRoute,
   type NotificationData,
 } from '~/lib/notifications/notification-payload';
@@ -32,7 +34,10 @@ import {
 import {
   upsertChatThreadNotificationFromData,
   displayRegularNotification,
+  displayCallNotification,
+  cancelCallNotification,
 } from '~/lib/notifications/chat-thread-notifications';
+import { callService } from '@repo/shared';
 
 type NotificationContextValue = {
   pushToken: string | null;
@@ -96,6 +101,25 @@ export const NotificationProvider = ({
       const incomingData = remoteMessage.data as NotificationData | undefined;
 
       if (Platform.OS === 'android') {
+        if (isCallNotificationData(incomingData)) {
+          if (incomingData) {
+            void displayCallNotification(incomingData).catch((notificationError) => {
+              setError(normalizeError(notificationError));
+            });
+          }
+          return;
+        }
+
+        if (isCallCancelledNotificationData(incomingData)) {
+          const callId = incomingData?.callId;
+          if (typeof callId === 'string') {
+            void cancelCallNotification(callId).catch((notificationError) => {
+              setError(normalizeError(notificationError));
+            });
+          }
+          return;
+        }
+
         if (isChatMessageNotificationData(incomingData)) {
           void upsertChatThreadNotificationFromData(incomingData).catch((notificationError) => {
             setError(normalizeError(notificationError));
@@ -128,6 +152,36 @@ export const NotificationProvider = ({
       }
 
       const data = detail.notification?.data as NotificationData | undefined;
+
+      // Handle interactive call action presses
+      if (detail.pressAction?.id === 'answer_call') {
+        const callId = data?.callId;
+        const conversationId = data?.conversationId;
+        if (typeof callId === 'string' && typeof conversationId === 'string') {
+          void callService.acceptCall(callId).catch((err) => {
+            console.error('[notifications] Failed to accept call in foreground:', err);
+          });
+          router.push(`/chat/${conversationId}`);
+        }
+        if (detail.notification?.id) {
+          void notifee.cancelNotification(detail.notification.id);
+        }
+        return;
+      }
+
+      if (detail.pressAction?.id === 'reject_call') {
+        const callId = data?.callId;
+        if (typeof callId === 'string') {
+          void callService.rejectCall(callId).catch((err) => {
+            console.error('[notifications] Failed to reject call in foreground:', err);
+          });
+        }
+        if (detail.notification?.id) {
+          void notifee.cancelNotification(detail.notification.id);
+        }
+        return;
+      }
+
       const targetRoute = getNotificationRoute(data);
       router.push(targetRoute as any);
     });

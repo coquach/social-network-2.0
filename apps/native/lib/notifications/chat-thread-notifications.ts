@@ -76,7 +76,6 @@ const sanitizePreview = (value?: string) => {
   if (!value?.trim()) {
      return 'Bạn có tin nhắn mới';
   }
-  }
 
   const normalized = value.replace(/\s+/g, ' ').trim();
   return normalized.length > 120
@@ -150,6 +149,19 @@ export async function ensureChatThreadNotificationInfrastructure() {
     vibration: true,
     lights: true,
     lightColor: '#10B981',
+    badge: true,
+  });
+
+  await notifee.createChannel({
+    id: 'calls',
+    name: 'Calls',
+    description: 'Incoming video and audio call notifications',
+    importance: AndroidImportance.HIGH,
+    sound: 'message',
+    vibration: true,
+    vibrationPattern: [1000, 1000, 1000, 1000, 1000],
+    lights: true,
+    lightColor: '#DC2626',
     badge: true,
   });
 }
@@ -362,4 +374,56 @@ export async function clearAllChatThreadNotifications() {
     .filter((id): id is string => Boolean(id?.startsWith('chat-thread:')));
 
   await Promise.all(threadIds.map((id) => notifee.cancelNotification(id)));
+}
+
+export async function displayCallNotification(data: NotificationData) {
+  if (!isAndroid) {
+    return;
+  }
+
+  await ensureChatThreadNotificationInfrastructure();
+
+  const callerName = typeof data.callerName === 'string' ? data.callerName : 'Cuộc gọi mới';
+  const callLabel = data.callType === 'video' ? 'cuộc gọi video' : 'cuộc gọi thoại';
+
+  await notifee.displayNotification({
+    id: `call:${data.callId}`,
+    title: callerName,
+    body: `Có ${callLabel} đến...`,
+    android: {
+      channelId: 'calls',
+      category: AndroidCategory.CALL,
+      importance: AndroidImportance.HIGH,
+      ongoing: true,
+      sound: 'message',
+      vibrationPattern: [1000, 1000, 1000, 1000, 1000],
+      pressAction: {
+        id: 'default',
+        launchActivity: 'default',
+      },
+      actions: [
+        {
+          title: 'Chấp nhận',
+          pressAction: {
+            id: 'answer_call',
+            launchActivity: 'default',
+          },
+        },
+        {
+          title: 'Từ chối',
+          pressAction: {
+            id: 'reject_call',
+          },
+        },
+      ],
+    },
+    data: data as any,
+  });
+}
+
+export async function cancelCallNotification(callId: string) {
+  if (!isAndroid) {
+    return;
+  }
+  await notifee.cancelNotification(`call:${callId}`);
 }
