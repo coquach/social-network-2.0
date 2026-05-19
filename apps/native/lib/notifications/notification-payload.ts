@@ -9,6 +9,14 @@ export type NotificationData = Record<string, unknown> & {
   preview?: string;
   unreadCount?: string | number;
   sentAt?: string | number;
+  // Regular notification specific fields
+  targetType?: string;
+  targetId?: string;
+  actorId?: string;
+  actorName?: string;
+  actorAvatar?: string;
+  title?: string;
+  body?: string;
 };
 
 export type ChatNotificationPayload = {
@@ -81,4 +89,44 @@ export const toChatNotificationPayload = (
         ? data.sentAt
         : undefined,
   };
+};
+
+/**
+ * Maps incoming notification data to the correct Expo Router route.
+ * Aligned with apps/web/lib/notification-type-links.ts
+ */
+export const getNotificationRoute = (
+  data: NotificationData | undefined,
+): string => {
+  if (!data) {
+    return '/notifications';
+  }
+
+  // 1. Chat notifications
+  if (isChatMessageNotificationData(data)) {
+    const conversationId = getConversationId(data);
+    return conversationId ? `/chat/${conversationId}` : '/notifications';
+  }
+
+  // 2. Regular notifications
+  const targetId = typeof data.targetId === 'string' ? data.targetId : undefined;
+  const type = typeof data.type === 'string' ? data.type : '';
+
+  switch (type) {
+    case 'friendship_request':
+    case 'friendship_accept':
+    case 'friend':
+    case 'follow':
+      return '/profile';
+    case 'comment':
+    case 'reply_comment':
+    case 'reaction':
+    case 'share':
+      return targetId ? `/posts/${targetId}` : '/notifications';
+    case 'group_noti':
+    case 'join_request_approved':
+      return targetId ? `/groups/${targetId}` : '/groups';
+    default:
+      return '/notifications';
+  }
 };

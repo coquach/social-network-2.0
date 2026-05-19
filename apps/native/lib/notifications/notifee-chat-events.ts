@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import notifee, { EventType, type InitialNotification } from '@notifee/react-native';
+import notifee, { EventType, type InitialNotification } from 'react-native-notify-kit';
 
 import {
   getConversationId,

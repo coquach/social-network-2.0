@@ -1,9 +1,9 @@
 import { useAuth } from '@clerk/expo';
-import notifee, { EventType } from '@notifee/react-native';
+import notifee, { EventType } from 'react-native-notify-kit';
 import { notificationService } from '@repo/shared';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
+import messaging from '@react-native-firebase/messaging';
 import { useRouter } from 'expo-router';
 import React, {
   createContext,
@@ -21,20 +21,21 @@ import {
   type NativePushRegistration,
 } from '../utils/registerForPushNotificationsAsync';
 import {
-  getConversationId,
   isChatMessageNotificationData,
+  getNotificationRoute,
   type NotificationData,
 } from '~/lib/notifications/notification-payload';
 import {
   consumePendingChatNavigation,
   extractConversationIdFromInitialNotification,
 } from '~/lib/notifications/notifee-chat-events';
-import { upsertChatThreadNotificationFromData } from '~/lib/notifications/chat-thread-notifications';
+import {
+  upsertChatThreadNotificationFromData,
+  displayRegularNotification,
+} from '~/lib/notifications/chat-thread-notifications';
 
 type NotificationContextValue = {
   pushToken: string | null;
-  expoPushToken: string | null;
-  notification: Notifications.Notification | null;
   error: Error | null;
 };
 
@@ -54,30 +55,10 @@ const appId =
 const normalizeError = (error: unknown) =>
   error instanceof Error ? error : new Error(String(error));
 
-const routeFromNotificationData = (
-  router: ReturnType<typeof useRouter>,
-  data: NotificationData | undefined,
-) => {
-  const conversationId = getConversationId(data);
-
-  if (isChatMessageNotificationData(data)) {
-    if (conversationId) {
-      router.push(`/chat/${conversationId}`);
-      return;
-    }
-  }
-
-  router.push('/notifications');
-};
-
 const isBackendCompatibleRegistration = (
   registration: NativePushRegistration | null,
 ): registration is NativePushRegistration & { pushToken: string } =>
-  Boolean(
-    registration &&
-      registration.platform === 'android' &&
-      registration.pushToken,
-  );
+  Boolean(registration && registration.pushToken);
 
 const buildBackendPayload = (registration: NativePushRegistration & { pushToken: string }) => ({
   token: registration.pushToken,
@@ -85,7 +66,7 @@ const buildBackendPayload = (registration: NativePushRegistration & { pushToken:
   provider: 'fcm' as const,
   appId,
   deviceId: Device.osBuildId ?? undefined,
-  deviceName: Device.modelName ?? 'Android device',
+  deviceName: Device.modelName ?? 'Device',
 });
 
 export function useNotification() {
@@ -106,74 +87,40 @@ export const NotificationProvider = ({
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const [pushToken, setPushToken] = useState<string | null>(null);
-  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const [notification, setNotification] =
-    useState<Notifications.Notification | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const registeredTokenRef = useRef<string | null>(null);
-  const handledResponseRef = useRef<string | null>(null);
 
+  // Handle FCM foreground messages
   useEffect(() => {
-    const handleNotificationResponse = (
-      response: Notifications.NotificationResponse | null | undefined,
-    ) => {
-      const request = response?.notification?.request;
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      const incomingData = remoteMessage.data as NotificationData | undefined;
 
-      if (!request) {
-        return;
-      }
-
-      const responseId =
-        request.identifier ?? JSON.stringify(request.content.data ?? {});
-      const responseData = request.content.data as NotificationData | undefined;
-
-      if (handledResponseRef.current === responseId) {
-        return;
-      }
-
-      handledResponseRef.current = responseId;
-
-      if (Platform.OS === 'android' && isChatMessageNotificationData(responseData)) {
-        return;
-      }
-
-      routeFromNotificationData(router, responseData);
-    };
-
-    const notificationListener = Notifications.addNotificationReceivedListener(
-      (incomingNotification) => {
-        const incomingData = incomingNotification.request.content.data as
-          | NotificationData
-          | undefined;
-
-        if (Platform.OS === 'android' && isChatMessageNotificationData(incomingData)) {
+      if (Platform.OS === 'android') {
+        if (isChatMessageNotificationData(incomingData)) {
           void upsertChatThreadNotificationFromData(incomingData).catch((notificationError) => {
             setError(normalizeError(notificationError));
           });
-          return;
+        } else {
+          const title = remoteMessage.notification?.title || incomingData?.title;
+          const body = remoteMessage.notification?.body || incomingData?.body;
+          if (title || body) {
+            void displayRegularNotification({
+              ...incomingData,
+              title,
+              body,
+              messageId: remoteMessage.messageId,
+            }).catch((notificationError) => {
+              setError(normalizeError(notificationError));
+            });
+          }
         }
+      }
+    });
 
-        setNotification(incomingNotification);
-      },
-    );
+    return unsubscribe;
+  }, []);
 
-    const responseListener =
-      Notifications.addNotificationResponseReceivedListener(
-        handleNotificationResponse,
-      );
-
-    try {
-      handleNotificationResponse(Notifications.getLastNotificationResponse());
-    } catch (responseError) {
-      setError(normalizeError(responseError));
-    }
-
-    return () => {
-      notificationListener.remove();
-      responseListener.remove();
-    };
-  }, [router]);
-
+  // Handle Notifee display events & taps
   useEffect(() => {
     const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
       if (type !== EventType.PRESS && type !== EventType.ACTION_PRESS) {
@@ -181,15 +128,8 @@ export const NotificationProvider = ({
       }
 
       const data = detail.notification?.data as NotificationData | undefined;
-
-      if (!isChatMessageNotificationData(data)) {
-        return;
-      }
-
-      const conversationId = getConversationId(data);
-      if (conversationId) {
-        router.push(`/chat/${conversationId}`);
-      }
+      const targetRoute = getNotificationRoute(data);
+      router.push(targetRoute as any);
     });
 
     const resolveInitialNavigation = async () => {
@@ -209,6 +149,16 @@ export const NotificationProvider = ({
 
         if (pendingNavigation?.conversationId) {
           router.push(`/chat/${pendingNavigation.conversationId}`);
+          return;
+        }
+
+        // Also resolve initial navigation for regular notifications if launched via tap
+        if (initialNotification?.notification?.data) {
+          const data = initialNotification.notification.data as NotificationData | undefined;
+          if (data && !isChatMessageNotificationData(data)) {
+            const targetRoute = getNotificationRoute(data);
+            router.push(targetRoute as any);
+          }
         }
       } catch (initialNotificationError) {
         setError(normalizeError(initialNotificationError));
@@ -220,6 +170,7 @@ export const NotificationProvider = ({
     return unsubscribe;
   }, [router]);
 
+  // Sync Token and Auth transitions
   useEffect(() => {
     if (!isLoaded || !isSignedIn) {
       return;
@@ -236,7 +187,6 @@ export const NotificationProvider = ({
         }
 
         setPushToken(registration.pushToken);
-        setExpoPushToken(registration.expoPushToken);
         setError(null);
 
         if (!isBackendCompatibleRegistration(registration)) {
@@ -261,29 +211,29 @@ export const NotificationProvider = ({
 
     void syncTokens();
 
-    const tokenListener = Notifications.addPushTokenListener((nextToken) => {
-      if (!nextToken?.data || Platform.OS !== 'android') {
+    // Listen to token refresh events from Firebase
+    const unsubscribeTokenRefresh = messaging().onTokenRefresh(async (nextToken) => {
+      if (!nextToken) {
         return;
       }
 
-      const nextPushToken = nextToken.data;
-      setPushToken(nextPushToken);
+      setPushToken(nextToken);
 
-      if (registeredTokenRef.current === nextPushToken) {
+      if (registeredTokenRef.current === nextToken) {
         return;
       }
 
       void notificationService
         .registerDeviceToken({
-          token: nextPushToken,
-          platform: 'android',
+          token: nextToken,
+          platform: Platform.OS as any,
           provider: 'fcm',
           appId,
           deviceId: Device.osBuildId ?? undefined,
-          deviceName: Device.modelName ?? 'Android device',
+          deviceName: Device.modelName ?? 'Device',
         })
         .then(() => {
-          registeredTokenRef.current = nextPushToken;
+          registeredTokenRef.current = nextToken;
           setError(null);
         })
         .catch((registrationError) => {
@@ -293,10 +243,11 @@ export const NotificationProvider = ({
 
     return () => {
       isCancelled = true;
-      tokenListener.remove();
+      unsubscribeTokenRefresh();
     };
   }, [isLoaded, isSignedIn]);
 
+  // Handle Sign Out token cleanup
   useEffect(() => {
     if (!isLoaded || isSignedIn || !registeredTokenRef.current) {
       return;
@@ -305,7 +256,6 @@ export const NotificationProvider = ({
     const tokenToRemove = registeredTokenRef.current;
     registeredTokenRef.current = null;
     setPushToken(null);
-    setExpoPushToken(null);
 
     void notificationService.removeDeviceToken(tokenToRemove).catch(() => {
       registeredTokenRef.current = tokenToRemove;
@@ -315,11 +265,9 @@ export const NotificationProvider = ({
   const value = useMemo<NotificationContextValue>(
     () => ({
       pushToken,
-      expoPushToken,
-      notification,
       error,
     }),
-    [error, expoPushToken, notification, pushToken],
+    [error, pushToken],
   );
 
   return (

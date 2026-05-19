@@ -22,9 +22,8 @@ import { NativeSocketProvider } from '~/providers/socket-provider';
 
 import { AppThemeProvider } from '~/providers/theme-provider';
 import { NotificationProvider } from '~/providers/notification-provider';
-import { ensureBackgroundNotificationTaskRegistered } from '~/lib/notifications/background-notification-task';
+import '~/lib/notifications/background-notification-task';
 import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
-import * as Notifications from 'expo-notifications';
 import { ModalProvider } from '~/components/providers/modal-provider';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
@@ -51,14 +50,6 @@ const heroUIConfig: HeroUINativeConfig = {
     maxVisibleToasts: 3,
   },
 };
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -74,17 +65,6 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
-
-  useEffect(() => {
-    void ensureBackgroundNotificationTaskRegistered().catch(
-      (registrationError) => {
-        console.warn(
-          '[notifications] Failed to register background notification task:',
-          registrationError,
-        );
-      },
-    );
-  }, []);
 
   useEffect(() => {
     void ensureChatThreadNotificationInfrastructure().catch(

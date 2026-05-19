@@ -99,6 +99,8 @@
       "@clerk/expo",
       "expo-secure-store",
       "expo-web-browser",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
       [
         "@stream-io/video-react-native-sdk",
         {
@@ -111,7 +113,7 @@
           "android": {
             "usesCleartextTraffic": true,
             "minSdkVersion": 24,
-            "compileSdkVersion": 34,
+            "compileSdkVersion": 36,
             "targetSdkVersion": 34
           },
           "ios": {
@@ -119,17 +121,7 @@
           }
         }
       ],
-      [
-        "expo-notifications",
-        {
-          "defaultChannel": "general",
-          "enableBackgroundRemoteNotifications": true,
-          "sounds": [
-            "./assets/sounds/general.wav",
-            "./assets/sounds/message.wav"
-          ]
-        }
-      ]
+      "./plugins/withNotificationSounds"
     ],
     "extra": {
       "router": {},
