@@ -9,6 +9,7 @@ export type NotificationData = Record<string, unknown> & {
   preview?: string;
   unreadCount?: string | number;
   sentAt?: string | number;
+  
   // Regular notification specific fields
   targetType?: string;
   targetId?: string;
@@ -17,6 +18,15 @@ export type NotificationData = Record<string, unknown> & {
   actorAvatar?: string;
   title?: string;
   body?: string;
+
+  // Call / Video call specific fields
+  callId?: string;
+  callType?: 'video' | 'voice' | string;
+  callerId?: string;
+  callerName?: string;
+  callerAvatar?: string;
+  isGroup?: string | boolean;
+  userId?: string;
 };
 
 export type ChatNotificationPayload = {
