@@ -1,14 +1,18 @@
-import api from "@/lib/api-client";
-import { CursorPageResponse, CursorPagination } from "@repo/shared";
-import { CreateReportForm, ReportDTO, ReportStatus } from "@/models/report/reportDTO";
-import { TargetType } from "@/models/social/enums/social.enum";
+import api from '@/lib/api-client';
+import { CursorPageResponse, CursorPagination } from '@repo/shared';
+import {
+  CreateReportForm,
+  ReportDTO,
+  ReportStatus,
+} from '@/models/report/reportDTO';
+import { TargetType } from '@/models/social/enums/social.enum';
 
 export const createReport = async (
   token: string,
-  reportData: CreateReportForm
+  reportData: CreateReportForm,
 ): Promise<ReportDTO> => {
   try {
-    const response = await api.post('/reports', reportData, {
+    const response = await api.post('/reports/content', reportData, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -23,17 +27,17 @@ export const createReport = async (
 export const resolveReportTarget = async (
   token: string,
   targetId: string,
-  targetType: TargetType
+  targetType: TargetType,
 ): Promise<boolean> => {
   try {
     const response = await api.post(
-      `/reports/resolve`,
+      `/reports/content/resolve`,
       { targetId, targetType },
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -45,17 +49,17 @@ export const resolveReportTarget = async (
 export const ignoreReport = async (
   token: string,
   targetId: string,
-  targetType: TargetType
+  targetType: TargetType,
 ): Promise<boolean> => {
   try {
     const response = await api.post(
-      `/reports/ignore`,
+      `/reports/content/ignore`,
       { targetId, targetType },
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -73,10 +77,10 @@ export interface ReportFilterDTO extends CursorPagination {
 }
 export const getReports = async (
   token: string,
-  filter: ReportFilterDTO
+  filter: ReportFilterDTO,
 ): Promise<CursorPageResponse<ReportDTO>> => {
   try {
-    const response = await api.get('/reports', {
+    const response = await api.get('/reports/content', {
       params: filter,
       headers: {
         Authorization: `Bearer ${token}`,

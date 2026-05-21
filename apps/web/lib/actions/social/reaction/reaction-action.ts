@@ -14,7 +14,7 @@ export interface GetReactionsDto extends CursorPagination {
 
 export const react = async (token: string, dto: CreateReactionForm) => {
   try {
-    const response = await api.post(`/reactions/react`, dto, {
+    const response = await api.post(`/reactions`, dto, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -28,7 +28,7 @@ export const react = async (token: string, dto: CreateReactionForm) => {
 
 export const disReact = async (token: string, dto: DisReactionForm) => {
   try {
-    const response = await api.delete(`/reactions/dis-react`,{
+    const response = await api.delete(`/reactions`, {
       data: dto,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -41,14 +41,11 @@ export const disReact = async (token: string, dto: DisReactionForm) => {
   }
 };
 
-export const getReactions = async (
-  token: string,
-  query: GetReactionsDto
-) => {
+export const getReactions = async (token: string, query: GetReactionsDto) => {
   try {
     const response = await api.get(`/reactions`, {
       params: query,
-      headers: { 
+      headers: {
         Authorization: `Bearer ${token}`,
       },
     });
@@ -57,4 +54,4 @@ export const getReactions = async (
     console.error(error);
     throw error;
   }
-}
+};

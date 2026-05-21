@@ -1,8 +1,5 @@
 import api from '@/lib/api-client';
-import {
-  CursorPageResponse,
-  CursorPagination,
-} from '@repo/shared';
+import { CursorPageResponse, CursorPagination } from '@repo/shared';
 import { Audience } from '@/models/social/enums/social.enum';
 import {
   CreateSharePostForm,
@@ -19,7 +16,7 @@ export interface GetShareQuery extends CursorPagination {
 
 export const sharePost = async (
   token: string,
-  dto: CreateSharePostForm
+  dto: CreateSharePostForm,
 ): Promise<SharePostDTO> => {
   try {
     const response = await api.post(`/shares`, dto, {
@@ -37,10 +34,10 @@ export const sharePost = async (
 export const updateSharePost = async (
   token: string,
   shareId: string,
-  dto: UpdateSharePostForm
-) : Promise<SharePostDTO> => {
+  dto: UpdateSharePostForm,
+): Promise<SharePostDTO> => {
   try {
-    const response = await api.patch(`/shares/share/${shareId}`, dto, {
+    const response = await api.patch(`/shares/${shareId}`, dto, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -68,10 +65,10 @@ export const deleteSharePost = async (token: string, shareId: string) => {
 
 export const getShareById = async (
   token: string,
-  shareId: string
+  shareId: string,
 ): Promise<SharePostDTO> => {
   try {
-    const response = await api.get(`/shares/share/${shareId}`, {
+    const response = await api.get(`/shares/${shareId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -85,7 +82,7 @@ export const getShareById = async (
 
 export const getMyShares = async (
   token: string,
-  query: GetShareQuery
+  query: GetShareQuery,
 ): Promise<CursorPageResponse<SharePostSnapshotDTO>> => {
   try {
     const response = await api.get(`/shares/me`, {
@@ -104,7 +101,7 @@ export const getMyShares = async (
 export const getUserShares = async (
   token: string,
   userId: string,
-  query: GetShareQuery
+  query: GetShareQuery,
 ): Promise<CursorPageResponse<SharePostSnapshotDTO>> => {
   try {
     const response = await api.get(`/shares/user/${userId}`, {
@@ -123,7 +120,7 @@ export const getUserShares = async (
 export const getPostShares = async (
   token: string,
   postId: string,
-  query: GetShareQuery
+  query: GetShareQuery,
 ): Promise<CursorPageResponse<SharePostSnapshotDTO>> => {
   try {
     const response = await api.get(`/shares/post/${postId}`, {

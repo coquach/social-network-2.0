@@ -27,10 +27,10 @@ export interface EmotionHistoryFilter extends EmotionQuery {
 
 export const getEmotionSummary = async (
   token: string,
-  query?: EmotionQuery
+  query?: EmotionQuery,
 ): Promise<EmotionSummaryDTO> => {
   try {
-    const response = await api.get('/emotion/summary', {
+    const response = await api.get('/emotions/summary', {
       params: {
         ...query,
         fromDate: normalizeDate(query?.fromDate),
@@ -49,10 +49,10 @@ export const getEmotionSummary = async (
 
 export const getEmotionDailyTrend = async (
   token: string,
-  query?: EmotionQuery
+  query?: EmotionQuery,
 ): Promise<EmotionDailyTrendDTO[]> => {
   try {
-    const response = await api.get('/emotion/summary/daily-trend', {
+    const response = await api.get('/emotions/summary/daily-trend', {
       params: {
         ...query,
         fromDate: normalizeDate(query?.fromDate),
@@ -70,10 +70,10 @@ export const getEmotionDailyTrend = async (
 };
 
 export const getEmotionByHour = async (
-  token: string
+  token: string,
 ): Promise<EmotionByHourDTO[]> => {
   try {
-    const response = await api.get('/emotion/summary/by-hour', {
+    const response = await api.get('/emotions/summary/by-hour', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -87,10 +87,10 @@ export const getEmotionByHour = async (
 
 export const getEmotionHistory = async (
   token: string,
-  filter: EmotionHistoryFilter
+  filter: EmotionHistoryFilter,
 ): Promise<EmotionHistoryResponse> => {
   try {
-    const response = await api.get('/emotion/history', {
+    const response = await api.get('/emotions/history', {
       params: {
         ...filter,
         fromDate: normalizeDate(filter?.fromDate),
@@ -109,10 +109,10 @@ export const getEmotionHistory = async (
 
 export const getEmotionDetail = async (
   token: string,
-  id: string
+  id: string,
 ): Promise<EmotionAnalysisDTO> => {
   try {
-    const response = await api.get(`/emotion/detail/${id}`, {
+    const response = await api.get(`/emotions/detail/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
