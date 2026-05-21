@@ -1,8 +1,5 @@
 import api from '@/lib/api-client';
-import {
-  CursorPageResponse,
-  CursorPagination,
-} from '@repo/shared';
+import { CursorPageResponse, CursorPagination } from '@repo/shared';
 import { Emotion, PostGroupStatus } from '@/models/social/enums/social.enum';
 import {
   CreatePostForm,
@@ -16,12 +13,14 @@ export interface GetPostQuery extends CursorPagination {
   feeling?: Emotion;
 }
 
+export type GroupPostModerationAction = 'approve' | 'reject';
+
 export const getPost = async (
   token: string,
-  postId: string
+  postId: string,
 ): Promise<PostDTO> => {
   try {
-    const response = await api.get<PostDTO>(`/posts/post/${postId}`, {
+    const response = await api.get<PostDTO>(`/posts/${postId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -35,7 +34,7 @@ export const getPost = async (
 
 export const getMyPosts = async (
   token: string,
-  query: GetPostQuery
+  query: GetPostQuery,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
     const response = await api.get<CursorPageResponse<PostSnapshotDTO>>(
@@ -45,7 +44,7 @@ export const getMyPosts = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -57,7 +56,7 @@ export const getMyPosts = async (
 export const getPostsByUser = async (
   token: string,
   userId: string,
-  query: GetPostQuery
+  query: GetPostQuery,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
     const response = await api.get<CursorPageResponse<PostSnapshotDTO>>(
@@ -67,7 +66,7 @@ export const getPostsByUser = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -84,17 +83,17 @@ export interface GetGroupPostQueryDTO extends CursorPagination {
 export const getPostsByGroup = async (
   token: string,
   groupId: string,
-  query: GetGroupPostQueryDTO
+  query: GetGroupPostQueryDTO,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
     const response = await api.get<CursorPageResponse<PostSnapshotDTO>>(
-      `/posts/group/${groupId}`,
+      `/groups/${groupId}/posts`,
       {
         params: query,
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -105,7 +104,7 @@ export const getPostsByGroup = async (
 
 export const createPost = async (
   token: string,
-  data: CreatePostForm
+  data: CreatePostForm,
 ): Promise<PostSnapshotDTO> => {
   try {
     const response = await api.post(`/posts`, data, {
@@ -122,14 +121,15 @@ export const createPost = async (
 
 export const createPostInGroup = async (
   token: string,
-  data: CreatePostForm
+  data: CreatePostForm,
 ): Promise<{
   post: PostSnapshotDTO;
   status: PostGroupStatus;
   message: string;
 }> => {
   try {
-    const response = await api.post(`/posts/group`, data, {
+    const groupId = data.groupId;
+    const response = await api.post(`/groups/${groupId}/posts`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -144,10 +144,10 @@ export const createPostInGroup = async (
 export const updatePost = async (
   token: string,
   postId: string,
-  data: UpdatePostForm
+  data: UpdatePostForm,
 ): Promise<PostSnapshotDTO> => {
   try {
-    const response = await api.patch(`/posts/update/${postId}`, data, {
+    const response = await api.patch(`/posts/${postId}`, data, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -159,46 +159,28 @@ export const updatePost = async (
   }
 };
 
-export const approvePostInGroup = async (
+export const approvePostInGroup = (
   token: string,
-  postId: string
-): Promise<boolean> => {
-  try {
-    const response = await api.post(`/posts/group/approve/${postId}`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+  groupId: string,
+  postId: string,
+) => {
+  return moderatePostInGroup(token, groupId, postId, 'approve');
 };
 
-export const rejectPostInGroup = async (
+export const rejectPostInGroup = (
   token: string,
-  postId: string
-): Promise<boolean> => {
-  try {
-    const response = await api.post(`/posts/group/reject/${postId}`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+  groupId: string,
+  postId: string,
+) => {
+  return moderatePostInGroup(token, groupId, postId, 'reject');
 };
 
 export const removePost = async (
   token: string,
-  postId: string
+  postId: string,
 ): Promise<boolean> => {
   try {
-    const response = await api.delete(`/posts/delete/${postId}`, {
+    const response = await api.delete(`/posts/${postId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -212,21 +194,46 @@ export const removePost = async (
 
 export const getPostEditHistory = async (
   token: string,
-  postId: string
+  postId: string,
 ): Promise<EditHistoryDTO[]> => {
   try {
     const response = await api.get<EditHistoryDTO[]>(
-      `/posts/post/${postId}/edit-histories`,
+      `/posts/${postId}/edit-histories`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
-  }
-  catch (error) {
+  } catch (error) {
     console.error(error);
     throw error;
   }
-}
+};
+
+const moderatePostInGroup = async (
+  token: string,
+  groupId: string,
+  postId: string,
+  action: GroupPostModerationAction,
+): Promise<boolean> => {
+  try {
+    const response = await api.post(
+      `/groups/${groupId}/posts/${postId}/moderation`,
+      {
+        action,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
