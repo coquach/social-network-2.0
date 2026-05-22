@@ -64,7 +64,7 @@ export function AppealsTable({
     () => [
       {
         accessorKey: 'id',
-        header: 'Appeal ID',
+        header: 'Mã kháng nghị',
         cell: ({ row }) => (
           <div className="max-w-55 truncate text-sm font-medium text-slate-700">
             {row.original.id}
@@ -73,7 +73,7 @@ export function AppealsTable({
       },
       {
         accessorKey: 'moderationId',
-        header: 'Moderation ID',
+        header: 'Mã kiểm duyệt',
         cell: ({ row }) => (
           <div className="max-w-55 truncate text-sm text-slate-700">
             {row.original.moderationId}
@@ -82,7 +82,7 @@ export function AppealsTable({
       },
       {
         accessorKey: 'userId',
-        header: 'User ID',
+        header: 'Mã người dùng',
         cell: ({ row }) => (
           <div className="max-w-55 truncate text-sm text-slate-700">
             {row.original.userId}
@@ -91,14 +91,14 @@ export function AppealsTable({
       },
       {
         accessorKey: 'status',
-        header: 'Status',
+        header: 'Trạng thái',
         cell: ({ row }) => (
           <ModerationStatusBadge status={row.original.status} />
         ),
       },
       {
         accessorKey: 'createdAt',
-        header: 'Created At',
+        header: 'Ngày tạo',
         cell: ({ row }) => (
           <div className="text-sm text-slate-600">
             {formatDateVN(row.original.createdAt)}
@@ -107,7 +107,7 @@ export function AppealsTable({
       },
       {
         id: 'actions',
-        header: 'Actions',
+        header: 'Thao tác',
         enableSorting: false,
         enableHiding: false,
         cell: ({ row }) => (
@@ -150,13 +150,16 @@ export function AppealsTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={clsx(header.column.id === 'actions' && 'w-44')}
+                    className={clsx(
+                      'text-[15px] font-medium',
+                      header.column.id === 'actions' && 'w-44',
+                    )}
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="-ml-3 h-8"
+                        className="-ml-3 h-8 text-[15px] font-medium"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(

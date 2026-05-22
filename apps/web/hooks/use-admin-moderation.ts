@@ -25,7 +25,7 @@ import {
   getAdminModerationRecords,
   restoreModeratedContent,
   reviewAppeal,
-} from '@/lib/actions/moderations/admin-moderation';
+} from '@/lib/actions/admin/admin-moderation';
 
 export const useAdminModerationRecords = (filter: AdminModerationQuery) => {
   const { getToken } = useAuth();

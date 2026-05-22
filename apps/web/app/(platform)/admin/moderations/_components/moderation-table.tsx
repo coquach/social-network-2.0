@@ -255,9 +255,9 @@ export function ModerationTable({
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <Table className="min-w-[980px]">
-          <TableHeader className="bg-slate-50">
+          <TableHeader className="bg-sky-50">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-slate-50">
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const isActions = header.column.id === 'actions';
 
@@ -265,7 +265,7 @@ export function ModerationTable({
                     <TableHead
                       key={header.id}
                       className={clsx(
-                        'h-11 text-xs font-semibold uppercase tracking-wide text-slate-600',
+                        'text-[15px] font-medium',
                         isActions && 'w-36 text-center',
                       )}
                     >
@@ -273,7 +273,7 @@ export function ModerationTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="-ml-3 h-8 text-xs font-semibold text-slate-700 hover:bg-transparent"
+                          className="-ml-3 h-8 text-[15px] font-medium"
                           onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(
@@ -286,7 +286,7 @@ export function ModerationTable({
                           ) : header.column.getIsSorted() === 'desc' ? (
                             <ArrowDown className="ml-2 h-3.5 w-3.5" />
                           ) : (
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5 text-slate-400" />
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
                           )}
                         </Button>
                       ) : (

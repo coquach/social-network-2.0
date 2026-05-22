@@ -17,7 +17,7 @@ import {
 import {
   AdminAppealQuery,
   AdminModerationQuery,
-} from '@/lib/actions/moderations/admin-moderation';
+} from '@/lib/actions/admin/admin-moderation';
 import {
   AppealStatus,
   FinalDecision,
