@@ -80,7 +80,7 @@ export const postService = {
     groupId: string,
     params?: GetGroupPostQueryParams,
   ): Promise<CursorPageResponse<PostDTO>> {
-    return getApiClient().getCursorPage(`/posts/group/${groupId}`, { params });
+    return getApiClient().getCursorPage(`/groups/${groupId}/posts`, { params });
   },
 
   /**
@@ -96,7 +96,8 @@ export const postService = {
   async createPostInGroup(
     data: CreatePostInput,
   ): Promise<CreatePostInGroupResponse> {
-    return getApiClient().post('/posts/group', data);
+    const groupId = data.groupId;
+    return getApiClient().post(`/groups/${groupId}/posts`, data);
   },
 
   /**
@@ -116,15 +117,15 @@ export const postService = {
   /**
    * Approve post in group (moderator action)
    */
-  async approvePostInGroup(postId: string): Promise<boolean> {
-    return getApiClient().post(`/posts/group/approve/${postId}`, {});
+  async approvePostInGroup(postId: string, groupId: string): Promise<boolean> {
+    return this.moderationPostInGroup(postId, groupId, 'approve');
   },
 
   /**
    * Reject post in group (moderator action)
    */
-  async rejectPostInGroup(postId: string): Promise<boolean> {
-    return getApiClient().post(`/posts/group/reject/${postId}`, {});
+  async rejectPostInGroup(postId: string, groupId: string): Promise<boolean> {
+    return this.moderationPostInGroup(postId, groupId, 'reject');
   },
 
   /**
@@ -169,6 +170,16 @@ export const postService = {
   ): Promise<CursorPageResponse<any>> {
     return getApiClient().getCursorPage(`/posts/${postId}/reactions`, {
       params,
+    });
+  },
+
+  async moderationPostInGroup(
+    postId: string,
+    groupId: string,
+    action: 'approve' | 'reject',
+  ): Promise<boolean> {
+    return getApiClient().post(`/groups/${groupId}/posts/${postId}/moderate`, {
+      action,
     });
   },
 };
