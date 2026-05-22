@@ -1,6 +1,11 @@
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
-import messaging from '@react-native-firebase/messaging';
+import {
+  getMessaging,
+  requestPermission,
+  getToken,
+  AuthorizationStatus,
+} from '@react-native-firebase/messaging';
 
 export type NativePushPlatform = 'ios' | 'android';
 
@@ -28,10 +33,11 @@ export async function registerForPushNotificationsAsync(): Promise<NativePushReg
   }
 
   // Request user permissions for Firebase Cloud Messaging
-  const authStatus = await messaging().requestPermission();
+  const messagingInstance = getMessaging();
+  const authStatus = await requestPermission(messagingInstance);
   const enabled =
-    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    authStatus === AuthorizationStatus.AUTHORIZED ||
+    authStatus === AuthorizationStatus.PROVISIONAL;
 
   if (!enabled) {
     throw new Error(
@@ -42,7 +48,7 @@ export async function registerForPushNotificationsAsync(): Promise<NativePushReg
   // Retrieve FCM push token
   let pushToken: string | null = null;
   try {
-    pushToken = await messaging().getToken();
+    pushToken = await getToken(messagingInstance);
   } catch (error) {
     console.warn('[notifications] Failed to get FCM push token:', error);
   }

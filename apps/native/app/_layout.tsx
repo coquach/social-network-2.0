@@ -58,8 +58,6 @@ export default function RootLayout() {
     'Inter-Bold': require('../assets/fonts/Inter-Bold.ttf'),
   });
 
-
-
   useEffect(() => {
     if (loaded || error) {
       SplashScreen.hideAsync();
@@ -86,15 +84,14 @@ export default function RootLayout() {
       <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
         <SafeAreaProvider>
           <NativeQueryProvider>
-            <NativeSharedProvider>
-              <NotificationProvider>
-                <NativeSocketProvider>
-                  <NativeChatRealtimeProvider>
-                    <CallStoreBootstrap />
-                    <CallProvider>
-                      <CallRealtimeProvider>
-                        <NativePresenceProvider>
-                          <HeroUINativeProvider config={heroUIConfig}>
+            <HeroUINativeProvider config={heroUIConfig}>
+              <NativeSharedProvider>
+                <NotificationProvider>
+                  <NativeSocketProvider>
+                    <NativeChatRealtimeProvider>
+                      <CallProvider>
+                        <CallRealtimeProvider>
+                          <NativePresenceProvider>
                             <AppThemeProvider>
                               <BottomSheetModalProvider>
                                 <Stack screenOptions={{ headerShown: false }}>
@@ -110,22 +107,17 @@ export default function RootLayout() {
                                 <CallOverlay />
                               </BottomSheetModalProvider>
                             </AppThemeProvider>
-                          </HeroUINativeProvider>
-                        </NativePresenceProvider>
-                      </CallRealtimeProvider>
-                    </CallProvider>
-                  </NativeChatRealtimeProvider>
-                </NativeSocketProvider>
-              </NotificationProvider>
-            </NativeSharedProvider>
+                          </NativePresenceProvider>
+                        </CallRealtimeProvider>
+                      </CallProvider>
+                    </NativeChatRealtimeProvider>
+                  </NativeSocketProvider>
+                </NotificationProvider>
+              </NativeSharedProvider>
+            </HeroUINativeProvider>
           </NativeQueryProvider>
         </SafeAreaProvider>
       </ClerkProvider>
     </GestureHandlerRootView>
   );
-}
-
-function CallStoreBootstrap() {
-  // Currently nothing to bootstrap in store, but good to have if we need listeners
-  return null;
 }

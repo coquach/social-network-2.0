@@ -18,7 +18,6 @@ import Animated, { FadeIn } from "react-native-reanimated";
 
 import { ChatMessageBubble } from "~/components/chat/chat-message-bubble";
 import { formatMessageDateLabel, getChatDayKey } from "~/lib/chat-date-utils";
-import { AppCard } from "~/components/ui/app-card";
 
 type ParticipantVisual = {
   name: string;
@@ -378,9 +377,9 @@ export function ConversationMessageList({
         onStartReachedThreshold={0.08}
         ListEmptyComponent={
           <View className="px-4">
-            <AppCard className="rounded-[32px] px-6 py-10">
+        
               <EmptyState />
-            </AppCard>
+            
           </View>
         }
         ListHeaderComponent={

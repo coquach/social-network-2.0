@@ -14,6 +14,12 @@ type CallProviderProps = {
   children: React.ReactNode;
 };
 
+export const CallClientContext = React.createContext<StreamVideoClient | null>(null);
+
+export function useCallClient() {
+  return React.useContext(CallClientContext);
+}
+
 export function CallProvider({ children }: CallProviderProps) {
   const { userId, isLoaded } = useAuth();
   const { data: currentUser } = useCurrentUser();
@@ -70,8 +76,16 @@ export function CallProvider({ children }: CallProviderProps) {
   }
 
   if (!client) {
-    return <>{children}</>;
+    return (
+      <CallClientContext.Provider value={null}>
+        {children}
+      </CallClientContext.Provider>
+    );
   }
 
-  return <StreamVideo client={client}>{children}</StreamVideo>;
+  return (
+    <CallClientContext.Provider value={client}>
+      <StreamVideo client={client}>{children}</StreamVideo>
+    </CallClientContext.Provider>
+  );
 }

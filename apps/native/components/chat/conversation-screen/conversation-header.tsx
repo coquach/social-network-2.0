@@ -66,7 +66,7 @@ export function ConversationHeader({
             icon="call-outline"
             variant="ghost"
             iconSize={20}
-            onPress={() => onStartCall?.(CallType.VOICE)}
+            onPress={() => onStartCall?.(CallType.AUDIO)}
           />
           <AppHeaderIconButton
             icon="videocam-outline"

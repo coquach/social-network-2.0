@@ -7,15 +7,15 @@ import {
   useLeaveConversation,
   useUnhideConversation,
   useUpdateConversation,
-} from "@repo/shared";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
-import { router } from "expo-router";
-import { Button } from "heroui-native/button";
-import { Input } from "heroui-native/input";
-import { useToast } from "heroui-native/toast";
-import React from "react";
-import { ScrollView, View, useWindowDimensions } from "react-native";
+} from '@repo/shared';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { router } from 'expo-router';
+import { Button } from 'heroui-native/button';
+import { Input } from 'heroui-native/input';
+import { useToast } from 'heroui-native/toast';
+import React from 'react';
+import { ScrollView, View, useWindowDimensions } from 'react-native';
 
 import {
   ConversationHero,
@@ -24,21 +24,21 @@ import {
   InfoRow,
   MemberListRow,
   SheetSection,
-} from "~/components/chat/conversation-screen/conversation-info-sheet-sections";
+} from '~/components/chat/conversation-screen/conversation-info-sheet-sections';
 import {
   getConversationPresenceSubtitle,
   getGroupConversationSubtitle,
   getParticipantDisplayName,
-} from "~/components/chat/chat-helpers";
-import { PrimaryButton, SecondaryButton } from "~/components/ui/app-button";
-import { AppBottomSheet } from "~/components/ui/app-bottom-sheet";
-import { AppModal } from "~/components/ui/app-modal";
-import { AppToast, type AppToastData } from "~/components/ui/app-toast";
-import { ImageSourceActions } from "~/components/ui/image-source-actions";
-import { useSingleImageSourcePicker } from "~/lib/use-single-image-source-picker";
+} from '~/components/chat/chat-helpers';
+import { PrimaryButton, SecondaryButton } from '~/components/ui/app-button';
+import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
+import { AppModal } from '~/components/ui/app-modal';
+import { AppToast, type AppToastData } from '~/components/ui/app-toast';
+import { ImageSourceActions } from '~/components/ui/image-source-actions';
+import { useSingleImageSourcePicker } from '~/lib/use-single-image-source-picker';
 
 type PresenceLike = {
-  status?: "online" | "offline" | "away";
+  status?: 'online' | 'offline' | 'away';
   lastSeen?: string | null;
 };
 
@@ -48,7 +48,7 @@ type ParticipantInfo = {
   avatarUrl?: string;
 };
 
-type PendingConversationAction = "leave" | "delete" | null;
+type PendingConversationAction = 'leave' | 'delete' | null;
 
 type ConversationInfoSheetProps = {
   visible: boolean;
@@ -72,15 +72,15 @@ const hasParticipantDetails = (
 
 function formatMetaDate(value?: Date | string | null) {
   if (!value) {
-    return "Không xác định";
+    return 'Không xác định';
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return "Không xác định";
+    return 'Không xác định';
   }
 
-  return format(date, "dd/MM/yyyy", { locale: vi });
+  return format(date, 'dd/MM/yyyy', { locale: vi });
 }
 
 export function ConversationInfoSheet({
@@ -97,7 +97,7 @@ export function ConversationInfoSheet({
   const { toast } = useToast();
   const [pendingAction, setPendingAction] =
     React.useState<PendingConversationAction>(null);
-  const [draftGroupName, setDraftGroupName] = React.useState("");
+  const [draftGroupName, setDraftGroupName] = React.useState('');
   const [isAvatarSheetOpen, setIsAvatarSheetOpen] = React.useState(false);
 
   const isGroup = Boolean(conversation?.isGroup);
@@ -120,24 +120,20 @@ export function ConversationInfoSheet({
     }));
   }, [conversation]);
 
-  const {
-    selectedImage,
-    pickImage,
-    clearImage,
-    setSelectedImage,
-  } = useSingleImageSourcePicker({
-    permissionAlert: {
-      title: "Cần quyền truy cập ảnh",
-      cameraMessage: "Hãy cho phép camera để chụp ảnh đại diện nhóm.",
-      libraryMessage: "Hãy cho phép thư viện để chọn ảnh đại diện nhóm.",
-    },
-    allowsEditing: true,
-    aspect: [1, 1],
-    fileNamePrefix: "group-avatar",
-  });
+  const { selectedImage, pickImage, clearImage, setSelectedImage } =
+    useSingleImageSourcePicker({
+      permissionAlert: {
+        title: 'Cần quyền truy cập ảnh',
+        cameraMessage: 'Hãy cho phép camera để chụp ảnh đại diện nhóm.',
+        libraryMessage: 'Hãy cho phép thư viện để chọn ảnh đại diện nhóm.',
+      },
+      allowsEditing: true,
+      aspect: [1, 1],
+      fileNamePrefix: 'group-avatar',
+    });
 
   const { mutateAsync: updateConversation, isPending: isUpdating } =
-    useUpdateConversation(conversation?._id ?? "");
+    useUpdateConversation(conversation?._id ?? '');
   const { mutateAsync: hideConversation, isPending: isHiding } =
     useHideConversation();
   const { mutateAsync: unhideConversation, isPending: isUnhiding } =
@@ -163,7 +159,7 @@ export function ConversationInfoSheet({
       return;
     }
 
-    setDraftGroupName(conversation.groupName?.trim() || "");
+    setDraftGroupName(conversation.groupName?.trim() || '');
     setSelectedImage(null);
     setPendingAction(null);
   }, [conversation, setSelectedImage, visible]);
@@ -177,26 +173,26 @@ export function ConversationInfoSheet({
       if (isHidden) {
         await unhideConversation(conversation._id);
         showToast({
-          title: "Đã hiện cuộc trò chuyện",
-          variant: "success",
+          title: 'Đã hiện cuộc trò chuyện',
+          variant: 'success',
         });
         return;
       }
 
       await hideConversation(conversation._id);
       showToast({
-        title: "Đã ẩn cuộc trò chuyện",
-        message: "Đoạn chat đã được chuyển khỏi danh sách chính.",
-        variant: "success",
+        title: 'Đã ẩn cuộc trò chuyện',
+        message: 'Đoạn chat đã được chuyển khỏi danh sách chính.',
+        variant: 'success',
       });
       onClose();
-      router.replace("/chat");
+      router.replace('/chat');
     } catch (error) {
       showToast({
-        title: "Không thể cập nhật cuộc trò chuyện",
+        title: 'Không thể cập nhật cuộc trò chuyện',
         message:
-          error instanceof Error ? error.message : "Vui lòng thử lại sau.",
-        variant: "error",
+          error instanceof Error ? error.message : 'Vui lòng thử lại sau.',
+        variant: 'error',
       });
     }
   }, [
@@ -215,7 +211,8 @@ export function ConversationInfoSheet({
 
     const trimmedName = draftGroupName.trim();
     const nextName =
-      trimmedName.length > 0 && trimmedName !== (conversation.groupName?.trim() || "")
+      trimmedName.length > 0 &&
+      trimmedName !== (conversation.groupName?.trim() || '')
         ? trimmedName
         : undefined;
     const nextAvatar = selectedImage?.uploadFile;
@@ -230,16 +227,16 @@ export function ConversationInfoSheet({
         uploadGroupAvatar: nextAvatar,
       });
       showToast({
-        title: "Đã cập nhật nhóm",
-        variant: "success",
+        title: 'Đã cập nhật nhóm',
+        variant: 'success',
       });
       clearImage();
     } catch (error) {
       showToast({
-        title: "Không thể cập nhật nhóm",
+        title: 'Không thể cập nhật nhóm',
         message:
-          error instanceof Error ? error.message : "Vui lòng thử lại sau.",
-        variant: "error",
+          error instanceof Error ? error.message : 'Vui lòng thử lại sau.',
+        variant: 'error',
       });
     }
   }, [
@@ -259,32 +256,32 @@ export function ConversationInfoSheet({
     }
 
     try {
-      if (pendingAction === "leave") {
+      if (pendingAction === 'leave') {
         await leaveConversation(conversation._id);
         showToast({
-          title: "Đã rời nhóm",
-          message: "Bạn sẽ không nhận thêm tin nhắn từ nhóm này nữa.",
-          variant: "success",
+          title: 'Đã rời nhóm',
+          message: 'Bạn sẽ không nhận thêm tin nhắn từ nhóm này nữa.',
+          variant: 'success',
         });
       }
 
-      if (pendingAction === "delete") {
+      if (pendingAction === 'delete') {
         await deleteConversation(conversation._id);
         showToast({
-          title: "Đã xóa nhóm",
-          variant: "success",
+          title: 'Đã xóa nhóm',
+          variant: 'success',
         });
       }
 
       setPendingAction(null);
       onClose();
-      router.replace("/chat");
+      router.replace('/chat');
     } catch (error) {
       showToast({
-        title: "Không thể thực hiện hành động",
+        title: 'Không thể thực hiện hành động',
         message:
-          error instanceof Error ? error.message : "Vui lòng thử lại sau.",
-        variant: "error",
+          error instanceof Error ? error.message : 'Vui lòng thử lại sau.',
+        variant: 'error',
       });
     }
   }, [
@@ -302,9 +299,9 @@ export function ConversationInfoSheet({
 
   const actionPending = isHiding || isUnhiding || isLeaving || isDeleting;
   const confirmPending =
-    pendingAction === "leave"
+    pendingAction === 'leave'
       ? isLeaving
-      : pendingAction === "delete"
+      : pendingAction === 'delete'
         ? isDeleting
         : false;
 
@@ -336,7 +333,7 @@ export function ConversationInfoSheet({
             conversationName={conversationName}
             subtitle={subtitle}
             directAvatarUrl={directAvatarUrl}
-            online={presence?.status === "online"}
+            online={presence?.status === 'online'}
             groupConversation={conversation}
             groupPreviewUri={selectedImage?.previewUri}
             tertiaryText={!isGroup ? directUser?.email : undefined}
@@ -344,14 +341,14 @@ export function ConversationInfoSheet({
 
           <View className="flex-row gap-3">
             <HeroMetric
-              icon={isGroup ? "people-outline" : "time-outline"}
+              icon={isGroup ? 'people-outline' : 'time-outline'}
               value={metaPrimaryValue}
-              label={isGroup ? "Thành viên" : "Trạng thái"}
+              label={isGroup ? 'Thành viên' : 'Trạng thái'}
             />
             <HeroMetric
-              icon={isGroup ? "shield-checkmark-outline" : "calendar-outline"}
+              icon={isGroup ? 'shield-checkmark-outline' : 'calendar-outline'}
               value={metaSecondaryValue}
-              label={isGroup ? "Quản trị" : "Tham gia"}
+              label={isGroup ? 'Quản trị' : 'Tham gia'}
             />
           </View>
 
@@ -396,7 +393,7 @@ export function ConversationInfoSheet({
                     className="flex-1 rounded-full shadow-none"
                     isDisabled={isUpdating}
                     onPress={() => {
-                      setDraftGroupName(conversation?.groupName?.trim() || "");
+                      setDraftGroupName(conversation?.groupName?.trim() || '');
                       clearImage();
                     }}
                   >
@@ -410,7 +407,7 @@ export function ConversationInfoSheet({
                       void handleSaveGroup();
                     }}
                   >
-                    {isUpdating ? "Đang cập nhật..." : "Lưu thay đổi"}
+                    {isUpdating ? 'Đang cập nhật...' : 'Lưu thay đổi'}
                   </Button>
                 </View>
               </View>
@@ -421,12 +418,12 @@ export function ConversationInfoSheet({
             <View className="gap-3">
               <InfoRow
                 icon="calendar-outline"
-                label={isGroup ? "Ngày tạo nhóm" : "Bắt đầu trò chuyện"}
+                label={isGroup ? 'Ngày tạo nhóm' : 'Bắt đầu trò chuyện'}
                 value={formatMetaDate(conversation?.createdAt)}
               />
               <InfoRow
-                icon={isGroup ? "people-outline" : "person-outline"}
-                label={isGroup ? "Quy mô" : "Người dùng tham gia"}
+                icon={isGroup ? 'people-outline' : 'person-outline'}
+                label={isGroup ? 'Quy mô' : 'Người dùng tham gia'}
                 value={
                   isGroup
                     ? `${conversation?.participants.length ?? 0} người`
@@ -437,14 +434,17 @@ export function ConversationInfoSheet({
                 <InfoRow
                   icon="person-circle-outline"
                   label="Vai trò của bạn"
-                  value={isAdmin ? "Bạn là quản trị viên" : "Bạn là thành viên"}
+                  value={isAdmin ? 'Bạn là quản trị viên' : 'Bạn là thành viên'}
                 />
               ) : null}
             </View>
           </SheetSection>
 
           {isGroup ? (
-            <SheetSection title="Thành viên" caption={`${members.length} người`}>
+            <SheetSection
+              title="Thành viên"
+              caption={`${members.length} người`}
+            >
               <View className="gap-2.5">
                 {members.map((member) => (
                   <MemberListRow
@@ -462,11 +462,9 @@ export function ConversationInfoSheet({
             <View className="gap-2.5">
               {!isGroup ? (
                 <ActionRow
-                  icon={isHidden ? "eye-outline" : "eye-off-outline"}
+                  icon={isHidden ? 'eye-outline' : 'eye-off-outline'}
                   label={
-                    isHidden
-                      ? "Hiện cuộc trò chuyện"
-                      : "Ẩn cuộc trò chuyện"
+                    isHidden ? 'Hiện cuộc trò chuyện' : 'Ẩn cuộc trò chuyện'
                   }
                   disabled={actionPending}
                   onPress={() => {
@@ -479,7 +477,7 @@ export function ConversationInfoSheet({
                     icon="exit-outline"
                     label="Rời nhóm"
                     disabled={actionPending}
-                    onPress={() => setPendingAction("leave")}
+                    onPress={() => setPendingAction('leave')}
                   />
                   {isAdmin ? (
                     <ActionRow
@@ -487,7 +485,7 @@ export function ConversationInfoSheet({
                       label="Xóa nhóm"
                       destructive
                       disabled={actionPending}
-                      onPress={() => setPendingAction("delete")}
+                      onPress={() => setPendingAction('delete')}
                     />
                   ) : null}
                 </>
@@ -504,24 +502,24 @@ export function ConversationInfoSheet({
             setPendingAction(null);
           }
         }}
-        variant={pendingAction === "delete" ? "danger" : "warning"}
-        title={pendingAction === "delete" ? "Xác nhận xóa nhóm" : "Rời nhóm?"}
+        variant={pendingAction === 'delete' ? 'danger' : 'warning'}
+        title={pendingAction === 'delete' ? 'Xác nhận xóa nhóm' : 'Rời nhóm?'}
         description={
-          pendingAction === "delete"
-            ? "Hành động này sẽ xóa toàn bộ cuộc trò chuyện nhóm và không thể hoàn tác."
-            : "Bạn sẽ không còn nhận tin nhắn từ nhóm này nữa."
+          pendingAction === 'delete'
+            ? 'Hành động này sẽ xóa toàn bộ cuộc trò chuyện nhóm và không thể hoàn tác.'
+            : 'Bạn sẽ không còn nhận tin nhắn từ nhóm này nữa.'
         }
         dismissible={!confirmPending}
         footer={
           <>
             <PrimaryButton
-              label={pendingAction === "delete" ? "Xóa nhóm" : "Rời nhóm"}
+              label={pendingAction === 'delete' ? 'Xóa nhóm' : 'Rời nhóm'}
               onPress={() => {
                 void handleConfirmAction();
               }}
               loading={confirmPending}
               disabled={confirmPending}
-              className={pendingAction === "delete" ? "bg-rose-600" : undefined}
+              className={pendingAction === 'delete' ? 'bg-rose-600' : undefined}
             />
             <SecondaryButton
               label="Hủy"

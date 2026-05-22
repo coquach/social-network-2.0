@@ -7,40 +7,57 @@ import {
   StreamUserTokenResponseDTO,
 } from '../../types/call.types';
 
+const mapCallSession = (session: any): CallSessionDTO => {
+  if (!session) return session;
+  return {
+    ...session,
+    id: session._id ?? session.id,
+  };
+};
+
 export const callService = {
   async getCallById(callId: string): Promise<CallSessionDTO> {
-    return getApiClient().get(`/calls/${callId}`);
+    const response = await getApiClient().get<any>(`/chats/calls/${callId}`);
+    return mapCallSession(response);
   },
 
   async createCall(input: CreateCallInput): Promise<CallSessionDTO> {
-    return getApiClient().post('/calls', input);
+    const response = await getApiClient().post<any>('/chats/calls', input);
+    return mapCallSession(response);
   },
 
   async acceptCall(callId: string): Promise<CallSessionDTO> {
-    return getApiClient().post(`/calls/${callId}/accept`);
+    const response = await getApiClient().post<any>(`/chats/calls/${callId}/accept`);
+    return mapCallSession(response);
   },
 
   async rejectCall(callId: string): Promise<CallSessionDTO> {
-    return getApiClient().post(`/calls/${callId}/reject`);
+    const response = await getApiClient().post<any>(`/chats/calls/${callId}/reject`);
+    return mapCallSession(response);
   },
 
   async endCall(callId: string): Promise<CallSessionDTO> {
-    return getApiClient().post(`/calls/${callId}/end`);
+    const response = await getApiClient().post<any>(`/chats/calls/${callId}/end`);
+    return mapCallSession(response);
   },
 
   async joinCall(callId: string): Promise<CallSessionDTO> {
-    return getApiClient().post(`/calls/${callId}/join`);
+    const response = await getApiClient().post<any>(`/chats/calls/${callId}/join`);
+    return mapCallSession(response);
   },
 
   async leaveCall(callId: string): Promise<CallSessionDTO> {
-    return getApiClient().post(`/calls/${callId}/leave`);
+    const response = await getApiClient().post<any>(`/chats/calls/${callId}/leave`);
+    return mapCallSession(response);
   },
 
-  async issueCallMediaToken(input: RequestCallMediaTokenInput): Promise<CallMediaTokenResponseDTO> {
-    return getApiClient().post(`/calls/media-token`, input);
+  async issueCallMediaToken(
+    input: RequestCallMediaTokenInput,
+  ): Promise<CallMediaTokenResponseDTO> {
+    return getApiClient().post(`/chats/calls/media-token`, input);
   },
 
   async issueUserMediaToken(): Promise<StreamUserTokenResponseDTO> {
-    return getApiClient().post(`/calls/user-token`);
+    return getApiClient().post(`/chats/calls/user-token`);
   },
 };

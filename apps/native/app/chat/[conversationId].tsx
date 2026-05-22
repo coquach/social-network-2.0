@@ -172,14 +172,6 @@ export default function ChatConversationScreen() {
 
   const { startCall } = useCallActions();
 
-  const handleStartCall = React.useCallback(
-    (type: CallType) => {
-      if (!conversationId) return;
-      void startCall(conversationId, type);
-    },
-    [conversationId, startCall],
-  );
-
   const otherParticipant = React.useMemo(() => {
     if (!conversation) {
       return null;
@@ -236,6 +228,21 @@ export default function ChatConversationScreen() {
       });
     },
     [toast],
+  );
+
+  const handleStartCall = React.useCallback(
+    async (type: CallType) => {
+      if (!conversationId) return;
+      const result = await startCall(conversationId, type);
+      if (!result.ok) {
+        showToast({
+          title: 'Không thể tạo cuộc gọi',
+          message: result.message,
+          variant: 'error',
+        });
+      }
+    },
+    [conversationId, startCall, showToast],
   );
 
   const conversationName = conversation

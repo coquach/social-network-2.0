@@ -3,7 +3,7 @@ import notifee, { EventType } from 'react-native-notify-kit';
 import { notificationService } from '@repo/shared';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, onMessage, onTokenRefresh } from '@react-native-firebase/messaging';
 import { useRouter } from 'expo-router';
 import React, {
   createContext,
@@ -97,7 +97,7 @@ export const NotificationProvider = ({
 
   // Handle FCM foreground messages
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+    const unsubscribe = onMessage(getMessaging(), async (remoteMessage) => {
       const incomingData = remoteMessage.data as NotificationData | undefined;
 
       if (Platform.OS === 'android') {
@@ -266,7 +266,7 @@ export const NotificationProvider = ({
     void syncTokens();
 
     // Listen to token refresh events from Firebase
-    const unsubscribeTokenRefresh = messaging().onTokenRefresh(async (nextToken) => {
+    const unsubscribeTokenRefresh = onTokenRefresh(getMessaging(), async (nextToken: string) => {
       if (!nextToken) {
         return;
       }

@@ -159,7 +159,7 @@ export async function ensureChatThreadNotificationInfrastructure() {
     importance: AndroidImportance.HIGH,
     sound: 'message',
     vibration: true,
-    vibrationPattern: [1000, 1000, 1000, 1000, 1000],
+    vibrationPattern: [1000, 1000, 1000, 1000, 1000, 1000],
     lights: true,
     lightColor: '#DC2626',
     badge: true,

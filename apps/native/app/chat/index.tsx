@@ -1,7 +1,7 @@
-import { FlashList } from "@shopify/flash-list";
-import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
-import { useAuth } from "@clerk/expo";
+import { FlashList } from '@shopify/flash-list';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '@clerk/expo';
 import {
   type ConversationDTO,
   useConversations,
@@ -9,40 +9,40 @@ import {
   useHideConversation,
   useLeaveConversation,
   useUnhideConversation,
-} from "@repo/shared";
-import { router } from "expo-router";
-import { Button } from "heroui-native/button";
-import { SearchField } from "heroui-native/search-field";
-import { useToast } from "heroui-native/toast";
-import React from "react";
-import { Alert, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+} from '@repo/shared';
+import { router } from 'expo-router';
+import { Button } from 'heroui-native/button';
+import { SearchField } from 'heroui-native/search-field';
+import { useToast } from 'heroui-native/toast';
+import React from 'react';
+import { Alert, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CreateConversationSheet } from "~/components/chat/create-conversation-sheet";
+import { CreateConversationSheet } from '~/components/chat/create-conversation-sheet';
 import {
   ChatConversationRow,
   ChatConversationRowSkeleton,
-} from "~/components/chat/chat-conversation-row";
+} from '~/components/chat/chat-conversation-row';
 import {
   DirectChatAvatar,
   GroupChatAvatar,
-} from "~/components/chat/chat-avatar";
+} from '~/components/chat/chat-avatar';
 import {
   getConversationLastActivity,
   getConversationName,
   getMessagePreview,
-} from "~/components/chat/chat-helpers";
-import { AppBottomSheet } from "~/components/ui/app-bottom-sheet";
+} from '~/components/chat/chat-helpers';
+import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
 import {
   AppBackButton,
   AppHeader,
   AppHeaderIconButton,
-} from "~/components/ui/app-header";
-import { AppLoadingBlock } from "~/components/ui/app-loading";
-import { AppScreen } from "~/components/ui/app-screen";
-import { AppToast, type AppToastData } from "~/components/ui/app-toast";
-import { FloatingActionButton } from "~/components/ui/floating-action-button";
-import { cn } from "~/lib/cn";
+} from '~/components/ui/app-header';
+import { AppLoadingBlock } from '~/components/ui/app-loading';
+import { AppScreen } from '~/components/ui/app-screen';
+import { AppToast, type AppToastData } from '~/components/ui/app-toast';
+import { FloatingActionButton } from '~/components/ui/floating-action-button';
+import { cn } from '~/lib/cn';
 
 const sortConversations = (conversations: ConversationDTO[]) => {
   return [...conversations].sort(
@@ -64,7 +64,7 @@ function ConversationSheetAction({
   disabled = false,
   destructive = false,
 }: {
-  icon: React.ComponentProps<typeof Ionicons>["name"];
+  icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   onPress: () => void;
   disabled?: boolean;
@@ -72,7 +72,7 @@ function ConversationSheetAction({
 }) {
   return (
     <Button
-      variant={destructive ? "danger-soft" : "ghost"}
+      variant={destructive ? 'danger-soft' : 'ghost'}
       className="min-h-14 justify-start rounded-[22px] px-4"
       isDisabled={disabled}
       onPress={onPress}
@@ -80,14 +80,14 @@ function ConversationSheetAction({
       <Ionicons
         name={icon}
         size={18}
-        color={destructive ? "#e11d48" : "#0ea5e9"}
+        color={destructive ? '#e11d48' : '#0ea5e9'}
       />
       <Text
         className={cn(
-          "ml-3 text-left text-[15px] font-semibold",
+          'ml-3 text-left text-[15px] font-semibold',
           destructive
-            ? "text-rose-600 dark:text-rose-300"
-            : "text-app-fg dark:text-app-fg-dark",
+            ? 'text-rose-600 dark:text-rose-300'
+            : 'text-app-fg dark:text-app-fg-dark',
         )}
       >
         {label}
@@ -100,7 +100,7 @@ export default function ChatInboxScreen() {
   const insets = useSafeAreaInsets();
   const { toast } = useToast();
   const { isLoaded, isSignedIn, userId } = useAuth();
-  const [searchText, setSearchText] = React.useState("");
+  const [searchText, setSearchText] = React.useState('');
   const [selectedConversation, setSelectedConversation] =
     React.useState<ConversationDTO | null>(null);
   const [actionOpen, setActionOpen] = React.useState(false);
@@ -139,17 +139,17 @@ export default function ChatInboxScreen() {
 
   const handleSettingsPress = React.useCallback(() => {
     showActionToast({
-      title: "Tính năng đang phát triển",
+      title: 'Tính năng đang phát triển',
       message:
-        "Chức năng này sẽ sớm được ra mắt trong các bản cập nhật tiếp theo.",
-      variant: "info",
+        'Chức năng này sẽ sớm được ra mắt trong các bản cập nhật tiếp theo.',
+      variant: 'info',
     });
   }, [showActionToast]);
 
   useFocusEffect(
     React.useCallback(() => {
       if (isLoaded && !isSignedIn) {
-        router.replace("/(auth)/sign-in");
+        router.replace('/(auth)/sign-in');
       }
     }, [isLoaded, isSignedIn]),
   );
@@ -183,7 +183,7 @@ export default function ChatInboxScreen() {
 
   const selectedConversationName = React.useMemo(() => {
     if (!selectedConversation) {
-      return "";
+      return '';
     }
 
     return getConversationName(selectedConversation);
@@ -221,52 +221,52 @@ export default function ChatInboxScreen() {
   );
 
   const executeConversationAction = React.useCallback(
-    async (action: "hide" | "unhide" | "leave" | "delete") => {
+    async (action: 'hide' | 'unhide' | 'leave' | 'delete') => {
       if (!selectedConversation) {
         return;
       }
 
       try {
-        if (action === "hide") {
+        if (action === 'hide') {
           await hideConversation(selectedConversation._id);
           showActionToast({
-            title: "Đã ẩn cuộc trò chuyện",
-            message: "Bạn có thể bật hiện lại bằng cách giữ đoạn chat",
-            variant: "success",
+            title: 'Đã ẩn cuộc trò chuyện',
+            message: 'Bạn có thể bật hiện lại bằng cách giữ đoạn chat',
+            variant: 'success',
           });
         }
 
-        if (action === "unhide") {
+        if (action === 'unhide') {
           await unhideConversation(selectedConversation._id);
           showActionToast({
-            title: "Đã hiện cuộc trò chuyện",
-            variant: "success",
+            title: 'Đã hiện cuộc trò chuyện',
+            variant: 'success',
           });
         }
 
-        if (action === "leave") {
+        if (action === 'leave') {
           await leaveConversation(selectedConversation._id);
           showActionToast({
-            title: "Đã rời nhóm ",
-            message: "Bạn sẽ không nhận được tin nhắn từ nhóm này nữa.",
-            variant: "success",
+            title: 'Đã rời nhóm ',
+            message: 'Bạn sẽ không nhận được tin nhắn từ nhóm này nữa.',
+            variant: 'success',
           });
         }
 
-        if (action === "delete") {
+        if (action === 'delete') {
           await deleteConversation(selectedConversation._id);
           showActionToast({
-            title: "Da xoa nhom",
-            variant: "success",
+            title: 'Da xoa nhom',
+            variant: 'success',
           });
         }
 
         closeActionSheet();
       } catch (error) {
         showActionToast({
-          title: "Không thể thực hiện hành động",
-          message: error instanceof Error ? error.message : "Đã có lỗi xảy ra",
-          variant: "error",
+          title: 'Không thể thực hiện hành động',
+          message: error instanceof Error ? error.message : 'Đã có lỗi xảy ra',
+          variant: 'error',
         });
       }
     },
@@ -282,29 +282,29 @@ export default function ChatInboxScreen() {
   );
 
   const confirmConversationAction = React.useCallback(
-    (action: "leave" | "delete") => {
+    (action: 'leave' | 'delete') => {
       if (!selectedConversation) {
         return;
       }
 
       const config =
-        action === "leave"
+        action === 'leave'
           ? {
-              title: "Rời nhóm?",
-              message: "Bạn sẽ không nhận được tin nhắn từ nhóm này nữa.",
-              confirmText: "Rời nhóm",
+              title: 'Rời nhóm?',
+              message: 'Bạn sẽ không nhận được tin nhắn từ nhóm này nữa.',
+              confirmText: 'Rời nhóm',
             }
           : {
-              title: "Xóa nhóm?",
-              message: "Hành động này không thể hoàn tác.",
-              confirmText: "Xóa nhóm",
+              title: 'Xóa nhóm?',
+              message: 'Hành động này không thể hoàn tác.',
+              confirmText: 'Xóa nhóm',
             };
 
       Alert.alert(config.title, config.message, [
-        { text: "Hủy", style: "cancel" },
+        { text: 'Hủy', style: 'cancel' },
         {
           text: config.confirmText,
-          style: "destructive",
+          style: 'destructive',
           onPress: () => {
             void executeConversationAction(action);
           },
@@ -317,11 +317,11 @@ export default function ChatInboxScreen() {
   const hasSearchText = searchText.trim().length > 0;
 
   const emptyTitle = hasSearchText
-    ? "Không tìm thấy cuộc trò chuyện nào"
-    : "Bạn chưa có cuộc trò chuyện nào";
+    ? 'Không tìm thấy cuộc trò chuyện nào'
+    : 'Bạn chưa có cuộc trò chuyện nào';
   const emptyDescription = hasSearchText
-    ? "Hãy thử điều chỉnh từ khóa tìm kiếm của bạn."
-    : "Nhấn vào biểu tượng tin nhắn để bắt đầu cuộc trò chuyện mới với bạn bè của bạn.";
+    ? 'Hãy thử điều chỉnh từ khóa tìm kiếm của bạn.'
+    : 'Nhấn vào biểu tượng tin nhắn để bắt đầu cuộc trò chuyện mới với bạn bè của bạn.';
 
   return (
     <AppScreen className="px-0 py-0">
@@ -353,7 +353,7 @@ export default function ChatInboxScreen() {
           <SearchField value={searchText} onChange={setSearchText}>
             <SearchField.Group className="rounded-[28px] border border-white/70 bg-white/92 dark:border-app-border-dark dark:bg-app-surface-dark/92">
               <SearchField.SearchIcon
-                iconProps={{ color: "#0ea5e9", size: 18 }}
+                iconProps={{ color: '#0ea5e9', size: 18 }}
               />
               <SearchField.Input
                 variant="secondary"
@@ -402,7 +402,7 @@ export default function ChatInboxScreen() {
                   paddingTop: 6,
                   flex: 1,
                   justifyContent:
-                    conversations.length === 0 ? "center" : "flex-start",
+                    conversations.length === 0 ? 'center' : 'flex-start',
                 }}
                 ItemSeparatorComponent={() => <View className="h-2.5" />}
                 showsVerticalScrollIndicator={false}
@@ -431,8 +431,8 @@ export default function ChatInboxScreen() {
                       <Ionicons
                         name={
                           hasSearchText
-                            ? "search-outline"
-                            : "chatbubbles-outline"
+                            ? 'search-outline'
+                            : 'chatbubbles-outline'
                         }
                         size={28}
                         color="#0ea5e9"
@@ -455,7 +455,7 @@ export default function ChatInboxScreen() {
       <AppBottomSheet
         visible={actionOpen}
         onClose={closeActionSheet}
-        title={selectedConversationName || "Tùy chọn cuộc trò chuyện"}
+        title={selectedConversationName || 'Tùy chọn cuộc trò chuyện'}
         description="Nhấn giữ cuộc trò chuyện để xem thêm tùy chọn"
       >
         {selectedConversation ? (
@@ -468,7 +468,7 @@ export default function ChatInboxScreen() {
                 />
               ) : (
                 <DirectChatAvatar
-                  name={selectedConversationName || "Cuộc trò chuyện"}
+                  name={selectedConversationName || 'Cuộc trò chuyện'}
                   size="md"
                 />
               )}
@@ -496,14 +496,14 @@ export default function ChatInboxScreen() {
             <View className="gap-2">
               {!isGroup ? (
                 <ConversationSheetAction
-                  icon={isHidden ? "eye-outline" : "eye-off-outline"}
+                  icon={isHidden ? 'eye-outline' : 'eye-off-outline'}
                   label={
-                    isHidden ? "Hiện cuộc trò chuyện" : "Ẩn cuộc trò chuyện"
+                    isHidden ? 'Hiện cuộc trò chuyện' : 'Ẩn cuộc trò chuyện'
                   }
                   disabled={isActionPending}
                   onPress={() => {
                     void executeConversationAction(
-                      isHidden ? "unhide" : "hide",
+                      isHidden ? 'unhide' : 'hide',
                     );
                   }}
                 />
@@ -515,7 +515,7 @@ export default function ChatInboxScreen() {
                   icon="log-out-outline"
                   destructive
                   disabled={isActionPending}
-                  onPress={() => confirmConversationAction("leave")}
+                  onPress={() => confirmConversationAction('leave')}
                 />
               ) : null}
 
@@ -525,7 +525,7 @@ export default function ChatInboxScreen() {
                   destructive
                   icon="trash-outline"
                   disabled={isActionPending}
-                  onPress={() => confirmConversationAction("delete")}
+                  onPress={() => confirmConversationAction('delete')}
                 />
               ) : null}
             </View>

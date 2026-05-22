@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import {
   isChatMessageNotificationData,
@@ -20,7 +20,7 @@ export const LAST_BACKGROUND_NOTIFICATION_KEY =
 const isNativePlatform = Platform.OS === 'android' || Platform.OS === 'ios';
 
 if (isNativePlatform) {
-  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  setBackgroundMessageHandler(getMessaging(), async (remoteMessage) => {
     console.log('[notifications] Message handled in the background!', remoteMessage);
     try {
       const notificationData = remoteMessage.data as NotificationData | undefined;

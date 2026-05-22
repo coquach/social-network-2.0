@@ -1,44 +1,45 @@
 import { z } from 'zod';
 
 export enum CallType {
-  VOICE = 'VOICE',
-  VIDEO = 'VIDEO',
+  AUDIO= 'audio',
+  VIDEO = 'video',
 }
 
 export enum CallSessionStatus {
-  RINGING = 'RINGING',
-  ACCEPTED = 'ACCEPTED',
-  REJECTED = 'REJECTED',
-  ENDED = 'ENDED',
-  TIMEOUT = 'TIMEOUT',
+  INITIATED = 'initiated',
+  RINGING = 'ringing',
+  ACCEPTED = 'accepted',
+  ENDED = 'ended',
+  REJECTED = 'rejected',
+  MISSED = 'missed',
+  CANCELLED = 'cancelled',
 }
 
 export enum CallEndReason {
-  NORMAL = 'NORMAL',
-  REJECTED = 'REJECTED',
-  TIMEOUT = 'TIMEOUT',
-  ERROR = 'ERROR',
-  BUSY = 'BUSY',
-  CANCELLED = 'CANCELLED',
-}
-
-export interface CallParticipantDTO {
-  userId: string;
-  joinedAt?: Date;
-  leftAt?: Date;
-  status: 'IDLE' | 'JOINED' | 'LEFT';
+  HANGUP = 'hangup',
+  REJECTED = 'rejected',
+  MISSED = 'missed',
+  TIMEOUT = 'timeout',
+  FAILED = 'failed',
+  KICKED = 'kicked',
 }
 
 export interface CallSessionDTO {
-  id: string;
+  _id: string;
+  id: string; // Populated by service for compatibility
   conversationId: string;
   initiatorId: string;
   type: CallType;
   status: CallSessionStatus;
-  participants: CallParticipantDTO[];
+  participants: string[];
   startedAt?: Date;
   endedAt?: Date;
   endReason?: CallEndReason;
+  createdAt?: Date;
+  updatedAt?: Date;
+  callMessageId?: string;
+  isGroupCall?: boolean;
+  maxParticipants?: number;
 }
 
 export interface CallMediaTokenResponseDTO {

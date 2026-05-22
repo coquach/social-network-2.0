@@ -7,22 +7,54 @@ import {
   queryKeys,
   ConversationDTO,
 } from '@repo/shared';
-import { useStreamVideoClient } from '@stream-io/video-react-native-sdk';
-import { useCallback } from 'react';
+import { useCallClient } from '~/providers/call-provider';
+import { useCallback, useRef } from 'react';
 import { useCallStore } from '~/store/call-store';
 import { useQueryClient } from '@tanstack/react-query';
 
+export type CallErrorCode =
+  | 'USER_BUSY_IN_ANOTHER_CALL'
+  | 'RECIPIENT_BUSY'
+  | 'CONVERSATION_BUSY'
+  | 'STREAM_ERROR'
+  | 'UNKNOWN';
+
+export type StartCallResult =
+  | { ok: true }
+  | { ok: false; code: CallErrorCode; message: string };
+
+function parseCallError(error: unknown): { code: CallErrorCode; message: string } {
+  const msg = (error as any)?.message ?? String(error);
+
+  if (msg.includes('USER_BUSY_IN_ANOTHER_CALL')) {
+    return { code: 'USER_BUSY_IN_ANOTHER_CALL', message: 'Bạn đang trong một cuộc gọi khác.' };
+  }
+  if (msg.includes('RECIPIENT_BUSY')) {
+    return { code: 'RECIPIENT_BUSY', message: 'Người nhận đang bận.' };
+  }
+  if (msg.includes('Conversation already has an active call')) {
+    return { code: 'CONVERSATION_BUSY', message: 'Cuộc trò chuyện đang có cuộc gọi.' };
+  }
+  if (msg.includes('media infrastructure')) {
+    return { code: 'STREAM_ERROR', message: 'Không thể kết nối dịch vụ cuộc gọi. Vui lòng thử lại.' };
+  }
+  return { code: 'UNKNOWN', message: 'Không thể tạo cuộc gọi. Vui lòng thử lại.' };
+}
+
 export function useCallActions() {
-  const client = useStreamVideoClient();
+  const client = useCallClient();
   const queryClient = useQueryClient();
-  const { 
-    setOutgoingCall, 
-    setActiveCall, 
-    setIncomingCall, 
+  const {
+    setOutgoingCall,
+    setActiveCall,
+    setIncomingCall,
     reset,
     incomingCall,
-    activeCall 
+    activeCall,
   } = useCallStore();
+
+  // Guard ref to prevent double-call race condition
+  const isStartingCall = useRef(false);
 
   const { mutateAsync: createCallSession } = useCreateCall();
   const { mutateAsync: acceptCallSession } = useAcceptCall();
@@ -30,40 +62,61 @@ export function useCallActions() {
   const { mutateAsync: endCallSession } = useEndCall();
 
   const startCall = useCallback(
-    async (conversationId: string, type: CallType) => {
+    async (conversationId: string, type: CallType): Promise<StartCallResult> => {
+      // Hard guard: prevent double-call
+      if (isStartingCall.current) {
+        console.warn('[Call] startCall already in progress, ignoring.');
+        return { ok: false, code: 'UNKNOWN', message: 'Cuộc gọi đang được khởi tạo.' };
+      }
+      isStartingCall.current = true;
+
       try {
         setOutgoingCall({ conversationId, type, status: 'dialing' });
 
         const session = await createCallSession({ conversationId, type });
+        // Set activeCall immediately so endCall/cancel can reference the ID
+        setActiveCall(session);
         setOutgoingCall({ conversationId, type, status: 'ringing' });
 
         if (!client) throw new Error('Stream client not initialized');
 
         const call = client.call('default', session.id);
-        
-        // Get conversation members to notify them via Stream's ringing flow
-        const conversation = queryClient.getQueryData<ConversationDTO>(queryKeys.conversations.detail(conversationId));
-        const members = (conversation?.participants ?? []).map(id => ({ user_id: id }));
+
+        // Phase 2.3: getOrCreate first, THEN control camera/mic
+        // Avoids spinning up hardware before the call room actually exists on Stream
+        const conversation = queryClient.getQueryData<ConversationDTO>(
+          queryKeys.conversations.detail(conversationId),
+        );
+        const members = (conversation?.participants ?? []).map((id) => ({
+          user_id: id,
+        }));
 
         await call.getOrCreate({
           ring: true,
           data: {
             members,
-            custom: {
-              type, // VOICE or VIDEO
-            }
-          }
+            custom: { type },
+          },
         });
-        
-        setActiveCall(session);
+
+        // Control camera AFTER room creation to avoid premature hardware spin-up
+        if (type === CallType.AUDIO) {
+          await call.camera.disable();
+        } else {
+          await call.camera.enable();
+        }
+
         setOutgoingCall({ conversationId, type, status: 'accepted' });
+        return { ok: true };
       } catch (error) {
         console.error('[Call] Failed to start call:', error);
-        setOutgoingCall(null);
         reset();
+        return { ok: false, ...parseCallError(error) };
+      } finally {
+        isStartingCall.current = false;
       }
     },
-    [client, createCallSession, setActiveCall, setOutgoingCall, reset, queryClient, incomingCall, activeCall],
+    [client, createCallSession, setActiveCall, setOutgoingCall, reset, queryClient],
   );
 
   const answerCall = useCallback(async () => {
@@ -71,9 +124,16 @@ export function useCallActions() {
 
     try {
       await acceptCallSession(incomingCall.id);
-      
+
       const call = client.call('default', incomingCall.id);
       await call.join();
+
+      // Control camera after joining
+      if (incomingCall.type === CallType.AUDIO) {
+        await call.camera.disable();
+      } else {
+        await call.camera.enable();
+      }
 
       setActiveCall(incomingCall);
       setIncomingCall(null);
@@ -83,33 +143,40 @@ export function useCallActions() {
   }, [acceptCallSession, client, setActiveCall, setIncomingCall, incomingCall]);
 
   const rejectCall = useCallback(async () => {
-    if (!incomingCall) return;
+    if (!incomingCall || !client) return;
 
     try {
-      await rejectCallSession(incomingCall.id);
+      const call = client.call('default', incomingCall.id);
+      // Fire-and-forget both — don't let either block the UI reset
+      void rejectCallSession(incomingCall.id).catch((e) =>
+        console.warn('[Call] rejectCallSession error:', e),
+      );
+      void call.reject().catch((e) =>
+        console.warn('[Call] call.reject error:', e),
+      );
+    } finally {
       setIncomingCall(null);
-    } catch (error) {
-      console.error('[Call] Failed to reject call:', error);
     }
-  }, [incomingCall, rejectCallSession, setIncomingCall]);
+  }, [incomingCall, client, rejectCallSession, setIncomingCall]);
 
   const endCall = useCallback(async () => {
-    if (!activeCall) {
-        reset();
-        return;
-    }
+    const callId = activeCall?.id;
 
-    try {
-      await endCallSession(activeCall.id);
-      if (client) {
-          const call = client.call('default', activeCall.id);
-          await call.leave();
-      }
-      reset();
-    } catch (error) {
-      console.error('[Call] Failed to end call:', error);
-      reset();
+    // Reset store immediately so UI unblocks right away — don't await backend
+    reset();
+
+    if (!callId) return;
+
+    // Fire-and-forget: don't await backend before letting user start new call
+    if (client) {
+      const call = client.call('default', callId);
+      void call.leave().catch((e) =>
+        console.warn('[Call] call.leave error:', e),
+      );
     }
+    void endCallSession(callId).catch((e) =>
+      console.warn('[Call] endCallSession error:', e),
+    );
   }, [activeCall, client, endCallSession, reset]);
 
   return {

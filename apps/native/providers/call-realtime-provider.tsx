@@ -4,11 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
 import { useCallStore } from '~/store/call-store';
 import { useSocket } from '~/providers/socket-provider';
+import { useCallClient } from '~/providers/call-provider';
 
 export function CallRealtimeProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const { userId, isSignedIn } = useAuth();
   const { chatSocket } = useSocket();
+  const client = useCallClient();
   const { setIncomingCall, setActiveCall, reset } = useCallStore();
 
   useEffect(() => {
@@ -18,10 +20,20 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
 
     const handleCallNew = async (payload: CallSessionDTO) => {
       // If user is a participant but not the initiator
-      if (payload.participants.some(p => p.userId === userId) && payload.initiatorId !== userId) {
+      if (payload.participants.includes(userId) && payload.initiatorId !== userId) {
         if (payload.status === CallSessionStatus.RINGING) {
           // Sync with manual state for now (might be redundant with Stream useCalls)
           setIncomingCall(payload);
+
+          // Pre-fetch and watch the call in the Stream client so it registers in useCalls()
+          if (client) {
+            try {
+              const call = client.call('default', payload.id);
+              await call.get();
+            } catch (error) {
+              console.error('[CallRealtimeProvider] Failed to pre-fetch incoming Stream call:', error);
+            }
+          }
         }
       }
     };
@@ -32,7 +44,7 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
       // Update active call if it's the one we're in
       const activeCall = useCallStore.getState().activeCall;
       if (activeCall?.id === payload.id) {
-        if (payload.status === CallSessionStatus.ENDED || payload.status === CallSessionStatus.TIMEOUT) {
+        if (payload.status === CallSessionStatus.ENDED) {
           reset();
         } else {
           setActiveCall(payload);
@@ -45,7 +57,7 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
         if (payload.status !== CallSessionStatus.RINGING) {
           setIncomingCall(null);
         }
-        if (payload.status === CallSessionStatus.ACCEPTED && payload.participants.some(p => p.userId === userId && p.status === 'JOINED')) {
+        if (payload.status === CallSessionStatus.ACCEPTED && payload.participants.includes(userId)) {
             setActiveCall(payload);
         }
       }
