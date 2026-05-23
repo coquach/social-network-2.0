@@ -253,19 +253,19 @@ export function ModerationDetailDrawer({
                     </h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="rounded-lg border border-slate-100 p-3">
-                        <p className="text-xs text-slate-500">ID kháng nghị</p>
+                        <p className="text-xs text-slate-500">Mã kháng nghị</p>
                         <p className="text-sm font-medium text-slate-700">
                           {appeal.id}
                         </p>
                       </div>
                       <div className="rounded-lg border border-slate-100 p-3">
-                        <p className="text-xs text-slate-500">ID kiểm duyệt</p>
+                        <p className="text-xs text-slate-500">Mã kiểm duyệt</p>
                         <p className="text-sm font-medium text-slate-700">
                           {appeal.moderationId}
                         </p>
                       </div>
                       <div className="rounded-lg border border-slate-100 p-3">
-                        <p className="text-xs text-slate-500">ID người dùng</p>
+                        <p className="text-xs text-slate-500">Mã người dùng</p>
                         <p className="text-sm font-medium text-slate-700">
                           {appeal.userId}
                         </p>

@@ -54,7 +54,7 @@ type AppealProps = {
 type Props = ViolationProps | AppealProps;
 
 const labelClass =
-  'mb-1.5 text-[12px] font-medium tracking-wide text-slate-500';
+  'mb-1.5 text-[13px] font-medium tracking-wide text-slate-500';
 
 const controlClass =
   'h-10 rounded-lg border-slate-200 bg-white shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-sky-100';

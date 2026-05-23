@@ -6,6 +6,7 @@ import {
   UsersRound,
   Settings,
   Brain,
+  Music,
 } from 'lucide-react';
 
 export type SidebarItem = {
@@ -41,7 +42,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     roles: ['admin', 'moderator'],
   },
   {
-    title: 'Kiểm duyệt',
+    title: 'Tự động kiểm duyệt',
     url: '/admin/moderations',
     icon: FileText,
     roles: ['admin', 'moderator'],
@@ -50,6 +51,12 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     title: 'Cảm xúc cộng đồng',
     url: '/admin/emotions',
     icon: Brain,
+    roles: ['admin'],
+  },
+  {
+    title: 'Quản lý nhạc',
+    url: '/admin/musics',
+    icon: Music,
     roles: ['admin'],
   },
   {
