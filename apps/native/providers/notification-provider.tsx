@@ -14,7 +14,7 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 
 import {
   registerForPushNotificationsAsync,
@@ -29,6 +29,7 @@ import {
 } from '~/lib/notifications/notification-payload';
 import {
   consumePendingChatNavigation,
+  consumePendingCallAnswer,
   extractConversationIdFromInitialNotification,
 } from '~/lib/notifications/notifee-chat-events';
 import {
@@ -37,7 +38,7 @@ import {
   displayCallNotification,
   cancelCallNotification,
 } from '~/lib/notifications/chat-thread-notifications';
-import { callService } from '@repo/shared';
+import { callService, useCallStore, CallSessionStatus, CallType } from '@repo/shared';
 
 type NotificationContextValue = {
   pushToken: string | null;
@@ -94,6 +95,7 @@ export const NotificationProvider = ({
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const registeredTokenRef = useRef<string | null>(null);
+  const { setIncomingCall } = useCallStore();
 
   // Handle FCM foreground messages
   useEffect(() => {
@@ -158,10 +160,19 @@ export const NotificationProvider = ({
         const callId = data?.callId;
         const conversationId = data?.conversationId;
         if (typeof callId === 'string' && typeof conversationId === 'string') {
-          void callService.acceptCall(callId).catch((err) => {
-            console.error('[notifications] Failed to accept call in foreground:', err);
+          // Hydrate incomingCall store so CallOverlay triggers the full join flow
+          // (acceptCall REST + Stream join). We only have partial data from the
+          // notification payload, so build a minimal CallSessionDTO.
+          setIncomingCall({
+            _id: callId,
+            id: callId,
+            conversationId,
+            initiatorId: data?.callerId ?? '',
+            type: data?.callType === 'video' ? CallType.VIDEO : CallType.AUDIO,
+            status: CallSessionStatus.RINGING,
+            participants: [],
           });
-          router.push(`/chat/${conversationId}`);
+          router.push('/chat/call');
         }
         if (detail.notification?.id) {
           void notifee.cancelNotification(detail.notification.id);
@@ -183,15 +194,46 @@ export const NotificationProvider = ({
       }
 
       const targetRoute = getNotificationRoute(data);
+      if (targetRoute === '/chat/call') {
+        const callId = data?.callId;
+        const conversationId = data?.conversationId;
+        if (typeof callId === 'string' && typeof conversationId === 'string') {
+          setIncomingCall({
+            _id: callId,
+            id: callId,
+            conversationId,
+            initiatorId: data?.callerId ?? '',
+            type: data?.callType === 'video' ? CallType.VIDEO : CallType.AUDIO,
+            status: CallSessionStatus.RINGING,
+            participants: [],
+          });
+        }
+      }
       router.push(targetRoute as any);
     });
 
     const resolveInitialNavigation = async () => {
       try {
-        const [initialNotification, pendingNavigation] = await Promise.all([
+        const [initialNotification, pendingNavigation, pendingCallAnswer] = await Promise.all([
           notifee.getInitialNotification(),
           consumePendingChatNavigation(),
+          consumePendingCallAnswer(),
         ]);
+
+        // Highest priority: user tapped "Answer" while app was killed/background
+        if (pendingCallAnswer) {
+          setIncomingCall({
+            _id: pendingCallAnswer.callId,
+            id: pendingCallAnswer.callId,
+            conversationId: pendingCallAnswer.conversationId,
+            initiatorId: '',
+            type: CallType.AUDIO, // unknown at this point, CallOverlay will handle
+            status: CallSessionStatus.RINGING,
+            participants: [],
+          });
+          router.push('/chat/call');
+          return;
+        }
 
         const initialConversationId =
           await extractConversationIdFromInitialNotification(initialNotification);
@@ -211,6 +253,21 @@ export const NotificationProvider = ({
           const data = initialNotification.notification.data as NotificationData | undefined;
           if (data && !isChatMessageNotificationData(data)) {
             const targetRoute = getNotificationRoute(data);
+            if (targetRoute === '/chat/call') {
+              const callId = data?.callId;
+              const conversationId = data?.conversationId;
+              if (typeof callId === 'string' && typeof conversationId === 'string') {
+                setIncomingCall({
+                  _id: callId,
+                  id: callId,
+                  conversationId,
+                  initiatorId: data?.callerId ?? '',
+                  type: data?.callType === 'video' ? CallType.VIDEO : CallType.AUDIO,
+                  status: CallSessionStatus.RINGING,
+                  participants: [],
+                });
+              }
+            }
             router.push(targetRoute as any);
           }
         }
@@ -221,7 +278,45 @@ export const NotificationProvider = ({
 
     void resolveInitialNavigation();
 
-    return unsubscribe;
+    const resolvePendingBackgroundActions = async () => {
+      try {
+        const [pendingNavigation, pendingCallAnswer] = await Promise.all([
+          consumePendingChatNavigation(),
+          consumePendingCallAnswer(),
+        ]);
+
+        if (pendingCallAnswer) {
+          setIncomingCall({
+            _id: pendingCallAnswer.callId,
+            id: pendingCallAnswer.callId,
+            conversationId: pendingCallAnswer.conversationId,
+            initiatorId: '',
+            type: CallType.AUDIO,
+            status: CallSessionStatus.RINGING,
+            participants: [],
+          });
+          router.push('/chat/call');
+          return;
+        }
+
+        if (pendingNavigation?.conversationId) {
+          router.push(`/chat/${pendingNavigation.conversationId}`);
+        }
+      } catch (err) {
+        console.error('[notifications] Failed to resolve background actions:', err);
+      }
+    };
+
+    const appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        void resolvePendingBackgroundActions();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      appStateSubscription.remove();
+    };
   }, [router]);
 
   // Sync Token and Auth transitions

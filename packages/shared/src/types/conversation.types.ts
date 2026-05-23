@@ -20,6 +20,7 @@ export interface ConversationDTO {
   updatedAt?: Date;
   lastSeenMessageId?: Map<string, string>;
   hiddenFor?: string[];
+  activeCallId?: string;
 }
 
 /**

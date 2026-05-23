@@ -19,9 +19,9 @@ export const useWarmUpBrowser = () => {
       return;
     }
 
-    void WebBrowser.warmUpAsync();
+    void WebBrowser.warmUpAsync().catch(() => {});
     return () => {
-      void WebBrowser.coolDownAsync();
+      void WebBrowser.coolDownAsync().catch(() => {});
     };
   }, []);
 };

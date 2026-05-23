@@ -62,7 +62,11 @@ export const getNotificationRoute = (
     actorId = flatData.actorId;
   }
 
-  // 3. Chat / Message routing
+  // 3. Chat / Message / Call routing
+  if (type === 'call') {
+    return '/chat/call';
+  }
+
   if (type === 'message' || (!targetId && conversationId)) {
     return conversationId ? `/chat/${conversationId}` : '/notifications';
   }

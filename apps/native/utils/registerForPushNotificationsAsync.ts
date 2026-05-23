@@ -6,6 +6,7 @@ import {
   getToken,
   AuthorizationStatus,
 } from '@react-native-firebase/messaging';
+import notifee from 'react-native-notify-kit';
 
 export type NativePushPlatform = 'ios' | 'android';
 
@@ -32,12 +33,15 @@ export async function registerForPushNotificationsAsync(): Promise<NativePushReg
     );
   }
 
-  // Request user permissions for Firebase Cloud Messaging
+  // Request user permissions for Firebase Cloud Messaging and Notifee
   const messagingInstance = getMessaging();
   const authStatus = await requestPermission(messagingInstance);
+  const notifeeStatus = await notifee.requestPermission();
   const enabled =
     authStatus === AuthorizationStatus.AUTHORIZED ||
-    authStatus === AuthorizationStatus.PROVISIONAL;
+    authStatus === AuthorizationStatus.PROVISIONAL ||
+    notifeeStatus.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
+    notifeeStatus.authorizationStatus === AuthorizationStatus.PROVISIONAL;
 
   if (!enabled) {
     throw new Error(

@@ -50,8 +50,10 @@
         "ACCESS_NETWORK_STATE",
         "WAKE_LOCK",
         "READ_PHONE_STATE",
+        "POST_NOTIFICATIONS",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_PHONE_CALL"
+        "FOREGROUND_SERVICE_PHONE_CALL",
+        "USE_FULL_SCREEN_INTENT"
       ],
       "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false,

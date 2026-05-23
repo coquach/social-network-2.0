@@ -1,15 +1,16 @@
 import {
   CallType,
   useAcceptCall,
+  useCallStore,
   useCreateCall,
   useEndCall,
+  useJoinCall,
   useRejectCall,
   queryKeys,
   ConversationDTO,
 } from '@repo/shared';
 import { useCallClient } from '~/providers/call-provider';
 import { useCallback, useRef } from 'react';
-import { useCallStore } from '~/store/call-store';
 import { useQueryClient } from '@tanstack/react-query';
 
 export type CallErrorCode =
@@ -24,7 +25,8 @@ export type StartCallResult =
   | { ok: false; code: CallErrorCode; message: string };
 
 function parseCallError(error: unknown): { code: CallErrorCode; message: string } {
-  const msg = (error as any)?.message ?? String(error);
+  const backendMsg = (error as any)?.responseData?.message || (error as any)?.response?.data?.message;
+  const msg = backendMsg || (error as any)?.message || String(error);
 
   if (msg.includes('USER_BUSY_IN_ANOTHER_CALL')) {
     return { code: 'USER_BUSY_IN_ANOTHER_CALL', message: 'Bạn đang trong một cuộc gọi khác.' };
@@ -60,6 +62,7 @@ export function useCallActions() {
   const { mutateAsync: acceptCallSession } = useAcceptCall();
   const { mutateAsync: rejectCallSession } = useRejectCall();
   const { mutateAsync: endCallSession } = useEndCall();
+  const { mutateAsync: joinCallSession } = useJoinCall();
 
   const startCall = useCallback(
     async (conversationId: string, type: CallType): Promise<StartCallResult> => {
@@ -128,6 +131,11 @@ export function useCallActions() {
       const call = client.call('default', incomingCall.id);
       await call.join();
 
+      // Notify BE so Redis group-online-set stays accurate
+      void joinCallSession(incomingCall.id).catch((e) =>
+        console.warn('[Call] joinCallSession error:', e),
+      );
+
       // Control camera after joining
       if (incomingCall.type === CallType.AUDIO) {
         await call.camera.disable();
@@ -140,7 +148,7 @@ export function useCallActions() {
     } catch (error) {
       console.error('[Call] Failed to answer call:', error);
     }
-  }, [acceptCallSession, client, setActiveCall, setIncomingCall, incomingCall]);
+  }, [acceptCallSession, joinCallSession, client, setActiveCall, setIncomingCall, incomingCall]);
 
   const rejectCall = useCallback(async () => {
     if (!incomingCall || !client) return;
@@ -162,12 +170,11 @@ export function useCallActions() {
   const endCall = useCallback(async () => {
     const callId = activeCall?.id;
 
-    // Reset store immediately so UI unblocks right away — don't await backend
+    // Reset store immediately so UI unblocks right away
     reset();
 
     if (!callId) return;
 
-    // Fire-and-forget: don't await backend before letting user start new call
     if (client) {
       const call = client.call('default', callId);
       void call.leave().catch((e) =>
@@ -179,10 +186,47 @@ export function useCallActions() {
     );
   }, [activeCall, client, endCallSession, reset]);
 
+  const joinOngoingCall = useCallback(async (callId: string, type: CallType = CallType.VIDEO) => {
+    if (!client) return;
+    try {
+      const call = client.call('default', callId);
+      await call.join();
+
+      void joinCallSession(callId).catch((e) =>
+        console.warn('[Call] joinCallSession error:', e),
+      );
+
+      if (type === CallType.AUDIO) {
+        await call.camera.disable();
+      } else {
+        await call.camera.enable();
+      }
+
+      const existingCall = queryClient.getQueryData(queryKeys.calls.detail(callId)) as any;
+      if (existingCall) {
+        setActiveCall(existingCall);
+      } else {
+        // Fallback: create a dummy active call state so UI opens
+        setActiveCall({
+          _id: callId,
+          id: callId,
+          conversationId: 'unknown',
+          initiatorId: 'unknown',
+          type: type,
+          status: 'accepted' as any,
+          participants: [],
+        } as any);
+      }
+    } catch (error) {
+      console.error('[Call] Failed to join ongoing call:', error);
+    }
+  }, [client, joinCallSession, setActiveCall, queryClient]);
+
   return {
     startCall,
     answerCall,
     rejectCall,
     endCall,
+    joinOngoingCall,
   };
 }

@@ -170,7 +170,7 @@ export default function ChatConversationScreen() {
     markConversationAsRead,
   });
 
-  const { startCall } = useCallActions();
+  const { startCall, joinOngoingCall } = useCallActions();
 
   const otherParticipant = React.useMemo(() => {
     if (!conversation) {
@@ -617,12 +617,8 @@ export default function ChatConversationScreen() {
 
   return (
     <AppScreen className="px-0 py-0">
-      <KeyboardAwareContainer
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        withKeyboardHeightPadding={Platform.OS === "android"}
-        className="flex-1 bg-app-bg dark:bg-app-bg-dark"
-      >
-        <View className="flex-1">
+      
+      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
           <ConversationHeader
             conversation={conversation}
             conversationName={conversationName}
@@ -632,6 +628,7 @@ export default function ChatConversationScreen() {
               setDrawerOpen(true);
             }}
             onStartCall={handleStartCall}
+            onJoinCall={(callId) => joinOngoingCall(callId, CallType.VIDEO)}
           />
 
           {isConversationLoading ? (
@@ -748,7 +745,7 @@ export default function ChatConversationScreen() {
             }
           />
         </View>
-      </KeyboardAwareContainer>
+  
     </AppScreen>
   );
 }

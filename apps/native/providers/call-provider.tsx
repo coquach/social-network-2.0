@@ -4,7 +4,7 @@ import {
   StreamVideoClient,
   User,
 } from '@stream-io/video-react-native-sdk';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useCurrentUser, useIssueUserMediaToken } from '@repo/shared';
 import { AppLoadingOverlay } from '~/components/ui/app-loading';
 
@@ -25,6 +25,8 @@ export function CallProvider({ children }: CallProviderProps) {
   const { data: currentUser } = useCurrentUser();
   const { mutateAsync: issueToken } = useIssueUserMediaToken();
   const [client, setClient] = useState<StreamVideoClient | null>(null);
+  // Track previous userId so we can force-disconnect on identity change
+  const prevUserIdRef = useRef<string | null>(null);
 
   const user = useMemo<User | null>(() => {
     if (!userId || !currentUser) return null;
@@ -45,19 +47,33 @@ export function CallProvider({ children }: CallProviderProps) {
           await client.disconnectUser();
           if (active) setClient(null);
         }
+        prevUserIdRef.current = null;
         return;
       }
 
+      // Force-disconnect if the identity changed (logout → different login)
+      if (prevUserIdRef.current && prevUserIdRef.current !== user.id && client) {
+        await client.disconnectUser();
+        if (active) setClient(null);
+      }
+
       try {
-        const { token } = await issueToken();
+        // Use tokenProvider callback instead of a static token so the SDK
+        // can automatically re-fetch when the token expires (fixes >1h sessions).
+        const tokenProvider = async () => {
+          const { token } = await issueToken();
+          return token;
+        };
+
         if (!active) return;
 
         const streamClient = StreamVideoClient.getOrCreateInstance({
           apiKey,
           user: user as any,
-          token,
+          tokenProvider,
         });
 
+        prevUserIdRef.current = user.id ?? null;
         setClient(streamClient);
       } catch (error) {
         console.error('[CallProvider] Failed to initialize Stream client:', error);

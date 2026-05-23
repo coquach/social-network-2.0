@@ -2,9 +2,8 @@ import 'react-native-get-random-values';
 import 'react-native-gesture-handler';
 import 'expo-keep-awake';
 import '../global.css';
-import '../lib/notifications/notifee-chat-events';
 import { ClerkProvider } from '@clerk/expo';
-import { tokenCache } from '@clerk/expo/token-cache';
+import { defaultTokenCache } from '~/lib/token-cache';
 import { SplashScreen, Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import {
@@ -22,14 +21,14 @@ import { NativeSocketProvider } from '~/providers/socket-provider';
 
 import { AppThemeProvider } from '~/providers/theme-provider';
 import { NotificationProvider } from '~/providers/notification-provider';
-import '~/lib/notifications/background-notification-task';
 import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
 import { ModalProvider } from '~/components/providers/modal-provider';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
 import { CallProvider } from '~/providers/call-provider';
 import { CallRealtimeProvider } from '~/providers/call-realtime-provider';
-import { CallOverlay } from '~/components/chat/call-overlay';
+import { CallManager } from '~/components/chat/call-manager';
+import { CallMiniOverlay } from '~/components/chat/call-mini-overlay';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -81,7 +80,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={defaultTokenCache}>
         <SafeAreaProvider>
           <NativeQueryProvider>
             <HeroUINativeProvider config={heroUIConfig}>
@@ -104,7 +103,8 @@ export default function RootLayout() {
                                 </Stack>
                                 <ModalProvider />
                                 <AssistantOverlay />
-                                <CallOverlay />
+                                <CallManager />
+                                <CallMiniOverlay />
                               </BottomSheetModalProvider>
                             </AppThemeProvider>
                           </NativePresenceProvider>

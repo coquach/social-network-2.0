@@ -396,8 +396,13 @@ export async function displayCallNotification(data: NotificationData) {
       importance: AndroidImportance.HIGH,
       ongoing: true,
       sound: 'message',
-      vibrationPattern: [1000, 1000, 1000, 1000, 1000],
+      timeoutAfter: 30000,
+      vibrationPattern: [1000, 1000, 1000, 1000, 1000, 1000],
       pressAction: {
+        id: 'default',
+        launchActivity: 'default',
+      },
+      fullScreenAction: {
         id: 'default',
         launchActivity: 'default',
       },

@@ -30,6 +30,7 @@ type ConversationHeaderProps = {
   presence?: PresenceLike;
   onOpenDrawer: () => void;
   onStartCall?: (type: CallType) => void;
+  onJoinCall?: (callId: string) => void;
 };
 
 const getPresenceDotClassName = (status?: PresenceLike["status"]) => {
@@ -51,6 +52,7 @@ export function ConversationHeader({
   presence,
   onOpenDrawer,
   onStartCall,
+  onJoinCall,
 }: ConversationHeaderProps) {
   const subtitle = conversation?.isGroup
     ? getGroupConversationSubtitle(conversation.participants.length)
@@ -62,18 +64,29 @@ export function ConversationHeader({
       leading={<AppBackButton />}
       trailing={
         <View className="flex-row items-center gap-1">
-          <AppHeaderIconButton
-            icon="call-outline"
-            variant="ghost"
-            iconSize={20}
-            onPress={() => onStartCall?.(CallType.AUDIO)}
-          />
-          <AppHeaderIconButton
-            icon="videocam-outline"
-            variant="ghost"
-            iconSize={22}
-            onPress={() => onStartCall?.(CallType.VIDEO)}
-          />
+          {conversation?.activeCallId ? (
+            <AppHeaderIconButton
+              icon="call"
+              variant="secondary"
+              iconSize={20}
+              onPress={() => onJoinCall?.(conversation.activeCallId!)}
+            />
+          ) : (
+            <>
+              <AppHeaderIconButton
+                icon="call-outline"
+                variant="ghost"
+                iconSize={20}
+                onPress={() => onStartCall?.(CallType.AUDIO)}
+              />
+              <AppHeaderIconButton
+                icon="videocam-outline"
+                variant="ghost"
+                iconSize={22}
+                onPress={() => onStartCall?.(CallType.VIDEO)}
+              />
+            </>
+          )}
           <AppHeaderIconButton
             icon="ellipsis-horizontal"
             variant="ghost"
