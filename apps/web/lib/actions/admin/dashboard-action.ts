@@ -92,7 +92,7 @@ export const getEmotionDashboard = async (
   query: DashboardQueryDTO,
 ): Promise<EmotionDashboardDTO[]> => {
   try {
-    const response = await api.get('/emotions/dashboard', {
+    const response = await api.get('/admin/emotion/dashboard/charts', {
       params: query,
       headers: {
         Authorization: `Bearer ${token}`,
