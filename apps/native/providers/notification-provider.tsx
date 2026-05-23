@@ -1,9 +1,9 @@
 import { useAuth } from '@clerk/expo';
-import notifee, { EventType } from '@notifee/react-native';
+import notifee, { EventType } from 'react-native-notify-kit';
 import { notificationService } from '@repo/shared';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
+import { getMessaging, onMessage, onTokenRefresh } from '@react-native-firebase/messaging';
 import { useRouter } from 'expo-router';
 import React, {
   createContext,
@@ -14,27 +14,34 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 
 import {
   registerForPushNotificationsAsync,
   type NativePushRegistration,
 } from '../utils/registerForPushNotificationsAsync';
 import {
-  getConversationId,
   isChatMessageNotificationData,
+  isCallNotificationData,
+  isCallCancelledNotificationData,
+  getNotificationRoute,
   type NotificationData,
 } from '~/lib/notifications/notification-payload';
 import {
   consumePendingChatNavigation,
+  consumePendingCallAnswer,
   extractConversationIdFromInitialNotification,
 } from '~/lib/notifications/notifee-chat-events';
-import { upsertChatThreadNotificationFromData } from '~/lib/notifications/chat-thread-notifications';
+import {
+  upsertChatThreadNotificationFromData,
+  displayRegularNotification,
+  displayCallNotification,
+  cancelCallNotification,
+} from '~/lib/notifications/chat-thread-notifications';
+import { callService, useCallStore, CallSessionStatus, CallType } from '@repo/shared';
 
 type NotificationContextValue = {
   pushToken: string | null;
-  expoPushToken: string | null;
-  notification: Notifications.Notification | null;
   error: Error | null;
 };
 
@@ -54,30 +61,10 @@ const appId =
 const normalizeError = (error: unknown) =>
   error instanceof Error ? error : new Error(String(error));
 
-const routeFromNotificationData = (
-  router: ReturnType<typeof useRouter>,
-  data: NotificationData | undefined,
-) => {
-  const conversationId = getConversationId(data);
-
-  if (isChatMessageNotificationData(data)) {
-    if (conversationId) {
-      router.push(`/chat/${conversationId}`);
-      return;
-    }
-  }
-
-  router.push('/notifications');
-};
-
 const isBackendCompatibleRegistration = (
   registration: NativePushRegistration | null,
 ): registration is NativePushRegistration & { pushToken: string } =>
-  Boolean(
-    registration &&
-      registration.platform === 'android' &&
-      registration.pushToken,
-  );
+  Boolean(registration && registration.pushToken);
 
 const buildBackendPayload = (registration: NativePushRegistration & { pushToken: string }) => ({
   token: registration.pushToken,
@@ -85,7 +72,7 @@ const buildBackendPayload = (registration: NativePushRegistration & { pushToken:
   provider: 'fcm' as const,
   appId,
   deviceId: Device.osBuildId ?? undefined,
-  deviceName: Device.modelName ?? 'Android device',
+  deviceName: Device.modelName ?? 'Device',
 });
 
 export function useNotification() {
@@ -106,74 +93,60 @@ export const NotificationProvider = ({
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const [pushToken, setPushToken] = useState<string | null>(null);
-  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const [notification, setNotification] =
-    useState<Notifications.Notification | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const registeredTokenRef = useRef<string | null>(null);
-  const handledResponseRef = useRef<string | null>(null);
+  const { setIncomingCall } = useCallStore();
 
+  // Handle FCM foreground messages
   useEffect(() => {
-    const handleNotificationResponse = (
-      response: Notifications.NotificationResponse | null | undefined,
-    ) => {
-      const request = response?.notification?.request;
+    const unsubscribe = onMessage(getMessaging(), async (remoteMessage) => {
+      const incomingData = remoteMessage.data as NotificationData | undefined;
 
-      if (!request) {
-        return;
-      }
-
-      const responseId =
-        request.identifier ?? JSON.stringify(request.content.data ?? {});
-      const responseData = request.content.data as NotificationData | undefined;
-
-      if (handledResponseRef.current === responseId) {
-        return;
-      }
-
-      handledResponseRef.current = responseId;
-
-      if (Platform.OS === 'android' && isChatMessageNotificationData(responseData)) {
-        return;
-      }
-
-      routeFromNotificationData(router, responseData);
-    };
-
-    const notificationListener = Notifications.addNotificationReceivedListener(
-      (incomingNotification) => {
-        const incomingData = incomingNotification.request.content.data as
-          | NotificationData
-          | undefined;
-
-        if (Platform.OS === 'android' && isChatMessageNotificationData(incomingData)) {
-          void upsertChatThreadNotificationFromData(incomingData).catch((notificationError) => {
-            setError(normalizeError(notificationError));
-          });
+      if (Platform.OS === 'android') {
+        if (isCallNotificationData(incomingData)) {
+          if (incomingData) {
+            void displayCallNotification(incomingData).catch((notificationError) => {
+              setError(normalizeError(notificationError));
+            });
+          }
           return;
         }
 
-        setNotification(incomingNotification);
-      },
-    );
+        if (isCallCancelledNotificationData(incomingData)) {
+          const callId = incomingData?.callId;
+          if (typeof callId === 'string') {
+            void cancelCallNotification(callId).catch((notificationError) => {
+              setError(normalizeError(notificationError));
+            });
+          }
+          return;
+        }
 
-    const responseListener =
-      Notifications.addNotificationResponseReceivedListener(
-        handleNotificationResponse,
-      );
+        if (isChatMessageNotificationData(incomingData)) {
+          void upsertChatThreadNotificationFromData(incomingData).catch((notificationError) => {
+            setError(normalizeError(notificationError));
+          });
+        } else {
+          const title = remoteMessage.notification?.title || incomingData?.title;
+          const body = remoteMessage.notification?.body || incomingData?.body;
+          if (title || body) {
+            void displayRegularNotification({
+              ...incomingData,
+              title,
+              body,
+              messageId: remoteMessage.messageId,
+            }).catch((notificationError) => {
+              setError(normalizeError(notificationError));
+            });
+          }
+        }
+      }
+    });
 
-    try {
-      handleNotificationResponse(Notifications.getLastNotificationResponse());
-    } catch (responseError) {
-      setError(normalizeError(responseError));
-    }
+    return unsubscribe;
+  }, []);
 
-    return () => {
-      notificationListener.remove();
-      responseListener.remove();
-    };
-  }, [router]);
-
+  // Handle Notifee display events & taps
   useEffect(() => {
     const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
       if (type !== EventType.PRESS && type !== EventType.ACTION_PRESS) {
@@ -182,22 +155,85 @@ export const NotificationProvider = ({
 
       const data = detail.notification?.data as NotificationData | undefined;
 
-      if (!isChatMessageNotificationData(data)) {
+      // Handle interactive call action presses
+      if (detail.pressAction?.id === 'answer_call') {
+        const callId = data?.callId;
+        const conversationId = data?.conversationId;
+        if (typeof callId === 'string' && typeof conversationId === 'string') {
+          // Hydrate incomingCall store so CallOverlay triggers the full join flow
+          // (acceptCall REST + Stream join). We only have partial data from the
+          // notification payload, so build a minimal CallSessionDTO.
+          setIncomingCall({
+            _id: callId,
+            id: callId,
+            conversationId,
+            initiatorId: data?.callerId ?? '',
+            type: data?.callType === 'video' ? CallType.VIDEO : CallType.AUDIO,
+            status: CallSessionStatus.RINGING,
+            participants: [],
+          });
+          router.push('/chat/call');
+        }
+        if (detail.notification?.id) {
+          void notifee.cancelNotification(detail.notification.id);
+        }
         return;
       }
 
-      const conversationId = getConversationId(data);
-      if (conversationId) {
-        router.push(`/chat/${conversationId}`);
+      if (detail.pressAction?.id === 'reject_call') {
+        const callId = data?.callId;
+        if (typeof callId === 'string') {
+          void callService.rejectCall(callId).catch((err) => {
+            console.error('[notifications] Failed to reject call in foreground:', err);
+          });
+        }
+        if (detail.notification?.id) {
+          void notifee.cancelNotification(detail.notification.id);
+        }
+        return;
       }
+
+      const targetRoute = getNotificationRoute(data);
+      if (targetRoute === '/chat/call') {
+        const callId = data?.callId;
+        const conversationId = data?.conversationId;
+        if (typeof callId === 'string' && typeof conversationId === 'string') {
+          setIncomingCall({
+            _id: callId,
+            id: callId,
+            conversationId,
+            initiatorId: data?.callerId ?? '',
+            type: data?.callType === 'video' ? CallType.VIDEO : CallType.AUDIO,
+            status: CallSessionStatus.RINGING,
+            participants: [],
+          });
+        }
+      }
+      router.push(targetRoute as any);
     });
 
     const resolveInitialNavigation = async () => {
       try {
-        const [initialNotification, pendingNavigation] = await Promise.all([
+        const [initialNotification, pendingNavigation, pendingCallAnswer] = await Promise.all([
           notifee.getInitialNotification(),
           consumePendingChatNavigation(),
+          consumePendingCallAnswer(),
         ]);
+
+        // Highest priority: user tapped "Answer" while app was killed/background
+        if (pendingCallAnswer) {
+          setIncomingCall({
+            _id: pendingCallAnswer.callId,
+            id: pendingCallAnswer.callId,
+            conversationId: pendingCallAnswer.conversationId,
+            initiatorId: '',
+            type: CallType.AUDIO, // unknown at this point, CallOverlay will handle
+            status: CallSessionStatus.RINGING,
+            participants: [],
+          });
+          router.push('/chat/call');
+          return;
+        }
 
         const initialConversationId =
           await extractConversationIdFromInitialNotification(initialNotification);
@@ -209,6 +245,31 @@ export const NotificationProvider = ({
 
         if (pendingNavigation?.conversationId) {
           router.push(`/chat/${pendingNavigation.conversationId}`);
+          return;
+        }
+
+        // Also resolve initial navigation for regular notifications if launched via tap
+        if (initialNotification?.notification?.data) {
+          const data = initialNotification.notification.data as NotificationData | undefined;
+          if (data && !isChatMessageNotificationData(data)) {
+            const targetRoute = getNotificationRoute(data);
+            if (targetRoute === '/chat/call') {
+              const callId = data?.callId;
+              const conversationId = data?.conversationId;
+              if (typeof callId === 'string' && typeof conversationId === 'string') {
+                setIncomingCall({
+                  _id: callId,
+                  id: callId,
+                  conversationId,
+                  initiatorId: data?.callerId ?? '',
+                  type: data?.callType === 'video' ? CallType.VIDEO : CallType.AUDIO,
+                  status: CallSessionStatus.RINGING,
+                  participants: [],
+                });
+              }
+            }
+            router.push(targetRoute as any);
+          }
         }
       } catch (initialNotificationError) {
         setError(normalizeError(initialNotificationError));
@@ -217,9 +278,48 @@ export const NotificationProvider = ({
 
     void resolveInitialNavigation();
 
-    return unsubscribe;
+    const resolvePendingBackgroundActions = async () => {
+      try {
+        const [pendingNavigation, pendingCallAnswer] = await Promise.all([
+          consumePendingChatNavigation(),
+          consumePendingCallAnswer(),
+        ]);
+
+        if (pendingCallAnswer) {
+          setIncomingCall({
+            _id: pendingCallAnswer.callId,
+            id: pendingCallAnswer.callId,
+            conversationId: pendingCallAnswer.conversationId,
+            initiatorId: '',
+            type: CallType.AUDIO,
+            status: CallSessionStatus.RINGING,
+            participants: [],
+          });
+          router.push('/chat/call');
+          return;
+        }
+
+        if (pendingNavigation?.conversationId) {
+          router.push(`/chat/${pendingNavigation.conversationId}`);
+        }
+      } catch (err) {
+        console.error('[notifications] Failed to resolve background actions:', err);
+      }
+    };
+
+    const appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        void resolvePendingBackgroundActions();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      appStateSubscription.remove();
+    };
   }, [router]);
 
+  // Sync Token and Auth transitions
   useEffect(() => {
     if (!isLoaded || !isSignedIn) {
       return;
@@ -236,7 +336,6 @@ export const NotificationProvider = ({
         }
 
         setPushToken(registration.pushToken);
-        setExpoPushToken(registration.expoPushToken);
         setError(null);
 
         if (!isBackendCompatibleRegistration(registration)) {
@@ -261,29 +360,29 @@ export const NotificationProvider = ({
 
     void syncTokens();
 
-    const tokenListener = Notifications.addPushTokenListener((nextToken) => {
-      if (!nextToken?.data || Platform.OS !== 'android') {
+    // Listen to token refresh events from Firebase
+    const unsubscribeTokenRefresh = onTokenRefresh(getMessaging(), async (nextToken: string) => {
+      if (!nextToken) {
         return;
       }
 
-      const nextPushToken = nextToken.data;
-      setPushToken(nextPushToken);
+      setPushToken(nextToken);
 
-      if (registeredTokenRef.current === nextPushToken) {
+      if (registeredTokenRef.current === nextToken) {
         return;
       }
 
       void notificationService
         .registerDeviceToken({
-          token: nextPushToken,
-          platform: 'android',
+          token: nextToken,
+          platform: Platform.OS as any,
           provider: 'fcm',
           appId,
           deviceId: Device.osBuildId ?? undefined,
-          deviceName: Device.modelName ?? 'Android device',
+          deviceName: Device.modelName ?? 'Device',
         })
         .then(() => {
-          registeredTokenRef.current = nextPushToken;
+          registeredTokenRef.current = nextToken;
           setError(null);
         })
         .catch((registrationError) => {
@@ -293,10 +392,11 @@ export const NotificationProvider = ({
 
     return () => {
       isCancelled = true;
-      tokenListener.remove();
+      unsubscribeTokenRefresh();
     };
   }, [isLoaded, isSignedIn]);
 
+  // Handle Sign Out token cleanup
   useEffect(() => {
     if (!isLoaded || isSignedIn || !registeredTokenRef.current) {
       return;
@@ -305,7 +405,6 @@ export const NotificationProvider = ({
     const tokenToRemove = registeredTokenRef.current;
     registeredTokenRef.current = null;
     setPushToken(null);
-    setExpoPushToken(null);
 
     void notificationService.removeDeviceToken(tokenToRemove).catch(() => {
       registeredTokenRef.current = tokenToRemove;
@@ -315,11 +414,9 @@ export const NotificationProvider = ({
   const value = useMemo<NotificationContextValue>(
     () => ({
       pushToken,
-      expoPushToken,
-      notification,
       error,
     }),
-    [error, expoPushToken, notification, pushToken],
+    [error, pushToken],
   );
 
   return (

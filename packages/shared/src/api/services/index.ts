@@ -11,3 +11,4 @@ export * from './group.service';
 export * from './search.service';
 export * from './chatbot.service';
 export * from './music.service';
+export * from './call.service';

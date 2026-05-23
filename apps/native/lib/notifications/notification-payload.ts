@@ -1,15 +1,10 @@
-export type NotificationData = Record<string, unknown> & {
-  type?: string;
-  conversationId?: string;
-  messageId?: string;
-  senderId?: string;
-  senderName?: string;
-  conversationName?: string;
-  senderAvatar?: string;
-  preview?: string;
-  unreadCount?: string | number;
-  sentAt?: string | number;
-};
+import {
+  type NotificationDTO,
+  type NotificationData,
+  getNotificationRoute as sharedGetNotificationRoute,
+} from '@repo/shared';
+
+export type { NotificationData };
 
 export type ChatNotificationPayload = {
   conversationId: string;
@@ -39,7 +34,23 @@ export const isChatMessageNotificationData = (
     return false;
   }
 
+  if (data.type === 'call' || data.type === 'call_cancelled') {
+    return false;
+  }
+
   return data.type === 'message' || Boolean(getConversationId(data));
+};
+
+export const isCallNotificationData = (
+  data: NotificationData | undefined,
+): boolean => {
+  return data?.type === 'call';
+};
+
+export const isCallCancelledNotificationData = (
+  data: NotificationData | undefined,
+): boolean => {
+  return data?.type === 'call_cancelled';
 };
 
 export const toChatNotificationPayload = (
@@ -75,10 +86,17 @@ export const toChatNotificationPayload = (
     preview: typeof data?.preview === 'string' ? data.preview : '',
     unreadCount:
       Number.isFinite(unreadCount) && unreadCount > 0 ? unreadCount : 1,
-    isGroup: data?.isGroup === 'true' || data?.isGroup === true,
-    sentAt:
-      typeof data?.sentAt === 'string' || typeof data?.sentAt === 'number'
-        ? data.sentAt
-        : undefined,
+    isGroup: data?.isGroup === 'true',
+    sentAt: typeof data?.sentAt === 'string' ? data.sentAt : undefined,
   };
+};
+
+/**
+ * Maps incoming notification data to the correct Expo Router route.
+ * Aligned with apps/web/lib/notification-type-links.ts
+ */
+export const getNotificationRoute = (
+  data: NotificationData | NotificationDTO | undefined,
+): string => {
+  return sharedGetNotificationRoute(data, 'native');
 };

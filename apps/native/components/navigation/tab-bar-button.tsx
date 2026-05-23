@@ -2,11 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import Animated, {
-  Easing,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withSpring
 } from 'react-native-reanimated';
 
 type TabBarButtonProps = {
@@ -33,32 +32,40 @@ export function TabBarButton({
   const progress = useSharedValue(isFocused ? 1 : 0);
 
   useEffect(() => {
-    progress.value = withTiming(isFocused ? 1 : 0, {
-      duration: 220,
-      easing: Easing.out(Easing.cubic),
+    // Sử dụng withSpring để tạo độ nảy mượt mà, tự nhiên
+    progress.value = withSpring(isFocused ? 1 : 0, {
+      damping: 12, // Độ cản (càng thấp càng nảy nhiều)
+      stiffness: 150, // Độ cứng của lò xo (càng cao tốc độ nảy càng nhanh)
+      mass: 1, // Khối lượng
     });
   }, [isFocused, progress]);
 
   const capsuleStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0.5, 1]),
+    opacity: interpolate(progress.value, [0, 1], [0, 1]), // Ẩn hẳn khi chưa focus
     transform: [
-      { scaleX: interpolate(progress.value, [0, 1], [0.88, 1]) },
-      { scaleY: interpolate(progress.value, [0, 1], [0.88, 1]) },
+      { scaleX: interpolate(progress.value, [0, 1], [0.7, 1]) },
+      { scaleY: interpolate(progress.value, [0, 1], [0.7, 1]) },
     ],
   }));
 
   const iconStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: interpolate(progress.value, [0, 1], [0, -1.5]) },
-      { scale: interpolate(progress.value, [0, 1], [1, 1.08]) },
+      // Đẩy icon lên cao hơn một chút khi active
+      { translateY: interpolate(progress.value, [0, 1], [0, -3]) },
+      // Phóng to rõ rệt hơn (tăng từ 1.08 lên 1.25)
+      { scale: interpolate(progress.value, [0, 1], [1, 1.25]) },
     ],
   }));
 
   const labelStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 1], [0.72, 1]),
-    transform: [{ translateY: interpolate(progress.value, [0, 1], [0, -1]) }],
+    transform: [
+      // Nhường chỗ cho icon phóng to
+      { translateY: interpolate(progress.value, [0, 1], [0, 2]) },
+      // Tùy chọn: Bạn cũng có thể thu nhỏ text đi một chút khi icon to ra
+      // { scale: interpolate(progress.value, [0, 1], [1, 0.9]) }
+    ],
   }));
-
   return (
     <Pressable
       accessibilityRole="button"

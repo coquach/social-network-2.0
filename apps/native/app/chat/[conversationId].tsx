@@ -13,6 +13,7 @@ import {
   useSendMessage,
   useUploadOptional,
   useUser,
+  CallType,
 } from "@repo/shared";
 import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
@@ -54,6 +55,7 @@ import { KeyboardAwareContainer } from "~/components/ui/keyboard-aware-container
 import { pickLibraryMediaAssets, pickSingleImage } from "~/lib/media-picker";
 import { useNativeConversationRealtime } from "~/providers/chat-realtime-provider";
 import { usePresenceChannel } from "~/providers/presence-provider";
+import { useCallActions } from "~/hooks/use-call-actions";
 
 const MAX_ATTACHMENTS = 6;
 
@@ -168,6 +170,8 @@ export default function ChatConversationScreen() {
     markConversationAsRead,
   });
 
+  const { startCall, joinOngoingCall } = useCallActions();
+
   const otherParticipant = React.useMemo(() => {
     if (!conversation) {
       return null;
@@ -224,6 +228,21 @@ export default function ChatConversationScreen() {
       });
     },
     [toast],
+  );
+
+  const handleStartCall = React.useCallback(
+    async (type: CallType) => {
+      if (!conversationId) return;
+      const result = await startCall(conversationId, type);
+      if (!result.ok) {
+        showToast({
+          title: 'Không thể tạo cuộc gọi',
+          message: result.message,
+          variant: 'error',
+        });
+      }
+    },
+    [conversationId, startCall, showToast],
   );
 
   const conversationName = conversation
@@ -598,12 +617,8 @@ export default function ChatConversationScreen() {
 
   return (
     <AppScreen className="px-0 py-0">
-      <KeyboardAwareContainer
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        withKeyboardHeightPadding={Platform.OS === "android"}
-        className="flex-1 bg-app-bg dark:bg-app-bg-dark"
-      >
-        <View className="flex-1">
+      
+      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
           <ConversationHeader
             conversation={conversation}
             conversationName={conversationName}
@@ -612,6 +627,8 @@ export default function ChatConversationScreen() {
             onOpenDrawer={() => {
               setDrawerOpen(true);
             }}
+            onStartCall={handleStartCall}
+            onJoinCall={(callId) => joinOngoingCall(callId, CallType.VIDEO)}
           />
 
           {isConversationLoading ? (
@@ -728,7 +745,7 @@ export default function ChatConversationScreen() {
             }
           />
         </View>
-      </KeyboardAwareContainer>
+  
     </AppScreen>
   );
 }
