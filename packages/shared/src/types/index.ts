@@ -18,4 +18,9 @@ export * from './message.types';
 export * from './conversation.types';
 export * from './feed.types';
 export * from './group.types';
+export * from './report.types';
 export * from './upload.types';
+export * from './chatbot.types';
+export * from './music.types';
+export * from './call.types';
+

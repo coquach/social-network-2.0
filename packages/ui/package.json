@@ -5,16 +5,19 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
     "@types/minimatch": "^6.0.0",
     "@types/react": "~19.2.10",
+    "react": "^19.2.3",
+    "react-native": "0.83.2",
     "tsup": "^8.0.1",
     "typescript": "5.9.2"
   },
-  "dependencies": {
+  "peerDependencies": {
     "react": "^19.2.0",
     "react-native": "0.83.2"
   }

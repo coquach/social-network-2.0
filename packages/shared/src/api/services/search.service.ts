@@ -12,6 +12,7 @@ import type {
   GroupPrivacy,
   Emotion,
 } from '../../types';
+import type { SortOrder } from '../../types/common.types';
 
 // ==================== Filter Types ====================
 
@@ -25,6 +26,8 @@ export interface SearchPostFilter {
   userId?: string;
   groupId?: string;
   emotion?: Emotion;
+  sortBy?: 'createdAt';
+  sortOrder?: SortOrder;
 }
 
 /**
@@ -45,6 +48,7 @@ export interface SearchGroupFilter {
   groupId?: string;
   privacy?: GroupPrivacy;
   sortBy?: SearchGroupSortBy;
+  sortOrder?: SortOrder;
 }
 
 /**
@@ -58,6 +62,8 @@ export interface SearchUserFilter {
   firstName?: string;
   lastName?: string;
   isActive?: boolean;
+  sortBy?: 'createdAt';
+  sortOrder?: SortOrder;
 }
 
 // ==================== Service ====================

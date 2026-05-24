@@ -20,15 +20,45 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sentimeta.app"
+      "bundleIdentifier": "com.sentimeta.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Sentimeta needs microphone access so you can record and send voice messages, and make calls.",
+        "NSCameraUsageDescription": "Sentimeta needs camera access so you can take photos and make video calls."
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "icon": {
+        "dark": "./assests/icons/ios-dark.png",
+        "light": "./assests/icons/ios-light.png",
+        "tinted": "./assests/icons/ios-tinted.png"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
+        "foregroundImage": "./assets/icons/adaptive-icon.png",
+        "monochromeImage": "./assets/icons/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_CONNECT",
+        "ACCESS_NETWORK_STATE",
+        "WAKE_LOCK",
+        "READ_PHONE_STATE",
+        "POST_NOTIFICATIONS",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_PHONE_CALL",
+        "USE_FULL_SCREEN_INTENT"
+      ],
+      "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.sentimeta.app"
+      "package": "com.sentimeta.app",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -39,13 +69,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
-          "image": "./assets/splash.png",
+          "backgroundColor": "#ffffff",
+          "image": "./assets/icons/splash-icon-dark.png",
           "imageWidth": 200,
+          "resizeMode": "contain",
           "darkMode": {
             "backgroundColor": "#000000",
-            "image": "./assets/splash.png",
-            "imageWidth": 200
+            "image": "./assets/icons/splash-icon-light.png"
           }
         }
       ],
@@ -60,9 +90,47 @@
           ]
         }
       ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Sentimeta to access your microphone so you can record and send voice messages, and make calls.",
+          "recordAudioAndroid": true,
+          "enableBackgroundPlayback": true
+        }
+      ],
       "@clerk/expo",
       "expo-secure-store",
-      "expo-web-browser"
-    ]
+      "expo-web-browser",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
+      [
+        "@stream-io/video-react-native-sdk",
+        {
+          "addVoipBackgroundMode": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "minSdkVersion": 24,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 34
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ],
+      "./plugins/withNotificationSounds"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e269aaac-d58b-4520-a4f8-4cf6fc462dad"
+      }
+    },
+    "owner": "sentimeta"
   }
 }

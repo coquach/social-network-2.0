@@ -1,10 +1,10 @@
-import { useAuth, useSSO, useSignUp } from '@clerk/expo';
-import { Link, Redirect, useRouter } from 'expo-router';
-import React from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { useAuth, useSSO, useSignUp } from "@clerk/expo";
+import { Link, Redirect, useRouter } from "expo-router";
+import React from "react";
+import { ActivityIndicator, Text, View } from "react-native";
 
-import { AuthBrand } from '~/components/auth/auth-brand';
-import { AuthCard } from '~/components/auth/auth-card';
+import { AuthBrand } from "~/components/auth/auth-brand";
+import { AuthCard } from "~/components/auth/auth-card";
 import {
   AuthAlert,
   AuthDivider,
@@ -13,21 +13,15 @@ import {
   AuthGoogleButton,
   AuthPrimaryButton,
   AuthSecondaryButton,
-} from '~/components/auth/auth-primitives';
-import { AuthShell } from '~/components/auth/auth-shell';
+} from "~/components/auth/auth-primitives";
+import { AuthShell } from "~/components/auth/auth-shell";
 import {
   createAuthNavigate,
   oauthRedirectUrl,
   resolveAuthError,
   toErrorMessage,
   useWarmUpBrowser,
-} from '~/utils/clerk-auth';
-
-const SIGN_UP_HIGHLIGHTS = [
-  'Khởi tạo nhanh',
-  'Xác minh email',
-  'Sẵn sàng cho 2FA',
-];
+} from "~/utils/clerk-auth";
 
 export default function SignUpScreen() {
   const { signUp, errors, fetchStatus } = useSignUp();
@@ -37,19 +31,26 @@ export default function SignUpScreen() {
 
   useWarmUpBrowser();
 
-  const [emailAddress, setEmailAddress] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [code, setCode] = React.useState('');
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
+  const [emailAddress, setEmailAddress] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [code, setCode] = React.useState("");
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [localError, setLocalError] = React.useState<string | null>(null);
   const isFinalizingRef = React.useRef(false);
 
-  const isSubmitting = fetchStatus === 'fetching';
+  const isSubmitting = fetchStatus === "fetching";
   const isBusy = isSubmitting || isGoogleLoading;
-  const isPrimaryDisabled = !emailAddress.trim() || !password || isBusy;
+  const isPrimaryDisabled =
+    !firstName.trim() ||
+    !lastName.trim() ||
+    !emailAddress.trim() ||
+    !password ||
+    isBusy;
   const needsEmailVerification =
-    signUp.status === 'missing_requirements' &&
-    signUp.unverifiedFields.includes('email_address') &&
+    signUp.status === "missing_requirements" &&
+    signUp.unverifiedFields.includes("email_address") &&
     signUp.missingFields.length === 0;
   const formError = resolveAuthError(localError, errors);
 
@@ -79,7 +80,7 @@ export default function SignUpScreen() {
 
     if (error) {
       isFinalizingRef.current = false;
-      reportError(error, 'Không thể hoàn tất đăng ký.');
+      reportError(error, "Không thể hoàn tất đăng ký.");
       return;
     }
 
@@ -87,7 +88,7 @@ export default function SignUpScreen() {
   }, [navigateAfterAuth, reportError, signUp]);
 
   React.useEffect(() => {
-    if (signUp.status === 'complete' && !isSignedIn) {
+    if (signUp.status === "complete" && !isSignedIn) {
       void completeSignUp();
     }
   }, [completeSignUp, isSignedIn, signUp.status]);
@@ -95,7 +96,7 @@ export default function SignUpScreen() {
   const requestVerificationEmail = React.useCallback(async () => {
     const sendCodeResult = await signUp.verifications.sendEmailCode();
     if (sendCodeResult.error) {
-      reportError(sendCodeResult.error, 'Không gửi được mã xác minh.');
+      reportError(sendCodeResult.error, "Không gửi được mã xác minh.");
     }
   }, [reportError, signUp]);
 
@@ -114,7 +115,7 @@ export default function SignUpScreen() {
         signIn: ssoSignIn,
         signUp: ssoSignUp,
       } = await startSSOFlow({
-        strategy: 'oauth_google',
+        strategy: "oauth_google",
         redirectUrl: oauthRedirectUrl,
       });
 
@@ -127,70 +128,79 @@ export default function SignUpScreen() {
       }
 
       if (
-        ssoSignIn?.status === 'needs_second_factor' ||
-        ssoSignIn?.status === 'needs_client_trust'
+        ssoSignIn?.status === "needs_second_factor" ||
+        ssoSignIn?.status === "needs_client_trust"
       ) {
         setLocalError(
-          'Google yêu cầu xác minh bổ sung. Vui lòng thử lại bằng email và mật khẩu.',
+          "Google yêu cầu xác minh bổ sung. Vui lòng thử lại bằng email và mật khẩu.",
         );
         return;
       }
 
-      if (ssoSignUp && ssoSignUp.status !== 'complete') {
-        setLocalError('Đăng ký Google chưa hoàn tất, vui lòng thử lại.');
+      if (ssoSignUp && ssoSignUp.status !== "complete") {
+        setLocalError("Đăng ký Google chưa hoàn tất, vui lòng thử lại.");
         return;
       }
 
-      setLocalError('Đăng ký Google chưa hoàn tất, vui lòng thử lại.');
+      setLocalError("Đăng ký Google chưa hoàn tất, vui lòng thử lại.");
     } catch (error) {
-      reportError(error, 'Không thể đăng ký bằng Google.');
+      reportError(error, "Không thể đăng ký bằng Google.");
     } finally {
       setIsGoogleLoading(false);
     }
   }, [clearError, isBusy, navigateAfterAuth, reportError, startSSOFlow]);
 
   const handleSubmit = React.useCallback(async () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      setLocalError("Vui lòng nhập đầy đủ họ và tên.");
+      return;
+    }
+
     if (!emailAddress.trim() || !password || isBusy) {
-      setLocalError('Vui lòng nhập đầy đủ email và mật khẩu.');
+      setLocalError("Vui lòng nhập đầy đủ email và mật khẩu.");
       return;
     }
 
     clearError();
 
     const { error } = await signUp.password({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       emailAddress: emailAddress.trim(),
       password,
     });
 
     if (error) {
-      reportError(error, 'Đăng ký thất bại. Vui lòng thử lại.');
+      reportError(error, "Đăng ký thất bại. Vui lòng thử lại.");
       return;
     }
 
-    if (signUp.status === 'complete') {
+    if (signUp.status === "complete") {
       await completeSignUp();
       return;
     }
 
     if (
-      signUp.status === 'missing_requirements' &&
-      signUp.unverifiedFields.includes('email_address')
+      signUp.status === "missing_requirements" &&
+      signUp.unverifiedFields.includes("email_address")
     ) {
       await requestVerificationEmail();
       return;
     }
 
     if (signUp.missingFields.length > 0) {
-      setLocalError(`Cần bổ sung: ${signUp.missingFields.join(', ')}`);
+      setLocalError(`Cần bổ sung: ${signUp.missingFields.join(", ")}`);
       return;
     }
 
-    setLocalError('Đăng ký chưa hoàn tất. Vui lòng thử lại.');
+    setLocalError("Đăng ký chưa hoàn tất. Vui lòng thử lại.");
   }, [
     clearError,
     completeSignUp,
     emailAddress,
+    firstName,
     isBusy,
+    lastName,
     password,
     reportError,
     requestVerificationEmail,
@@ -199,7 +209,7 @@ export default function SignUpScreen() {
 
   const handleVerify = React.useCallback(async () => {
     if (!code.trim() || isBusy) {
-      setLocalError('Vui lòng nhập mã xác minh.');
+      setLocalError("Vui lòng nhập mã xác minh.");
       return;
     }
 
@@ -209,23 +219,23 @@ export default function SignUpScreen() {
       code: code.trim(),
     });
     if (error) {
-      reportError(error, 'Mã xác minh không hợp lệ.');
+      reportError(error, "Mã xác minh không hợp lệ.");
       return;
     }
 
-    if (signUp.status === 'complete') {
+    if (signUp.status === "complete") {
       await completeSignUp();
       return;
     }
 
-    setLocalError('Xác minh chưa thành công. Vui lòng thử lại.');
+    setLocalError("Xác minh chưa thành công. Vui lòng thử lại.");
   }, [clearError, code, completeSignUp, isBusy, reportError, signUp]);
 
   if (isSignedIn) {
-    return <Redirect href="/(tabs)/newfeeds" />;
+    return <Redirect href="/(main)/newfeeds" />;
   }
 
-  if (signUp.status === 'complete' && !localError) {
+  if (signUp.status === "complete" && !localError) {
     return (
       <AuthShell>
         <AuthBrand />
@@ -241,7 +251,7 @@ export default function SignUpScreen() {
     );
   }
 
-  if (signUp.status === 'complete' && localError) {
+  if (signUp.status === "complete" && localError) {
     return (
       <AuthShell>
         <AuthBrand />
@@ -301,12 +311,25 @@ export default function SignUpScreen() {
         />
         <AuthDivider />
         <AuthField
+          label="Họ"
+          value={lastName}
+          placeholder="Nguyễn"
+          autoCapitalize="words"
+          onChangeText={setLastName}
+        />
+        <AuthField
+          label="Tên"
+          value={firstName}
+          placeholder="An"
+          autoCapitalize="words"
+          onChangeText={setFirstName}
+        />
+        <AuthField
           label="Email"
           value={emailAddress}
           placeholder="ban@example.com"
           keyboardType="email-address"
           onChangeText={setEmailAddress}
-          error={errors.fields.emailAddress?.message}
         />
         <AuthField
           label="Mật khẩu"
@@ -314,7 +337,6 @@ export default function SignUpScreen() {
           placeholder="Tạo mật khẩu"
           secureTextEntry
           onChangeText={setPassword}
-          error={errors.fields.password?.message}
         />
         <AuthAlert message={formError} />
         <AuthPrimaryButton

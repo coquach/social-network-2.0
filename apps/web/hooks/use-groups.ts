@@ -35,6 +35,7 @@ import {
 import {
   CursorPageResponse,
   CursorPagination,
+  MediaType,
 } from '@repo/shared';
 import { getQueryClient } from '@/lib/query-client';
 import { queryKeys, mutationKeys } from '@/lib/query-keys';
@@ -157,7 +158,7 @@ export const useCreateGroup = () => {
 
         const uploadedAvatar = await uploadToCloudinary(
           avatar.file,
-          'image',
+          MediaType.IMAGE,
           `groups/${userId}/avatar`,
           signal
         );
@@ -172,7 +173,7 @@ export const useCreateGroup = () => {
         if (cover) {
           const uploadedCover = await uploadToCloudinary(
             cover.file,
-            'image',
+            MediaType.IMAGE,
             `groups/${userId}/cover`,
             signal
           );
@@ -221,7 +222,7 @@ export const useUpdateGroup = (groupId: string) => {
         if (avatar) {
           const uploadedAvatar = await uploadToCloudinary(
             avatar.file,
-            'image',
+            MediaType.IMAGE,
             `groups/${userId}/avatar`,
             signal
           );
@@ -237,7 +238,7 @@ export const useUpdateGroup = (groupId: string) => {
         if (cover) {
           const uploadedCover = await uploadToCloudinary(
             cover.file,
-            'image',
+            MediaType.IMAGE,
             `groups/${userId}/cover`,
             signal
           );

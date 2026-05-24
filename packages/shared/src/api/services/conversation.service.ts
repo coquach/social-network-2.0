@@ -20,7 +20,10 @@ export const conversationService = {
     cursor?: string;
     limit?: number;
   }): Promise<CursorPageResponse<ConversationDTO>> {
-    return getApiClient().getCursorPage('/conversations', { params });
+    return getApiClient().getCursorPage<ConversationDTO>(
+      '/chats/conversations',
+      { params }
+    );
   },
 
   /**
@@ -29,7 +32,9 @@ export const conversationService = {
   async getConversation(
     conversationId: string
   ): Promise<ConversationWithParticipantsDTO> {
-    return getApiClient().get(`/conversations/${conversationId}`);
+    return getApiClient().get<ConversationWithParticipantsDTO>(
+      `/chats/conversations/${conversationId}`
+    );
   },
 
   /**
@@ -38,7 +43,10 @@ export const conversationService = {
   async createConversation(
     data: CreateConversationInput
   ): Promise<ConversationDTO> {
-    return getApiClient().post('/conversations', data);
+    return getApiClient().post<ConversationDTO>(
+      '/chats/conversations',
+      data
+    );
   },
 
   /**
@@ -48,42 +56,45 @@ export const conversationService = {
     conversationId: string,
     data: UpdateConversationInput
   ): Promise<ConversationDTO> {
-    return getApiClient().patch(`/conversations/${conversationId}`, data);
+    return getApiClient().put<ConversationDTO>(
+      `/chats/conversations/${conversationId}`,
+      data
+    );
   },
 
   /**
    * Leave conversation
    */
   async leaveConversation(conversationId: string): Promise<void> {
-    return getApiClient().post(`/conversations/${conversationId}/leave`);
+    return getApiClient().post(`/chats/conversations/${conversationId}/leave`);
   },
 
   /**
    * Delete conversation
    */
   async deleteConversation(conversationId: string): Promise<void> {
-    return getApiClient().delete(`/conversations/${conversationId}`);
+    return getApiClient().delete(`/chats/conversations/${conversationId}`);
   },
 
   /**
    * Mark conversation as read
    */
   async markConversationAsRead(conversationId: string): Promise<void> {
-    return getApiClient().post(`/conversations/${conversationId}/mark-read`);
+    return getApiClient().post(`/chats/conversations/${conversationId}/read`, {});
   },
 
   /**
    * Hide conversation
    */
   async hideConversation(conversationId: string): Promise<void> {
-    return getApiClient().post(`/conversations/${conversationId}/hide`);
+    return getApiClient().post(`/chats/conversations/${conversationId}/hide`);
   },
 
   /**
    * Unhide conversation
    */
   async unhideConversation(conversationId: string): Promise<void> {
-    return getApiClient().post(`/conversations/${conversationId}/unhide`);
+    return getApiClient().post(`/chats/conversations/${conversationId}/unhide`);
   },
 
   /**
@@ -92,9 +103,9 @@ export const conversationService = {
   async addParticipants(
     conversationId: string,
     participantIds: string[]
-  ): Promise<void> {
-    return getApiClient().post(`/conversations/${conversationId}/participants`, {
-      participantIds,
+  ): Promise<ConversationDTO> {
+    return conversationService.updateConversation(conversationId, {
+      participantsToAdd: participantIds,
     });
   },
 
@@ -104,16 +115,19 @@ export const conversationService = {
   async removeParticipant(
     conversationId: string,
     participantId: string
-  ): Promise<void> {
-    return getApiClient().delete(
-      `/conversations/${conversationId}/participants/${participantId}`
-    );
+  ): Promise<ConversationDTO> {
+    return conversationService.updateConversation(conversationId, {
+      participantsToRemove: [participantId],
+    });
   },
 
   /**
    * Get or create direct conversation with a user
    */
   async getOrCreateDirect(userId: string): Promise<ConversationDTO> {
-    return getApiClient().post('/conversations/direct', { userId });
+    return conversationService.createConversation({
+      isGroup: false,
+      participants: [userId],
+    });
   },
 };

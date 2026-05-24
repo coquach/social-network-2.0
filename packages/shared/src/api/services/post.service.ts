@@ -15,6 +15,7 @@ import type {
   Emotion,
   PostGroupStatus,
   EditHistoryDTO,
+  PostSnapshotDTO,
 } from '../../types';
 
 /**
@@ -50,13 +51,15 @@ export const postService = {
    * Get single post by ID
    */
   async getPost(postId: string): Promise<PostDTO> {
-    return getApiClient().get(`/posts/post/${postId}`);
+    return getApiClient().get(`/posts/${postId}`);
   },
 
   /**
    * Get current user's posts (paginated)
    */
-  async getMyPosts(params?: GetPostQueryParams): Promise<CursorPageResponse<PostDTO>> {
+  async getMyPosts(
+    params?: GetPostQueryParams,
+  ): Promise<CursorPageResponse<PostSnapshotDTO>> {
     return getApiClient().getCursorPage('/posts/me', { params });
   },
 
@@ -65,7 +68,7 @@ export const postService = {
    */
   async getUserPosts(
     userId: string,
-    params?: GetPostQueryParams
+    params?: GetPostQueryParams,
   ): Promise<CursorPageResponse<PostDTO>> {
     return getApiClient().getCursorPage(`/posts/user/${userId}`, { params });
   },
@@ -75,7 +78,7 @@ export const postService = {
    */
   async getGroupPosts(
     groupId: string,
-    params?: GetGroupPostQueryParams
+    params?: GetGroupPostQueryParams,
   ): Promise<CursorPageResponse<PostDTO>> {
     return getApiClient().getCursorPage(`/posts/group/${groupId}`, { params });
   },
@@ -90,7 +93,9 @@ export const postService = {
   /**
    * Create post in group (may require approval)
    */
-  async createPostInGroup(data: CreatePostInput): Promise<CreatePostInGroupResponse> {
+  async createPostInGroup(
+    data: CreatePostInput,
+  ): Promise<CreatePostInGroupResponse> {
     return getApiClient().post('/posts/group', data);
   },
 
@@ -126,7 +131,7 @@ export const postService = {
    * Get post edit history
    */
   async getPostEditHistory(postId: string): Promise<EditHistoryDTO[]> {
-    return getApiClient().get(`/posts/post/${postId}/edit-histories`);
+    return getApiClient().get(`/posts/${postId}/edit-histories`);
   },
 
   /**
@@ -160,8 +165,10 @@ export const postService = {
    */
   async getPostReactions(
     postId: string,
-    params?: { reactionType?: string; cursor?: string; limit?: number }
+    params?: { reactionType?: string; cursor?: string; limit?: number },
   ): Promise<CursorPageResponse<any>> {
-    return getApiClient().getCursorPage(`/posts/${postId}/reactions`, { params });
+    return getApiClient().getCursorPage(`/posts/${postId}/reactions`, {
+      params,
+    });
   },
 };

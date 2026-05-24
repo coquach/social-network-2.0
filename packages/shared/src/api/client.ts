@@ -81,14 +81,26 @@ export class ApiClient {
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
       async (error: AxiosError) => {
+        const method = error.config?.method?.toUpperCase() ?? 'UNKNOWN';
+        const requestUrl = error.config?.url ?? 'unknown-url';
+        const status = error.response?.status;
+        const responseData = error.response?.data;
+
         if (error.response?.status === 401) {
           // Token expired or invalid - platform will handle logout
-          console.error('Unauthorized - token may be expired');
+          console.error(`[API] ${method} ${requestUrl} -> 401 Unauthorized`);
         }
 
         if (error.response?.status === 500) {
-          console.error('Server error occurred');
+          console.error(`[API] ${method} ${requestUrl} -> 500 Server error`);
         }
+
+        console.error('[API] Request failed', {
+          method,
+          url: requestUrl,
+          status,
+          responseData,
+        });
 
         return Promise.reject(error);
       }

@@ -68,7 +68,7 @@ export const useCreateComment = (rootId: string) => {
         if (media) {
           const mediaUpload = await uploadToCloudinary(
             media.file,
-            media.type === MediaType.IMAGE ? 'image' : 'video',
+            media.type,
             `${rootId}/comments/${userId}`,
             signal
           );

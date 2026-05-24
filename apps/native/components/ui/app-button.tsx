@@ -1,6 +1,7 @@
 import { Button } from 'heroui-native/button';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { appThemeColors } from '~/constants/theme';
 import { cn } from '~/lib/cn';
 
 type ButtonProps = {
@@ -9,7 +10,16 @@ type ButtonProps = {
   disabled?: boolean;
   loading?: boolean;
   className?: string;
+  hasShadow?: boolean;
 };
+
+const shadowStyle = {
+  shadowColor: appThemeColors.dark.background,
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.25,
+  shadowRadius: 8,
+  elevation: 4,
+}
 
 function AppButtonBase({
   label,
@@ -19,12 +29,16 @@ function AppButtonBase({
   className = '',
   variant,
   spinnerColor,
+  hasShadow = false,
 }: ButtonProps & {
   variant: 'primary' | 'secondary' | 'outline';
   spinnerColor: string;
 }) {
   return (
-    <Button variant={variant} className={className} onPress={onPress} isDisabled={disabled}>
+    <Button variant={variant} className={className} onPress={onPress} isDisabled={disabled}
+      style={hasShadow ? shadowStyle : undefined}
+
+    >
       {loading ? (
         <View className="flex-row items-center gap-2">
           <ActivityIndicator size="small" color={spinnerColor} />

@@ -13,9 +13,6 @@ import './globals.css';
 import { SocketProvider } from '@/components/providers/socket-provider';
 import { FCMProvider } from '@/components/providers/fcm-provider';
 
-
-
-
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
@@ -55,7 +52,6 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
- 
 };
 
 export const viewPort: Viewport = {

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { ErrorFallback } from '@/components/error-fallback';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import {
   Field,
   FieldError,
   FieldGroup,
-  FieldLabel
+  FieldLabel,
 } from '@/components/ui/field';
 import {
   InputGroup,
@@ -22,19 +22,30 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from '@/components/ui/input-group';
+import { LiveRegion } from '@/components/ui/live-region';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetUser, useUpdateUser } from '@/hooks/use-user-hook';
-import { LiveRegion } from '@/components/ui/live-region';
-import { ProfileUpdateForm, ProfileUpdateSchema } from '@/models/user/userDTO';
+import { ImageIcon, Pencil } from '@/lib/icons';
+import {
+  INTEREST_OPTIONS,
+  ProfileUpdateForm,
+  ProfileUpdateSchema,
+} from '@/models/user/userDTO';
 import { useProfileModal } from '@/store/use-profile-modal';
 import { useUser } from '@clerk/nextjs';
 import { useForm } from '@tanstack/react-form';
-import { ImageIcon, Pencil } from '@/lib/icons';
 import Image from 'next/image';
 import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 
 const isFile = (value: unknown): value is File => value instanceof File;
+
+const normalizePresetInterests = (
+  interests?: string[],
+): ProfileUpdateForm['interests'] =>
+  interests?.filter((interest): interest is (typeof INTEREST_OPTIONS)[number] =>
+    INTEREST_OPTIONS.includes(interest as (typeof INTEREST_OPTIONS)[number]),
+  ) ?? [];
 
 export const ProfileModal = () => {
   const profileModal = useProfileModal();
@@ -45,7 +56,7 @@ export const ProfileModal = () => {
     error,
   } = useGetUser(profileModal.id as string);
   const { mutateAsync: updateUser, isPending } = useUpdateUser(
-    profileModal.id as string
+    profileModal.id as string,
   );
   const { user } = useUser();
 
@@ -59,16 +70,19 @@ export const ProfileModal = () => {
       firstName: fetchedUser?.firstName ?? '',
       lastName: fetchedUser?.lastName ?? '',
       bio: fetchedUser?.bio ?? '',
+      location: fetchedUser?.location ?? '',
+      jobTitle: fetchedUser?.jobTitle ?? '',
+      company: fetchedUser?.company ?? '',
+      school: fetchedUser?.school ?? '',
+      interests: normalizePresetInterests(fetchedUser?.interests),
     } satisfies ProfileUpdateForm,
-
     validators: {
       onSubmit: ({ value }) => {
         const result = ProfileUpdateSchema.safeParse(value);
         if (result.success) return undefined;
-        return result.error.issues.map((i) => i.message);
+        return result.error.issues.map((issue) => issue.message);
       },
     },
-
     onSubmit: async ({ value }) => {
       const promise = updateUser(value, {
         onSuccess: () => {
@@ -84,6 +98,7 @@ export const ProfileModal = () => {
 
   useEffect(() => {
     if (!fetchedUser) return;
+
     form.reset({
       avatarUrl: (fetchedUser.avatarUrl ??
         undefined) as ProfileUpdateForm['avatarUrl'],
@@ -93,6 +108,11 @@ export const ProfileModal = () => {
       firstName: fetchedUser.firstName ?? '',
       lastName: fetchedUser.lastName ?? '',
       bio: fetchedUser.bio ?? '',
+      location: fetchedUser.location ?? '',
+      jobTitle: fetchedUser.jobTitle ?? '',
+      company: fetchedUser.company ?? '',
+      school: fetchedUser.school ?? '',
+      interests: normalizePresetInterests(fetchedUser.interests),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchedUser]);
@@ -126,11 +146,11 @@ export const ProfileModal = () => {
 
   return (
     <Dialog open={profileModal.isOpen} onOpenChange={profileModal.onClose}>
-      <LiveRegion 
-        message={isPending ? 'Đang cập nhật hồ sơ...' : ''} 
+      <LiveRegion
+        message={isPending ? 'Đang cập nhật hồ sơ...' : ''}
         politeness="polite"
       />
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
+      <DialogContent className="max-w-lg overflow-hidden p-0">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-semibold">
             Chỉnh sửa hồ sơ
@@ -138,7 +158,7 @@ export const ProfileModal = () => {
         </DialogHeader>
 
         {isLoading && (
-          <div className="p-5 space-y-4">
+          <div className="space-y-4 p-5">
             <Skeleton className="h-28 w-full rounded-xl" />
             <Skeleton className="h-10 w-full rounded-lg" />
             <Skeleton className="h-10 w-full rounded-lg" />
@@ -160,184 +180,315 @@ export const ProfileModal = () => {
               form.handleSubmit();
             }}
           >
-            <div className="p-5 space-y-5">
+            <div className="space-y-5 p-5">
               <FieldGroup className="pr-2">
-              <form.Field name="avatarUrl">
-                {(field) => (
-                  <Field>
-                    <FieldLabel htmlFor="avatar">Avatar</FieldLabel>
-                    <div className="flex items-center justify-center gap-4">
+                <form.Field name="avatarUrl">
+                  {(field) => (
+                    <Field>
+                      <FieldLabel htmlFor="avatar">Ảnh đại diện</FieldLabel>
+                      <div className="flex items-center justify-center gap-4">
+                        <input
+                          hidden
+                          type="file"
+                          accept="image/*"
+                          id="avatar"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            field.handleChange(
+                              (file ?? undefined) as ProfileUpdateForm['avatarUrl'],
+                            );
+                          }}
+                        />
+                        <label
+                          htmlFor="avatar"
+                          className="group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-full border-2 border-white shadow-sm"
+                        >
+                          <Image
+                            src={avatarPreview}
+                            alt="Ảnh đại diện"
+                            width={80}
+                            height={80}
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute inset-0 hidden items-center justify-center bg-black/35 group-hover:flex">
+                            <Pencil className="h-5 w-5 text-white" />
+                          </div>
+                        </label>
+                      </div>
+                    </Field>
+                  )}
+                </form.Field>
+
+                <form.Field name="coverImageUrl">
+                  {(field) => (
+                    <Field>
+                      <FieldLabel htmlFor="cover-image">Ảnh bìa</FieldLabel>
                       <input
                         hidden
                         type="file"
                         accept="image/*"
-                        id="avatar"
+                        id="cover-image"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          const nextValue =
-                            (file ?? undefined) as ProfileUpdateForm['avatarUrl'];
-                          field.handleChange(nextValue);
+                          field.handleChange(
+                            (file ??
+                              undefined) as ProfileUpdateForm['coverImageUrl'],
+                          );
                         }}
                       />
                       <label
-                        htmlFor="avatar"
-                        className="group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-full border-2 border-white shadow-sm"
+                        htmlFor="cover-image"
+                        className="group relative block h-28 w-full cursor-pointer overflow-hidden rounded-xl border border-gray-200"
                       >
                         <Image
-                          src={avatarPreview}
-                          alt="Avatar"
-                          width={80}
-                          height={80}
+                          src={coverPreview}
+                          alt="Ảnh bìa"
+                          fill
                           loading="lazy"
-                          className="h-full w-full object-cover"
+                          className="object-cover"
                         />
                         <div className="absolute inset-0 hidden items-center justify-center bg-black/35 group-hover:flex">
-                          <Pencil className="h-5 w-5 text-white" />
+                          <div className="flex items-center gap-2 text-sm text-white">
+                            <ImageIcon className="h-4 w-4" />
+                            Thay ảnh bìa
+                          </div>
                         </div>
                       </label>
-             
-                    </div>
-                  </Field>
-                )}
-              </form.Field>
+                    </Field>
+                  )}
+                </form.Field>
 
-              <form.Field name="coverImageUrl">
-                {(field) => (
-                  <Field>
-                    <FieldLabel htmlFor="cover-image">Ảnh bìa</FieldLabel>
-                    <input
-                      hidden
-                      type="file"
-                      accept="image/*"
-                      id="cover-image"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        const nextValue =
-                          (file ?? undefined) as ProfileUpdateForm['coverImageUrl'];
-                        field.handleChange(nextValue);
-                      }}
-                    />
-                    <label
-                      htmlFor="cover-image"
-                      className="group relative block h-28 w-full cursor-pointer overflow-hidden rounded-xl border border-gray-200"
-                    >
-                      <Image
-                        src={coverPreview}
-                        alt="Cover image"
-                        fill
-                        loading="lazy"
-                        className="object-cover"
-                      />
-                      <div className="absolute inset-0 hidden items-center justify-center bg-black/35 group-hover:flex">
-                        <div className="flex items-center gap-2 text-sm text-white">
-                          <ImageIcon className="h-4 w-4" />
-                          Thay ảnh bìa
+                <form.Field name="lastName">
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid;
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor="lastName">Họ và tên đệm</FieldLabel>
+                        <InputGroup className="rounded-xl">
+                          <InputGroupInput
+                            id="lastName"
+                            name={field.name}
+                            value={field.state.value ?? ''}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="Nhập họ và tên đệm"
+                            disabled={isPending}
+                            aria-invalid={isInvalid}
+                          />
+                        </InputGroup>
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+
+                <form.Field name="firstName">
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid;
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor="firstName">Tên</FieldLabel>
+                        <InputGroup className="rounded-xl">
+                          <InputGroupInput
+                            id="firstName"
+                            name={field.name}
+                            value={field.state.value ?? ''}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="Nhập tên"
+                            disabled={isPending}
+                            aria-invalid={isInvalid}
+                          />
+                        </InputGroup>
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <form.Field name="location">
+                    {(field) => (
+                      <Field>
+                        <FieldLabel htmlFor="location">Khu vực</FieldLabel>
+                        <InputGroup className="rounded-xl">
+                          <InputGroupInput
+                            id="location"
+                            name={field.name}
+                            value={field.state.value ?? ''}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="Ví dụ: Thành phố Hồ Chí Minh"
+                            disabled={isPending}
+                          />
+                        </InputGroup>
+                      </Field>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="school">
+                    {(field) => (
+                      <Field>
+                        <FieldLabel htmlFor="school">Trường học</FieldLabel>
+                        <InputGroup className="rounded-xl">
+                          <InputGroupInput
+                            id="school"
+                            name={field.name}
+                            value={field.state.value ?? ''}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="Ví dụ: HCMUT"
+                            disabled={isPending}
+                          />
+                        </InputGroup>
+                      </Field>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="jobTitle">
+                    {(field) => (
+                      <Field>
+                        <FieldLabel htmlFor="jobTitle">Chức danh</FieldLabel>
+                        <InputGroup className="rounded-xl">
+                          <InputGroupInput
+                            id="jobTitle"
+                            name={field.name}
+                            value={field.state.value ?? ''}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="Ví dụ: Product Designer"
+                            disabled={isPending}
+                          />
+                        </InputGroup>
+                      </Field>
+                    )}
+                  </form.Field>
+
+                  <form.Field name="company">
+                    {(field) => (
+                      <Field>
+                        <FieldLabel htmlFor="company">Công ty</FieldLabel>
+                        <InputGroup className="rounded-xl">
+                          <InputGroupInput
+                            id="company"
+                            name={field.name}
+                            value={field.state.value ?? ''}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="Ví dụ: Acme Social"
+                            disabled={isPending}
+                          />
+                        </InputGroup>
+                      </Field>
+                    )}
+                  </form.Field>
+                </div>
+
+                <form.Field name="bio">
+                  {(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid;
+                    const value = (field.state.value ?? '') as string;
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor="bio">Tiểu sử</FieldLabel>
+                        <InputGroup className="rounded-xl">
+                          <InputGroupTextarea
+                            id="bio"
+                            name={field.name}
+                            value={value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            placeholder="Viết vài dòng về bạn..."
+                            rows={3}
+                            disabled={isPending}
+                            aria-invalid={isInvalid}
+                            className="max-h-40 min-h-24 overflow-y-auto"
+                          />
+                          <InputGroupAddon align="block-end">
+                            <InputGroupText className="tabular-nums">
+                              {value.length}/255
+                            </InputGroupText>
+                          </InputGroupAddon>
+                        </InputGroup>
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+
+                <form.Field name="interests">
+                  {(field) => {
+                    const interests = field.state.value ?? [];
+
+                    return (
+                      <Field>
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <FieldLabel htmlFor="interests">
+                            Sở thích và chủ đề quan tâm
+                          </FieldLabel>
+                          <span className="text-xs text-slate-500">
+                            {interests.length}/10
+                          </span>
                         </div>
-                      </div>
-                    </label>
-                  </Field>
-                )}
-              </form.Field>
+                        <div
+                          id="interests"
+                          className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3"
+                        >
+                          {INTEREST_OPTIONS.map((option) => {
+                            const selected = interests.includes(option);
+                            const reachedLimit =
+                              !selected && interests.length >= 10;
 
-              <form.Field name="lastName">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor="lastName">Họ và tên đệm</FieldLabel>
-                      <InputGroup className="rounded-xl">
-                        <InputGroupInput
-                          id="lastName"
-                          name={field.name}
-                          value={field.state.value ?? ''}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="Nhập họ và tên đệm"
-                          disabled={isPending}
-                          aria-invalid={isInvalid}
-                        />
-                      </InputGroup>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-
-              <form.Field name="firstName">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor="firstName">Tên</FieldLabel>
-                      <InputGroup className="rounded-xl">
-                        <InputGroupInput
-                          id="firstName"
-                          name={field.name}
-                          value={field.state.value ?? ''}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="Nhập tên"
-                          disabled={isPending}
-                          aria-invalid={isInvalid}
-                        />
-                      </InputGroup>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-
-              <form.Field name="bio">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-                  const value = (field.state.value ?? '') as string;
-
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor="bio">Tiểu sử</FieldLabel>
-                      <InputGroup className="rounded-xl">
-                        <InputGroupTextarea
-                          id="bio"
-                          name={field.name}
-                          value={value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="Viết vài dòng về bạn..."
-                          rows={3}
-                          disabled={isPending}
-                          aria-invalid={isInvalid}
-                          className="min-h-24 max-h-40 overflow-y-auto"
-                        />
-                        <InputGroupAddon align="block-end">
-                          <InputGroupText className="tabular-nums">
-                            {value.length}/160
-                          </InputGroupText>
-                        </InputGroupAddon>
-                      </InputGroup>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
-                    </Field>
-                  );
-                }}
-              </form.Field>
-            </FieldGroup>
+                            return (
+                              <Button
+                                key={option}
+                                type="button"
+                                size="sm"
+                                variant={selected ? 'default' : 'outline'}
+                                className={
+                                  selected
+                                    ? 'rounded-full bg-sky-500 text-white hover:bg-sky-600'
+                                    : 'rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                                }
+                                disabled={isPending || reachedLimit}
+                                onClick={() => {
+                                  field.handleChange(
+                                    selected
+                                      ? interests.filter((item) => item !== option)
+                                      : [...interests, option],
+                                  );
+                                }}
+                              >
+                                {option}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Chọn tối đa 10 mục để hệ thống đề xuất bạn bè sát hơn.
+                        </p>
+                      </Field>
+                    );
+                  }}
+                </form.Field>
+              </FieldGroup>
             </div>
 
             <DialogFooter>
-              <Button
-                type="submit"
-                disabled={!form.state.isDirty || isPending}
-              >
+              <Button type="submit" disabled={!form.state.isDirty || isPending}>
                 Lưu thay đổi
               </Button>
             </DialogFooter>

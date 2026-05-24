@@ -1,14 +1,20 @@
-'use client';
+"use client";
 
-import { RotateCcw, Search } from 'lucide-react';
-import * as React from 'react';
-import { useDebouncedCallback } from 'use-debounce';
+import { RotateCcw, Search } from "lucide-react";
+import * as React from "react";
+import { useDebouncedCallback } from "use-debounce";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SystemUserFilter } from '@/lib/actions/admin/admin-users-action';
-import { SystemRole, UserStatus } from '@/models/user/systemUserDTO';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SystemUserFilter } from "@/lib/actions/admin/admin-users-action";
+import { SystemRole, UserStatus } from "@/models/user/systemUserDTO";
 
 type UsersToolbarProps = {
   filter: SystemUserFilter;
@@ -17,24 +23,32 @@ type UsersToolbarProps = {
   loading?: boolean;
 };
 
-export function UsersToolbar({ filter, onFilterChange, onReset, loading }: UsersToolbarProps) {
-  const [q, setQ] = React.useState(filter.query ?? '');
-  const [status, setStatus] = React.useState<string>(filter.status ?? 'all');
-  const [role, setRole] = React.useState<string>(filter.role ?? 'all');
+export function UsersToolbar({
+  filter,
+  onFilterChange,
+  onReset,
+  loading,
+}: UsersToolbarProps) {
+  const [q, setQ] = React.useState(filter.query ?? "");
+  const [status, setStatus] = React.useState<string>(filter.status ?? "all");
+  const [role, setRole] = React.useState<string>(filter.role ?? "all");
+  const latestQueryRef = React.useRef(q);
 
   React.useEffect(() => {
-    setQ(filter.query ?? '');
+    setQ(filter.query ?? "");
   }, [filter.query]);
 
   React.useEffect(() => {
-    setStatus(filter.status ?? 'all');
+    setStatus(filter.status ?? "all");
   }, [filter.status]);
 
   React.useEffect(() => {
-    setRole(filter.role ?? 'all');
+    setRole(filter.role ?? "all");
   }, [filter.role]);
 
-
+  React.useEffect(() => {
+    latestQueryRef.current = q;
+  }, [q]);
 
   const handleStatusChange = (value: string) => {
     setStatus(value);
@@ -48,12 +62,12 @@ export function UsersToolbar({ filter, onFilterChange, onReset, loading }: Users
     (text: string, nextStatus: string, nextRole: string) => {
       onFilterChange({
         query: text.trim() || undefined,
-        status: nextStatus === 'all' ? undefined : (nextStatus as UserStatus),
-        role: nextRole === 'all' ? undefined : (nextRole as SystemRole),
+        status: nextStatus === "all" ? undefined : (nextStatus as UserStatus),
+        role: nextRole === "all" ? undefined : (nextRole as SystemRole),
         page: 1,
       });
     },
-    [onFilterChange]
+    [onFilterChange],
   );
 
   const debouncedSearch = useDebouncedCallback(
@@ -61,23 +75,20 @@ export function UsersToolbar({ filter, onFilterChange, onReset, loading }: Users
       applyFilters(text, status, role);
     },
     300,
-    { maxWait: 800 }
+    { maxWait: 800 },
   );
 
   React.useEffect(() => {
-    onFilterChange({
-      query: q.trim() || undefined,
-      status: status === 'all' ? undefined : (status as UserStatus),
-      role: role === 'all' ? undefined : (role as SystemRole),
-      page: 1,
-    });
-  }, [status, role,]);
+    applyFilters(latestQueryRef.current, status, role);
+  }, [applyFilters, status, role]);
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <div>
-          <div className="mb-1 text-xs font-medium text-slate-500">Tìm kiếm</div>
+          <div className="mb-1 text-xs font-medium text-slate-500">
+            Tìm kiếm
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
@@ -94,7 +105,9 @@ export function UsersToolbar({ filter, onFilterChange, onReset, loading }: Users
         </div>
 
         <div>
-          <div className="mb-1 text-xs font-medium text-slate-500">Trạng thái</div>
+          <div className="mb-1 text-xs font-medium text-slate-500">
+            Trạng thái
+          </div>
           <Select value={status} onValueChange={handleStatusChange}>
             <SelectTrigger className="border-sky-100 focus:ring-sky-200">
               <SelectValue placeholder="Chọn trạng thái" />
@@ -110,13 +123,7 @@ export function UsersToolbar({ filter, onFilterChange, onReset, loading }: Users
 
         <div>
           <div className="mb-1 text-xs font-medium text-slate-500">Vai trò</div>
-          <Select
-            value={role}
-            onValueChange={(value) => {
-              setRole(value);
-              applyFilters(q, status, value);
-            }}
-          >
+          <Select value={role} onValueChange={handleRoleChange}>
             <SelectTrigger className="border-sky-100 focus:ring-sky-200">
               <SelectValue placeholder="Chọn vai trò" />
             </SelectTrigger>

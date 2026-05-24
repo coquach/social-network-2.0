@@ -1,14 +1,24 @@
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useUser } from '@clerk/expo';
+import type { NavigationHelpers, ParamListBase, TabNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { Platform, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
 
-import { CreatePostSheet } from './create-post-sheet';
 import { CreatePostTabButton } from './create-post-tab-button';
 import { TabBarButton } from './tab-bar-button';
+import { useTabBarVisibility } from './tab-bar-visibility-context';
+import { useCreatePostModal } from '@repo/shared/store/useCreatePostModal';
+
+const TAB_BAR_SHOW_DURATION = 320;
+const TAB_BAR_HIDE_DURATION = 500;
 
 const TAB_META = {
   newfeeds: { label: 'Bảng tin', icon: 'newspaper-outline' as const },
@@ -24,15 +34,53 @@ function isKnownTab(name: string): name is keyof typeof TAB_META {
   return name in TAB_META;
 }
 
-export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
+type TabBarProps = {
+  state: TabNavigationState<ParamListBase>;
+  navigation: NavigationHelpers<ParamListBase> & {
+    emit: (event: { type: string; target?: string; canPreventDefault?: boolean }) => { defaultPrevented: boolean };
+    navigate: (name: string, params?: object) => void;
+  };
+};
+
+export function FloatingTabBar({ state, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets();
+  const { user } = useUser();
   const { resolvedTheme } = useAppTheme();
+  const { isVisible } = useTabBarVisibility();
   const colors = appThemeColors[resolvedTheme];
-  const [isCreateSheetOpen, setIsCreateSheetOpen] = React.useState(false);
+  const isCreateSheetOpen = useCreatePostModal((state) => state.isOpen);
+  const openCreatePost = React.useCallback(() => {
+    if (!useCreatePostModal.getState().isOpen) {
+      useCreatePostModal.getState().open();
+    }
+  }, []);
+  const tabBarVisibility = useSharedValue(1);
+
+  React.useEffect(() => {
+    tabBarVisibility.value = withTiming(isVisible ? 1 : 0, {
+      duration: isVisible ? TAB_BAR_SHOW_DURATION : TAB_BAR_HIDE_DURATION,
+    });
+  }, [isVisible, tabBarVisibility]);
+
+  const animatedTabBarStyle = useAnimatedStyle(() => {
+    return {
+      opacity: tabBarVisibility.value,
+      transform: [
+        {
+          translateY: (1 - tabBarVisibility.value) * 140,
+        },
+      ],
+    };
+  });
 
   const routesByName = React.useMemo(() => {
     return state.routes.reduce<
-      Partial<Record<keyof typeof TAB_META, { index: number; key: string; name: string; params?: object }>>
+      Partial<
+        Record<
+          keyof typeof TAB_META,
+          { index: number; key: string; name: string; params?: object }
+        >
+      >
     >((accumulator, route, index) => {
       if (isKnownTab(route.name)) {
         accumulator[route.name] = {
@@ -82,6 +130,7 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
           key={route.key}
           label={meta.label}
           icon={meta.icon}
+          avatarUrl={name === 'profile' ? (user?.imageUrl ?? null) : null}
           activeColor={colors.primary}
           inactiveColor={colors.mutedForeground}
           isFocused={focused}
@@ -90,15 +139,25 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
         />
       );
     },
-    [colors.mutedForeground, colors.primary, navigation, routesByName, state.index],
+    [
+      colors.mutedForeground,
+      colors.primary,
+      navigation,
+      routesByName,
+      state.index,
+      user?.imageUrl,
+    ],
   );
 
   return (
     <>
-      <View
-        pointerEvents="box-none"
+      <Animated.View
+        pointerEvents={isVisible && !isCreateSheetOpen ? 'box-none' : 'none'}
         className="absolute bottom-0 left-0 right-0"
-        style={{ paddingBottom: Math.max(insets.bottom, 10) }}
+        style={[
+          { paddingBottom: Math.max(insets.bottom, 10) },
+          animatedTabBarStyle,
+        ]}
       >
         <View className="px-4">
           <View
@@ -114,22 +173,14 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
             </View>
             <CreatePostTabButton
               isActive={isCreateSheetOpen}
-              onPress={() => {
-                setIsCreateSheetOpen((current) => !current);
-              }}
+              onPress={openCreatePost}
             />
             <View className="flex-1 flex-row items-end justify-between pl-2">
               {RIGHT_TABS.map(renderTab)}
             </View>
           </View>
         </View>
-      </View>
-      <CreatePostSheet
-        visible={isCreateSheetOpen}
-        onClose={() => {
-          setIsCreateSheetOpen(false);
-        }}
-      />
+      </Animated.View>
     </>
   );
 }

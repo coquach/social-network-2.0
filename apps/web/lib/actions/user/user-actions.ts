@@ -36,17 +36,23 @@ export const createUser = async (data: UserCreateForm) => {
 export const updateUser = async (token: string, data: ProfileUpdateForm) => {
   try {
     const formData = new FormData();
+
     Object.entries(data).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
 
       if (value instanceof File) {
-        // Nếu là file thì append file
         formData.append(key, value);
-      } else {
-        // còn lại stringify bình thường
-        formData.append(key, value.toString());
+        return;
       }
+
+      if (Array.isArray(value)) {
+        formData.append(key, JSON.stringify(value));
+        return;
+      }
+
+      formData.append(key, value.toString());
     });
+
     const response = await api.patch(`/users`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -59,4 +65,3 @@ export const updateUser = async (token: string, data: ProfileUpdateForm) => {
     throw error;
   }
 };
-

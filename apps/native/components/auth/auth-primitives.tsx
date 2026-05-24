@@ -163,18 +163,29 @@ type AuthGoogleButtonProps = {
 
 export function AuthGoogleButton({ onPress, disabled = false, loading = false }: AuthGoogleButtonProps) {
   return (
-    <Button variant="outline" className="min-h-12 rounded-2xl" onPress={onPress} isDisabled={disabled}>
+    <Button
+      variant="outline"
+      className="min-h-12 rounded-2xl"
+      onPress={onPress}
+      isDisabled={disabled}
+    >
       {loading ? (
         <View className="flex-row items-center gap-3">
-          <ActivityIndicator size="small" color="#0ea5e9" />
-          <Button.Label>Đang kết nối Google...</Button.Label>
+          <ActivityIndicator size="small" color="#0ea5e9"  />
+          <Button.Label className="text-app-primary dark:text-app-primary-dark">
+            Đang kết nối Google...
+          </Button.Label>
         </View>
       ) : (
         <View className="flex-row items-center gap-3">
           <View className="h-7 w-7 items-center justify-center rounded-full bg-app-primary/15 dark:bg-app-primary-dark/15">
-            <Text className="font-bold text-app-primary dark:text-app-primary-dark">G</Text>
+            <Text className="font-bold text-app-primary dark:text-app-primary-dark">
+              G
+            </Text>
           </View>
-          <Button.Label>Tiếp tục với Google</Button.Label>
+          <Button.Label className="text-app-primary dark:text-app-primary-dark">
+            Tiếp tục với Google
+          </Button.Label>
         </View>
       )}
     </Button>
@@ -186,7 +197,7 @@ export function AuthDivider() {
     <View className="my-1 flex-row items-center">
       <View className="h-px flex-1 bg-app-border dark:bg-app-border-dark" />
       <Text className="mx-3 text-xs uppercase tracking-widest text-app-muted-fg dark:text-app-muted-fg-dark">
-        ho?c
+        hoặc
       </Text>
       <View className="h-px flex-1 bg-app-border dark:bg-app-border-dark" />
     </View>
