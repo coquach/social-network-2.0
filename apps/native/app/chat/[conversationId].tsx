@@ -28,7 +28,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
 import React from "react";
-import { Platform, View } from "react-native";
+import { View } from "react-native";
 
 import {
   type ChatComposerAttachment,
@@ -51,7 +51,6 @@ import { AppAlert, type AppAlertVariant } from "~/components/ui/app-alert";
 import { AppModal } from "~/components/ui/app-modal";
 import { AppScreen } from "~/components/ui/app-screen";
 import { AppToast, type AppToastData } from "~/components/ui/app-toast";
-import { KeyboardAwareContainer } from "~/components/ui/keyboard-aware-container";
 import { pickLibraryMediaAssets, pickSingleImage } from "~/lib/media-picker";
 import { useNativeConversationRealtime } from "~/providers/chat-realtime-provider";
 import { usePresenceChannel } from "~/providers/presence-provider";

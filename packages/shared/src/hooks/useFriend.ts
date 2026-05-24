@@ -31,6 +31,29 @@ import { cancelQueries, invalidateQueries } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
 import { mutationKeys, queryKeys } from './query-keys';
 
+type FriendQueryOptions = {
+  enabled?: boolean;
+};
+
+const hydrateUserIdsPage = async (
+  page: CursorPageResponse<string>,
+): Promise<CursorPageResponse<UserDTO>> => {
+  const users = await Promise.all(
+    (page.data ?? []).map(async (userId) => {
+      try {
+        return await userService.getUser(userId);
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  return {
+    ...page,
+    data: users.filter((item): item is UserDTO => item !== null),
+  };
+};
+
 /**
  * Hook to get relationship status with a user
  */
@@ -48,9 +71,12 @@ export const useRelationshipStatus = (targetId: string) => {
 /**
  * Hook to get friend requests (infinite scroll)
  */
-export const useFriendRequests = (params?: { limit?: number }) => {
+export const useFriendRequests = (
+  params?: { limit?: number },
+  options?: FriendQueryOptions,
+) => {
   return useInfiniteQuery<CursorPageResponse<string>>({
-    queryKey: queryKeys.friends.requests(),
+    queryKey: [...queryKeys.friends.requests(), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       return friendService.getFriendRequests({
         ...params,
@@ -60,6 +86,32 @@ export const useFriendRequests = (params?: { limit?: number }) => {
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
+    ...queryConfigs.realtime,
+  });
+};
+
+/**
+ * Hook to get friend request sender profiles (infinite scroll).
+ */
+export const useFriendRequestUsers = (
+  params?: { limit?: number },
+  options?: FriendQueryOptions,
+) => {
+  return useInfiniteQuery<CursorPageResponse<UserDTO>>({
+    queryKey: [...queryKeys.friends.requests(), 'profiles', params ?? {}] as const,
+    queryFn: async ({ pageParam }) => {
+      const requestIdsPage = await friendService.getFriendRequests({
+        ...params,
+        cursor: pageParam as string | undefined,
+      });
+
+      return hydrateUserIdsPage(requestIdsPage);
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+    initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
     ...queryConfigs.realtime,
   });
 };
@@ -67,9 +119,13 @@ export const useFriendRequests = (params?: { limit?: number }) => {
 /**
  * Hook to get friends list (infinite scroll)
  */
-export const useFriends = (userId?: string, params?: { limit?: number }) => {
+export const useFriends = (
+  userId?: string,
+  params?: { limit?: number },
+  options?: FriendQueryOptions,
+) => {
   return useInfiniteQuery<CursorPageResponse<string>>({
-    queryKey: queryKeys.friends.list(userId),
+    queryKey: [...queryKeys.friends.list(userId), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       return friendService.getFriends(userId, {
         ...params,
@@ -79,6 +135,7 @@ export const useFriends = (userId?: string, params?: { limit?: number }) => {
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
     ...queryConfigs.semiStatic,
   });
 };
@@ -87,7 +144,11 @@ export const useFriends = (userId?: string, params?: { limit?: number }) => {
  * Hook to get a user's friend profiles (UserDTO list).
  * This is useful for profile/group UIs that need avatar/name directly.
  */
-export const useFriendUsers = (userId: string, params?: QueryParams) => {
+export const useFriendUsers = (
+  userId: string,
+  params?: QueryParams,
+  options?: FriendQueryOptions,
+) => {
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
     queryKey: [...queryKeys.user.friends(userId), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
@@ -96,25 +157,12 @@ export const useFriendUsers = (userId: string, params?: QueryParams) => {
         cursor: pageParam as string | undefined,
       });
 
-      const users = await Promise.all(
-        (friendIdsPage.data ?? []).map(async (friendId) => {
-          try {
-            return await userService.getUser(friendId);
-          } catch {
-            return null;
-          }
-        }),
-      );
-
-      return {
-        ...friendIdsPage,
-        data: users.filter((item): item is UserDTO => item !== null),
-      };
+      return hydrateUserIdsPage(friendIdsPage);
     },
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
-    enabled: !!userId,
+    enabled: options?.enabled !== false && !!userId,
     ...queryConfigs.semiStatic,
   });
 };
@@ -122,9 +170,12 @@ export const useFriendUsers = (userId: string, params?: QueryParams) => {
 /**
  * Hook to get friend suggestions (infinite scroll)
  */
-export const useFriendSuggestions = (params?: { limit?: number }) => {
+export const useFriendSuggestions = (
+  params?: { limit?: number },
+  options?: FriendQueryOptions,
+) => {
   return useInfiniteQuery<CursorPageResponse<FriendSuggestionDTO>>({
-    queryKey: queryKeys.friends.suggestions(),
+    queryKey: queryKeys.friends.suggestions(params ?? {}),
     queryFn: async ({ pageParam }) => {
       return friendService.getFriendSuggestions({
         ...params,
@@ -134,6 +185,7 @@ export const useFriendSuggestions = (params?: { limit?: number }) => {
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
     ...queryConfigs.standard,
   });
 };
@@ -154,9 +206,12 @@ export const useFriendRecommendationAnalytics = (days?: number) => {
 /**
  * Hook to get blocked users (infinite scroll)
  */
-export const useBlockedUsers = (params?: { limit?: number }) => {
+export const useBlockedUsers = (
+  params?: { limit?: number },
+  options?: FriendQueryOptions,
+) => {
   return useInfiniteQuery<CursorPageResponse<string>>({
-    queryKey: queryKeys.friends.blocked(),
+    queryKey: [...queryKeys.friends.blocked(), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
       return friendService.getBlockedUsers({
         ...params,
@@ -166,6 +221,32 @@ export const useBlockedUsers = (params?: { limit?: number }) => {
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
+    ...queryConfigs.semiStatic,
+  });
+};
+
+/**
+ * Hook to get blocked user profiles (infinite scroll).
+ */
+export const useBlockedUserProfiles = (
+  params?: { limit?: number },
+  options?: FriendQueryOptions,
+) => {
+  return useInfiniteQuery<CursorPageResponse<UserDTO>>({
+    queryKey: [...queryKeys.friends.blocked(), 'profiles', params ?? {}] as const,
+    queryFn: async ({ pageParam }) => {
+      const blockedIdsPage = await friendService.getBlockedUsers({
+        ...params,
+        cursor: pageParam as string | undefined,
+      });
+
+      return hydrateUserIdsPage(blockedIdsPage);
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+    initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
     ...queryConfigs.semiStatic,
   });
 };

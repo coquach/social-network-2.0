@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/expo';
 import { Redirect, withLayoutContext } from 'expo-router';
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React from 'react';
 
 import { FloatingTabBar } from '~/components/navigation/floating-tab-bar';
 import { TabBarVisibilityProvider } from '~/components/navigation/tab-bar-visibility-context';
