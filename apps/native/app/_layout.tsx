@@ -1,34 +1,34 @@
-import 'react-native-get-random-values';
-import 'react-native-gesture-handler';
-import 'expo-keep-awake';
-import '../global.css';
 import { ClerkProvider } from '@clerk/expo';
-import { defaultTokenCache } from '~/lib/token-cache';
-import { SplashScreen, Stack } from 'expo-router';
+import { tokenCache } from '@clerk/expo/token-cache';
 import { useFonts } from 'expo-font';
+import 'expo-keep-awake';
+import { SplashScreen, Stack } from 'expo-router';
 import {
   HeroUINativeProvider,
   type HeroUINativeConfig,
 } from 'heroui-native/provider';
 import { useEffect } from 'react';
+import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import 'react-native-get-random-values';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeChatRealtimeProvider } from '~/providers/chat-realtime-provider';
 import { NativePresenceProvider } from '~/providers/presence-provider';
 import { NativeQueryProvider } from '~/providers/query-provider';
 import { NativeSharedProvider } from '~/providers/shared-provider';
 import { NativeSocketProvider } from '~/providers/socket-provider';
+import '../global.css';
 
-import { AppThemeProvider } from '~/providers/theme-provider';
-import { NotificationProvider } from '~/providers/notification-provider';
-import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
-import { ModalProvider } from '~/components/providers/modal-provider';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
-import { CallProvider } from '~/providers/call-provider';
-import { CallRealtimeProvider } from '~/providers/call-realtime-provider';
 import { CallManager } from '~/components/chat/call-manager';
 import { CallMiniOverlay } from '~/components/chat/call-mini-overlay';
+import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
+import { ModalProvider } from '~/components/providers/modal-provider';
+import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
+import { CallProvider } from '~/providers/call-provider';
+import { CallRealtimeProvider } from '~/providers/call-realtime-provider';
+import { NotificationProvider } from '~/providers/notification-provider';
+import { AppThemeProvider } from '~/providers/theme-provider';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -80,7 +80,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ClerkProvider publishableKey={publishableKey} tokenCache={defaultTokenCache}>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache} >
         <SafeAreaProvider>
           <NativeQueryProvider>
             <HeroUINativeProvider config={heroUIConfig}>
