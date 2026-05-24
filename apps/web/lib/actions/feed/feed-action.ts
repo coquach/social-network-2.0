@@ -1,8 +1,5 @@
 import api from '@/lib/api-client';
-import {
-  CursorPageResponse,
-  CursorPagination,
-} from '@repo/shared';
+import { CursorPageResponse, CursorPagination } from '@repo/shared';
 import { FeedDTO } from '@/models/feed/feedDTO';
 import { Emotion } from '@/models/social/enums/social.enum';
 import { PostSnapshotDTO } from '@/models/social/post/postDTO';
@@ -13,17 +10,17 @@ export interface PersonalFeedQuery extends CursorPagination {
 
 export const getMyFeed = async (
   token: string,
-  query: PersonalFeedQuery
+  query: PersonalFeedQuery,
 ): Promise<CursorPageResponse<FeedDTO>> => {
   try {
     const response = await api.get<CursorPageResponse<FeedDTO>>(
-      `/feeds/my_feed`,
+      `/feeds/my-feed`,
       {
         params: query,
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -38,7 +35,7 @@ export interface TrendingQuery extends CursorPagination {
 
 export const getTrendingFeed = async (
   token: string,
-  query: TrendingQuery
+  query: TrendingQuery,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
     const response = await api.get<CursorPageResponse<PostSnapshotDTO>>(
@@ -48,7 +45,7 @@ export const getTrendingFeed = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -68,7 +65,7 @@ export const views = async (token: string, feedItemIds: string[]) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
   } catch (error) {
     console.error(error);

@@ -33,6 +33,9 @@ export * from './useDeviceToken';
 // Message hooks
 export * from './useMessage';
 
+// Emotion hooks
+export * from './useEmotion';
+
 // Conversation hooks
 export * from './useConversation';
 

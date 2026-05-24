@@ -6,7 +6,7 @@ export interface DashboardQueryDTO {
 }
 export const getDashboard = async (
   token: string,
-  query: DashboardQueryDTO
+  query: DashboardQueryDTO,
 ): Promise<{
   activeUsers: number;
   totalPosts: number;
@@ -14,7 +14,7 @@ export const getDashboard = async (
   pendingReports: number;
 }> => {
   try {
-    const response = await api.get('/admins/dashboard', {
+    const response = await api.get('/admin/dashboard', {
       params: query,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -29,7 +29,7 @@ export const getDashboard = async (
 
 export const getContentChart = async (
   token: string,
-  query: DashboardQueryDTO
+  query: DashboardQueryDTO,
 ): Promise<
   {
     date: string;
@@ -39,7 +39,7 @@ export const getContentChart = async (
   }[]
 > => {
   try {
-    const response = await api.get('/admins/content-chart', {
+    const response = await api.get('/admin/content-chart', {
       params: query,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -54,7 +54,7 @@ export const getContentChart = async (
 
 export const getReportChart = async (
   token: string,
-  query: DashboardQueryDTO
+  query: DashboardQueryDTO,
 ): Promise<
   {
     date: string;
@@ -64,7 +64,7 @@ export const getReportChart = async (
   }[]
 > => {
   try {
-    const response = await api.get('/admins/report-chart', {
+    const response = await api.get('/admin/report-chart', {
       params: query,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -89,10 +89,10 @@ export interface EmotionDashboardDTO {
 
 export const getEmotionDashboard = async (
   token: string,
-  query: DashboardQueryDTO
+  query: DashboardQueryDTO,
 ): Promise<EmotionDashboardDTO[]> => {
   try {
-    const response = await api.get('/emotion/dashboard', {
+    const response = await api.get('/admin/emotion/dashboard/charts', {
       params: query,
       headers: {
         Authorization: `Bearer ${token}`,

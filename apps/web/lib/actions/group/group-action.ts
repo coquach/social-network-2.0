@@ -1,23 +1,30 @@
 import { GroupEventLog } from '@/models/group/enums/group-envent-log.enum';
-import { JoinRequestSortBy, JoinRequestStatus } from '@/models/group/enums/group-invite-status.enum';
+import {
+  JoinRequestSortBy,
+  JoinRequestStatus,
+} from '@/models/group/enums/group-invite-status.enum';
 import { GroupMemberStatus } from '@/models/group/enums/group-member-status.enum';
 import { GroupPermission } from '@/models/group/enums/group-permission.enum';
 import { GroupRole } from '@/models/group/enums/group-role.enum';
 import {
   CreateGroupForm,
   GroupDTO,
-  UpdateGroupForm
+  UpdateGroupForm,
 } from '@/models/group/groupDTO';
 import { InvitedGroupDTO } from '@/models/group/groupInviteDTO';
 import { GroupLogDTO } from '@/models/group/groupLogDTO';
 import { GroupMemberDTO } from '@/models/group/groupMemberDTO';
-import { CreateGroupReportForm, GroupReportDTO } from '@/models/group/groupReportDTO';
+import {
+  CreateGroupReportForm,
+  GroupReportDTO,
+} from '@/models/group/groupReportDTO';
 import { JoinRequestResponseDTO } from '@/models/group/groupRequestDTO';
-import { GroupSettingDTO, UpdateGroupSettingForm } from '@/models/group/groupSettingDTO';
+import {
+  GroupSettingDTO,
+  UpdateGroupSettingForm,
+} from '@/models/group/groupSettingDTO';
 import api from '../../api-client';
 import { CursorPageResponse, CursorPagination } from '@repo/shared';
-
-
 
 export const getMyGroups = async (
   token: string,
@@ -31,11 +38,10 @@ export const getMyGroups = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
-  }
-    catch (error) {
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -53,11 +59,10 @@ export const getRecommendedGroups = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
-  }
-    catch (error) {
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -75,7 +80,7 @@ export const getInvitedGroups = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -86,10 +91,10 @@ export const getInvitedGroups = async (
 
 export const getGroupById = async (
   token: string,
-  groupId: string
+  groupId: string,
 ): Promise<GroupDTO> => {
   try {
-    const response = await api.get<GroupDTO>(`/groups/group/${groupId}`, {
+    const response = await api.get<GroupDTO>(`/groups/${groupId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -101,11 +106,9 @@ export const getGroupById = async (
   }
 };
 
-
-
 export const createGroup = async (
   token: string,
-  createGroupDto: CreateGroupForm
+  createGroupDto: CreateGroupForm,
 ): Promise<GroupDTO> => {
   try {
     const response = await api.post<GroupDTO>(`/groups`, createGroupDto, {
@@ -123,17 +126,17 @@ export const createGroup = async (
 export const updateGroup = async (
   token: string,
   groupId: string,
-  updateGroupDto: UpdateGroupForm
+  updateGroupDto: UpdateGroupForm,
 ): Promise<GroupDTO> => {
   try {
     const response = await api.patch<GroupDTO>(
-      `/groups/group/${groupId}`,
+      `/groups/${groupId}`,
       updateGroupDto,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -144,15 +147,15 @@ export const updateGroup = async (
 
 export const deleteGroup = async (
   token: string,
-  groupId: string
+  groupId: string,
 ): Promise<boolean> => {
   try {
-   const response = await api.delete<boolean>(`/groups/group/${groupId}`, {
+    const response = await api.delete<boolean>(`/groups/${groupId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data
+    return response.data;
   } catch (error) {
     console.error(error);
     throw error;
@@ -161,16 +164,16 @@ export const deleteGroup = async (
 
 export const getGroupSettings = async (
   token: string,
-  groupId: string
+  groupId: string,
 ): Promise<GroupSettingDTO> => {
   try {
     const response = await api.get<GroupSettingDTO>(
-      `/groups/group/${groupId}/settings`,
+      `/groups/${groupId}/settings`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -181,17 +184,17 @@ export const getGroupSettings = async (
 export const updateGroupSettings = async (
   token: string,
   groupId: string,
-  settings: UpdateGroupSettingForm
+  settings: UpdateGroupSettingForm,
 ): Promise<GroupSettingDTO> => {
   try {
     const response = await api.patch<GroupSettingDTO>(
-      `/groups/group/${groupId}/settings`,
+      `/groups/${groupId}/settings`,
       settings,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -204,38 +207,39 @@ export const updateGroupSettings = async (
 export const createGroupReport = async (
   token: string,
   groupId: string,
-  createGroupReportDto: CreateGroupReportForm
+  createGroupReportDto: CreateGroupReportForm,
 ): Promise<GroupReportDTO> => {
   try {
     const response = await api.post<GroupReportDTO>(
-      `/groups/group/${groupId}/reports`,
+      `/groups-reports/${groupId}`,
       createGroupReportDto,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
-  }
-    catch (error) {
+  } catch (error) {
     console.error(error);
     throw error;
   }
-}
-
-
+};
 
 export const leaveGroup = async (
   token: string,
-  groupId: string
+  groupId: string,
 ): Promise<void> => {
   try {
-    await api.post<void>(`/groups/${groupId}/members/leave`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    await api.post<void>(
+      `/groups/${groupId}/members/leave`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
   } catch (error) {
     console.error(error);
     throw error;
@@ -245,16 +249,19 @@ export const leaveGroup = async (
 export const removeMember = async (
   token: string,
   groupId: string,
-  memberId: string
+  memberId: string,
 ): Promise<void> => {
   try {
-    await api.post<void>(`/groups/${groupId}/members/${memberId}/remove`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    await api.post<void>(
+      `/groups/${groupId}/members/${memberId}/remove`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
-  }
-    catch (error) {
+    );
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -263,33 +270,40 @@ export const removeMember = async (
 export const banMember = async (
   token: string,
   groupId: string,
-  memberId: string
+  memberId: string,
 ): Promise<void> => {
   try {
-    await api.post<void>(`/groups/${groupId}/members/${memberId}/ban`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    await api.post<void>(
+      `/groups/${groupId}/members/${memberId}/ban`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
   } catch (error) {
     console.error(error);
     throw error;
   }
-};  
+};
 
 export const unbanMember = async (
   token: string,
   groupId: string,
-  memberId: string
+  memberId: string,
 ): Promise<void> => {
   try {
-    await api.post<void>(`/groups/${groupId}/members/${memberId}/unban`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    await api.post<void>(
+      `/groups/${groupId}/members/${memberId}/unban`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
-  }
-    catch (error) {
+    );
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -297,22 +311,21 @@ export const unbanMember = async (
 
 export const changeMemberRole = async (
   token: string,
-  groupId: string,  
+  groupId: string,
   memberId: string,
-  newRole: GroupRole
+  newRole: GroupRole,
 ): Promise<void> => {
   try {
     await api.put<void>(
-      `/groups/${groupId}/members/${memberId}/change-role`, 
+      `/groups/${groupId}/members/${memberId}/change-role`,
       { newRole },
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
-  }
-    catch (error) {
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -322,20 +335,19 @@ export const changeMemberPermission = async (
   token: string,
   groupId: string,
   memberId: string,
-  permissions: GroupPermission[]
+  permissions: GroupPermission[],
 ): Promise<void> => {
   try {
-    await api.put<void>(  
+    await api.put<void>(
       `/groups/${groupId}/members/${memberId}/change-permission`,
       { permissions },
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
-  }
-    catch (error) {
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -351,7 +363,7 @@ export interface GroupMemberFilter {
 export const getGroupMembers = async (
   token: string,
   groupId: string,
-  query: GroupMemberFilter
+  query: GroupMemberFilter,
 ): Promise<CursorPageResponse<GroupMemberDTO>> => {
   try {
     const response = await api.get<CursorPageResponse<GroupMemberDTO>>(
@@ -361,7 +373,7 @@ export const getGroupMembers = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -379,7 +391,7 @@ export interface GroupLogFilter extends CursorPagination {
 export const getGroupLogs = async (
   token: string,
   groupId: string,
-  query: GroupLogFilter
+  query: GroupLogFilter,
 ): Promise<CursorPageResponse<GroupLogDTO>> => {
   try {
     const response = await api.get<CursorPageResponse<GroupLogDTO>>(
@@ -389,21 +401,16 @@ export const getGroupLogs = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
-  }
-    catch (error) {
+  } catch (error) {
     console.error(error);
     throw error;
   }
 };
 
-
-export const requestToJoinGroup = async (
-  token: string,
-  groupId: string
-) => {
+export const requestToJoinGroup = async (token: string, groupId: string) => {
   try {
     const response = await api.post(
       `/groups/${groupId}/join-requests`,
@@ -412,9 +419,9 @@ export const requestToJoinGroup = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
-    return response.data ;
+    return response.data;
   } catch (error) {
     console.error(error);
     throw error;
@@ -424,7 +431,7 @@ export const requestToJoinGroup = async (
 export const inviteUserToGroup = async (
   token: string,
   groupId: string,
-  inviteeId: string
+  inviteeId: string,
 ): Promise<boolean> => {
   try {
     const response = await api.post<boolean>(
@@ -434,7 +441,7 @@ export const inviteUserToGroup = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -445,7 +452,7 @@ export const inviteUserToGroup = async (
 
 export const acceptGroupInvite = async (
   token: string,
-  groupId: string
+  groupId: string,
 ): Promise<boolean> => {
   try {
     const response = await api.post<boolean>(
@@ -455,7 +462,7 @@ export const acceptGroupInvite = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -466,7 +473,7 @@ export const acceptGroupInvite = async (
 
 export const declineGroupInvite = async (
   token: string,
-  groupId: string
+  groupId: string,
 ): Promise<boolean> => {
   try {
     const response = await api.post<boolean>(
@@ -476,7 +483,7 @@ export const declineGroupInvite = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -488,22 +495,20 @@ export const declineGroupInvite = async (
 export const approveJoinRequest = async (
   token: string,
   groupId: string,
-  requestId: string
+  requestId: string,
 ): Promise<boolean> => {
   try {
-   const response = await api.post<boolean>(
+    const response = await api.post<boolean>(
       `/groups/${groupId}/join-requests/${requestId}/approve`,
       {},
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-      
+      },
     );
-    return response.data ;
-  }
-    catch (error) {
+    return response.data;
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -512,19 +517,19 @@ export const approveJoinRequest = async (
 export const rejectJoinRequest = async (
   token: string,
   groupId: string,
-  requestId: string
+  requestId: string,
 ): Promise<boolean> => {
   try {
-  const response =  await api.post<boolean>(
+    const response = await api.post<boolean>(
       `/groups/${groupId}/join-requests/${requestId}/reject`,
       {},
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
-    return response.data ;
+    return response.data;
   } catch (error) {
     console.error(error);
     throw error;
@@ -534,21 +539,20 @@ export const rejectJoinRequest = async (
 export const cancelJoinRequest = async (
   token: string,
   groupId: string,
-  requestId: string
+  requestId: string,
 ): Promise<boolean> => {
   try {
-  const response =  await api.post<boolean>(
+    const response = await api.post<boolean>(
       `/groups/${groupId}/join-requests/${requestId}/cancel`,
       {},
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
-    return response.data ;
-  }
-    catch (error) {
+    return response.data;
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -561,7 +565,7 @@ export interface JoinRequestFilter extends CursorPagination {
 export const getGroupJoinRequests = async (
   token: string,
   groupId: string,
-  query: JoinRequestFilter
+  query: JoinRequestFilter,
 ): Promise<CursorPageResponse<JoinRequestResponseDTO>> => {
   try {
     const response = await api.get<CursorPageResponse<JoinRequestResponseDTO>>(
@@ -571,7 +575,7 @@ export const getGroupJoinRequests = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {

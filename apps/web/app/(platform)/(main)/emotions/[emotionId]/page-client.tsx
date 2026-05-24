@@ -2,49 +2,61 @@
 
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { format } from 'date-fns';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEmotionDetail } from '@/hooks/use-emotion-journal';
-import { DetailMetaCard } from '../_components/detail-meta-card';
-import { getEmotionMeta } from '../_components/emotion-meta';
+import {
+  AnalysisSummaryDto,
+  TargetType,
+  useEmotionAnalysis,
+} from '@repo/shared';
+import { EmotionContentPreview } from '../_components/emotion-content-preview';
 import { EmotionScoreBlock } from '../_components/emotion-score-block';
-import { ImageAnalysisCard } from '../_components/image-analysis-card';
-import { TextAnalysisCard } from '../_components/text-analysis-card';
-
-const targetLabel: Record<string, string> = {
-  POST: 'Post',
-  COMMENT: 'Comment',
-  SHARE: 'Share',
-};
+import { getEmotionEmoji, getEmotionLabel } from '../lib/emotion-mappers';
+import { formatRiskLevel } from '../lib/emotion-formatters';
 
 type EmotionDetailClientProps = {
-  emotionId: string;
-  hasError?: boolean;
+  targetId: string;
+  targetType: TargetType;
 };
 
 export const EmotionDetailClient = ({
-  emotionId,
-  hasError,
+  targetId,
+  targetType,
 }: EmotionDetailClientProps) => {
-  const detailQuery = useEmotionDetail(emotionId);
+  const detailQuery = useEmotionAnalysis(targetType, targetId);
   const summary = detailQuery.data;
-  const finalMeta = getEmotionMeta(summary?.finalEmotion as string);
+  const finalEmotionLabel = summary
+    ? getEmotionLabel(summary.finalEmotion as string)
+    : null;
+  const finalEmotionEmoji = summary
+    ? getEmotionEmoji(summary.finalEmotion as string)
+    : null;
 
-  const createdAt = useMemo(() => {
-    if (!summary?.createdAt) return null;
-    const value = new Date(summary.createdAt);
-    return Number.isNaN(value.getTime()) ? null : value;
-  }, [summary?.createdAt]);
+  const riskColor: Record<string, string> = {
+    none: 'border-emerald-100 bg-emerald-50 text-emerald-700',
+    low: 'border-sky-100 bg-sky-50 text-sky-700',
+    medium: 'border-amber-100 bg-amber-50 text-amber-700',
+    high: 'border-rose-100 bg-rose-50 text-rose-700',
+  };
+
+  const analysisUpdatedAt = summary
+    ? format(new Date(summary.createdAt), 'dd/MM/yyyy HH:mm')
+    : null;
+
+  const confidenceLabel = summary
+    ? `${(summary.confidence * 100).toFixed(1)}%`
+    : '—';
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:py-10">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           variant="outline"
-          className="border-slate-200 text-slate-700 hover:border-slate-300"
+          className="border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
           asChild
         >
           <Link href="/emotions">
@@ -52,9 +64,15 @@ export const EmotionDetailClient = ({
             Trở lại
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold text-sky-500">
-          Phân tích cảm xúc chi tiết
-        </h1>
+
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+            Phân tích cảm xúc chi tiết
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Xem nội dung gốc và kết quả phân tích theo cùng một ngữ cảnh.
+          </p>
+        </div>
       </div>
 
       {detailQuery.isLoading ? (
@@ -63,67 +81,80 @@ export const EmotionDetailClient = ({
           <Skeleton className="h-48 w-full" />
           <Skeleton className="h-48 w-full" />
         </div>
-      ) : detailQuery.error || hasError || !summary ? (
+      ) : detailQuery.isError ? (
         <Card className="border-slate-100 shadow-sm">
           <CardContent className="flex items-center gap-3 p-6 text-sm text-rose-600">
             <AlertTriangle className="h-5 w-5" />
-            Đã có lỗi xảy ra khi tải dữ liệu phân tích cảm xúc. Vui lòng thử
+            Đã có lỗi xảy ra khi tải dữ liệu phân tích cảm xúc.
+          </CardContent>
+        </Card>
+      ) : !summary ? (
+        <Card className="border-slate-200/70 shadow-sm">
+          <CardContent className="p-6 text-sm text-slate-600">
+            Không tìm thấy dữ liệu phân tích cảm xúc.
           </CardContent>
         </Card>
       ) : (
-        <>
-          <DetailMetaCard
-            summary={summary}
-            analysisId={emotionId}
-            createdAt={createdAt}
-            targetLabel={targetLabel}
-          />
+        <div className="space-y-6">
+          <EmotionContentPreview summary={summary} />
 
-          <Card className="border-slate-100 shadow-sm">
-            <CardHeader className="space-y-2">
-              <CardTitle className="flex items-center gap-3 text-lg font-semibold text-sky-700">
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl"
-                  style={{ backgroundColor: `${finalMeta.color}22` }}
-                >
-                  {finalMeta.emoji}
+          <Card className="overflow-hidden border-slate-200/70 bg-white shadow-sm transition-shadow hover:shadow-md">
+            <CardHeader className="border-b border-slate-100/80 bg-linear-to-r from-slate-50 via-white to-emerald-50/40 p-4 sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0 space-y-2">
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-100 bg-emerald-50 text-emerald-700"
+                  >
+                    Kết quả cảm xúc
+                  </Badge>
+
+                  <CardTitle className="flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                    <span className="text-3xl sm:text-4xl">
+                      {finalEmotionEmoji ?? '•'}
+                    </span>
+                    <span>{finalEmotionLabel ?? summary.finalEmotion}</span>
+                  </CardTitle>
                 </div>
-                <div>
-                  <p className="text-sm text-slate-500">Phân tích cuối</p>
-                  <p className="text-xl font-semibold text-slate-900">
-                    {finalMeta.label}
-                  </p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-700">
-                  Điểm cảm xúc cuối cùng
-                </p>
-                <p className="text-xs text-slate-500">
-                  Dựa trên tất cả các phân tích cảm xúc từ văn bản và hình ảnh
-                </p>
-                <div className="mt-3">
-                  <EmotionScoreBlock scores={summary.finalScores} />
+
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <Badge
+                    variant="outline"
+                    className="border-slate-200 bg-white text-slate-700"
+                  >
+                    Độ tin cậy {confidenceLabel}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={riskColor[summary.riskLevel] ?? riskColor.none}
+                  >
+                    Mức độ rủi ro: {formatRiskLevel(summary.riskLevel)}
+                  </Badge>
+                  {analysisUpdatedAt ? (
+                    <span>Cập nhật {analysisUpdatedAt}</span>
+                  ) : null}
                 </div>
               </div>
-              <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-700">
-                  Mục tiêu phân tích
-                </p>
-                <p className="mt-2 text-sm text-slate-700">
-                  {summary.targetId}
-                </p>
+            </CardHeader>
+
+            <CardContent className="space-y-5 p-4 sm:p-6">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 sm:p-5">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      Phân bố cảm xúc
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Tỷ trọng các nhãn cảm xúc trong kết quả cuối.
+                    </p>
+                  </div>
+                </div>
+
+                <EmotionScoreBlock scores={summary.finalScores} />
               </div>
             </CardContent>
           </Card>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <TextAnalysisCard textEmotion={summary.textEmotion} />
-            <ImageAnalysisCard images={summary.imageEmotions} />
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

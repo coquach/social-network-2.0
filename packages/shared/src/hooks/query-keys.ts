@@ -1,9 +1,9 @@
 /**
  * Centralized React Query Keys for @repo/shared
- * 
+ *
  * Platform-agnostic query keys that can be used across web and mobile.
  * Following the same pattern as the web app for consistency.
- * 
+ *
  * @see https://tanstack.com/query/latest/docs/react/guides/query-keys
  */
 
@@ -89,6 +89,7 @@ export const queryKeys = {
       [...queryKeys.feed.all, 'personal', emotion ?? 'ALL'] as const,
     trending: (emotion?: string) =>
       [...queryKeys.feed.all, 'trending', emotion ?? 'ALL'] as const,
+
   },
 
   // ==================== Music ====================
@@ -107,6 +108,7 @@ export const queryKeys = {
         ...(query !== undefined ? [query] : []),
       ] as const,
     detail: (id: string) => [...queryKeys.music.all, 'detail', id] as const,
+
   },
 
   // ==================== Friends ====================
@@ -152,6 +154,7 @@ export const queryKeys = {
       [...queryKeys.search.all, 'posts', query] as const,
     groups: (query: string) =>
       [...queryKeys.search.all, 'groups', query] as const,
+
   },
 
   // ==================== Chatbot ====================
@@ -164,6 +167,7 @@ export const queryKeys = {
         userId,
         ...(typeof pageSize === 'number' ? [pageSize] : []),
       ] as const,
+
   },
 
   // ==================== Groups ====================
@@ -239,26 +243,65 @@ export const queryKeys = {
   // ==================== Emotion Journal ====================
   emotionJournal: {
     all: ['emotion-journal'] as const,
+
+
+    /**
+     * History / entries
+     */
     entries: (query?: unknown) =>
       [
         ...queryKeys.emotionJournal.all,
         'entries',
         ...(query !== undefined ? [query] : []),
       ] as const,
-    analytics: () => [...queryKeys.emotionJournal.all, 'analytics'] as const,
+
+
+    /**
+     * Dashboard analytics
+     * summary / trend / distribution / insights
+     */
+    analytics: (query?: unknown) =>
+      [
+        ...queryKeys.emotionJournal.all,
+        'analytics',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+
+    /**
+     * Emotion analysis by target
+     */
+    analysis: (targetType: TargetType, targetId: string) =>
+      [
+        ...queryKeys.emotionJournal.all,
+        'analysis',
+        targetType,
+        targetId,
+      ] as const,
+
+    /**
+     * Feedback by target
+     */
+    feedback: (targetType: TargetType, targetId: string) =>
+      [
+        ...queryKeys.emotionJournal.all,
+        'feedback',
+        targetType,
+        targetId,
+      ] as const,
   },
 
   // ==================== Calls ====================
   calls: {
     all: ['calls'] as const,
     detail: (callId: string) => [...queryKeys.calls.all, callId] as const,
+
   },
 } as const;
 
 /**
  * Type-safe query key factory
  * Usage example:
- * 
+ *
  * ```ts
  * const postKey = queryKeys.posts.detail('post-123')
  * const reactionsKey = queryKeys.reactions.list('target-id', TargetType.POST)
@@ -268,13 +311,13 @@ export type QueryKeys = typeof queryKeys;
 
 /**
  * Mutation Keys Factory
- * 
+ *
  * Centralized mutation keys for consistent mutation tracking and management.
  * Benefits:
  * - Enable useMutationState for cross-component mutation tracking
  * - Consistent naming across the application
  * - Type-safe mutation key access
- * 
+ *
  * @see https://tanstack.com/query/latest/docs/react/guides/mutations
  */
 export const mutationKeys = {

@@ -2,6 +2,7 @@
 
 // Common types
 export * from './common.types';
+export * from './emotion.types';
 
 // Enums
 export * from './enums';
