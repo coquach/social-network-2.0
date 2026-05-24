@@ -1,183 +1,222 @@
+'use client';
+
+import { ReactNode } from 'react';
 import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
+  Minus,
+  ShieldAlert,
+  Smile,
+  TrendingUp,
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmotionSummaryDTO } from '@/models/emotion/emotionDTO';
-import { format } from 'date-fns';
-import { Pie, PieChart, Cell } from 'recharts';
-import { EMOTION_KEYS, emotionMeta, getEmotionMeta, pickValue } from './emotion-meta';
+import { useEmotionDashboardSummary } from '@repo/shared';
+
+import {
+  clampPercent,
+  formatMoodTrend,
+  formatPercentage,
+  formatRiskLevel,
+} from '../lib/emotion-formatters';
+import {
+  getEmotionEmoji,
+  getEmotionLabel,
+  getRiskStatus,
+} from '../lib/emotion-mappers';
+import { getRiskBadgeStyles } from '../lib/emotion-ui';
 
 interface EmotionSummaryCardProps {
-  data?: EmotionSummaryDTO;
-  loading: boolean;
-  lastUpdated?: Date;
+  title: string;
+  icon?: ReactNode;
+  value: ReactNode;
+  description: string;
+  badge?: ReactNode;
+  footer?: ReactNode;
+  progressValue?: number;
+  progressLabel?: string;
 }
 
-const chartConfig = EMOTION_KEYS.reduce(
-  (acc, key) => {
-    acc[key] = {
-      label: `${emotionMeta[key].emoji} ${emotionMeta[key].label}`,
-      color: emotionMeta[key].color,
-    };
-    return acc;
-  },
-  {} as Record<string, { label: string; color: string }>
+export const EmotionSummaryCard = ({
+  title,
+  icon,
+  value,
+  description,
+  badge,
+  footer,
+  progressValue,
+  progressLabel,
+}: EmotionSummaryCardProps) => {
+  return (
+    <Card className="flex h-full flex-col rounded-[24px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.6)] backdrop-blur-sm">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {title}
+        </p>
+        <div className="flex items-center gap-2 text-slate-500">
+          {icon}
+          {badge}
+        </div>
+      </div>
+
+      <div className="mt-3 text-[1.65rem] font-semibold tracking-tight text-slate-900">
+        {value}
+      </div>
+
+      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+
+      {typeof progressValue === 'number' && (
+        <div className="mt-4 space-y-1.5">
+          <Progress value={progressValue} className="h-2 bg-slate-100" />
+          {progressLabel && (
+            <p className="text-xs font-medium text-slate-500">
+              {progressLabel}
+            </p>
+          )}
+        </div>
+      )}
+
+      {footer && (
+        <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+          {footer}
+        </p>
+      )}
+    </Card>
+  );
+};
+
+const SummarySkeleton = () => (
+  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    {Array.from({ length: 4 }).map((_, index) => (
+      <div
+        key={index}
+        className="rounded-[24px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.6)] backdrop-blur-sm"
+      >
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="mt-4 h-8 w-36" />
+        <Skeleton className="mt-3 h-4 w-full" />
+        <Skeleton className="mt-2 h-2 w-full" />
+      </div>
+    ))}
+  </div>
 );
 
-export const EmotionSummaryCard = ({
-  data,
-  loading,
-  lastUpdated,
-}: EmotionSummaryCardProps) => {
-  if (loading) {
+export const EmotionSummaryGrid = () => {
+  const summaryQuery = useEmotionDashboardSummary();
+
+  if (summaryQuery.isLoading) {
+    return <SummarySkeleton />;
+  }
+
+  if (summaryQuery.isError) {
     return (
-      <Card className="h-full border-slate-100 shadow-sm">
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="mt-2 h-4 w-24" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
+      <section className="rounded-3xl border border-rose-200 bg-rose-50/60 p-6">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 text-rose-600" />
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-rose-700">
+              Không thể tải phần tóm tắt ngay lúc này.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
+              onClick={() => summaryQuery.refetch()}
+            >
+              Tải lại tóm tắt
+            </Button>
+          </div>
+        </div>
+      </section>
     );
   }
+
+  const data = summaryQuery.data;
 
   if (!data) {
     return (
-      <Card className="h-full border-slate-100 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-sky-500">
-            Tóm tắt cảm xúc
-          </CardTitle>
-          <p className="text-sm text-slate-500">
-            Chưa có dữ liệu để hiển thị. Hãy đăng bài hoặc bình luận để hệ thống
-            ghi nhận cảm xúc.
-          </p>
-        </CardHeader>
-      </Card>
+      <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-6 text-sm text-slate-600">
+        Chưa có dữ liệu tóm tắt để hiển thị.
+      </section>
     );
   }
 
-  const topEmotionMeta = getEmotionMeta(data.topEmotion as string);
-  const total = data.count ?? 0;
-  const chartData = EMOTION_KEYS.map((key) => ({
-    key,
-    value: pickValue(data.distribution, key),
-    label: `${emotionMeta[key].emoji} ${emotionMeta[key].label}`,
-  }));
+  const riskStatus = getRiskStatus(data.riskLevel);
+  const moodTrend = formatMoodTrend(
+    data.shortTermTrend ?? data.emotionMomentum,
+  );
+  const negativityPercent = clampPercent(data.recentNegativityScore);
+  const positivityPercent = Math.max(0, 100 - negativityPercent);
+  const dominantLabel = getEmotionLabel(data.dominantEmotion);
+  const dominantEmoji = getEmotionEmoji(data.dominantEmotion);
 
-  const sum = chartData.reduce((acc, item) => acc + item.value, 0);
-  const normalizedData = chartData.map((item) => {
-    const value = sum > 1 ? item.value : item.value * 100;
-    const percentage = sum > 0 ? (item.value / (sum || 1)) * 100 : 0;
-    return { ...item, value, percentage };
-  });
-
-  const hasEntries = total > 0 || normalizedData.some((item) => item.value > 0);
+  const MoodIcon =
+    moodTrend.direction === 'up'
+      ? ArrowUpRight
+      : moodTrend.direction === 'down'
+        ? ArrowDownRight
+        : Minus;
 
   return (
-    <Card className="h-full border-slate-100 shadow-sm">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-lg font-semibold text-sky-500">
-          Tóm tắt cảm xúc
-        </CardTitle>
-        <p className="text-sm text-slate-500">
-          Cảm xúc nổi bật và tần suất xuất hiện của bạn.
-        </p>
-        {lastUpdated && (
-          <p className="text-xs text-slate-400">
-            Cập nhật: {format(lastUpdated, 'dd/MM/yyyy HH:mm')}
-          </p>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-            <p className="text-xs font-semibold uppercase text-slate-500">
-              Cảm xúc nổi bật
-            </p>
-            <div className="mt-2 flex items-center gap-3">
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
-                style={{ backgroundColor: `${topEmotionMeta.color}22` }}
-              >
-                {topEmotionMeta.emoji}
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Trạng thái chính</p>
-                <p className="text-base font-semibold text-slate-800">
-                  {topEmotionMeta.label}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_20px_-14px_rgba(15,23,42,0.35)]">
-            <p className="text-xs font-semibold uppercase text-slate-500">
-              Số lần ghi nhận
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-800">
-              {total.toLocaleString('vi-VN')}
-            </p>
-            <p className="text-xs text-slate-500">Trong khoảng thời gian đã chọn</p>
-          </div>
-        </div>
-
-        {hasEntries ? (
-          <ChartContainer
-            config={chartConfig}
-            className="mt-2 flex h-80 flex-col justify-center"
+    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <EmotionSummaryCard
+        title="Trạng thái hiện tại"
+        icon={<ShieldAlert className="h-4 w-4 text-rose-600" />}
+        value={formatRiskLevel(data.riskLevel)}
+        description={
+          riskStatus === 'critical'
+            ? 'Đang có dấu hiệu căng thẳng cảm xúc cao.'
+            : riskStatus === 'warning'
+              ? 'Có tín hiệu áp lực tăng dần.'
+              : 'Đang ở vùng ổn định.'
+        }
+        badge={
+          <span
+            className={`rounded-full border px-2 py-1 text-xs font-semibold uppercase tracking-wide ${getRiskBadgeStyles(riskStatus)}`}
           >
-            <PieChart>
-              <Pie
-                data={normalizedData}
-                dataKey="value"
-                nameKey="label"
-                innerRadius={70}
-                outerRadius={120}
-                strokeWidth={2}
-              >
-                {normalizedData.map((entry) => (
-                  <Cell
-                    key={entry.key}
-                    fill={`var(--color-${entry.key})`}
-                    stroke="#fff"
-                    strokeWidth={2}
-                  />
-                ))}
-              </Pie>
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    formatter={(_, name, item) => {
-                      const percentage = (item?.payload as any)?.percentage ?? 0;
-                      return (
-                        <div className="flex w-full items-center justify-between gap-4">
-                          <span className="text-slate-600">{name}</span>
-                          <span className="font-semibold text-slate-800">
-                            {percentage.toFixed(1)}%
-                          </span>
-                        </div>
-                      );
-                    }}
-                  />
-                }
-              />
-              <ChartLegend content={<ChartLegendContent />} />
-            </PieChart>
-          </ChartContainer>
-        ) : (
-          <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-500">
-            Chưa có dữ liệu trong khoảng thời gian này.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            {riskStatus === 'critical'
+              ? 'Nguy cấp'
+              : riskStatus === 'warning'
+                ? 'Cảnh báo'
+                : 'Bình thường'}
+          </span>
+        }
+      />
+
+      <EmotionSummaryCard
+        title="Cảm xúc nổi bật"
+        icon={<Smile className="h-4 w-4 text-amber-600" />}
+        value={
+          <span className="inline-flex items-center gap-2 text-slate-900">
+            <span className="text-2xl" aria-hidden>
+              {dominantEmoji}
+            </span>
+            <span>{dominantLabel}</span>
+          </span>
+        }
+        description="Cảm xúc chiếm ưu thế trong giai đoạn gần đây."
+      />
+
+      <EmotionSummaryCard
+        title="Tỷ lệ tích cực"
+        icon={<TrendingUp className="h-4 w-4 text-sky-700" />}
+        value={formatPercentage(positivityPercent, { source: 'percent' })}
+        description="Phần phản hồi mang sắc thái tích cực hoặc cân bằng."
+        progressValue={positivityPercent}
+        progressLabel={`${positivityPercent.toFixed(1)}% tích cực`}
+      />
+
+      <EmotionSummaryCard
+        title="Xu hướng tâm trạng"
+        icon={<MoodIcon className="h-4 w-4 text-slate-700" />}
+        value={moodTrend.label}
+        description={moodTrend.hint}
+        footer={moodTrend.deltaText}
+      />
+    </section>
   );
 };

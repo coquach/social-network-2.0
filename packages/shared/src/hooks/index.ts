@@ -1,6 +1,6 @@
 /**
  * React Query Hooks for @repo/shared
- * 
+ *
  * Platform-agnostic hooks that work with React Query.
  * These hooks use the services layer and provide caching, optimistic updates,
  * and automatic refetching.
@@ -32,6 +32,9 @@ export * from './useDeviceToken';
 
 // Message hooks
 export * from './useMessage';
+
+// Emotion hooks
+export * from './useEmotion';
 
 // Conversation hooks
 export * from './useConversation';
