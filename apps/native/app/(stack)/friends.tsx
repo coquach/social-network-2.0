@@ -15,7 +15,7 @@ import {
   useSendFriendRequest,
   useUnblockUser,
 } from '@repo/shared';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
 import { RefreshControl, View } from 'react-native';
@@ -119,14 +119,36 @@ const getSuggestionMeta = (suggestion?: FriendSuggestionDTO) => {
   return undefined;
 };
 
+const getRequestedTab = (tab?: string | string[]): FriendsTabKey => {
+  const value = Array.isArray(tab) ? tab[0] : tab;
+
+  if (
+    value === 'friends' ||
+    value === 'requests' ||
+    value === 'suggestions' ||
+    value === 'blocked'
+  ) {
+    return value;
+  }
+
+  return 'friends';
+};
+
 export default function FriendsScreen() {
   const router = useRouter();
+  const { tab } = useLocalSearchParams<{ tab?: string | string[] }>();
   const insets = useSafeAreaInsets();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = React.useState<FriendsTabKey>('friends');
+  const [activeTab, setActiveTab] = React.useState<FriendsTabKey>(() =>
+    getRequestedTab(tab),
+  );
   const [pendingActionKey, setPendingActionKey] = React.useState<string | null>(
     null,
   );
+
+  React.useEffect(() => {
+    setActiveTab(getRequestedTab(tab));
+  }, [tab]);
 
   const currentUserQuery = useCurrentUser();
   const currentUser = currentUserQuery.data;
