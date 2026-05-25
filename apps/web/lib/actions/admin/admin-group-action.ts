@@ -17,15 +17,18 @@ export interface GroupReportQuery extends CursorPagination {
 
 export const getGroupReports = async (
   token: string,
-  query: GroupReportQuery
+  query: GroupReportQuery,
 ): Promise<CursorPageResponse<GroupReportDTO>> => {
   try {
-    const response = await api.get<CursorPageResponse<GroupReportDTO>>(`/groups/reports`, {
-      params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await api.get<CursorPageResponse<GroupReportDTO>>(
+      `/group-reports`,
+      {
+        params: query,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
     return response.data;
   } catch (error) {
     console.error(error);
@@ -46,32 +49,17 @@ export interface AdminGroupQuery extends Pagination {
 
 export const getAdminGroups = async (
   token: string,
-  filter: AdminGroupQuery
+  filter: AdminGroupQuery,
 ): Promise<PageResponse<AdminGroupDTO>> => {
   try {
-    const response = await api.get<PageResponse<AdminGroupDTO>>(`/groups/admin`, {
-      params: filter,
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await api.get<PageResponse<AdminGroupDTO>>(
+      `/groups/admin`,
+      {
+        params: filter,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-
-export const banGroup = async (token: string, groupId: string): Promise<boolean> => {
-  try {
-    const response = await api.post<boolean>(
-      `/groups/group/${groupId}/ban`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
     );
     return response.data;
   } catch (error) {
@@ -80,16 +68,19 @@ export const banGroup = async (token: string, groupId: string): Promise<boolean>
   }
 };
 
-export const unbanGroup = async (token: string, groupId: string): Promise<boolean> => {
+export const banGroup = async (
+  token: string,
+  groupId: string,
+): Promise<boolean> => {
   try {
     const response = await api.post<boolean>(
-      `/groups/group/${groupId}/unban`,
+      `/group-reports/${groupId}/ban`,
       {},
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -98,16 +89,40 @@ export const unbanGroup = async (token: string, groupId: string): Promise<boolea
   }
 };
 
-export const ignoreReportGroup = async (token: string, targetId: string): Promise<boolean> => {
+export const unbanGroup = async (
+  token: string,
+  groupId: string,
+): Promise<boolean> => {
+  try {
+    const response = await api.post<boolean>(
+      `/group-reports/${groupId}/unban`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const ignoreReportGroup = async (
+  token: string,
+  targetId: string,
+): Promise<boolean> => {
   try {
     const response = await api.post(
-      `/groups/group/${targetId}/ignore`,
+      `/group-reports/${targetId}/ignore`,
       {},
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {

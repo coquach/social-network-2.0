@@ -3,6 +3,8 @@
  * Thông tin cơ bản về app
  */
 
+import { count } from "console";
+
 export const appConfig = {
   name: 'Sentimeta',
   description: 'A social network powered by emotion analysis',
