@@ -52,11 +52,13 @@ const heroUIConfig: HeroUINativeConfig = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  console.log('🔥 RootLayout rendering');
   const [loaded, error] = useFonts({
     'Inter-Regular': require('../assets/fonts/Inter-Regular.ttf'),
     'Inter-Bold': require('../assets/fonts/Inter-Bold.ttf'),
   });
 
+  console.log('🔥 Fonts loaded:', loaded, 'error:', error);
   useEffect(() => {
     if (loaded || error) {
       SplashScreen.hideAsync();
@@ -77,7 +79,7 @@ export default function RootLayout() {
   if (!loaded && !error) {
     return null;
   }
-
+  console.log('🔥 About to render providers');
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ClerkProvider publishableKey={publishableKey} tokenCache={defaultTokenCache}>
