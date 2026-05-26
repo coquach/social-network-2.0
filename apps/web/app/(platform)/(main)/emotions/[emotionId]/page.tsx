@@ -1,19 +1,22 @@
-import { redirect } from 'next/navigation';
-
-import { getEmotionDetail } from '@/lib/actions/emotion/emotion-action';
-import { getQueryClient } from '@/lib/query-client';
 import { auth } from '@clerk/nextjs/server';
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { notFound, redirect } from 'next/navigation';
+
+import { TargetType } from '@repo/shared';
+
 import { EmotionDetailClient } from './page-client';
 
 type EmotionDetailPageProps = {
   params: Promise<{ emotionId: string }>;
+  searchParams: Promise<{ targetType?: string }>;
 };
 
 export default async function EmotionDetailPage({
   params,
+  searchParams,
 }: EmotionDetailPageProps) {
   const { emotionId } = await params;
+  const { targetType } = await searchParams;
+
   const { getToken } = await auth();
   const token = await getToken();
 
@@ -21,19 +24,16 @@ export default async function EmotionDetailPage({
     redirect('/sign-in');
   }
 
-  try {
-    const queryClient = getQueryClient();
-    await queryClient.prefetchQuery({
-      queryKey: ['emotion-detail', emotionId],
-      queryFn: () => getEmotionDetail(token, emotionId),
-    });
+  const VALID_TARGET_TYPES = ['POST', 'COMMENT', 'SHARE'] as const;
 
-    return (
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <EmotionDetailClient emotionId={emotionId} />
-      </HydrationBoundary>
-    );
-  } catch {
-    return <EmotionDetailClient emotionId={emotionId} hasError />;
+  if (!targetType || !VALID_TARGET_TYPES.includes(targetType as TargetType)) {
+    notFound();
   }
+
+  return (
+    <EmotionDetailClient
+      targetId={emotionId}
+      targetType={targetType as TargetType}
+    />
+  );
 }

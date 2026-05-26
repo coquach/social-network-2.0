@@ -40,6 +40,11 @@ export function AppBottomSheet({
 }: AppBottomSheetProps) {
   const insets = useSafeAreaInsets();
 
+  // Don't mount the sheet at all when not visible — prevents the
+  // "ghost render" flash where @gorhom/bottom-sheet briefly shows
+  // the handle before animating to the closed position.
+  if (!visible) return null;
+
   return (
     <BottomSheet
       isOpen={visible}

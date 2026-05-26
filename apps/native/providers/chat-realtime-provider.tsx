@@ -1,5 +1,4 @@
 import { useAuth } from "@clerk/expo";
-import { useFocusEffect } from "@react-navigation/native";
 import {
   type ConversationDTO,
   type ConversationWithParticipantsDTO,
@@ -15,8 +14,8 @@ import React from "react";
 
 import {
   compareMessagesAscending,
-  getConversationLastSeenMap,
   getConversationLastActivity,
+  getConversationLastSeenMap,
 } from "~/components/chat/chat-helpers";
 import { clearChatThreadNotification } from "~/lib/notifications/chat-thread-notifications";
 import { useSocket } from "~/providers/socket-provider";
@@ -334,26 +333,24 @@ export function useNativeConversationRealtime({
     );
   }, [fetchedMessages]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      if (!conversationId || !chatSocket || isHiddenForMe) {
-        return undefined;
-      }
+  React.useEffect(() => {
+    if (!conversationId || !chatSocket || isHiddenForMe) {
+      return undefined;
+    }
 
-      void clearChatThreadNotification(conversationId).catch((error) => {
-        console.warn(
-          "[notifications] Failed to clear chat thread notification on focus:",
-          error,
-        );
-      });
+    void clearChatThreadNotification(conversationId).catch((error) => {
+      console.warn(
+        "[notifications] Failed to clear chat thread notification on focus:",
+        error,
+      );
+    });
 
-      chatSocket.emit("conversation.join", { conversationId });
+    chatSocket.emit("conversation.join", { conversationId });
 
-      return () => {
-        chatSocket.emit("conversation.leave", { conversationId });
-      };
-    }, [chatSocket, conversationId, isHiddenForMe]),
-  );
+    return () => {
+      chatSocket.emit("conversation.leave", { conversationId });
+    };
+  }, [chatSocket, conversationId, isHiddenForMe]);
 
   React.useEffect(() => {
     if (!chatSocket || !conversationId || isHiddenForMe) {

@@ -1,6 +1,6 @@
 export function formatRelativeTime(date: string | Date): string {
   const inputDate = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(inputDate.getTime())) {
+  if (Number.isNaN(inputDate.getTime()) || inputDate.getTime() === 0) {
     return 'Vừa đây';
   }
 

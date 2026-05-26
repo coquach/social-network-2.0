@@ -4,7 +4,7 @@ import notifee, {
   AndroidImportance,
   AndroidStyle,
   type AndroidMessagingStyleMessage,
-} from '@notifee/react-native';
+} from 'react-native-notify-kit';
 import { Platform } from 'react-native';
 
 import {
@@ -14,6 +14,7 @@ import {
 
 const CHAT_CHANNEL_GROUP_ID = 'chat';
 const CHAT_CHANNEL_ID = 'messages';
+const REGULAR_CHANNEL_ID = 'general';
 const CHAT_NOTIFICATION_GROUP_ID = 'chat-threads';
 const CHAT_SUMMARY_NOTIFICATION_ID = 'chat-thread-summary';
 const CHAT_THREAD_STORAGE_KEY = '@sentimeta:chat-thread-notifications';
@@ -73,7 +74,7 @@ const normalizeTimestamp = (value?: number | string) => {
 
 const sanitizePreview = (value?: string) => {
   if (!value?.trim()) {
-    return 'Ban co tin nhan moi';
+     return 'Bạn có tin nhắn mới';
   }
 
   const normalized = value.replace(/\s+/g, ' ').trim();
@@ -131,12 +132,72 @@ export async function ensureChatThreadNotificationInfrastructure() {
     description: 'Incoming chat message notifications',
     groupId: CHAT_CHANNEL_GROUP_ID,
     importance: AndroidImportance.HIGH,
-    sound: 'message.wav',
+    sound: 'message',
     vibration: true,
     vibrationPattern: [250, 150, 250, 150],
     lights: true,
     lightColor: '#2563EB',
     badge: true,
+  });
+
+  await notifee.createChannel({
+    id: REGULAR_CHANNEL_ID,
+    name: 'General',
+    description: 'General notifications like likes, comments, and requests',
+    importance: AndroidImportance.HIGH,
+    sound: 'general',
+    vibration: true,
+    lights: true,
+    lightColor: '#10B981',
+    badge: true,
+  });
+
+  await notifee.createChannel({
+    id: 'calls',
+    name: 'Calls',
+    description: 'Incoming video and audio call notifications',
+    importance: AndroidImportance.HIGH,
+    sound: 'message',
+    vibration: true,
+    vibrationPattern: [1000, 1000, 1000, 1000, 1000, 1000],
+    lights: true,
+    lightColor: '#DC2626',
+    badge: true,
+  });
+}
+
+export async function displayRegularNotification(data: NotificationData) {
+  if (!isAndroid) {
+    return;
+  }
+
+  await ensureChatThreadNotificationInfrastructure();
+
+  const notificationId = (typeof data.messageId === 'string' ? data.messageId : undefined) || `regular:${Date.now()}`;
+  const title = (typeof data.title === 'string' ? data.title : undefined) || 'Thông báo mới';
+  const body = (typeof data.body === 'string' ? data.body : undefined) || '';
+
+  // Coerce all values to string for Notifee's flat data structure
+  const flatData: Record<string, string> = {};
+  Object.keys(data).forEach((key) => {
+    if (data[key] !== undefined && data[key] !== null) {
+      flatData[key] = String(data[key]);
+    }
+  });
+
+  await notifee.displayNotification({
+    id: notificationId,
+    title,
+    body,
+    data: flatData,
+    android: {
+      channelId: REGULAR_CHANNEL_ID,
+      pressAction: {
+        id: 'open-regular-notification',
+      },
+      showTimestamp: true,
+      onlyAlertOnce: true,
+    },
   });
 }
 
@@ -264,13 +325,13 @@ async function syncChatThreadSummaryNotification(stateMap: ChatThreadStateMap) {
   );
   const summaryLines = threads.slice(0, 5).map((thread) => {
     const latestMessage = thread.messages.at(-1);
-    return `${getConversationTitle(thread)}: ${latestMessage?.preview || 'Ban co tin nhan moi'}`;
+    return `${getConversationTitle(thread)}: ${latestMessage?.preview || 'Bạn có tin nhắn mới'}`;
   });
 
   await notifee.displayNotification({
     id: CHAT_SUMMARY_NOTIFICATION_ID,
-    title: `${totalUnread} tin nhan moi`,
-    body: `${threads.length} cuoc tro chuyen co tin nhan moi`,
+    title: `${totalUnread} tin nhắn mới`,
+    body: `${threads.length} cuộc trò chuyện có tin nhắn mới`,
     android: {
       channelId: CHAT_CHANNEL_ID,
       groupId: CHAT_NOTIFICATION_GROUP_ID,
@@ -281,7 +342,7 @@ async function syncChatThreadSummaryNotification(stateMap: ChatThreadStateMap) {
       style: {
         type: AndroidStyle.INBOX,
         lines: summaryLines,
-        summary: `${threads.length} cuoc tro chuyen`,
+        summary: `${threads.length} cuộc trò chuện`,
       },
       onlyAlertOnce: true,
     },
@@ -313,4 +374,61 @@ export async function clearAllChatThreadNotifications() {
     .filter((id): id is string => Boolean(id?.startsWith('chat-thread:')));
 
   await Promise.all(threadIds.map((id) => notifee.cancelNotification(id)));
+}
+
+export async function displayCallNotification(data: NotificationData) {
+  if (!isAndroid) {
+    return;
+  }
+
+  await ensureChatThreadNotificationInfrastructure();
+
+  const callerName = typeof data.callerName === 'string' ? data.callerName : 'Cuộc gọi mới';
+  const callLabel = data.callType === 'video' ? 'cuộc gọi video' : 'cuộc gọi thoại';
+
+  await notifee.displayNotification({
+    id: `call:${data.callId}`,
+    title: callerName,
+    body: `Có ${callLabel} đến...`,
+    android: {
+      channelId: 'calls',
+      category: AndroidCategory.CALL,
+      importance: AndroidImportance.HIGH,
+      ongoing: true,
+      sound: 'message',
+      timeoutAfter: 30000,
+      vibrationPattern: [1000, 1000, 1000, 1000, 1000, 1000],
+      pressAction: {
+        id: 'default',
+        launchActivity: 'default',
+      },
+      fullScreenAction: {
+        id: 'default',
+        launchActivity: 'default',
+      },
+      actions: [
+        {
+          title: 'Chấp nhận',
+          pressAction: {
+            id: 'answer_call',
+            launchActivity: 'default',
+          },
+        },
+        {
+          title: 'Từ chối',
+          pressAction: {
+            id: 'reject_call',
+          },
+        },
+      ],
+    },
+    data: data as any,
+  });
+}
+
+export async function cancelCallNotification(callId: string) {
+  if (!isAndroid) {
+    return;
+  }
+  await notifee.cancelNotification(`call:${callId}`);
 }

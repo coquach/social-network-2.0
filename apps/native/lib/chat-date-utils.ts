@@ -8,6 +8,17 @@ export const coerceChatDate = (value: ChatDateValue): Date | null => {
     return null;
   }
 
+  if (typeof value === "number") {
+    return new Date(value < 10000000000 ? value * 1000 : value);
+  }
+
+  if (typeof value === "string") {
+    if (/^\d+$/.test(value)) {
+      const num = parseInt(value, 10);
+      return new Date(num < 10000000000 ? num * 1000 : num);
+    }
+  }
+
   if (typeof value === "object") {
     const candidate = value as {
       $date?: Date | string | number;
@@ -40,7 +51,7 @@ export const coerceChatDate = (value: ChatDateValue): Date | null => {
 
   const date = value instanceof Date ? value : new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime()) || date.getTime() === 0) {
     return null;
   }
 

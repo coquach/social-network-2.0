@@ -243,7 +243,7 @@ function PostDetailScreenContent() {
 function PostNotFound() {
   return (
     <View className="flex-1 items-center justify-center">
-      <Text>KhÃ´ng tÃ¬m tháº¥y bÃ i viáº¿t</Text>
+      <Text>Không tìm thấy bài viết</Text>
     </View>
   );
 }
@@ -252,7 +252,3 @@ function PostNotFound() {
 export default function PostDetailScreen() {
   return <PostDetailScreenContent />;
 }
-
-
-
-

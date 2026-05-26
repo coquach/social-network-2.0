@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
-import { MediaType, type AttachmentDTO, type MessageDTO } from "@repo/shared";
+import { MediaType, CallType, type AttachmentDTO, type MessageDTO } from "@repo/shared";
 import React from "react";
 import { Image, Linking, Pressable, Text, View } from "react-native";
 import Animated, {
@@ -14,6 +14,7 @@ import {
 } from "~/components/chat/chat-attachment-utils";
 import { ChatAvatar } from "~/components/chat/chat-avatar";
 import { MessageReplyPreview } from "~/components/chat/conversation-screen/message-reply-preview";
+import { useCallActions } from "~/hooks/use-call-actions";
 import { cn } from "~/lib/cn";
 import { formatMessageTimestamp } from "./chat-helpers";
 
@@ -136,6 +137,86 @@ function AttachmentCard({
   );
 }
 
+const formatDuration = (seconds?: number) => {
+  if (!seconds) return null;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
+function CallMessageCard({
+  message,
+  isOwn,
+  onStartCall,
+}: {
+  message: MessageDTO;
+  isOwn: boolean;
+  onStartCall: (type: CallType) => void;
+}) {
+  const meta = (message as any).systemMeta;
+  const isVideo = meta?.callType === "video" || meta?.callType === "VIDEO";
+  const duration = meta?.durationSec;
+  const endedReason = meta?.endedReason;
+  const callStatus = meta?.callStatus;
+
+  // Determine status details
+  let statusText = "Cuộc gọi thoại";
+
+  if (isVideo) {
+    statusText = "Cuộc gọi video";
+  }
+
+  // Handle missed/rejected states
+  const isMissed = 
+    callStatus === "MISSED" || 
+    endedReason === "MISSED" || 
+    endedReason === "REJECTED";
+    
+  const isCancelled = callStatus === "CANCELLED" || endedReason === "CANCELLED";
+
+  if (isMissed) {
+    statusText = isVideo ? "Cuộc gọi video nhỡ" : "Cuộc gọi nhỡ";
+  } else if (isCancelled) {
+    statusText = isVideo ? "Cuộc gọi video đã hủy" : "Cuộc gọi thoại đã hủy";
+  } else {
+    statusText = isVideo ? "Cuộc gọi video đã kết thúc" : "Cuộc gọi thoại đã kết thúc";
+  }
+
+  const durationStr = duration && duration > 0 ? formatDuration(duration) : null;
+
+  return (
+    <View className="flex-row items-center gap-3 py-1 min-w-[200px]">
+      <View className="flex-1 justify-center">
+        <Text className={cn("text-[14px] font-semibold", isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark")}>
+          {statusText}
+        </Text>
+        {durationStr ? (
+          <Text className={cn("text-[11px] mt-0.5", isOwn ? "text-white/80" : "text-app-muted-fg dark:text-app-muted-fg-dark")}>
+            Thời lượng: {durationStr}
+          </Text>
+        ) : (
+          <Text className={cn("text-[11px] mt-0.5 opacity-80", isOwn ? "text-white/70" : "text-app-muted-fg dark:text-app-muted-fg-dark")}>
+            {isMissed ? "Nhấn để gọi lại" : "Nhấn để gọi"}
+          </Text>
+        )}
+      </View>
+      <Pressable
+        onPress={() => onStartCall(isVideo ? CallType.VIDEO : CallType.AUDIO)}
+        className={cn(
+          "h-11 w-11 items-center justify-center rounded-2xl",
+          isOwn ? "bg-white/20 active:bg-white/30" : "bg-slate-100 dark:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700"
+        )}
+      >
+        <Ionicons 
+          name={isVideo ? "videocam" : "call"} 
+          size={16} 
+          color={isOwn ? "white" : "#0ea5e9"}
+        />
+      </Pressable>
+    </View>
+  );
+}
+
 export function ChatMessageBubble({
   message,
   senderName,
@@ -150,6 +231,7 @@ export function ChatMessageBubble({
   onPressReplyTo,
 }: ChatMessageBubbleProps) {
   const { userId } = useAuth();
+  const { startCall } = useCallActions();
   const isOwn = message.senderId === userId;
   const bubbleTime = React.useMemo(
     () => formatMessageTimestamp(message.createdAt),
@@ -283,7 +365,17 @@ export function ChatMessageBubble({
                 </View>
               ) : null}
 
-              {content ? (
+              {(message as any).messageType === "system_call" ? (
+                <CallMessageCard 
+                  message={message}
+                  isOwn={isOwn}
+                  onStartCall={(type) => {
+                    void startCall(message.conversationId, type);
+                  }}
+                />
+              ) : null}
+
+              {content && (message as any).messageType !== "system_call" ? (
                 <Text
                   className={cn(
                     "text-[15px] leading-5",

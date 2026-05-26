@@ -67,26 +67,26 @@ export const useUser = (userId: string, options?: { enabled?: boolean }) => {
   });
 };
 
-/**
- * Search users
- */
-export const useSearchUsers = (query: string, params?: QueryParams) => {
-  return useInfiniteQuery<CursorPageResponse<UserDTO>>({
-    queryKey: [...queryKeys.search.users(query), params ?? {}] as const,
-    queryFn: async ({ pageParam }) => {
-      return userService.searchUsers({
-        query,
-        cursor: pageParam as string | undefined,
-        limit: params?.limit,
-      });
-    },
-    getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
-    initialPageParam: undefined,
-    enabled: query.length > 0,
-    ...queryConfigs.standard,
-  });
-};
+// /**
+//  * Search users
+//  */
+// export const useSearchUsers = (query: string, params?: QueryParams) => {
+//   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
+//     queryKey: [...queryKeys.search.users(query), params ?? {}] as const,
+//     queryFn: async ({ pageParam }) => {
+//       return userService.searchUsers({
+//         query,
+//         cursor: pageParam as string | undefined,
+//         limit: params?.limit,
+//       });
+//     },
+//     getNextPageParam: (lastPage) =>
+//       lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
+//     initialPageParam: undefined,
+//     enabled: query.length > 0,
+//     ...queryConfigs.standard,
+//   });
+// };
 
 /**
  * Get user's friends list

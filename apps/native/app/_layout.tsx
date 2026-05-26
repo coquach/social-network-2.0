@@ -1,8 +1,9 @@
+import 'react-native-get-random-values';
 import 'react-native-gesture-handler';
+import 'expo-keep-awake';
 import '../global.css';
-import '../lib/notifications/notifee-chat-events';
 import { ClerkProvider } from '@clerk/expo';
-import { tokenCache } from '@clerk/expo/token-cache';
+import { defaultTokenCache } from '~/lib/token-cache';
 import { SplashScreen, Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import {
@@ -10,7 +11,6 @@ import {
   type HeroUINativeConfig,
 } from 'heroui-native/provider';
 import { useEffect } from 'react';
-import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NativeChatRealtimeProvider } from '~/providers/chat-realtime-provider';
@@ -21,12 +21,14 @@ import { NativeSocketProvider } from '~/providers/socket-provider';
 
 import { AppThemeProvider } from '~/providers/theme-provider';
 import { NotificationProvider } from '~/providers/notification-provider';
-import { ensureBackgroundNotificationTaskRegistered } from '~/lib/notifications/background-notification-task';
 import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
-import * as Notifications from 'expo-notifications';
 import { ModalProvider } from '~/components/providers/modal-provider';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
+import { CallProvider } from '~/providers/call-provider';
+import { CallRealtimeProvider } from '~/providers/call-realtime-provider';
+import { CallManager } from '~/components/chat/call-manager';
+import { CallMiniOverlay } from '~/components/chat/call-mini-overlay';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -47,14 +49,6 @@ const heroUIConfig: HeroUINativeConfig = {
     maxVisibleToasts: 3,
   },
 };
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -65,25 +59,11 @@ export default function RootLayout() {
   });
 
   console.log('🔥 Fonts loaded:', loaded, 'error:', error);
-
-
-
   useEffect(() => {
     if (loaded || error) {
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
-
-  useEffect(() => {
-    void ensureBackgroundNotificationTaskRegistered().catch(
-      (registrationError) => {
-        console.warn(
-          '[notifications] Failed to register background notification task:',
-          registrationError,
-        );
-      },
-    );
-  }, []);
 
   useEffect(() => {
     void ensureChatThreadNotificationInfrastructure().catch(
@@ -102,35 +82,41 @@ export default function RootLayout() {
   console.log('🔥 About to render providers');
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={defaultTokenCache}>
         <SafeAreaProvider>
           <NativeQueryProvider>
-            <NativeSharedProvider>
-              <NotificationProvider>
-                <NativeSocketProvider>
-                  <NativeChatRealtimeProvider>
-                    <NativePresenceProvider>
-                      <HeroUINativeProvider config={heroUIConfig}>
-                        <AppThemeProvider>
-                          <BottomSheetModalProvider>
-                            <Stack screenOptions={{ headerShown: false }}>
-                              <Stack.Screen name="index" />
-                              <Stack.Screen name="(onboarding)" />
-                              <Stack.Screen name="(auth)" />
-                              <Stack.Screen name="(main)" />
-                              <Stack.Screen name="chat" />
-                              <Stack.Screen name="(stack)" />
-                            </Stack>
-                            <ModalProvider />
-                            <AssistantOverlay />
-                          </BottomSheetModalProvider>
-                        </AppThemeProvider>
-                      </HeroUINativeProvider>
-                    </NativePresenceProvider>
-                  </NativeChatRealtimeProvider>
-                </NativeSocketProvider>
-              </NotificationProvider>
-            </NativeSharedProvider>
+            <HeroUINativeProvider config={heroUIConfig}>
+              <NativeSharedProvider>
+                <NotificationProvider>
+                  <NativeSocketProvider>
+                    <NativeChatRealtimeProvider>
+                      <CallProvider>
+                        <CallRealtimeProvider>
+                          <NativePresenceProvider>
+                            <AppThemeProvider>
+                              <BottomSheetModalProvider>
+                                <Stack screenOptions={{ headerShown: false }}>
+                                  <Stack.Screen name="index" />
+                                  <Stack.Screen name="(onboarding)" />
+                                  <Stack.Screen name="(auth)" />
+                                  <Stack.Screen name="(main)" />
+                                  <Stack.Screen name="chat" />
+                                  <Stack.Screen name="(stack)" />
+                                </Stack>
+                                <ModalProvider />
+                                <AssistantOverlay />
+                                <CallManager />
+                                <CallMiniOverlay />
+                              </BottomSheetModalProvider>
+                            </AppThemeProvider>
+                          </NativePresenceProvider>
+                        </CallRealtimeProvider>
+                      </CallProvider>
+                    </NativeChatRealtimeProvider>
+                  </NativeSocketProvider>
+                </NotificationProvider>
+              </NativeSharedProvider>
+            </HeroUINativeProvider>
           </NativeQueryProvider>
         </SafeAreaProvider>
       </ClerkProvider>

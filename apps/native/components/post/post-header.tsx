@@ -1,82 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/expo';
 import { useRouter } from 'expo-router';
-import { BottomSheet } from 'heroui-native/bottom-sheet';
 import React from 'react';
-import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { formatRelativeTime } from '~/utils/format-relative-time';
-import { TargetType, useUser } from '@repo/shared';
+import { useUser } from '@repo/shared';
 import type {
   Audience,
   PostSnapshotDTO,
   SharePostSnapshotDTO,
 } from '@repo/shared';
 
-import {
-  useDeletePostModal,
-  usePostEditHistoryModalStore,
-  useReportModalStore,
-  useUpdatePostModal,
-  useUpdateSharePostModal,
-} from '@repo/shared';
-
-// ─── Menu Item ─────────────────────────────────────────
-
-type MenuItemVariant = 'default' | 'danger' | 'warning';
-
-type MenuItemProps = {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  label: string;
-  onPress: () => void;
-  variant?: MenuItemVariant;
-  disabled?: boolean;
-  loading?: boolean;
-};
-
-const ICON_COLOR: Record<MenuItemVariant, string> = {
-  default: '#475569',
-  danger: '#ef4444',
-  warning: '#64748b',
-};
-
-const TEXT_CLASS: Record<MenuItemVariant, string> = {
-  default: 'text-app-fg dark:text-app-fg-dark',
-  danger: 'text-red-500',
-  warning: 'text-app-muted-fg dark:text-app-muted-fg-dark',
-};
-
-function MenuItem({
-  icon,
-  label,
-  onPress,
-  variant = 'default',
-  disabled = false,
-  loading = false,
-}: MenuItemProps) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled}
-      onPress={onPress}
-      android_ripple={{ color: 'rgba(0,0,0,0.05)' }}
-      className="flex-row items-center gap-3 px-4 py-3 active:bg-black/5 disabled:opacity-60 dark:active:bg-white/5"
-    >
-      {loading ? (
-        <ActivityIndicator size="small" color={ICON_COLOR[variant]} />
-      ) : (
-        <Ionicons name={icon} size={20} color={ICON_COLOR[variant]} />
-      )}
-
-      <Text
-        className={`flex-1 text-[15px] ${TEXT_CLASS[variant]} ${
-          variant === 'default' ? 'font-medium' : ''
-        }`}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+import { usePostOptionsStore } from '~/store/use-post-options-store';
 
 // ─── Props ─────────────────────────────────────────────
 
@@ -105,15 +40,10 @@ function PostHeaderComponent({
 }: PostHeaderProps) {
   const { userId: currentUserId } = useAuth();
   const router = useRouter();
+  const openPostOptions = usePostOptionsStore((s) => s.openPostOptions);
 
   // User
   const { data: author } = useUser(data.userId);
-
-  const [openMenu, setOpenMenu] = React.useState(false);
-
-  const { openModal: deletePostModalOpen } = useDeletePostModal();
-  const { openModal: updatePostModalOpen } = useUpdatePostModal();
-  const { openModal: updateSharePostModalOpen } = useUpdateSharePostModal();
 
   const isOwner = currentUserId === data.userId;
 
@@ -172,61 +102,19 @@ function PostHeaderComponent({
     router.push(`/groups/${group.id}` as never);
   }, [group?.id, router]);
 
-  const close = React.useCallback(() => setOpenMenu(false), []);
-
-  // ─── Actions ─────────────────────────────────────────
-
-  const handleEdit = React.useCallback(() => {
-    if (isShared) {
-      updateSharePostModalOpen(shareId || '');
-    } else {
-      updatePostModalOpen(postId || '');
-    }
-    close();
-  }, [
-    close,
-    isShared,
-    postId,
-    shareId,
-    updatePostModalOpen,
-    updateSharePostModalOpen,
-  ]);
-
-  const handleDelete = React.useCallback(() => {
-    deletePostModalOpen({
-      postId: postId || '',
-      isShare: isShared,
+  const handleMenuPress = React.useCallback(() => {
+    console.log('[PostHeader] Menu button pressed for post:', {
+      postId,
       shareId,
+      isShared,
     });
-    close();
-  }, [close, deletePostModalOpen, isShared, postId, shareId]);
-
-  const handleReport = React.useCallback(() => {
-    const targetId = isShared ? shareId || '' : postId || '';
-    const targetType = isShared ? TargetType.SHARE : TargetType.POST;
-
-    if (!targetId) {
-      close();
-      return;
-    }
-
-    useReportModalStore.getState().open({
-      targetId,
-      targetType,
+    openPostOptions({
+      postId,
+      shareId,
+      isShared,
+      isOwner,
     });
-
-    close();
-  }, [close, isShared, postId, shareId]);
-
-  const handleHistory = React.useCallback(() => {
-    if (!postId) {
-      close();
-      return;
-    }
-
-    usePostEditHistoryModalStore.getState().open(postId);
-    close();
-  }, [close, postId]);
+  }, [openPostOptions, postId, shareId, isShared, isOwner]);
 
   // ─── UI ──────────────────────────────────────────────
 
@@ -346,57 +234,14 @@ function PostHeaderComponent({
           </View>
         </View>
 
-        {/* Menu */}
+        {/* Menu Button */}
         {showSettings && (
-          <BottomSheet isOpen={openMenu} onOpenChange={setOpenMenu}>
-            <BottomSheet.Trigger>
-              <Pressable
-                onPress={() => setOpenMenu(true)}
-                className="h-9 w-9 items-center justify-center rounded-full bg-app-surface/70 active:opacity-70"
-              >
-                <Ionicons
-                  name="ellipsis-horizontal"
-                  size={19}
-                  color="#64748b"
-                />
-              </Pressable>
-            </BottomSheet.Trigger>
-
-            <BottomSheet.Portal>
-              <BottomSheet.Overlay className="bg-black/40" />
-
-              <BottomSheet.Content>
-                <MenuItem
-                  icon="create-outline"
-                  label="Chỉnh sửa"
-                  onPress={handleEdit}
-                  disabled={!isOwner}
-                />
-
-                <MenuItem
-                  icon="time-outline"
-                  label="Lịch sử chỉnh sửa"
-                  onPress={handleHistory}
-                />
-
-                <MenuItem
-                  icon="trash-outline"
-                  label="Xoá bài viết"
-                  variant="danger"
-                  onPress={handleDelete}
-                  disabled={!isOwner}
-                />
-
-                <MenuItem
-                  icon="flag-outline"
-                  label="Báo cáo"
-                  variant="warning"
-                  onPress={handleReport}
-                  disabled={isOwner}
-                />
-              </BottomSheet.Content>
-            </BottomSheet.Portal>
-          </BottomSheet>
+          <Pressable
+            onPress={handleMenuPress}
+            className="h-9 w-9 items-center justify-center rounded-full bg-app-surface/70 active:opacity-70"
+          >
+            <Ionicons name="ellipsis-horizontal" size={19} color="#64748b" />
+          </Pressable>
         )}
       </View>
     </>

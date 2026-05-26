@@ -33,6 +33,9 @@ export * from './useDeviceToken';
 // Message hooks
 export * from './useMessage';
 
+// Emotion hooks
+export * from './useEmotion';
+
 // Conversation hooks
 export * from './useConversation';
 
@@ -58,6 +61,9 @@ export * from './useMusic';
 
 // Group permission hooks
 export * from './use-group-permissions'
+
+// Call hooks
+export * from './useCall';
 
 
 // UI utility hooks (web-only, requires DOM)

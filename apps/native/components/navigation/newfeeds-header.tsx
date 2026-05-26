@@ -22,11 +22,11 @@ const MESSAGE_BADGE_MAX = 99;
 type HeaderAction = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
-  href?: '/chat' | '/notifications';
+  href?: '/chat' | '/notifications' | '/(stack)/search';
 };
 
 const RIGHT_ACTIONS: HeaderAction[] = [
-  { icon: 'search-outline', label: 'Tim kiem' },
+  { icon: 'search-outline', label: 'Tim kiem', href: '/(stack)/search' },
   { icon: 'notifications-outline', label: 'Thong bao', href: '/notifications' },
   { icon: 'chatbubble-outline', label: 'Nhan tin', href: '/chat' },
 ];
@@ -115,7 +115,7 @@ export function NewfeedsHeader() {
           <AppToast
             toast={{
               title: label,
-              message: 'Chuc nang nay se duoc bo sung o buoc tiep theo.',
+              message: 'Chức năng này sẽ được bổ sung ở bước tiếp theo.',
             }}
             toastProps={toastProps}
           />

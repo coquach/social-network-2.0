@@ -1,71 +1,81 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
-import * as TaskManager from 'expo-task-manager';
+import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import {
   isChatMessageNotificationData,
+  isCallNotificationData,
+  isCallCancelledNotificationData,
   type NotificationData,
 } from './notification-payload';
-import { upsertChatThreadNotificationFromData } from './chat-thread-notifications';
+import {
+  upsertChatThreadNotificationFromData,
+  displayRegularNotification,
+  displayCallNotification,
+  cancelCallNotification,
+} from './chat-thread-notifications';
 
-export const BACKGROUND_NOTIFICATION_TASK = 'background-notification-task';
 export const LAST_BACKGROUND_NOTIFICATION_KEY =
   '@sentimeta:last-background-notification';
 
 const isNativePlatform = Platform.OS === 'android' || Platform.OS === 'ios';
 
-if (isNativePlatform && !TaskManager.isTaskDefined(BACKGROUND_NOTIFICATION_TASK)) {
-  TaskManager.defineTask<Notifications.NotificationTaskPayload>(
-    BACKGROUND_NOTIFICATION_TASK,
-    async ({ data, error, executionInfo }) => {
-      if (error) {
-        console.warn('[notifications] Background task error:', error);
+if (isNativePlatform) {
+  setBackgroundMessageHandler(getMessaging(), async (remoteMessage) => {
+    console.log('[notifications] Message handled in the background!', remoteMessage);
+    try {
+      const notificationData = remoteMessage.data as NotificationData | undefined;
+
+      // Handle VoIP high-priority Call Push Notifications
+      if (isCallNotificationData(notificationData)) {
+        if (notificationData) {
+          await displayCallNotification(notificationData);
+        }
         return;
       }
 
-      try {
-        const notificationData = data as NotificationData | undefined;
-        const kind = isChatMessageNotificationData(notificationData)
-          ? 'chat'
-          : 'regular';
-
-        if (kind === 'chat') {
-          await upsertChatThreadNotificationFromData(notificationData);
+      if (isCallCancelledNotificationData(notificationData)) {
+        const callId = notificationData?.callId;
+        if (typeof callId === 'string') {
+          await cancelCallNotification(callId);
         }
-
-        await AsyncStorage.setItem(
-          LAST_BACKGROUND_NOTIFICATION_KEY,
-          JSON.stringify({
-            receivedAt: new Date().toISOString(),
-            data,
-            executionInfo,
-            kind,
-          }),
-        );
-      } catch (storageError) {
-        console.warn(
-          '[notifications] Failed to persist background notification payload:',
-          storageError,
-        );
+        return;
       }
-    },
-  );
-}
 
-export async function ensureBackgroundNotificationTaskRegistered() {
-  if (!isNativePlatform) {
-    return false;
-  }
+      const kind = isChatMessageNotificationData(notificationData)
+        ? 'chat'
+        : 'regular';
 
-  const isRegistered = await TaskManager.isTaskRegisteredAsync(
-    BACKGROUND_NOTIFICATION_TASK,
-  );
+      if (kind === 'chat') {
+        await upsertChatThreadNotificationFromData(notificationData);
+      } else {
+        const title = remoteMessage.notification?.title || notificationData?.title;
+        const body = remoteMessage.notification?.body || notificationData?.body;
+        if (title || body) {
+          await displayRegularNotification({
+            ...notificationData,
+            title,
+            body,
+            messageId: remoteMessage.messageId,
+          });
+        }
+      }
 
-  if (!isRegistered) {
-    await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
-  }
-
-  return true;
+      await AsyncStorage.setItem(
+        LAST_BACKGROUND_NOTIFICATION_KEY,
+        JSON.stringify({
+          receivedAt: new Date().toISOString(),
+          data: remoteMessage.data,
+          messageId: remoteMessage.messageId,
+          kind,
+        }),
+      );
+    } catch (storageError) {
+      console.warn(
+        '[notifications] Failed to persist background notification payload:',
+        storageError,
+      );
+    }
+  });
 }
 
 export async function getLastBackgroundNotificationPayload() {

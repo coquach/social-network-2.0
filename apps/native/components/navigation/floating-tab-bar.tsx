@@ -1,5 +1,5 @@
 import { useUser } from '@clerk/expo';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { NavigationHelpers, ParamListBase, TabNavigationState } from '@react-navigation/native';
 import React from 'react';
 import { Platform, View } from 'react-native';
 import Animated, {
@@ -34,7 +34,15 @@ function isKnownTab(name: string): name is keyof typeof TAB_META {
   return name in TAB_META;
 }
 
-export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
+type TabBarProps = {
+  state: TabNavigationState<ParamListBase>;
+  navigation: NavigationHelpers<ParamListBase> & {
+    emit: (event: { type: string; target?: string; canPreventDefault?: boolean }) => { defaultPrevented: boolean };
+    navigate: (name: string, params?: object) => void;
+  };
+};
+
+export function FloatingTabBar({ state, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets();
   const { user } = useUser();
   const { resolvedTheme } = useAppTheme();

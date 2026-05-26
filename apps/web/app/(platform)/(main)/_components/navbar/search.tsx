@@ -25,11 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import {
-  useSearchGroups,
-  useSearchPosts,
-  useSearchUsers,
-} from '@repo/shared';
+import { useSearchGroups, useSearchPosts, useSearchUsers } from '@repo/shared';
 import { SuggestionGroupItem } from '@/components/search-suggestions/suggest-group-items';
 import { SuggestionPostItem } from '@/components/search-suggestions/suggest-post-items';
 import { SuggestionUserItem } from '@/components/search-suggestions/suggest-user-item';
@@ -87,14 +83,14 @@ export const Search = () => {
   const [debouncedQ, setDebouncedQ] = React.useState('');
   const debounce = useDebouncedCallback(
     (v: string) => setDebouncedQ(v.trim()),
-    250
+    250,
   );
 
   // mobile dialog
   const [openMobile, setOpenMobile] = React.useState(false);
 
   const wrapperRef = React.useRef<HTMLFormElement | null>(null);
-  
+
   // Close suggestions when clicking outside
   useClickOutside(wrapperRef, () => setOpenSuggest(false), openSuggest);
 
@@ -130,7 +126,7 @@ export const Search = () => {
     >) ?? [];
 
   const onPick = (
-    item: PostSnapshotDTO | GroupSummaryDTO | UserDTO | undefined
+    item: PostSnapshotDTO | GroupSummaryDTO | UserDTO | undefined,
   ) => {
     if (!item) return;
     closeLayers();
@@ -214,8 +210,8 @@ export const Search = () => {
                 {type === 'posts'
                   ? 'Bài viết'
                   : type === 'groups'
-                  ? 'Nhóm'
-                  : 'Người dùng'}{' '}
+                    ? 'Nhóm'
+                    : 'Người dùng'}{' '}
                 gợi ý
               </span>
               {loading && (
@@ -254,7 +250,9 @@ export const Search = () => {
                     if (type === 'groups') {
                       return (
                         <SuggestionGroupItem
-                          key={(it as GroupSummaryDTO).id ?? (it as any).groupId}
+                          key={
+                            (it as GroupSummaryDTO).id ?? (it as any).groupId
+                          }
                           group={it as GroupSummaryDTO}
                           onPick={onPick}
                         />
@@ -314,7 +312,6 @@ export const Search = () => {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Tìm kiếm..."
-                autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') goSearch(q);
                 }}

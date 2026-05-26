@@ -1,5 +1,13 @@
 import { Role } from '@/lib/role';
-import { LayoutDashboard, Users, FileText, UsersRound, Settings } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  UsersRound,
+  Settings,
+  Brain,
+  Music,
+} from 'lucide-react';
 
 export type SidebarItem = {
   title: string;
@@ -32,6 +40,24 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     url: '/admin/groups',
     icon: UsersRound,
     roles: ['admin', 'moderator'],
+  },
+  {
+    title: 'Tự động kiểm duyệt',
+    url: '/admin/moderations',
+    icon: FileText,
+    roles: ['admin', 'moderator'],
+  },
+  {
+    title: 'Cảm xúc cộng đồng',
+    url: '/admin/emotions',
+    icon: Brain,
+    roles: ['admin'],
+  },
+  {
+    title: 'Quản lý nhạc',
+    url: '/admin/musics',
+    icon: Music,
+    roles: ['admin'],
   },
   {
     title: 'Cài đặt hệ thống',
