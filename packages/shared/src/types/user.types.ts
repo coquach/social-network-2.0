@@ -19,6 +19,11 @@ export interface UserDTO {
   };
   avatarUrl: string;
   bio: string;
+  location?: string;
+  jobTitle?: string;
+  company?: string;
+  school?: string;
+  interests?: string[];
   createdAt: Date;
   relation?: {
     status: string;
@@ -70,18 +75,28 @@ export interface UserPreferences {
  * Input types for user operations
  */
 export interface CreateUserInput {
+  id?: string;
   email: string;
   firstName: string;
   lastName: string;
   password?: string;
+  avatarUrl?: string;
+  coverImageUrl?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateUserInput {
   firstName?: string;
   lastName?: string;
   bio?: string;
+  location?: string;
+  jobTitle?: string;
+  company?: string;
+  school?: string;
+  interests?: string[];
   avatarUrl?: string;
   coverImageUrl?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateProfileInput extends UpdateUserInput {

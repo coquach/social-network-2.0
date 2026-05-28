@@ -43,19 +43,21 @@ export function CreatePostTabButton({
   }));
 
   const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${interpolate(progress.value, [0, 1], [0, 45])}deg` }],
+    transform: [
+      { rotate: `${interpolate(progress.value, [0, 1], [0, 45])}deg` },
+    ],
   }));
 
   return (
-    <View className="mt-[-28px] items-center justify-start">
-      <View className="h-[72px] w-[72px] items-center justify-center">
+    <View className="-mt-7 items-center justify-start">
+      <View className="h-18 w-18 items-center justify-center">
         <Animated.View
           style={haloStyle}
-          className="absolute h-[72px] w-[72px] rounded-full bg-app-primary/12 dark:bg-app-primary-dark/16"
+          className="absolute h-18 w-18 rounded-full bg-app-primary/12 dark:bg-app-primary-dark/16"
         />
         <Animated.View
           style={haloStyle}
-          className="absolute h-[58px] w-[58px] rounded-[22px] border border-white/50 bg-white/65 dark:border-slate-200/10 dark:bg-slate-950/18"
+          className="absolute h-14.5 w-14.5 rounded-[22px] border border-white/50 bg-white/65 dark:border-slate-200/10 dark:bg-slate-950/18"
         />
         <Animated.View style={buttonStyle}>
           <Pressable
@@ -63,7 +65,8 @@ export function CreatePostTabButton({
             accessibilityLabel="Tạo bài viết"
             onPress={onPress}
             onLongPress={onLongPress}
-            className="h-[62px] w-[62px] items-center justify-center rounded-[24px] bg-app-primary dark:bg-app-primary-dark"
+            disabled={isActive}
+            className="h-15.5 w-15.5 items-center justify-center rounded-3xl bg-app-primary dark:bg-app-primary-dark"
             style={{
               boxShadow: isActive
                 ? '0 22px 46px rgba(14, 165, 233, 0.42)'
@@ -77,7 +80,7 @@ export function CreatePostTabButton({
         </Animated.View>
         <Animated.View
           style={haloStyle}
-          className="absolute bottom-[14px] right-[12px] h-2.5 w-2.5 rounded-full bg-white/80"
+          className="absolute bottom-3.5 right-3 h-2.5 w-2.5 rounded-full bg-white/80"
         />
       </View>
     </View>

@@ -13,6 +13,7 @@ import { uploadToCloudinary } from '@/lib/actions/cloudinary/upload-action';
 import {
   CursorPageResponse,
   CursorPagination,
+  MediaType,
   getStandardNextPageParam,
 } from '@repo/shared';
 import { getQueryClient } from '@/lib/query-client';
@@ -111,7 +112,7 @@ export const useCreateConversation = () => {
         if (media) {
           const uploadResult = await uploadToCloudinary(
             media.file,
-            'image',
+            MediaType.IMAGE,
             `conversations/group-avatars`,
             signal
           );
@@ -156,7 +157,7 @@ export const useUpdateConversation = (conversationId: string) => {
         if (media) {
           const uploadResult = await uploadToCloudinary(
             media.file,
-            'image',
+            MediaType.IMAGE,
             `conversations/group-avatars`,
             signal,
             publicId

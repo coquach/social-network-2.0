@@ -14,40 +14,14 @@ import type {
   CursorPageResponse,
   QueryParams,
 } from '../types/common.types';
-import type { TargetType } from '../types/enums';
+import type { ReportDTO, CreateReportInput } from '../types/report.types';
+import type { ReportStatus, TargetType } from '../types/enums';
 import { queryKeys } from './query-keys';
-
-// ==================== Types ====================
-
-export interface ReportDTO {
-  id: string;
-  reporterId: string;
-  targetId: string;
-  targetType: TargetType;
-  reason: string;
-  status: ReportStatusEnum;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export enum ReportStatusEnum {
-  PENDING = 'PENDING',
-  REVIEWED = 'REVIEWED',
-  RESOLVED = 'RESOLVED',
-  REJECTED = 'REJECTED',
-}
-
-export interface CreateReportInput {
-  targetId: string;
-  targetType: TargetType;
-  reason: string;
-  description?: string;
-}
 
 export interface ReportFilterParams extends QueryParams {
   targetId?: string;
   targetType?: TargetType;
-  status?: ReportStatusEnum;
+  status?: ReportStatus;
 }
 
 // Note: These functions would need to be implemented in a report service

@@ -3,16 +3,18 @@ module.exports = {
   reactStrictMode: true,
   transpilePackages: ['@repo/shared', '@repo/ui'],
   output: 'standalone',
-
   images: {
     remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: '**',
+      },
       {
         protocol: 'https',
         hostname: '**',
       },
     ],
   },
-
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',

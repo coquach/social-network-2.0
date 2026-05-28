@@ -10,8 +10,8 @@
  */
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { searchService, type SearchPostFilter, type SearchGroupFilter } from '../api/services';
-import type { PostSnapshotDTO, GroupSummaryDTO } from '../types';
+import { searchService, type SearchPostFilter, type SearchGroupFilter, SearchUserFilter } from '../api/services';
+import type { PostSnapshotDTO, GroupSummaryDTO, UserDTO } from '../types';
 import type { CursorPageResponse } from '../types';
 import { queryKeys } from './query-keys';
 
@@ -53,4 +53,21 @@ export const useSearchGroups = (filter: SearchGroupFilter) => {
   });
 };
 
-// Note: useSearchUsers is in useUser.ts for compatibility
+/**
+ * Hook to search users (infinite scroll)
+ */
+export const useSearchUsers = (filter: SearchUserFilter) => {
+  const { query, ...otherFilters } = filter;
+  
+  return useInfiniteQuery<CursorPageResponse<UserDTO>>({
+    queryKey: [...queryKeys.search.users(query || ''), otherFilters] as const,
+    queryFn: ({ pageParam }) =>
+      searchService.searchUsers({
+        ...filter,
+        cursor: pageParam as string | undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: undefined,
+    enabled: !!query,
+  });
+};

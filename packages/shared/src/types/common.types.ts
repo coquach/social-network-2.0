@@ -69,7 +69,7 @@ export interface DateRange {
 /**
  * Sort order
  */
-export type SortOrder = 'asc' | 'desc';
+export type SortOrder = 'ASC' | 'DESC';
 
 /**
  * Common query parameters

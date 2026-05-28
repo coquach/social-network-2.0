@@ -13,15 +13,13 @@ import {
 } from '@tanstack/react-query';
 import { friendService } from '../api/services/friend.service';
 import { userService } from '../api/services/user.service';
-import type {
-  CursorPageResponse,
-  QueryParams,
-} from '../types/common.types';
+import type { CursorPageResponse, QueryParams } from '../types/common.types';
 import type {
   UpdateUserInput,
   UserDTO,
   UserProfile,
 } from '../types/user.types';
+import { useAuth } from '../contexts/auth-context';
 import { useUploadOptional } from '../contexts/upload-context';
 import type { UploadableFile } from '../types/upload.types';
 import {
@@ -39,11 +37,18 @@ import { queryKeys } from './query-keys';
  * Get current authenticated user
  */
 export const useCurrentUser = () => {
-  return useQuery<UserDTO>({
+  const { userId } = useAuth();
+
+  return useQuery<UserProfile>({
     queryKey: queryKeys.user.current(),
     queryFn: async () => {
-      return userService.getCurrentUser();
+      if (!userId) {
+        throw new Error('Current user is not available');
+      }
+
+      return userService.getUser(userId);
     },
+    enabled: !!userId,
     ...queryConfigs.semiStatic, // User profile changes infrequently
   });
 };
@@ -62,41 +67,56 @@ export const useUser = (userId: string, options?: { enabled?: boolean }) => {
   });
 };
 
-/**
- * Search users
- */
-export const useSearchUsers = (query: string, params?: QueryParams) => {
-  return useInfiniteQuery<CursorPageResponse<UserDTO>>({
-    queryKey: queryKeys.search.users(query),
-    queryFn: async ({ pageParam }) => {
-      return userService.searchUsers({
-        query,
-        cursor: pageParam as string | undefined,
-        limit: params?.limit,
-      });
-    },
-    getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
-    initialPageParam: undefined,
-    enabled: query.length > 0,
-    ...queryConfigs.standard,
-  });
-};
+// /**
+//  * Search users
+//  */
+// export const useSearchUsers = (query: string, params?: QueryParams) => {
+//   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
+//     queryKey: [...queryKeys.search.users(query), params ?? {}] as const,
+//     queryFn: async ({ pageParam }) => {
+//       return userService.searchUsers({
+//         query,
+//         cursor: pageParam as string | undefined,
+//         limit: params?.limit,
+//       });
+//     },
+//     getNextPageParam: (lastPage) =>
+//       lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
+//     initialPageParam: undefined,
+//     enabled: query.length > 0,
+//     ...queryConfigs.standard,
+//   });
+// };
 
 /**
  * Get user's friends list
  */
 export const useUserFriends = (userId: string, params?: QueryParams) => {
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
-    queryKey: queryKeys.user.friends(userId),
+    queryKey: [...queryKeys.user.friends(userId), params ?? {}] as const,
     queryFn: async ({ pageParam }) => {
-      return userService.getUserFriends(userId, {
+      const friendIdsPage = await friendService.getFriends(userId, {
         ...params,
         cursor: pageParam as string | undefined,
       });
+
+      const users = await Promise.all(
+        (friendIdsPage.data ?? []).map(async (friendId) => {
+          try {
+            return await userService.getUser(friendId);
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      return {
+        ...friendIdsPage,
+        data: users.filter((item): item is UserDTO => item !== null),
+      };
     },
     getNextPageParam: (lastPage) =>
-      lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
+      lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
     enabled: !!userId,
     ...queryConfigs.semiStatic,
@@ -108,7 +128,7 @@ export const useUserFriends = (userId: string, params?: QueryParams) => {
 /**
  * Update user profile
  * With optimistic updates
- * 
+ *
  * @example
  * const updateProfile = useUpdateProfile();
  * updateProfile.mutate({

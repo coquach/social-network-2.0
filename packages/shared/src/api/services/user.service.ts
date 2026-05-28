@@ -4,19 +4,14 @@
  */
 
 import { getApiClient } from '../client';
-import type {
-  UserDTO,
-  UserProfile,
-  UpdateUserInput,
-  CursorPageResponse,
-} from '../../types';
+import type { UserDTO, UserProfile, UpdateUserInput, CursorPageResponse } from '../../types';
 
 export const userService = {
   /**
-   * Get current user profile
+   * Get current authenticated user profile
    */
-  async getCurrentUser(): Promise<UserDTO> {
-    return getApiClient().get('/users/me');
+  async getCurrentUser(): Promise<UserProfile> {
+    return getApiClient().get('/users/current');
   },
 
   /**
@@ -30,7 +25,7 @@ export const userService = {
    * Update user profile
    */
   async updateProfile(data: UpdateUserInput): Promise<UserDTO> {
-    return getApiClient().patch('/users/me', data);
+    return getApiClient().patch('/users', data);
   },
 
   /**
@@ -42,16 +37,6 @@ export const userService = {
     limit?: number;
   }): Promise<CursorPageResponse<UserDTO>> {
     return getApiClient().getCursorPage('/users/search', { params });
-  },
-
-  /**
-   * Get user's friends
-   */
-  async getUserFriends(
-    userId: string,
-    params?: { cursor?: string; limit?: number }
-  ): Promise<CursorPageResponse<UserDTO>> {
-    return getApiClient().getCursorPage(`/users/${userId}/friends`, { params });
   },
 
   /**

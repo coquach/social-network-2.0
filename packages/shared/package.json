@@ -26,6 +26,11 @@
       "import": "./dist/hooks/index.mjs",
       "require": "./dist/hooks/index.js"
     },
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "import": "./dist/schemas/index.mjs",
+      "require": "./dist/schemas/index.js"
+    },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.mjs",
@@ -44,7 +49,8 @@
   },
   "dependencies": {
     "axios": "^1.12.2",
-    "date-fns": "^4.1.0"
+    "date-fns": "^4.1.0",
+    "zod": "^4.1.11"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.90.2",

@@ -89,6 +89,26 @@ export const queryKeys = {
       [...queryKeys.feed.all, 'personal', emotion ?? 'ALL'] as const,
     trending: (emotion?: string) =>
       [...queryKeys.feed.all, 'trending', emotion ?? 'ALL'] as const,
+
+  },
+
+  // ==================== Music ====================
+  music: {
+    all: ['music'] as const,
+    recommendations: (query?: unknown) =>
+      [
+        ...queryKeys.music.all,
+        'recommendations',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    list: (query?: unknown) =>
+      [
+        ...queryKeys.music.all,
+        'list',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    detail: (id: string) => [...queryKeys.music.all, 'detail', id] as const,
+
   },
 
   // ==================== Friends ====================
@@ -134,6 +154,20 @@ export const queryKeys = {
       [...queryKeys.search.all, 'posts', query] as const,
     groups: (query: string) =>
       [...queryKeys.search.all, 'groups', query] as const,
+
+  },
+
+  // ==================== Chatbot ====================
+  chatbot: {
+    all: ['chatbot'] as const,
+    history: (userId: string, pageSize?: number) =>
+      [
+        ...queryKeys.chatbot.all,
+        'history',
+        userId,
+        ...(typeof pageSize === 'number' ? [pageSize] : []),
+      ] as const,
+
   },
 
   // ==================== Groups ====================
@@ -207,9 +241,9 @@ export const queryKeys = {
   },
 
   // ==================== Emotion Journal ====================
-  // ==================== Emotion Journal ====================
   emotionJournal: {
     all: ['emotion-journal'] as const,
+
 
     /**
      * History / entries
@@ -220,6 +254,7 @@ export const queryKeys = {
         'entries',
         ...(query !== undefined ? [query] : []),
       ] as const,
+
 
     /**
      * Dashboard analytics
@@ -253,6 +288,13 @@ export const queryKeys = {
         targetType,
         targetId,
       ] as const,
+  },
+
+  // ==================== Calls ====================
+  calls: {
+    all: ['calls'] as const,
+    detail: (callId: string) => [...queryKeys.calls.all, callId] as const,
+
   },
 } as const;
 

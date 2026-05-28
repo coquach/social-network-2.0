@@ -17,6 +17,8 @@ export const useRegisterDeviceToken = () => {
     mutationFn: async (data: {
       token: string;
       platform: 'ios' | 'android' | 'web';
+      provider?: 'fcm';
+      appId?: string;
       deviceId?: string;
       deviceName?: string;
     }) => {

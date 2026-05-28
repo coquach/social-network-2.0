@@ -1,0 +1,30 @@
+name: Native Preview Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        type: choice
+        description: Platform to build
+        required: true
+        default: android
+        options:
+          - android
+          - ios
+      profile:
+        type: choice
+        description: Build profile to use
+        required: true
+        default: preview
+        options:
+          - preview
+          - development
+          - development-simulator
+
+jobs:
+  build_preview:
+    name: Build ${{ inputs.platform || 'android' }} with ${{ inputs.profile || 'preview' }}
+    type: build
+    params:
+      platform: ${{ inputs.platform || 'android' }}
+      profile: ${{ inputs.profile || 'preview' }}
