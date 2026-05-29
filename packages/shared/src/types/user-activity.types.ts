@@ -1,0 +1,32 @@
+/**
+ * User Activity Types
+ * Platform-agnostic user activity log type definitions
+ */
+
+export enum ActivityType {
+  POST_CREATED = 'POST_CREATED',
+  COMMENT_CREATED = 'COMMENT_CREATED',
+  POST_SHARED = 'POST_SHARED',
+  SEND_REQUEST = 'SEND_REQUEST',
+  ACCEPT_REQUEST = 'ACCEPT_REQUEST',
+  REJECT_REQUEST = 'REJECT_REQUEST',
+  CANCEL_REQUEST = 'CANCEL_REQUEST',
+  UNFRIEND = 'UNFRIEND',
+  USER_BLOCKED = 'USER_BLOCKED',
+  GROUP_JOINED = 'GROUP_JOINED',
+  GROUP_LEFT = 'GROUP_LEFT',
+  GROUP_CREATED = 'GROUP_CREATED',
+}
+
+/**
+ * User activity log item
+ */
+export interface UserActivityDto {
+  id: string;
+  actorId: string;
+  activityType: ActivityType | string;
+  targetId: string;
+  contentPreview?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: Date;
+}

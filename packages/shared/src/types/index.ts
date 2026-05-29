@@ -3,6 +3,8 @@
 // Common types
 export * from './common.types';
 export * from './emotion.types';
+export * from './user-activity.types';
+export * from './moderation.types';
 
 // Enums
 export * from './enums';
@@ -23,4 +25,3 @@ export * from './upload.types';
 export * from './chatbot.types';
 export * from './music.types';
 export * from './call.types';
-
