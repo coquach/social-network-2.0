@@ -82,7 +82,10 @@ export default function RootLayout() {
   console.log('🔥 About to render providers');
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ClerkProvider publishableKey={publishableKey} tokenCache={defaultTokenCache}>
+      <ClerkProvider
+        publishableKey={publishableKey}
+        tokenCache={defaultTokenCache}
+      >
         <SafeAreaProvider>
           <NativeQueryProvider>
             <HeroUINativeProvider config={heroUIConfig}>

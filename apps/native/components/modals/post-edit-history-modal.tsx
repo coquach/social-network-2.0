@@ -22,6 +22,7 @@ export function PostEditHistoryModal() {
   const { isOpen, postId, close } = usePostEditHistoryModalStore();
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const hasOpenedRef = useRef(false);
 
   const snapPoints = useMemo(() => ['60%'], []);
 
@@ -46,8 +47,22 @@ export function PostEditHistoryModal() {
 
   // open / close
   useEffect(() => {
-    if (isOpen) bottomSheetRef.current?.present();
-    else bottomSheetRef.current?.dismiss();
+    if (isOpen) {
+      hasOpenedRef.current = true;
+      const frame = requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
+
+      return () => {
+        cancelAnimationFrame(frame);
+      };
+    }
+
+    if (!hasOpenedRef.current) {
+      return;
+    }
+
+    bottomSheetRef.current?.dismiss();
   }, [isOpen]);
 
   // ─────────────────────────────────────────
@@ -72,7 +87,10 @@ export function PostEditHistoryModal() {
     <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
-      onDismiss={close}
+      onDismiss={() => {
+        hasOpenedRef.current = false;
+        close();
+      }}
       enablePanDownToClose
       enableDynamicSizing={false}
       backdropComponent={renderBackdrop}
