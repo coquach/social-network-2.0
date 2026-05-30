@@ -89,7 +89,6 @@ export const queryKeys = {
       [...queryKeys.feed.all, 'personal', emotion ?? 'ALL'] as const,
     trending: (emotion?: string) =>
       [...queryKeys.feed.all, 'trending', emotion ?? 'ALL'] as const,
-
   },
 
   // ==================== Music ====================
@@ -108,7 +107,6 @@ export const queryKeys = {
         ...(query !== undefined ? [query] : []),
       ] as const,
     detail: (id: string) => [...queryKeys.music.all, 'detail', id] as const,
-
   },
 
   // ==================== Friends ====================
@@ -154,7 +152,6 @@ export const queryKeys = {
       [...queryKeys.search.all, 'posts', query] as const,
     groups: (query: string) =>
       [...queryKeys.search.all, 'groups', query] as const,
-
   },
 
   // ==================== Chatbot ====================
@@ -167,7 +164,6 @@ export const queryKeys = {
         userId,
         ...(typeof pageSize === 'number' ? [pageSize] : []),
       ] as const,
-
   },
 
   // ==================== Groups ====================
@@ -244,7 +240,6 @@ export const queryKeys = {
   emotionJournal: {
     all: ['emotion-journal'] as const,
 
-
     /**
      * History / entries
      */
@@ -254,7 +249,6 @@ export const queryKeys = {
         'entries',
         ...(query !== undefined ? [query] : []),
       ] as const,
-
 
     /**
      * Dashboard analytics
@@ -290,11 +284,40 @@ export const queryKeys = {
       ] as const,
   },
 
+  // ==================== User Activity ====================
+  userActivity: {
+    all: ['user-activity'] as const,
+    entries: (query?: unknown) =>
+      [
+        ...queryKeys.userActivity.all,
+        'entries',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+  },
+
+  // ==================== Moderation ====================
+  moderations: {
+    all: ['moderations'] as const,
+    me: (query?: unknown) =>
+      [
+        ...queryKeys.moderations.all,
+        'me',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    detail: (id: string) =>
+      [...queryKeys.moderations.all, 'detail', id] as const,
+    appeals: (query?: unknown) =>
+      [
+        ...queryKeys.moderations.all,
+        'appeals',
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+  },
+
   // ==================== Calls ====================
   calls: {
     all: ['calls'] as const,
     detail: (callId: string) => [...queryKeys.calls.all, callId] as const,
-
   },
 } as const;
 
