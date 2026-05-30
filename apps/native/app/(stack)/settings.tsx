@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useClerk } from '@clerk/expo';
+import { useRouter } from 'expo-router';
 import { Switch } from 'heroui-native/switch';
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -12,16 +13,18 @@ import { AppCard } from '~/components/ui/app-card';
 import { AppHeader } from '~/components/ui/app-header';
 import { useAppTheme } from '~/providers/theme-provider';
 
+
 const settingsItems = [
   { id: 'account', label: 'Account center', icon: 'person-circle-outline' },
-  { id: 'privacy', label: 'Privacy', icon: 'lock-closed-outline' },
+  { id: 'privacy', label: 'Privacy', icon: 'lock-closed-outline', path: '/privacy' },
   { id: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
   { id: 'language', label: 'Language', icon: 'language-outline' },
-  { id: 'support', label: 'Help and support', icon: 'help-circle-outline' },
+  { id: 'support', label: 'Help and support', icon: 'help-circle-outline', path: '/support' },
 ] as const;
 
 export default function SettingsScreen() {
   const { signOut } = useClerk();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { resolvedTheme, setThemePreference } = useAppTheme();
 
@@ -43,7 +46,7 @@ export default function SettingsScreen() {
   return (
     <>
       <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-        <AppHeader title="Cài đặt" variant="default" />
+        <AppHeader title="Cài đặt" variant="default" />
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
@@ -82,7 +85,9 @@ export default function SettingsScreen() {
 
             {settingsItems.map((item, index) => (
               <View key={item.id}>
-                <Pressable className="flex-row items-center gap-3 rounded-2xl px-3 py-3 active:bg-sky-500/10 dark:active:bg-sky-400/15">
+                <Pressable
+                  onPress={() => 'path' in item && router.push(item.path as any)}
+                  className="flex-row items-center gap-3 rounded-2xl px-3 py-3 active:bg-sky-500/10 dark:active:bg-sky-400/15">
                   <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-500/12 dark:bg-sky-400/18">
                     <Ionicons
                       name={item.icon}
