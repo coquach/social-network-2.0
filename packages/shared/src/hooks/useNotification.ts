@@ -30,9 +30,9 @@ import { queryKeys } from './query-keys';
 /**
  * Get notifications list with infinite scroll
  */
-export const useNotifications = (params?: QueryParams) => {
+export const useNotifications = (params?: QueryParams & { type?: string; isRead?: boolean }) => {
   return useInfiniteQuery<CursorPageResponse<NotificationDTO>>({
-    queryKey: queryKeys.notifications.list(),
+    queryKey: [...queryKeys.notifications.list(), params],
     queryFn: async ({ pageParam }) => {
       return notificationService.getNotifications({
         ...params,
@@ -74,6 +74,22 @@ export const useNotificationPreferences = () => {
 };
 
 // ==================== Mutation Hooks ====================
+
+/**
+ * Update notification preferences
+ */
+export const useUpdateNotificationPreferences = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<any, Error, any>({
+    mutationFn: async (data) => {
+      return notificationService.updatePreferences(data);
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData([...queryKeys.notifications.all, 'preferences'], data);
+    },
+  });
+};
 
 /**
  * Mark a notification as read

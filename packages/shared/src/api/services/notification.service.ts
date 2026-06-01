@@ -16,7 +16,8 @@ export const notificationService = {
   async getNotifications(params?: {
     cursor?: string;
     limit?: number;
-    status?: 'read' | 'unread';
+    isRead?: boolean;
+    type?: string;
   }): Promise<CursorPageResponse<NotificationDTO>> {
     return getApiClient().getCursorPage('/notifications', { params });
   },

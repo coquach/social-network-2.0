@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useClerk } from '@clerk/expo';
+import { useRouter } from 'expo-router';
 import { Switch } from 'heroui-native/switch';
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -39,6 +40,13 @@ export default function SettingsScreen() {
   } = useProfileLogout(() => signOut());
 
   const isDarkTheme = resolvedTheme === 'dark';
+  const router = useRouter();
+
+  const handleItemPress = (id: string) => {
+    if (id === 'notifications') {
+      router.push('/(stack)/notification-settings');
+    }
+  };
 
   return (
     <>
@@ -82,7 +90,10 @@ export default function SettingsScreen() {
 
             {settingsItems.map((item, index) => (
               <View key={item.id}>
-                <Pressable className="flex-row items-center gap-3 rounded-2xl px-3 py-3 active:bg-sky-500/10 dark:active:bg-sky-400/15">
+                <Pressable
+                  className="flex-row items-center gap-3 rounded-2xl px-3 py-3 active:bg-sky-500/10 dark:active:bg-sky-400/15"
+                  onPress={() => handleItemPress(item.id)}
+                >
                   <View className="h-9 w-9 items-center justify-center rounded-xl bg-sky-500/12 dark:bg-sky-400/18">
                     <Ionicons
                       name={item.icon}
