@@ -106,9 +106,30 @@ export default function OtherUserProfileScreen() {
 
           {/* Privacy Enforcement: Hide bio if locked */}
           {!isLocked && (
-            <Text className="mt-1 text-[14px] leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
-              {bioText}
-            </Text>
+            <>
+              <Text className="mt-1 text-[14px] leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
+                {bioText}
+              </Text>
+              
+              <View className="mt-4 flex-row items-center gap-6">
+                <View className="flex-row items-center gap-1.5">
+                  <Text className="text-[15px] font-bold text-app-fg dark:text-app-fg-dark">
+                    {user?.postCount ?? 0}
+                  </Text>
+                  <Text className="text-[15px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                    bài viết
+                  </Text>
+                </View>
+                <View className="flex-row items-center gap-1.5">
+                  <Text className="text-[15px] font-bold text-app-fg dark:text-app-fg-dark">
+                    {user?.friendCount ?? 0}
+                  </Text>
+                  <Text className="text-[15px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                    bạn bè
+                  </Text>
+                </View>
+              </View>
+            </>
           )}
 
           {/* Render Action Buttons Component */}

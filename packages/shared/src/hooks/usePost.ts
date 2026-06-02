@@ -211,6 +211,7 @@ export const useCreatePost = () => {
       invalidateQueries(queryClient, [
         [...queryKeys.feed.all] as unknown[],
         [...queryKeys.posts.lists()] as unknown[],
+        [...queryKeys.user.detail(newPost.userId)] as unknown[],
       ]);
     },
   });
@@ -399,6 +400,7 @@ export const useDeletePost = () => {
       invalidateQueries(queryClient, [
         [...queryKeys.feed.all] as unknown[],
         [...queryKeys.posts.lists()] as unknown[],
+        [...queryKeys.user.current()] as unknown[],
       ]);
     },
     onError: (_error, postId, context) => {

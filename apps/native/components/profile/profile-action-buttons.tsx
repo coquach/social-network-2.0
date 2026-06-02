@@ -7,10 +7,13 @@ import {
   useSendFriendRequest, 
   useRemoveFriend,
   useAcceptFriendRequest,
+  useRejectFriendRequest,
   RelationStatus,
   MessagePrivacy,
   type UserProfile
 } from '@repo/shared';
+import { AppToast } from '~/components/ui/app-toast';
+
 
 interface ProfileActionButtonsProps {
   user: UserProfile;
@@ -18,11 +21,27 @@ interface ProfileActionButtonsProps {
 
 export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
   const router = useRouter();
-  const { showToast } = useToast();
+  const { toast } = useToast();
+  
+  const showToast = React.useCallback(
+    (title: string, message: string, variant: 'success' | 'error') => {
+      toast.show({
+        duration: 2200,
+        component: (toastProps) => (
+          <AppToast
+            toast={{ title, message, variant }}
+            toastProps={toastProps}
+          />
+        ),
+      });
+    },
+    [toast],
+  );
   
   const sendFriendRequest = useSendFriendRequest();
   const removeFriend = useRemoveFriend();
   const acceptFriendRequest = useAcceptFriendRequest();
+  const rejectFriendRequest = useRejectFriendRequest();
 
   const relationStatus = user.relation?.status || RelationStatus.NONE;
   const privacySettings = user.privacySettings || { messagePrivacy: MessagePrivacy.EVERYONE };
@@ -50,6 +69,24 @@ export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
     }
   };
 
+  const handleAcceptFriend = async () => {
+    try {
+      await acceptFriendRequest.mutateAsync(user.id);
+      showToast('Thành công', 'Đã chấp nhận kết bạn', 'success');
+    } catch (e) {
+      showToast('Lỗi', 'Không thể chấp nhận kết bạn', 'error');
+    }
+  };
+
+  const handleRejectFriend = async () => {
+    try {
+      await rejectFriendRequest.mutateAsync(user.id);
+      showToast('Thành công', 'Đã từ chối kết bạn', 'success');
+    } catch (e) {
+      showToast('Lỗi', 'Không thể từ chối kết bạn', 'error');
+    }
+  };
+
   // Determine if messaging is allowed
   const canMessage = 
     privacySettings.messagePrivacy === MessagePrivacy.EVERYONE || 
@@ -71,7 +108,7 @@ export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
         </Pressable>
       )}
 
-      {relationStatus === RelationStatus.PENDING && (
+      {(relationStatus === RelationStatus.PENDING || relationStatus === 'REQUESTED_OUT') && (
         <Pressable
           onPress={handleRemoveFriend}
           disabled={removeFriend.isPending}
@@ -82,6 +119,29 @@ export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
             Huỷ lời mời
           </Text>
         </Pressable>
+      )}
+
+      {relationStatus === 'REQUESTED_IN' && (
+        <>
+          <Pressable
+            onPress={handleAcceptFriend}
+            disabled={acceptFriendRequest.isPending}
+            className="h-11 flex-1 flex-row items-center justify-center gap-1 rounded-xl bg-app-primary active:opacity-85 dark:bg-app-primary-dark"
+          >
+            <Text className="text-[15px] font-semibold text-white">
+              Chấp nhận
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={handleRejectFriend}
+            disabled={rejectFriendRequest.isPending}
+            className="h-11 flex-1 flex-row items-center justify-center gap-1 rounded-xl bg-rose-500 active:opacity-85"
+          >
+            <Text className="text-[15px] font-semibold text-white">
+              Từ chối
+            </Text>
+          </Pressable>
+        </>
       )}
 
       {relationStatus === RelationStatus.FRIEND && (

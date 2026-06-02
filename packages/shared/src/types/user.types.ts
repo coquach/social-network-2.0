@@ -47,6 +47,8 @@ export interface UserDTO {
   school?: string;
   interests?: string[];
   createdAt: Date;
+  postCount: number;
+  friendCount: number;
   relation?: {
     status: string;
   };
@@ -67,8 +69,6 @@ export interface UserSnapshotDTO {
  * User profile data
  */
 export interface UserProfile extends UserDTO {
-  friendCount?: number;
-  postCount?: number;
   followerCount?: number;
   followingCount?: number;
 }
