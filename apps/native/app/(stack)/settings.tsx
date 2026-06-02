@@ -13,16 +13,18 @@ import { AppCard } from '~/components/ui/app-card';
 import { AppHeader } from '~/components/ui/app-header';
 import { useAppTheme } from '~/providers/theme-provider';
 
+
 const settingsItems = [
   { id: 'account', label: 'Account center', icon: 'person-circle-outline' },
-  { id: 'privacy', label: 'Privacy', icon: 'lock-closed-outline' },
+  { id: 'privacy', label: 'Privacy', icon: 'lock-closed-outline', path: '/privacy' },
   { id: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
   { id: 'language', label: 'Language', icon: 'language-outline' },
-  { id: 'support', label: 'Help and support', icon: 'help-circle-outline' },
+  { id: 'support', label: 'Help and support', icon: 'help-circle-outline', path: '/support' },
 ] as const;
 
 export default function SettingsScreen() {
   const { signOut } = useClerk();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { resolvedTheme, setThemePreference } = useAppTheme();
 
@@ -40,7 +42,7 @@ export default function SettingsScreen() {
   } = useProfileLogout(() => signOut());
 
   const isDarkTheme = resolvedTheme === 'dark';
-  const router = useRouter();
+
 
   const handleItemPress = (id: string) => {
     if (id === 'notifications') {
@@ -53,7 +55,7 @@ export default function SettingsScreen() {
   return (
     <>
       <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-        <AppHeader title="Cài đặt" variant="default" />
+        <AppHeader title="Cài đặt" variant="default" />
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
