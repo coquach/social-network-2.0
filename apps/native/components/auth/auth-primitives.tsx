@@ -17,9 +17,13 @@ type AuthFieldProps = {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   secureTextEntry?: boolean;
   error?: string;
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
+  onSubmitEditing?: () => void;
+  blurOnSubmit?: boolean;
+  autoFocus?: boolean;
 };
 
-export function AuthField({
+export const AuthField = React.forwardRef<any, AuthFieldProps>(({
   label,
   value,
   onChangeText,
@@ -28,7 +32,11 @@ export function AuthField({
   autoCapitalize = 'none',
   secureTextEntry = false,
   error,
-}: AuthFieldProps) {
+  returnKeyType,
+  onSubmitEditing,
+  blurOnSubmit,
+  autoFocus,
+}, ref) => {
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
   const isPasswordField = secureTextEntry;
   const isInvalid = Boolean(error);
@@ -42,6 +50,7 @@ export function AuthField({
       </Label>
       <View className="relative">
         <Input
+          ref={ref}
           variant="secondary"
           className={cn('min-h-14 rounded-2xl px-4 py-3.5 text-base', isPasswordField && 'pr-14')}
           value={value}
@@ -50,6 +59,10 @@ export function AuthField({
           keyboardType={keyboardType}
           onChangeText={onChangeText}
           secureTextEntry={isPasswordField && !isPasswordVisible}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          blurOnSubmit={blurOnSubmit}
+          autoFocus={autoFocus}
         />
         {isPasswordField ? (
           <Pressable
@@ -71,7 +84,7 @@ export function AuthField({
       </FieldError>
     </TextField>
   );
-}
+});
 
 type AuthErrorTextProps = {
   message?: string | null;

@@ -1,6 +1,6 @@
 import { BottomSheet } from "heroui-native/bottom-sheet";
 import React from "react";
-import { View } from "react-native";
+import { View, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { cn } from "~/lib/cn";
@@ -48,7 +48,12 @@ export function AppBottomSheet({
   return (
     <BottomSheet
       isOpen={visible}
-      onOpenChange={(nextOpen) => !nextOpen && onClose()}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          Keyboard.dismiss();
+          onClose();
+        }
+      }}
     >
       <BottomSheet.Portal>
         <BottomSheet.Overlay

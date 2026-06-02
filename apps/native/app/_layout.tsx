@@ -24,6 +24,7 @@ import { NotificationProvider } from '~/providers/notification-provider';
 import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
 import { ModalProvider } from '~/components/providers/modal-provider';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
 import { CallProvider } from '~/providers/call-provider';
 import { CallRealtimeProvider } from '~/providers/call-realtime-provider';
@@ -94,20 +95,22 @@ export default function RootLayout() {
                         <CallRealtimeProvider>
                           <NativePresenceProvider>
                             <AppThemeProvider>
-                              <BottomSheetModalProvider>
-                                <Stack screenOptions={{ headerShown: false }}>
-                                  <Stack.Screen name="index" />
-                                  <Stack.Screen name="(onboarding)" />
-                                  <Stack.Screen name="(auth)" />
-                                  <Stack.Screen name="(main)" />
-                                  <Stack.Screen name="chat" />
-                                  <Stack.Screen name="(stack)" />
-                                </Stack>
-                                <ModalProvider />
-                                <AssistantOverlay />
-                                <CallManager />
-                                <CallMiniOverlay />
-                              </BottomSheetModalProvider>
+                              <KeyboardProvider>
+                                <BottomSheetModalProvider>
+                                  <Stack screenOptions={{ headerShown: false }}>
+                                    <Stack.Screen name="index" />
+                                    <Stack.Screen name="(onboarding)" />
+                                    <Stack.Screen name="(auth)" />
+                                    <Stack.Screen name="(main)" />
+                                    <Stack.Screen name="chat" />
+                                    <Stack.Screen name="(stack)" />
+                                  </Stack>
+                                  <ModalProvider />
+                                  <AssistantOverlay />
+                                  <CallManager />
+                                  <CallMiniOverlay />
+                                </BottomSheetModalProvider>
+                              </KeyboardProvider>
                             </AppThemeProvider>
                           </NativePresenceProvider>
                         </CallRealtimeProvider>

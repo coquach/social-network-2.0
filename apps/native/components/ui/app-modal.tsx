@@ -1,6 +1,6 @@
 import { Dialog } from 'heroui-native/dialog';
 import React from 'react';
-import { View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, View } from 'react-native';
 import { cn } from '~/lib/cn';
 
 type AppModalVariant = 'default' | 'warning' | 'danger' | 'success';
@@ -67,45 +67,56 @@ export function AppModal({
   const styles = modalVariantStyles[variant];
 
   return (
-    <Dialog isOpen={visible} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+    <Dialog isOpen={visible} onOpenChange={(nextOpen) => {
+      if (!nextOpen) {
+        Keyboard.dismiss();
+        onClose();
+      }
+    }}>
       <Dialog.Portal>
         <Dialog.Overlay
           className="bg-slate-950/40"
           isCloseOnPress={dismissible}
         />
-        <Dialog.Content
-          className={cn(
-            'self-center w-full max-w-md rounded-[28px] border p-5',
-            styles.content,
-            contentClassName,
-          )}
-          isSwipeable={false}
+        <KeyboardAvoidingView 
+          behavior="padding" 
+          style={{ flex: 1, justifyContent: 'center' }} 
+          pointerEvents="box-none"
         >
-          {title ? (
-            <Dialog.Title
-              className={cn(
-                'text-2xl font-extrabold tracking-tight text-center',
-                styles.title,
-                titleClassName,
-              )}
-            >
-              {title}
-            </Dialog.Title>
-          ) : null}
-          {description ? (
-            <Dialog.Description
-              className={cn(
-                'mt-2 text-sm leading-6',
-                styles.description,
-                descriptionClassName,
-              )}
-            >
-              {description}
-            </Dialog.Description>
-          ) : null}
-          {children ? <View className="mt-5">{children}</View> : null}
-          {footer ? <View className={cn('mt-5 gap-3', footerClassName)}>{footer}</View> : null}
-        </Dialog.Content>
+          <Dialog.Content
+            className={cn(
+              'self-center w-full max-w-md rounded-[28px] border p-5',
+              styles.content,
+              contentClassName,
+            )}
+            isSwipeable={false}
+          >
+            {title ? (
+              <Dialog.Title
+                className={cn(
+                  'text-2xl font-extrabold tracking-tight text-center',
+                  styles.title,
+                  titleClassName,
+                )}
+              >
+                {title}
+              </Dialog.Title>
+            ) : null}
+            {description ? (
+              <Dialog.Description
+                className={cn(
+                  'mt-2 text-sm leading-6',
+                  styles.description,
+                  descriptionClassName,
+                )}
+              >
+                {description}
+              </Dialog.Description>
+            ) : null}
+            {children ? <View className="mt-5">{children}</View> : null}
+            {footer ? <View className={cn('mt-5 gap-3', footerClassName)}>{footer}</View> : null}
+          </Dialog.Content>
+        </KeyboardAvoidingView>
       </Dialog.Portal>
     </Dialog>
   );

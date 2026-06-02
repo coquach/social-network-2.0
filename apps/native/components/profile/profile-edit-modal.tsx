@@ -1,6 +1,6 @@
-﻿import { Button } from 'heroui-native/button';
+import { Button } from 'heroui-native/button';
 import React from 'react';
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import type { NativeUploadFileDescriptor } from '@repo/shared';
 
@@ -45,6 +45,9 @@ export function ProfileEditModal({
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [isAvatarSheetOpen, setIsAvatarSheetOpen] = React.useState(false);
   const [isCoverSheetOpen, setIsCoverSheetOpen] = React.useState(false);
+
+  const lastNameRef = React.useRef<TextInput>(null);
+  const bioRef = React.useRef<TextInput>(null);
 
   const avatarPicker = useSingleImageSourcePicker({
     permissionAlert: {
@@ -156,8 +159,12 @@ export function ProfileEditModal({
         </View>
       }
     >
-      <View className="gap-4">
-        <View className="items-center">
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="gap-4">
+          <View className="items-center">
           <Text className="mb-2 text-xs font-semibold uppercase tracking-wider text-app-muted-fg dark:text-app-muted-fg-dark">
             Ảnh đại diện
           </Text>
@@ -249,6 +256,9 @@ export function ProfileEditModal({
             placeholder="Nhập tên"
             autoCapitalize="words"
             className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+            returnKeyType="next"
+            onSubmitEditing={() => lastNameRef.current?.focus()}
+            blurOnSubmit={false}
           />
         </View>
 
@@ -257,11 +267,15 @@ export function ProfileEditModal({
             Họ
           </Text>
           <TextInput
+            ref={lastNameRef}
             value={lastName}
             onChangeText={setLastName}
             placeholder="Nhập họ"
             autoCapitalize="words"
             className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+            returnKeyType="next"
+            onSubmitEditing={() => bioRef.current?.focus()}
+            blurOnSubmit={false}
           />
         </View>
 
@@ -270,6 +284,7 @@ export function ProfileEditModal({
             Tiểu sử
           </Text>
           <TextInput
+            ref={bioRef}
             value={bio}
             onChangeText={setBio}
             placeholder="Giới thiệu ngắn về bạn"
@@ -278,6 +293,8 @@ export function ProfileEditModal({
             textAlignVertical="top"
             maxLength={240}
             className="min-h-24 rounded-xl border border-app-border bg-app-surface px-3 py-2 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+            returnKeyType="done"
+            onSubmitEditing={handleSave}
           />
           <Text className="mt-1 text-right text-xs text-app-muted-fg dark:text-app-muted-fg-dark">
             {bio.trim().length}/240
@@ -287,7 +304,8 @@ export function ProfileEditModal({
         {errorMessage ? (
           <Text className="text-sm text-red-500">{errorMessage}</Text>
         ) : null}
-      </View>
+        </View>
+      </ScrollView>
     </AppModal>
   );
 }

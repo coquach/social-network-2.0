@@ -4,10 +4,10 @@ import {
   Keyboard,
   Pressable,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { BottomSheet } from 'heroui-native/bottom-sheet';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useToast } from 'heroui-native/toast';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateReport, useReportModalStore } from '@repo/shared';
@@ -22,7 +22,7 @@ export function CreateReportModal() {
   const insets = useSafeAreaInsets();
   const { isOpen, targetId, targetType, close } = useReportModalStore();
 
-  const inputRef = React.useRef<TextInput | null>(null);
+  const inputRef = React.useRef<any>(null);
 
   const [reason, setReason] = React.useState('');
 
@@ -157,7 +157,7 @@ export function CreateReportModal() {
                 Mô tả vấn đề bạn gặp phải
               </Text>
 
-              <TextInput
+              <BottomSheetTextInput
                 ref={inputRef}
                 value={reason}
                 onChangeText={setReason}
@@ -169,6 +169,8 @@ export function CreateReportModal() {
                 maxLength={MAX_REASON}
                 textAlignVertical="top"
                 className="min-h-30 rounded-2xl border border-app-border bg-app-surface-elevated px-4 py-3 text-base text-app-fg dark:border-app-border-dark dark:bg-app-surface-elevated-dark dark:text-app-fg-dark"
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
               />
 
               {/* counter */}

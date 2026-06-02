@@ -1,25 +1,27 @@
-﻿import { AntDesign } from "@expo/vector-icons";
-import { useAuth } from "@clerk/expo";
-import { useAssistantChatSession } from "@repo/shared";
-import { Button } from "heroui-native/button";
-import React from "react";
-import { Platform, Text, TextInput, View } from "react-native";
+import { useAuth } from '@clerk/expo';
+import { AntDesign } from '@expo/vector-icons';
+import { useAssistantChatSession } from '@repo/shared';
+import { Button } from 'heroui-native/button';
+import React from 'react';
+import { Text, TextInput, View } from 'react-native';
 
 import {
   AssistantMessageList,
   type AssistantMessageItem,
-} from "~/components/chatbot/assistant-message-list";
-import { AppModal } from "~/components/ui/app-modal";
-import { KeyboardAwareContainer } from "~/components/ui/keyboard-aware-container";
+} from '~/components/chatbot/assistant-message-list';
+import { AppModal } from '~/components/ui/app-modal';
 
 type AssistantChatModalProps = {
   visible: boolean;
   onClose: () => void;
 };
 
-export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps) {
+export function AssistantChatModal({
+  visible,
+  onClose,
+}: AssistantChatModalProps) {
   const { userId } = useAuth();
-  const [input, setInput] = React.useState("");
+  const [input, setInput] = React.useState('');
   const fallbackTimestampBaseRef = React.useRef(Date.now());
   const {
     messages: historyMessages,
@@ -38,7 +40,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
     isRefreshingHistory,
     isSyncingHistory,
     resetError,
-  } = useAssistantChatSession(userId ?? "", { limit: 20, enabled: visible });
+  } = useAssistantChatSession(userId ?? '', { limit: 20, enabled: visible });
 
   const messages = React.useMemo(() => {
     const fallbackBase = fallbackTimestampBaseRef.current;
@@ -51,7 +53,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
         return value.getTime();
       }
 
-      if (typeof value === "number") {
+      if (typeof value === 'number') {
         return Number.isFinite(value) ? value : Number.NaN;
       }
 
@@ -76,7 +78,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
 
       return {
         id: `server:${message.id}`,
-        role: message.role === "assistant" ? "assistant" : "user",
+        role: message.role === 'assistant' ? 'assistant' : 'user',
         content: message.content,
         createdAt,
         isPending: message.metadata?.isPending === true,
@@ -95,13 +97,11 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
       return;
     }
 
-    
-
     try {
       await sendMessage(message);
       setInput('');
     } catch (sendError) {
-      console.error("[assistant] send failed:", sendError);
+      console.error('[assistant] send failed:', sendError);
     }
   }, [input, isChatBusy, sendMessage, userId]);
 
@@ -113,7 +113,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
     try {
       await clearHistory();
     } catch (clearError) {
-      console.error("[assistant] clear history failed:", clearError);
+      console.error('[assistant] clear history failed:', clearError);
     }
   }, [clearHistory, isChatBusy, isClearing, userId]);
 
@@ -125,16 +125,12 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
       titleClassName="text-center text-app-fg dark:text-app-fg-dark"
       contentClassName="self-center w-[92%] max-w-[92%] rounded-[28px] border border-app-border bg-app-surface px-4 py-4 dark:border-app-border-dark dark:bg-app-surface-dark"
     >
-      <KeyboardAwareContainer
-        enabled={visible}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="w-full"
-      >
+      <View className="w-full">
         <View style={{ height: 440 }}>
           {error ? (
             <View className="mb-3 rounded-[16px] border border-rose-200 bg-rose-50 px-3 py-2 dark:border-rose-500/30 dark:bg-rose-500/10">
               <Text className="text-xs text-rose-700 dark:text-rose-200">
-                {error.message || "Không thể tải hội thoại với trợ lý."}
+                {error.message || 'Không thể tải hội thoại với trợ lý.'}
               </Text>
               {isHistoryError ? (
                 <Button
@@ -164,7 +160,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
             >
               <AntDesign name="reload" size={14} color="#0ea5e9" />
               <Text className="ml-2 text-sm font-semibold text-app-fg dark:text-app-fg-dark">
-                {isRefreshingHistory ? "Đang làm mới..." : "Làm mới"}
+                {isRefreshingHistory ? 'Đang làm mới...' : 'Làm mới'}
               </Text>
             </Button>
             <Button
@@ -207,7 +203,6 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
                 style={{ minHeight: 34, maxHeight: 100 }}
                 editable={!isChatBusy}
                 returnKeyType="send"
-    
                 onSubmitEditing={() => {
                   void handleSend();
                 }}
@@ -225,7 +220,7 @@ export function AssistantChatModal({ visible, onClose }: AssistantChatModalProps
             </Button>
           </View>
         </View>
-      </KeyboardAwareContainer>
+      </View>
     </AppModal>
   );
 }

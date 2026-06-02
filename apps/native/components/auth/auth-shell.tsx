@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
+import { AppKeyboardScrollView } from '~/components/ui/app-keyboard-scroll-view';
 
 type AuthShellProps = {
   children: React.ReactNode;
@@ -7,11 +8,12 @@ type AuthShellProps = {
 
 export function AuthShell({ children }: AuthShellProps) {
   return (
-    <ScrollView
+    <AppKeyboardScrollView
       className="flex-1 bg-app-bg dark:bg-app-bg-dark"
       contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 28 }}
       keyboardShouldPersistTaps="handled"
       contentInsetAdjustmentBehavior="automatic"
+      bottomOffset={20}
     >
       <View
         pointerEvents="none"
@@ -26,6 +28,6 @@ export function AuthShell({ children }: AuthShellProps) {
         className="absolute -bottom-16 -left-20 h-72 w-72 rounded-full bg-app-primary/10 dark:bg-app-primary-dark/10"
       />
       <View className="w-full max-w-md self-center gap-5">{children}</View>
-    </ScrollView>
+    </AppKeyboardScrollView>
   );
 }
