@@ -45,6 +45,8 @@ export default function SettingsScreen() {
   const handleItemPress = (id: string) => {
     if (id === 'notifications') {
       router.push('/(stack)/notification-settings');
+    } else if (id === 'privacy') {
+      router.push('/(stack)/privacy-settings');
     }
   };
 

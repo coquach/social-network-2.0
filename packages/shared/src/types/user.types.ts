@@ -3,6 +3,28 @@
  * Platform-agnostic user-related type definitions
  */
 
+export enum PrivacyLevel {
+  PUBLIC = 'PUBLIC',
+  FRIENDS = 'FRIENDS',
+  PRIVATE = 'PRIVATE',
+}
+
+export enum MessagePrivacy {
+  EVERYONE = 'EVERYONE',
+  FRIENDS = 'FRIENDS',
+}
+
+export interface UserPrivacySettings {
+  profileVisibility: PrivacyLevel;
+  messagePrivacy: MessagePrivacy;
+  friendListVisibility: PrivacyLevel;
+}
+
+/**
+ * User Types
+ * Platform-agnostic user-related type definitions
+ */
+
 /**
  * Core user data transfer object
  */
@@ -28,6 +50,7 @@ export interface UserDTO {
   relation?: {
     status: string;
   };
+  privacySettings?: UserPrivacySettings;
 }
 
 /**
@@ -97,6 +120,7 @@ export interface UpdateUserInput {
   avatarUrl?: string;
   coverImageUrl?: string;
   isActive?: boolean;
+  privacySettings?: UserPrivacySettings;
 }
 
 export interface UpdateProfileInput extends UpdateUserInput {

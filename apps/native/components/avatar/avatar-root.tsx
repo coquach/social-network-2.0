@@ -2,6 +2,7 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@clerk/expo';
 import { cn } from '~/lib/cn';
 import { AvatarImage } from './avatar-image';
 import { AvatarName } from './avatar-name';
@@ -53,10 +54,16 @@ const AvatarRootComponent = ({
   const router = useRouter();
   const queryClient = getSharedQueryClient();
 
+  const { userId: currentUserId } = useAuth();
+  
   const handlePress = useCallback(() => {
     onBeforeNavigate?.();
-    router.push(`/profile/${userId}` as never);
-  }, [router, userId, onBeforeNavigate]);
+    if (userId === currentUserId) {
+      router.push(`/(main)/profile` as never);
+    } else {
+      router.push(`/(stack)/user/${userId}` as never);
+    }
+  }, [router, userId, currentUserId, onBeforeNavigate]);
 
   const contextValue = useMemo<AvatarContextValue>(
     () => ({
