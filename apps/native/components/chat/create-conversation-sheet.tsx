@@ -99,10 +99,12 @@ export function CreateConversationSheet({
   const deferredDirectQuery = React.useDeferredValue(directQuery.trim());
   const deferredGroupQuery = React.useDeferredValue(groupQuery.trim());
 
-  const directSearch = useSearchUsers(deferredDirectQuery, {
+  const directSearch = useSearchUsers({
+    query: deferredDirectQuery,
     limit: SEARCH_LIMIT,
   });
-  const groupSearch = useSearchUsers(deferredGroupQuery, {
+  const groupSearch = useSearchUsers({
+    query: deferredGroupQuery,
     limit: SEARCH_LIMIT,
   });
 

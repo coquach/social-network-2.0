@@ -314,6 +314,7 @@ export const useRemoveFriend = () => {
     onSuccess: (_, userId) => {
       // Invalidate friends lists
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.all });
 
       // Invalidate user detail to update relationship status
       queryClient.invalidateQueries({
@@ -358,6 +359,10 @@ export const useUnblockUser = () => {
       // Invalidate user detail
       queryClient.invalidateQueries({
         queryKey: queryKeys.user.detail(userId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.friends.blocked(),
       });
     },
   });

@@ -75,8 +75,10 @@ export const getNotificationRoute = (
   if (platform === 'native') {
     switch (type) {
       case 'friendship_request':
+        return '/(stack)/friends?tab=requests';
       case 'friendship_accept':
       case 'friend':
+        return '/(stack)/friends';
       case 'follow':
         return '/profile';
       case 'comment':

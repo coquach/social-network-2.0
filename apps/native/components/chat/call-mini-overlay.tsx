@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Pressable, PanResponder, Animated, Dimensions } from 'react-native';
+import { View, Pressable, PanResponder, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   CallingState,
@@ -16,7 +16,6 @@ import { AppEyebrow } from '../ui/app-text';
 
 const OVERLAY_WIDTH = 160;
 const OVERLAY_HEIGHT = 100;
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 /**
  * Floating mini call overlay shown when user minimizes the call.

@@ -321,14 +321,24 @@ export default function ProfileScreen() {
           <View className="mt-5">
             <AppCard className="gap-3 rounded-3xl p-4">
               <View className="flex-row items-center justify-between">
-                <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
-                  Bạn bè
-                </Text>
-                <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
-                  {currentUser?.friendCount
-                    ? `${currentUser.friendCount}`
-                    : 'Xem tất cả'}
-                </Text>
+                <View>
+                  <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
+                    Bạn bè
+                  </Text>
+                  {typeof currentUser?.friendCount === 'number' ? (
+                    <Text className="mt-0.5 text-[12px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                      {currentUser.friendCount} người bạn
+                    </Text>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={() => router.push('/(stack)/friends')}
+                  className="rounded-full px-2 py-1 active:opacity-70"
+                >
+                  <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
+                    Xem tất cả
+                  </Text>
+                </Pressable>
               </View>
 
               {isFriendsLoading ? (
