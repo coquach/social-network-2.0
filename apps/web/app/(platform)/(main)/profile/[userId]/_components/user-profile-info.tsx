@@ -1,5 +1,12 @@
 'use client';
-
+import { MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ErrorFallback } from '@/components/error-fallback';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,11 +42,12 @@ import {
 } from 'lucide-react';
 import { CldImage } from 'next-cloudinary';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 export const UserProfileInfo = () => {
   const { userId } = useParams<{ userId: string }>();
+  const router = useRouter();
   const {
     data: fetchedUser,
     isLoading,
@@ -171,13 +179,39 @@ export const UserProfileInfo = () => {
 
             <div className="flex flex-wrap items-center gap-2">
               {isSelf ? (
-                <Button
-                  size="sm"
-                  onClick={() => profileModal.onOpen(userId as string)}
-                >
-                  <PenBox className="mr-2 h-4 w-4" />
-                  Chỉnh sửa
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => profileModal.onOpen(userId as string)}
+                  >
+                    <PenBox className="mr-2 h-4 w-4" />
+                    Chỉnh sửa
+                  </Button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="outline" className="h-9 w-9">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem
+                        onClick={() => router.push('/settings/activity')}
+                      >
+                        Nhật ký hoạt động
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push('/settings/moderation-history')
+                        }
+                      >
+                        Lịch sử kiểm duyệt
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ) : (
                 <>
                   {!isBlocked && (

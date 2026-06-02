@@ -36,6 +36,12 @@ export * from './useMessage';
 // Emotion hooks
 export * from './useEmotion';
 
+// User activity hooks
+export * from './useUserActivity';
+
+// Moderation hooks
+export * from './useModeration';
+
 // Conversation hooks
 export * from './useConversation';
 
@@ -54,17 +60,15 @@ export * from './useSearch';
 // Report hooks
 export * from './useReport';
 
-
 // Chatbot hooks
 export * from './useChatbot';
 export * from './useMusic';
 
 // Group permission hooks
-export * from './use-group-permissions'
+export * from './use-group-permissions';
 
 // Call hooks
 export * from './useCall';
-
 
 // UI utility hooks (web-only, requires DOM)
 // Note: Import these directly from './useUI' in web apps only

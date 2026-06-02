@@ -3,8 +3,6 @@
  * Thông tin cơ bản về app
  */
 
-import { count } from "console";
-
 export const appConfig = {
   name: 'Sentimeta',
   description: 'A social network powered by emotion analysis',
@@ -23,9 +21,8 @@ export const appConfig = {
         alt: 'Sentimeta - A social network powered by emotion analysis',
       },
     ],
-    
   },
-  lcoale:"vi-VN",
+  lcoale: 'vi-VN',
   phoneNumber: '+84 123 456 789',
   email: '',
   type: 'website',
