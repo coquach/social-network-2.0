@@ -20,6 +20,7 @@ export function ShareListModal() {
   const { isOpen, closeModal, postId } = useShareListModal();
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const hasOpenedRef = useRef(false);
 
   const snapPoints = useMemo(() => ['60%'], []);
 
@@ -39,8 +40,22 @@ export function ShareListModal() {
 
   // open / close
   useEffect(() => {
-    if (isOpen) bottomSheetRef.current?.present();
-    else bottomSheetRef.current?.dismiss();
+    if (isOpen) {
+      hasOpenedRef.current = true;
+      const frame = requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
+
+      return () => {
+        cancelAnimationFrame(frame);
+      };
+    }
+
+    if (!hasOpenedRef.current) {
+      return;
+    }
+
+    bottomSheetRef.current?.dismiss();
   }, [isOpen]);
 
   // ─────────────────────────────────────────
@@ -99,7 +114,10 @@ export function ShareListModal() {
     <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
-      onDismiss={closeModal}
+      onDismiss={() => {
+        hasOpenedRef.current = false;
+        closeModal();
+      }}
       enablePanDownToClose
       enableDynamicSizing={false}
       backdropComponent={renderBackdrop}

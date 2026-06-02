@@ -33,6 +33,8 @@ export function ShareBottomSheet() {
   const sharePostMutation = useSharePost();
   const inputRef = React.useRef<any>(null);
   const bottomSheetRef = React.useRef<BottomSheetModal>(null);
+  const hasOpenedRef = React.useRef(false);
+  const shouldFocusInputRef = React.useRef(false);
   const snapPoints = React.useMemo(() => ['35%'], []);
   const { resolvedTheme } = useAppTheme();
   const colors = appThemeColors[resolvedTheme];
@@ -47,8 +49,9 @@ export function ShareBottomSheet() {
       setAudienceMenuOpen(false);
       Keyboard.dismiss();
       inputRef.current?.blur();
+      shouldFocusInputRef.current = false;
     } else {
-      setTimeout(() => inputRef.current?.focus(), 200);
+      shouldFocusInputRef.current = true;
     }
   }, [isOpen]);
 
@@ -77,12 +80,18 @@ export function ShareBottomSheet() {
 
   React.useEffect(() => {
     if (isOpen) {
-      bottomSheetRef.current?.present();
-      const timer = setTimeout(() => inputRef.current?.focus(), 200);
+      hasOpenedRef.current = true;
+      const frame = requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
 
       return () => {
-        clearTimeout(timer);
+        cancelAnimationFrame(frame);
       };
+    }
+
+    if (!hasOpenedRef.current) {
+      return;
     }
 
     bottomSheetRef.current?.dismiss();
@@ -168,7 +177,24 @@ export function ShareBottomSheet() {
       ref={bottomSheetRef}
       index={0}
       snapPoints={snapPoints}
+      onChange={(index) => {
+        if (index < 0) {
+          shouldFocusInputRef.current = false;
+          Keyboard.dismiss();
+          inputRef.current?.blur();
+          return;
+        }
+
+        if (index === 0 && shouldFocusInputRef.current) {
+          shouldFocusInputRef.current = false;
+          requestAnimationFrame(() => {
+            inputRef.current?.focus();
+          });
+        }
+      }}
       onDismiss={() => {
+        hasOpenedRef.current = false;
+        shouldFocusInputRef.current = false;
         Keyboard.dismiss();
         inputRef.current?.blur();
         setAudienceMenuOpen(false);
@@ -293,7 +319,7 @@ export function ShareBottomSheet() {
             label={isSubmitting ? 'Đang chia sẻ...' : 'Chia sẻ ngay'}
             onPress={() => {
               handleSubmit().catch((error: unknown) => {
-                console.log('Chia sẻ thất bại:', error);
+                console.warn('Chia sẻ thất bại:', error);
               });
             }}
             loading={isSubmitting}
