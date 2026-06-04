@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Avatar } from '~/components/avatar';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@clerk/expo';
 
 import type { UserDTO } from '@repo/shared';
 
@@ -12,11 +13,16 @@ type Props = {
 
 function SearchUserItemComponent({ user, onPress }: Props) {
   const router = useRouter();
+  const { userId: currentUserId } = useAuth();
 
   const handlePress = React.useCallback(() => {
     onPress?.(user);
-    router.push(`/profile/${user.id}` as never);
-  }, [onPress, router, user]);
+    if (user.id === currentUserId) {
+      router.push(`/(main)/profile` as never);
+    } else {
+      router.push(`/(stack)/user/${user.id}` as never);
+    }
+  }, [onPress, router, user, currentUserId]);
 
   const displayName = useMemo(() => {
     const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();

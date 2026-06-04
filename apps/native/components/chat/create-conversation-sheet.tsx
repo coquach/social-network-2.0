@@ -1,43 +1,43 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from '@expo/vector-icons';
 import {
   type UserDTO,
   useCreateConversation,
   useCurrentUser,
-  useSearchUsers,
-} from "@repo/shared";
-import { router } from "expo-router";
-import { Button } from "heroui-native/button";
-import { Tabs } from "heroui-native/tabs";
-import { useToast } from "heroui-native/toast";
-import React from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { View } from "react-native";
+  useFriendUsers,
+} from '@repo/shared';
+import { router } from 'expo-router';
+import { Button } from 'heroui-native/button';
+import { Tabs } from 'heroui-native/tabs';
+import { useToast } from 'heroui-native/toast';
+import React from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { View } from 'react-native';
 
-import { AppBottomSheet } from "~/components/ui/app-bottom-sheet";
-import { AppToast, type AppToastData } from "~/components/ui/app-toast";
-import { useSingleImageSourcePicker } from "~/lib/use-single-image-source-picker";
+import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
+import { AppToast, type AppToastData } from '~/components/ui/app-toast';
+import { useSingleImageSourcePicker } from '~/lib/use-single-image-source-picker';
 
-import { CreateDirectConversationTab } from "./create-conversation-sheet/direct-tab";
+import { CreateDirectConversationTab } from './create-conversation-sheet/direct-tab';
 import {
   createSchemaResolver,
   directConversationFormSchema,
   groupConversationFormSchema,
   type DirectConversationFormValues,
   type GroupConversationFormValues,
-} from "./create-conversation-sheet/form";
-import { CreateGroupConversationTab } from "./create-conversation-sheet/group-tab";
+} from './create-conversation-sheet/form';
+import { CreateGroupConversationTab } from './create-conversation-sheet/group-tab';
 import {
   getFieldErrorMessage,
   getUserName,
   SEARCH_LIMIT,
-} from "./create-conversation-sheet/shared";
+} from './create-conversation-sheet/shared';
 
 type CreateConversationSheetProps = {
   visible: boolean;
   onClose: () => void;
 };
 
-type ConversationTab = "direct" | "group";
+type ConversationTab = 'direct' | 'group';
 
 export function CreateConversationSheet({
   visible,
@@ -47,7 +47,7 @@ export function CreateConversationSheet({
   const { data: currentUser } = useCurrentUser();
   const { mutateAsync: createConversation, isPending } =
     useCreateConversation();
-  const [activeTab, setActiveTab] = React.useState<ConversationTab>("direct");
+  const [activeTab, setActiveTab] = React.useState<ConversationTab>('direct');
   const [selectedDirectUser, setSelectedDirectUser] =
     React.useState<UserDTO | null>(null);
   const [selectedGroupUsers, setSelectedGroupUsers] = React.useState<UserDTO[]>(
@@ -58,11 +58,11 @@ export function CreateConversationSheet({
     pickImage: pickAvatar,
     clearImage: clearAvatar,
   } = useSingleImageSourcePicker({
-    fileNamePrefix: "conversation-avatar",
+    fileNamePrefix: 'conversation-avatar',
     permissionAlert: {
-      title: "Cần quyền truy cập",
-      cameraMessage: "Hãy cho phép camera để chụp ảnh.",
-      libraryMessage: "Hãy cho phép thư viện ảnh để chọn ảnh.",
+      title: 'Cần quyền truy cập',
+      cameraMessage: 'Hãy cho phép camera để chụp ảnh.',
+      libraryMessage: 'Hãy cho phép thư viện ảnh để chọn ảnh.',
     },
   });
 
@@ -70,39 +70,41 @@ export function CreateConversationSheet({
     defaultValues: {
       isGroup: false,
       participants: [],
-      directQuery: "",
+      directQuery: '',
     },
     resolver: createSchemaResolver(directConversationFormSchema),
-    reValidateMode: "onChange",
+    reValidateMode: 'onChange',
   });
 
   const groupForm = useForm<GroupConversationFormValues>({
     defaultValues: {
       isGroup: true,
       participants: [],
-      groupName: "",
-      groupQuery: "",
+      groupName: '',
+      groupQuery: '',
     },
     resolver: createSchemaResolver(groupConversationFormSchema),
-    reValidateMode: "onChange",
+    reValidateMode: 'onChange',
   });
 
   const directQuery = useWatch({
     control: directForm.control,
-    name: "directQuery",
+    name: 'directQuery',
   });
   const groupQuery = useWatch({
     control: groupForm.control,
-    name: "groupQuery",
+    name: 'groupQuery',
   });
 
   const deferredDirectQuery = React.useDeferredValue(directQuery.trim());
   const deferredGroupQuery = React.useDeferredValue(groupQuery.trim());
 
-  const directSearch = useSearchUsers(deferredDirectQuery, {
+  const directSearch = useFriendUsers(currentUser?.id ?? '', {
+    search: deferredDirectQuery,
     limit: SEARCH_LIMIT,
   });
-  const groupSearch = useSearchUsers(deferredGroupQuery, {
+  const groupSearch = useFriendUsers(currentUser?.id ?? '', {
+    search: deferredGroupQuery,
     limit: SEARCH_LIMIT,
   });
 
@@ -134,7 +136,7 @@ export function CreateConversationSheet({
   const resetState = React.useCallback(() => {
     directForm.reset();
     groupForm.reset();
-    setActiveTab("direct");
+    setActiveTab('direct');
     setSelectedDirectUser(null);
     setSelectedGroupUsers([]);
     clearAvatar();
@@ -148,11 +150,11 @@ export function CreateConversationSheet({
   const handleSelectDirectUser = React.useCallback(
     (user: UserDTO) => {
       setSelectedDirectUser(user);
-      directForm.setValue("participants", [user.id], {
+      directForm.setValue('participants', [user.id], {
         shouldDirty: true,
         shouldValidate: true,
       });
-      directForm.setValue("directQuery", "", {
+      directForm.setValue('directQuery', '', {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -162,7 +164,7 @@ export function CreateConversationSheet({
 
   const handleRemoveDirectUser = React.useCallback(() => {
     setSelectedDirectUser(null);
-    directForm.setValue("participants", [], {
+    directForm.setValue('participants', [], {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -174,14 +176,14 @@ export function CreateConversationSheet({
 
       setSelectedGroupUsers(nextUsers);
       groupForm.setValue(
-        "participants",
+        'participants',
         nextUsers.map((item) => item.id),
         {
           shouldDirty: true,
           shouldValidate: true,
         },
       );
-      groupForm.setValue("groupQuery", "", {
+      groupForm.setValue('groupQuery', '', {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -195,7 +197,7 @@ export function CreateConversationSheet({
 
       setSelectedGroupUsers(nextUsers);
       groupForm.setValue(
-        "participants",
+        'participants',
         nextUsers.map((item) => item.id),
         {
           shouldDirty: true,
@@ -214,17 +216,17 @@ export function CreateConversationSheet({
       });
 
       showToast({
-        title: "Đã tạo cuộc trò chuyện",
-        message: `Đang mở chat với ${selectedDirectUser ? getUserName(selectedDirectUser) : "người dùng đã chọn"}.`,
-        variant: "success",
+        title: 'Đã tạo cuộc trò chuyện',
+        message: `Đang mở chat với ${selectedDirectUser ? getUserName(selectedDirectUser) : 'người dùng đã chọn'}.`,
+        variant: 'success',
       });
       handleDismiss();
       router.push(`/chat/${conversation._id}`);
     } catch (error) {
       showToast({
-        title: "Không thể tạo cuộc trò chuyện",
-        message: error instanceof Error ? error.message : "Đã xảy ra lỗi.",
-        variant: "error",
+        title: 'Không thể tạo cuộc trò chuyện',
+        message: error instanceof Error ? error.message : 'Đã xảy ra lỗi.',
+        variant: 'error',
       });
     }
   });
@@ -239,17 +241,17 @@ export function CreateConversationSheet({
       });
 
       showToast({
-        title: "Đã tạo nhóm chat",
+        title: 'Đã tạo nhóm chat',
         message: `Nhóm ${values.groupName} đã được tạo thành công.`,
-        variant: "success",
+        variant: 'success',
       });
       handleDismiss();
       router.push(`/chat/${conversation._id}`);
     } catch (error) {
       showToast({
-        title: "Không thể tạo nhóm chat",
-        message: error instanceof Error ? error.message : "Đã xảy ra lỗi.",
-        variant: "error",
+        title: 'Không thể tạo nhóm chat',
+        message: error instanceof Error ? error.message : 'Đã xảy ra lỗi.',
+        variant: 'error',
       });
     }
   });
@@ -263,6 +265,7 @@ export function CreateConversationSheet({
       titleClassName="text-center"
       descriptionClassName="text-center"
       bodyClassName="mt-4"
+      androidKeyboardInputMode="adjustResize"
       footer={
         <View className="flex-row gap-3">
           <Button
@@ -270,7 +273,7 @@ export function CreateConversationSheet({
             className="min-h-12 flex-1 rounded-[22px]"
             isDisabled={isPending}
             onPress={() => {
-              if (activeTab === "direct") {
+              if (activeTab === 'direct') {
                 void submitDirectConversation();
                 return;
               }
@@ -279,10 +282,10 @@ export function CreateConversationSheet({
             }}
           >
             {isPending
-              ? "Đang xử lý..."
-              : activeTab === "direct"
-                ? "Bắt đầu chat"
-                : "Tạo nhóm chat"}
+              ? 'Đang xử lý...'
+              : activeTab === 'direct'
+                ? 'Bắt đầu chat'
+                : 'Tạo nhóm chat'}
           </Button>
           <Button
             variant="secondary"

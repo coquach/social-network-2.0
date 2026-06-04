@@ -131,7 +131,7 @@ export const chatbotService = {
     }
 
     const response = await getApiClient().get<ChatbotHistoryPageRaw>(
-      `/assistant/chat-history/${encodeURIComponent(userId)}`,
+      `/assistant/chat-history/me`,
       { params },
     );
 
@@ -143,7 +143,7 @@ export const chatbotService = {
    */
   async clearHistory(userId: string): Promise<ChatbotClearHistoryResultDTO> {
     const response = await getApiClient().delete<ChatbotClearHistoryResultRaw>(
-      `/assistant/chat-history/${encodeURIComponent(userId)}`,
+      `/assistant/chat-history/me`,
     );
 
     return normalizeClearHistory(response);

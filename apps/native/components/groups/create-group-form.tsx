@@ -1,9 +1,10 @@
-﻿import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AppKeyboardScrollView } from '~/components/ui/app-keyboard-scroll-view';
 
 import { useCreateGroup } from '@repo/shared/hooks';
 import { CreateGroupInput, GroupPrivacy } from '@repo/shared/types';
@@ -24,6 +25,9 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+
+  const descriptionRef = React.useRef<TextInput>(null);
+  const rulesRef = React.useRef<TextInput>(null);
 
   const { control, handleSubmit, setValue } = useForm<CreateGroupInput>({
     defaultValues: {
@@ -106,7 +110,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <AppKeyboardScrollView>
         <View className="gap-6 p-5">
           {formAlert ? (
             <AppAlert
@@ -168,6 +172,9 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
                   className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                   value={value}
                   onChangeText={onChange}
+                  returnKeyType="next"
+                  onSubmitEditing={() => descriptionRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
               )}
             />
@@ -180,6 +187,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
               name="description"
               render={({ field: { onChange, value } }) => (
                 <TextInput
+                  ref={descriptionRef}
                   placeholder="Giới thiệu ngắn gọn về mục đích của nhóm..."
                   placeholderTextColor="#94a3b8"
                   multiline
@@ -188,6 +196,9 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
                   className="h-28 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                   value={value}
                   onChangeText={onChange}
+                  returnKeyType="next"
+                  onSubmitEditing={() => rulesRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
               )}
             />
@@ -235,12 +246,15 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
               name="rules"
               render={({ field: { onChange, value } }) => (
                 <TextInput
+                  ref={rulesRef}
                   placeholder="Ví dụ: Không spam, tôn trọng các thành viên..."
                   placeholderTextColor="#94a3b8"
                   multiline
                   className="h-24 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                   value={value}
                   onChangeText={onChange}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmit(onSubmit)}
                 />
               )}
             />
@@ -265,7 +279,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+      </AppKeyboardScrollView>
     </View>
   );
 };

@@ -1,7 +1,5 @@
-import { FlashList } from '@shopify/flash-list';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@clerk/expo';
+import { Ionicons } from '@expo/vector-icons';
 import {
   type ConversationDTO,
   useConversations,
@@ -10,7 +8,8 @@ import {
   useLeaveConversation,
   useUnhideConversation,
 } from '@repo/shared';
-import { router } from 'expo-router';
+import { FlashList } from '@shopify/flash-list';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Button } from 'heroui-native/button';
 import { SearchField } from 'heroui-native/search-field';
 import { useToast } from 'heroui-native/toast';
@@ -18,20 +17,21 @@ import React from 'react';
 import { Alert, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CreateConversationSheet } from '~/components/chat/create-conversation-sheet';
-import {
-  ChatConversationRow,
-  ChatConversationRowSkeleton,
-} from '~/components/chat/chat-conversation-row';
 import {
   DirectChatAvatar,
   GroupChatAvatar,
 } from '~/components/chat/chat-avatar';
 import {
+  ChatConversationRow,
+  ChatConversationRowSkeleton,
+} from '~/components/chat/chat-conversation-row';
+import {
   getConversationLastActivity,
   getConversationName,
   getMessagePreview,
 } from '~/components/chat/chat-helpers';
+import { CreateConversationSheet } from '~/components/chat/create-conversation-sheet';
+import { ChatSettingsSheet } from '~/components/chat/chat-settings-sheet';
 import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
 import {
   AppBackButton,
@@ -97,6 +97,7 @@ function ConversationSheetAction({
 }
 
 export default function ChatInboxScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { toast } = useToast();
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -106,6 +107,7 @@ export default function ChatInboxScreen() {
   const [actionOpen, setActionOpen] = React.useState(false);
   const [createConversationOpen, setCreateConversationOpen] =
     React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
 
   const {
     data,
@@ -138,13 +140,8 @@ export default function ChatInboxScreen() {
   );
 
   const handleSettingsPress = React.useCallback(() => {
-    showActionToast({
-      title: 'Tính năng đang phát triển',
-      message:
-        'Chức năng này sẽ sớm được ra mắt trong các bản cập nhật tiếp theo.',
-      variant: 'info',
-    });
-  }, [showActionToast]);
+    setSettingsOpen(true);
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -564,6 +561,11 @@ export default function ChatInboxScreen() {
         onClose={() => {
           setCreateConversationOpen(false);
         }}
+      />
+
+      <ChatSettingsSheet
+        visible={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </AppScreen>
   );

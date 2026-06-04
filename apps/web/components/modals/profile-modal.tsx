@@ -35,17 +35,16 @@ import { useProfileModal } from '@/store/use-profile-modal';
 import { useUser } from '@clerk/nextjs';
 import { useForm } from '@tanstack/react-form';
 import Image from 'next/image';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Plus } from 'lucide-react';
 
 const isFile = (value: unknown): value is File => value instanceof File;
 
 const normalizePresetInterests = (
   interests?: string[],
 ): ProfileUpdateForm['interests'] =>
-  interests?.filter((interest): interest is (typeof INTEREST_OPTIONS)[number] =>
-    INTEREST_OPTIONS.includes(interest as (typeof INTEREST_OPTIONS)[number]),
-  ) ?? [];
+  interests?.filter((interest): interest is string => !!interest) ?? [];
 
 export const ProfileModal = () => {
   const profileModal = useProfileModal();
@@ -59,6 +58,7 @@ export const ProfileModal = () => {
     profileModal.id as string,
   );
   const { user } = useUser();
+  const [customInterest, setCustomInterest] = useState('');
 
   const form = useForm({
     defaultValues: {
@@ -195,7 +195,8 @@ export const ProfileModal = () => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             field.handleChange(
-                              (file ?? undefined) as ProfileUpdateForm['avatarUrl'],
+                              (file ??
+                                undefined) as ProfileUpdateForm['avatarUrl'],
                             );
                           }}
                         />
@@ -266,7 +267,9 @@ export const ProfileModal = () => {
 
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor="lastName">Họ và tên đệm</FieldLabel>
+                        <FieldLabel htmlFor="lastName">
+                          Họ và tên đệm
+                        </FieldLabel>
                         <InputGroup className="rounded-xl">
                           <InputGroupInput
                             id="lastName"
@@ -433,6 +436,18 @@ export const ProfileModal = () => {
                   {(field) => {
                     const interests = field.state.value ?? [];
 
+                    const handleAddCustomInterest = () => {
+                      const trimmed = customInterest.trim();
+                      if (!trimmed) return;
+                      if (interests.includes(trimmed)) {
+                        setCustomInterest('');
+                        return;
+                      }
+                      if (interests.length >= 10) return;
+                      field.handleChange([...interests, trimmed]);
+                      setCustomInterest('');
+                    };
+
                     return (
                       <Field>
                         <div className="mb-2 flex items-center justify-between gap-3">
@@ -445,37 +460,98 @@ export const ProfileModal = () => {
                         </div>
                         <div
                           id="interests"
-                          className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3"
+                          className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
                         >
-                          {INTEREST_OPTIONS.map((option) => {
-                            const selected = interests.includes(option);
-                            const reachedLimit =
-                              !selected && interests.length >= 10;
+                          <div className="flex flex-wrap gap-2">
+                            {INTEREST_OPTIONS.map((option) => {
+                              const selected = interests.includes(option);
+                              const reachedLimit =
+                                !selected && interests.length >= 10;
 
-                            return (
-                              <Button
-                                key={option}
-                                type="button"
-                                size="sm"
-                                variant={selected ? 'default' : 'outline'}
-                                className={
-                                  selected
-                                    ? 'rounded-full bg-sky-500 text-white hover:bg-sky-600'
-                                    : 'rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
-                                }
-                                disabled={isPending || reachedLimit}
-                                onClick={() => {
-                                  field.handleChange(
+                              return (
+                                <Button
+                                  key={option}
+                                  type="button"
+                                  size="sm"
+                                  variant={selected ? 'default' : 'outline'}
+                                  className={
                                     selected
-                                      ? interests.filter((item) => item !== option)
-                                      : [...interests, option],
-                                  );
+                                      ? 'rounded-full bg-sky-500 text-white hover:bg-sky-600'
+                                      : 'rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                                  }
+                                  disabled={isPending || reachedLimit}
+                                  onClick={() => {
+                                    field.handleChange(
+                                      selected
+                                        ? interests.filter(
+                                            (item) => item !== option,
+                                          )
+                                        : [...interests, option],
+                                    );
+                                  }}
+                                >
+                                  {option}
+                                </Button>
+                              );
+                            })}
+
+                            {/* Custom interests */}
+                            {interests
+                              .filter(
+                                (i) => !INTEREST_OPTIONS.includes(i as any),
+                              )
+                              .map((option) => (
+                                <Button
+                                  key={`custom-${option}`}
+                                  type="button"
+                                  size="sm"
+                                  variant="default"
+                                  className="rounded-full bg-sky-500 text-white hover:bg-sky-600"
+                                  disabled={isPending}
+                                  onClick={() => {
+                                    field.handleChange(
+                                      interests.filter(
+                                        (item) => item !== option,
+                                      ),
+                                    );
+                                  }}
+                                >
+                                  {option} ✕
+                                </Button>
+                              ))}
+                          </div>
+
+                          <div className="flex gap-2">
+                            <InputGroup className="rounded-full bg-white flex-1">
+                              <InputGroupInput
+                                value={customInterest}
+                                onChange={(e) =>
+                                  setCustomInterest(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddCustomInterest();
+                                  }
                                 }}
-                              >
-                                {option}
-                              </Button>
-                            );
-                          })}
+                                placeholder="Thêm sở thích khác..."
+                                disabled={isPending || interests.length >= 10}
+                              />
+                            </InputGroup>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="rounded-full px-3"
+                              onClick={handleAddCustomInterest}
+                              disabled={
+                                isPending ||
+                                !customInterest.trim() ||
+                                interests.length >= 10
+                              }
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-xs text-slate-500">
                           Chọn tối đa 10 mục để hệ thống đề xuất bạn bè sát hơn.

@@ -1,4 +1,11 @@
 import { z } from 'zod';
+import { PrivacyLevel, MessagePrivacy } from '../types/user.types';
+
+export const UserPrivacySettingsSchema = z.object({
+  profileVisibility: z.nativeEnum(PrivacyLevel),
+  messagePrivacy: z.nativeEnum(MessagePrivacy),
+  friendListVisibility: z.nativeEnum(PrivacyLevel),
+});
 
 export const INTEREST_OPTIONS = [
   'Công nghệ',
@@ -23,7 +30,7 @@ export const INTEREST_OPTIONS = [
   'Ngoại ngữ',
 ] as const;
 
-export const InterestSchema = z.enum(INTEREST_OPTIONS);
+export const InterestSchema = z.string().trim().min(1).max(50);
 
 export const UserSchema = z.object({
   id: z.string().optional(),
@@ -44,6 +51,7 @@ export const UserSchema = z.object({
   company: z.string().optional(),
   school: z.string().optional(),
   interests: z.array(InterestSchema).optional(),
+  privacySettings: UserPrivacySettingsSchema.optional(),
 });
 
 export const UpdateUserInputSchema = z.object({
@@ -63,4 +71,5 @@ export const UpdateUserInputSchema = z.object({
   avatarUrl: z.url().optional(),
   coverImageUrl: z.url().optional(),
   isActive: z.boolean().optional(),
+  privacySettings: UserPrivacySettingsSchema.optional(),
 });

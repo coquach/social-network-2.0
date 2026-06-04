@@ -17,6 +17,7 @@ export function CreatePostSheet() {
   const close = useCreatePostModal((state) => state.close);
   const insets = useSafeAreaInsets();
   const createPostRef = React.useRef<BottomSheetModal>(null);
+  const hasOpenedRef = React.useRef(false);
   const snapPoints = React.useMemo(() => ['100%'], []);
   const animationConfigs = useBottomSheetTimingConfigs({
     duration: 320,
@@ -25,7 +26,17 @@ export function CreatePostSheet() {
 
   React.useEffect(() => {
     if (isOpen) {
-      createPostRef.current?.present();
+      hasOpenedRef.current = true;
+      const frame = requestAnimationFrame(() => {
+        createPostRef.current?.present();
+      });
+
+      return () => {
+        cancelAnimationFrame(frame);
+      };
+    }
+
+    if (!hasOpenedRef.current) {
       return;
     }
 
@@ -58,12 +69,10 @@ export function CreatePostSheet() {
       ref={createPostRef}
       index={0}
       snapPoints={snapPoints}
-      onChange={(index) => {
-        if (index < 0) {
-          close();
-        }
+      onDismiss={() => {
+        hasOpenedRef.current = false;
+        close();
       }}
-      onDismiss={close}
       topInset={insets.top}
       keyboardBehavior="interactive"
       android_keyboardInputMode="adjustPan"
@@ -73,6 +82,11 @@ export function CreatePostSheet() {
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={{ backgroundColor: '#94a3b8' }}
       backgroundStyle={{ borderRadius: 0 }}
+      onChange={(index) => {
+        if (index < 0) {
+          close();
+        }
+      }}
     >
       {content}
     </BottomSheetModal>

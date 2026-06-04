@@ -1,4 +1,4 @@
-﻿import {
+import {
   MediaType,
   useFriendUsers,
   useCurrentUser,
@@ -159,6 +159,11 @@ export default function ProfileScreen() {
         firstName: values.firstName,
         lastName: values.lastName,
         bio: values.bio,
+        location: values.location,
+        jobTitle: values.jobTitle,
+        company: values.company,
+        school: values.school,
+        interests: values.interests,
         uploadAvatar: toUploadableImage(values.avatarFile),
         uploadCover: toUploadableImage(values.coverFile),
       });
@@ -280,6 +285,25 @@ export default function ProfileScreen() {
             {bioText}
           </Text>
 
+          <View className="mt-4 flex-row items-center gap-6">
+            <View className="flex-row items-center gap-1.5">
+              <Text className="text-[15px] font-bold text-app-fg dark:text-app-fg-dark">
+                {currentUser?.postCount ?? 0}
+              </Text>
+              <Text className="text-[15px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                bài viết
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1.5">
+              <Text className="text-[15px] font-bold text-app-fg dark:text-app-fg-dark">
+                {currentUser?.friendCount ?? 0}
+              </Text>
+              <Text className="text-[15px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                bạn bè
+              </Text>
+            </View>
+          </View>
+
           <View className="mt-4 flex-row gap-2">
             <Pressable
               onPress={() => setIsEditModalOpen(true)}
@@ -302,14 +326,24 @@ export default function ProfileScreen() {
           <View className="mt-5">
             <AppCard className="gap-3 rounded-3xl p-4">
               <View className="flex-row items-center justify-between">
-                <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
-                  Bạn bè
-                </Text>
-                <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
-                  {currentUser?.friendCount
-                    ? `${currentUser.friendCount}`
-                    : 'Xem tất cả'}
-                </Text>
+                <View>
+                  <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
+                    Bạn bè
+                  </Text>
+                  {typeof currentUser?.friendCount === 'number' ? (
+                    <Text className="mt-0.5 text-[12px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                      {currentUser.friendCount} người bạn
+                    </Text>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={() => router.push('/(stack)/friends')}
+                  className="rounded-full px-2 py-1 active:opacity-70"
+                >
+                  <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
+                    Xem tất cả
+                  </Text>
+                </Pressable>
               </View>
 
               {isFriendsLoading ? (
@@ -462,6 +496,11 @@ export default function ProfileScreen() {
         defaultFirstName={currentUser?.firstName ?? ''}
         defaultLastName={currentUser?.lastName ?? ''}
         defaultBio={currentUser?.bio ?? ''}
+        defaultLocation={currentUser?.location ?? ''}
+        defaultJobTitle={currentUser?.jobTitle ?? ''}
+        defaultCompany={currentUser?.company ?? ''}
+        defaultSchool={currentUser?.school ?? ''}
+        defaultInterests={currentUser?.interests ?? []}
         defaultAvatarUrl={profileAvatar}
         defaultCoverUrl={coverImage}
         isSaving={updateProfile.isPending}

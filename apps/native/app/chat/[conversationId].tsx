@@ -1,8 +1,9 @@
 import { useAuth } from "@clerk/expo";
 import {
+  CallType,
+  type ConversationWithParticipantsDTO,
   MediaType,
   type MessageDTO,
-  type ConversationWithParticipantsDTO,
   useChatStore,
   useConversation,
   useCurrentUser,
@@ -13,10 +14,7 @@ import {
   useSendMessage,
   useUploadOptional,
   useUser,
-  CallType,
 } from "@repo/shared";
-import * as Clipboard from "expo-clipboard";
-import * as DocumentPicker from "expo-document-picker";
 import {
   AudioModule,
   RecordingPresets,
@@ -24,11 +22,13 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
+import * as Clipboard from "expo-clipboard";
+import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
 import React from "react";
-import { Platform, View } from "react-native";
+import { View, Platform } from "react-native";
 
 import {
   type ChatComposerAttachment,
@@ -37,25 +37,27 @@ import {
 import { ChatComposer } from "~/components/chat/chat-composer";
 import {
   compareMessagesAscending,
+  getConversationLastSeenMap,
   getConversationName,
   getConversationOtherParticipant,
   getConversationOtherUserId,
-  getConversationLastSeenMap,
 } from "~/components/chat/chat-helpers";
 import { ConversationHeader } from "~/components/chat/conversation-screen/conversation-header";
-import { MessageActionSheet } from "~/components/chat/conversation-screen/message-action-sheet";
 import { ConversationInfoSheet } from "~/components/chat/conversation-screen/conversation-info-sheet";
 import { ConversationMessageList } from "~/components/chat/conversation-screen/conversation-message-list";
+import { MessageActionSheet } from "~/components/chat/conversation-screen/message-action-sheet";
 import { PrimaryButton, SecondaryButton } from "~/components/ui/app-button";
 import { AppAlert, type AppAlertVariant } from "~/components/ui/app-alert";
 import { AppModal } from "~/components/ui/app-modal";
 import { AppScreen } from "~/components/ui/app-screen";
 import { AppToast, type AppToastData } from "~/components/ui/app-toast";
-import { KeyboardAwareContainer } from "~/components/ui/keyboard-aware-container";
+
+import { AppKeyboardAvoidingView } from "~/components/ui/app-keyboard-avoiding-view";
+import { useCallActions } from "~/hooks/use-call-actions";
+
 import { pickLibraryMediaAssets, pickSingleImage } from "~/lib/media-picker";
 import { useNativeConversationRealtime } from "~/providers/chat-realtime-provider";
 import { usePresenceChannel } from "~/providers/presence-provider";
-import { useCallActions } from "~/hooks/use-call-actions";
 
 const MAX_ATTACHMENTS = 6;
 
@@ -617,8 +619,10 @@ export default function ChatConversationScreen() {
 
   return (
     <AppScreen className="px-0 py-0">
-      
-      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
+      <AppKeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 bg-app-bg dark:bg-app-bg-dark"
+      >
           <ConversationHeader
             conversation={conversation}
             conversationName={conversationName}
@@ -744,8 +748,7 @@ export default function ChatConversationScreen() {
               </>
             }
           />
-        </View>
-  
+        </AppKeyboardAvoidingView>
     </AppScreen>
   );
 }

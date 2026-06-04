@@ -1,4 +1,4 @@
-﻿import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AppKeyboardAvoidingView } from '~/components/ui/app-keyboard-avoiding-view';
 
 import { RootType, TargetType, toPostSnapshot, usePost } from '@repo/shared';
 
@@ -25,27 +26,7 @@ import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
 import { MediaCarousel } from '~/components/posts/media-carousel';
 
-/** ================= KEYBOARD HANDLER ================= */
-function useKeyboardHeight() {
-  const [height, setHeight] = React.useState(0);
 
-  React.useEffect(() => {
-    const show = Keyboard.addListener('keyboardDidShow', (e) => {
-      setHeight(e.endCoordinates.height);
-    });
-
-    const hide = Keyboard.addListener('keyboardDidHide', () => {
-      setHeight(0);
-    });
-
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
-
-  return height;
-}
 
 /** ================= MAIN ================= */
 function PostDetailScreenContent() {
@@ -76,7 +57,6 @@ function PostDetailScreenContent() {
   const hasMedia = (post?.media?.length ?? 0) > 0;
 
   /** ================= KEYBOARD ================= */
-  const keyboardHeight = useKeyboardHeight();
 
   const closeKeyboardThen = React.useCallback((next: () => void) => {
     Keyboard.dismiss();
@@ -179,7 +159,7 @@ function PostDetailScreenContent() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={{ flex: 1 }}>
+      <AppKeyboardAvoidingView style={{ flex: 1 }}>
         {/* HEADER NAV */}
         <View
           style={{ paddingTop: insets.top + 10 }}
@@ -214,27 +194,20 @@ function PostDetailScreenContent() {
           rootType={RootType.POST}
           listHeaderComponent={header}
           contentContainerStyle={{
-            paddingBottom: keyboardHeight + 80,
+            paddingBottom: 20,
           }}
           style={{ flex: 1 }}
         />
 
         {/* INPUT (FIX CHUáº¨N) */}
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: keyboardHeight === 0 ? 0 : keyboardHeight + 20,
-          }}
-        >
+        <View className="pb-4 pt-1 bg-app-bg dark:bg-app-bg-dark">
           <CommentInput
             ref={inputRef}
             rootId={post.id}
             rootType={RootType.POST}
           />
         </View>
-      </View>
+      </AppKeyboardAvoidingView>
     </>
   );
 }

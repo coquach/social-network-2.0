@@ -72,6 +72,7 @@ export function ReactionModal() {
   const [selectedTab, setSelectedTab] = useState<'ALL' | ReactionType>('ALL');
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const hasOpenedRef = useRef(false);
   const listFadeAnim = useRef(new Animated.Value(1)).current;
 
   const snapPoints = useMemo(() => ['60%'], []);
@@ -92,11 +93,26 @@ export function ReactionModal() {
 
   // open / close
   useEffect(() => {
-    if (isOpen) bottomSheetRef.current?.present();
-    else bottomSheetRef.current?.dismiss();
+    if (isOpen) {
+      hasOpenedRef.current = true;
+      const frame = requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
+
+      return () => {
+        cancelAnimationFrame(frame);
+      };
+    }
+
+    if (!hasOpenedRef.current) {
+      return;
+    }
+
+    bottomSheetRef.current?.dismiss();
   }, [isOpen]);
 
   const handleClose = useCallback(() => {
+    hasOpenedRef.current = false;
     closeModal();
   }, [closeModal]);
 

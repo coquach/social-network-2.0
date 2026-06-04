@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import {
   type ConversationDTO,
   type ConversationWithParticipantsDTO,
@@ -15,23 +16,22 @@ import { Button } from 'heroui-native/button';
 import { Input } from 'heroui-native/input';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
 
-import {
-  ConversationHero,
-  ActionRow,
-  HeroMetric,
-  InfoRow,
-  MemberListRow,
-  SheetSection,
-} from '~/components/chat/conversation-screen/conversation-info-sheet-sections';
 import {
   getConversationPresenceSubtitle,
   getGroupConversationSubtitle,
   getParticipantDisplayName,
 } from '~/components/chat/chat-helpers';
-import { PrimaryButton, SecondaryButton } from '~/components/ui/app-button';
+import {
+  ActionRow,
+  ConversationHero,
+  InfoRow,
+  MemberListRow,
+  SheetSection
+} from '~/components/chat/conversation-screen/conversation-info-sheet-sections';
 import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
+import { PrimaryButton, SecondaryButton } from '~/components/ui/app-button';
 import { AppModal } from '~/components/ui/app-modal';
 import { AppToast, type AppToastData } from '~/components/ui/app-toast';
 import { ImageSourceActions } from '~/components/ui/image-source-actions';
@@ -108,18 +108,6 @@ export function ConversationInfoSheet({
     currentUserId && conversation?.hiddenFor?.includes(currentUserId),
   );
 
-  const members = React.useMemo<ParticipantInfo[]>(() => {
-    if (!hasParticipantDetails(conversation)) {
-      return [];
-    }
-
-    return conversation.participantDetails.map((member) => ({
-      id: member.id,
-      name: getParticipantDisplayName(member),
-      avatarUrl: member.avatarUrl,
-    }));
-  }, [conversation]);
-
   const { selectedImage, pickImage, clearImage, setSelectedImage } =
     useSingleImageSourcePicker({
       permissionAlert: {
@@ -131,6 +119,26 @@ export function ConversationInfoSheet({
       aspect: [1, 1],
       fileNamePrefix: 'group-avatar',
     });
+
+  const isDirty = React.useMemo(() => {
+    const originalName = conversation?.groupName?.trim() || '';
+    const currentName = draftGroupName.trim();
+    const hasNameChanged = currentName !== originalName && currentName.length > 0;
+    const hasImageChanged = selectedImage !== null;
+    return hasNameChanged || hasImageChanged;
+  }, [conversation?.groupName, draftGroupName, selectedImage]);
+
+  const members = React.useMemo<ParticipantInfo[]>(() => {
+    if (!hasParticipantDetails(conversation)) {
+      return [];
+    }
+
+    return conversation.participantDetails.map((member) => ({
+      id: member.id,
+      name: getParticipantDisplayName(member),
+      avatarUrl: member.avatarUrl,
+    }));
+  }, [conversation]);
 
   const { mutateAsync: updateConversation, isPending: isUpdating } =
     useUpdateConversation(conversation?._id ?? '');
@@ -339,17 +347,71 @@ export function ConversationInfoSheet({
             tertiaryText={!isGroup ? directUser?.email : undefined}
           />
 
-          <View className="flex-row gap-3">
-            <HeroMetric
-              icon={isGroup ? 'people-outline' : 'time-outline'}
-              value={metaPrimaryValue}
-              label={isGroup ? 'Thành viên' : 'Trạng thái'}
-            />
-            <HeroMetric
-              icon={isGroup ? 'shield-checkmark-outline' : 'calendar-outline'}
-              value={metaSecondaryValue}
-              label={isGroup ? 'Quản trị' : 'Tham gia'}
-            />
+          {/* Quick Actions (Messenger Style) */}
+          <View className="flex-row justify-center gap-6 mt-1">
+            {!isGroup ? (
+              <>
+                <View className="items-center gap-1.5">
+                  <Button
+                    variant="secondary"
+                    className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
+                    onPress={() => {
+                      onClose();
+                      const targetId = directUser?.id || conversation?.participants.find(id => id !== currentUserId);
+                      if (targetId) {
+                        router.push(`/(stack)/${targetId}`);
+                      }
+                    }}
+                  >
+                    <Ionicons name="person" size={20} className="text-app-fg dark:text-app-fg-dark" />
+                  </Button>
+                  <Text className="text-[11px] font-semibold text-app-fg dark:text-app-fg-dark">Trang cá nhân</Text>
+                </View>
+                <View className="items-center gap-1.5">
+                  <Button
+                    variant="secondary"
+                    className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
+                  >
+                    <Ionicons name="search" size={20} className="text-app-fg dark:text-app-fg-dark" />
+                  </Button>
+                  <Text className="text-[11px] font-semibold text-app-fg dark:text-app-fg-dark">Tìm kiếm</Text>
+                </View>
+                <View className="items-center gap-1.5">
+                  <Button
+                    variant="secondary"
+                    className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
+                    isDisabled={actionPending}
+                    onPress={() => void handleToggleHide()}
+                  >
+                    <Ionicons name={isHidden ? 'eye' : 'eye-off'} size={20} className="text-app-fg dark:text-app-fg-dark" />
+                  </Button>
+                  <Text className="text-[11px] font-semibold text-app-fg dark:text-app-fg-dark">{isHidden ? 'Hiện chat' : 'Ẩn chat'}</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View className="items-center gap-1.5">
+                  <Button
+                    variant="secondary"
+                    className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
+                  >
+                    <Ionicons name="search" size={20} className="text-app-fg dark:text-app-fg-dark" />
+                  </Button>
+                  <Text className="text-[11px] font-semibold text-app-fg dark:text-app-fg-dark">Tìm kiếm</Text>
+                </View>
+                <View className="items-center gap-1.5">
+                  <Button
+                    variant="secondary"
+                    className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
+                    isDisabled={actionPending}
+                    onPress={() => setPendingAction('leave')}
+                  >
+                    <Ionicons name="exit" size={20} color="#e11d48" />
+                  </Button>
+                  <Text className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">Rời nhóm</Text>
+                </View>
+              </>
+            )}
           </View>
 
           {isGroup && isAdmin ? (
@@ -380,36 +442,39 @@ export function ConversationInfoSheet({
                   {selectedImage ? (
                     <Button
                       variant="ghost"
-                      className="rounded-full shadow-none"
+                      className="rounded-full shadow-none text-rose-500"
                       onPress={clearImage}
                     >
-                      Bỏ ảnh
+                      Bỏ ảnh đã chọn
                     </Button>
                   ) : null}
                 </View>
-                <View className="flex-row gap-2">
-                  <Button
-                    variant="secondary"
-                    className="flex-1 rounded-full shadow-none"
-                    isDisabled={isUpdating}
-                    onPress={() => {
-                      setDraftGroupName(conversation?.groupName?.trim() || '');
-                      clearImage();
-                    }}
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="flex-1 rounded-full shadow-none"
-                    isDisabled={isUpdating}
-                    onPress={() => {
-                      void handleSaveGroup();
-                    }}
-                  >
-                    {isUpdating ? 'Đang cập nhật...' : 'Lưu thay đổi'}
-                  </Button>
-                </View>
+                
+                {isDirty ? (
+                  <View className="flex-row gap-2 mt-1">
+                    <Button
+                      variant="secondary"
+                      className="flex-1 rounded-full shadow-none"
+                      isDisabled={isUpdating}
+                      onPress={() => {
+                        setDraftGroupName(conversation?.groupName?.trim() || '');
+                        clearImage();
+                      }}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      variant="primary"
+                      className="flex-1 rounded-full shadow-none"
+                      isDisabled={isUpdating}
+                      onPress={() => {
+                        void handleSaveGroup();
+                      }}
+                    >
+                      {isUpdating ? 'Đang cập nhật...' : 'Lưu thay đổi'}
+                    </Button>
+                  </View>
+                ) : null}
               </View>
             </SheetSection>
           ) : null}
@@ -460,25 +525,8 @@ export function ConversationInfoSheet({
 
           <SheetSection title="Thao tác">
             <View className="gap-2.5">
-              {!isGroup ? (
-                <ActionRow
-                  icon={isHidden ? 'eye-outline' : 'eye-off-outline'}
-                  label={
-                    isHidden ? 'Hiện cuộc trò chuyện' : 'Ẩn cuộc trò chuyện'
-                  }
-                  disabled={actionPending}
-                  onPress={() => {
-                    void handleToggleHide();
-                  }}
-                />
-              ) : (
+              {!isGroup ? null : (
                 <>
-                  <ActionRow
-                    icon="exit-outline"
-                    label="Rời nhóm"
-                    disabled={actionPending}
-                    onPress={() => setPendingAction('leave')}
-                  />
                   {isAdmin ? (
                     <ActionRow
                       icon="trash-outline"

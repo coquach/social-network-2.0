@@ -1,7 +1,7 @@
 import { useAuth, useSSO, useSignUp } from "@clerk/expo";
 import { Link, Redirect, useRouter } from "expo-router";
 import React from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Text, TextInput, View } from "react-native";
 
 import { AuthBrand } from "~/components/auth/auth-brand";
 import { AuthCard } from "~/components/auth/auth-card";
@@ -39,6 +39,10 @@ export default function SignUpScreen() {
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [localError, setLocalError] = React.useState<string | null>(null);
   const isFinalizingRef = React.useRef(false);
+
+  const firstNameRef = React.useRef<TextInput>(null);
+  const emailRef = React.useRef<TextInput>(null);
+  const passwordRef = React.useRef<TextInput>(null);
 
   const isSubmitting = fetchStatus === "fetching";
   const isBusy = isSubmitting || isGoogleLoading;
@@ -316,27 +320,41 @@ export default function SignUpScreen() {
           placeholder="Nguyễn"
           autoCapitalize="words"
           onChangeText={setLastName}
+          returnKeyType="next"
+          onSubmitEditing={() => firstNameRef.current?.focus()}
+          blurOnSubmit={false}
         />
         <AuthField
+          ref={firstNameRef}
           label="Tên"
           value={firstName}
           placeholder="An"
           autoCapitalize="words"
           onChangeText={setFirstName}
+          returnKeyType="next"
+          onSubmitEditing={() => emailRef.current?.focus()}
+          blurOnSubmit={false}
         />
         <AuthField
+          ref={emailRef}
           label="Email"
           value={emailAddress}
           placeholder="ban@example.com"
           keyboardType="email-address"
           onChangeText={setEmailAddress}
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          blurOnSubmit={false}
         />
         <AuthField
+          ref={passwordRef}
           label="Mật khẩu"
           value={password}
           placeholder="Tạo mật khẩu"
           secureTextEntry
           onChangeText={setPassword}
+          returnKeyType="done"
+          onSubmitEditing={() => void handleSubmit()}
         />
         <AuthAlert message={formError} />
         <AuthPrimaryButton

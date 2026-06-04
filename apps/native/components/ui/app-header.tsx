@@ -106,7 +106,7 @@ export function AppHeader({
               {title ? (
                 <Text
                   numberOfLines={1}
-                  className="text-center text-2xl font-extrabold text-app-fg dark:text-app-fg-dark"
+                  className="text-center text-2xl font-extrabold text-slate-800 dark:text-white"
                 >
                   {title}
                 </Text>

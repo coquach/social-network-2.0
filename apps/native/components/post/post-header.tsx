@@ -94,8 +94,12 @@ function PostHeaderComponent({
   }, [displayName]);
 
   const goToUser = React.useCallback(() => {
-    router.push(`/profile/${data.userId}` as never);
-  }, [data.userId, router]);
+    if (isOwner) {
+      router.push(`/(main)/profile` as never);
+    } else {
+      router.push(`/(stack)/user/${data.userId}` as never);
+    }
+  }, [data.userId, isOwner, router]);
 
   const goToGroup = React.useCallback(() => {
     if (!group?.id) return;

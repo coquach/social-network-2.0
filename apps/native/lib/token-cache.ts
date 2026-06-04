@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 export interface TokenCache {
@@ -7,44 +7,43 @@ export interface TokenCache {
   clearToken?: (key: string) => void;
 }
 
-export const tokenCache: TokenCache = {
-  async getToken(key: string) {
-    try {
-      const item = await SecureStore.getItemAsync(key);
-      if (item) {
-        console.log(`${key} was used 🔐 \n`);
-      } else {
-        console.log('No values stored under key: ' + key);
+const createTokenCache = (): TokenCache => {
+  return {
+    async getToken(key: string) {
+      try {
+        const item = await AsyncStorage.getItem(key);
+        if (item) {
+          console.log(`[TokenCache] ${key} was used 🔐`);
+        } else {
+          console.log('[TokenCache] No values stored under key: ' + key);
+        }
+        return item;
+      } catch (error) {
+        console.error('[TokenCache] AsyncStorage get item error: ', error);
+        await AsyncStorage.removeItem(key);
+        return null;
       }
-      return item;
-    } catch (error) {
-      console.error('SecureStore get item error: ', error);
-      await SecureStore.deleteItemAsync(key);
-      return null;
-    }
-  },
-  async saveToken(key: string, value: string) {
-    try {
-      return SecureStore.setItemAsync(key, value);
-    } catch (err) {
-      return;
-    }
-  },
+    },
+    async saveToken(key: string, value: string) {
+      try {
+        console.log(`[TokenCache] ⏳ Attempting to save token for key: ${key}, value length: ${value.length}`);
+        await AsyncStorage.setItem(key, value);
+        console.log(`[TokenCache] ✅ Successfully saved token for key: ${key}`);
+      } catch (err) {
+        console.error('[TokenCache] ❌ AsyncStorage save item error: ', err);
+      }
+    },
+    async clearToken(key: string) {
+      try {
+        console.log(`[TokenCache] 🧹 Clearing token for key: ${key}`);
+        await AsyncStorage.removeItem(key);
+        console.log(`[TokenCache] ✅ Successfully cleared token for key: ${key}`);
+      } catch (err) {
+        console.error('[TokenCache] ❌ AsyncStorage delete item error: ', err);
+      }
+    },
+  };
 };
 
-// Fallback for web if ever needed
-export const webTokenCache: TokenCache = {
-  async getToken(key: string) {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(key);
-    }
-    return null;
-  },
-  async saveToken(key: string, value: string) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, value);
-    }
-  },
-};
-
-export const defaultTokenCache = Platform.OS === 'web' ? webTokenCache : tokenCache;
+export const tokenCache =
+  Platform.OS !== 'web' ? createTokenCache() : undefined;

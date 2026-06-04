@@ -2,8 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GroupRole, GroupMemberDTO } from '@repo/shared/types';
-import { roleLabel } from './admin-members-section'; // Re-use label từ file chính
-
+export const roleLabel: Record<GroupRole, string> = {
+    OWNER: 'Chủ nhóm',
+    ADMIN: 'Quản trị viên',
+    MODERATOR: 'Người kiểm duyệt',
+    MEMBER: 'Thành viên',
+};
 type ChangeRoleFormProps = {
     member: GroupMemberDTO;
     currentUserRole?: GroupRole; // Vai trò của admin đang thực hiện thao tác

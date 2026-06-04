@@ -12,9 +12,7 @@ import {
   UpdateUserInputSchema,
   UserSchema,
 } from '@repo/shared/schemas';
-
-const interestSchema = z.enum(INTEREST_OPTIONS);
-
+const interestSchema = z.string().trim().min(1).max(50);
 export const ProfileUpdateSchema = UpdateUserInputSchema.extend({
   firstName: z
     .string()

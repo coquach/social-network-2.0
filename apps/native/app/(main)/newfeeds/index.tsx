@@ -1,11 +1,11 @@
-﻿import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import React from 'react';
 import { View } from 'react-native';
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withTiming
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -14,11 +14,10 @@ import {
   NEWFEEDS_HEADER_BAR_HEIGHT,
   NewfeedsHeader,
 } from '~/components/navigation/newfeeds-header';
-import { FeedHeader } from '~/components/newfeeds/feed-header';
-import { RecommendedMusicSection } from '~/components/newfeeds/recommended-music-section';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
-import { FeedScrollProvider } from '~/contexts/feed-scroll-context';
+import { FeedHeader } from '~/components/newfeeds/feed-header';
 import { appThemeColors } from '~/constants/theme';
+import { FeedScrollProvider } from '~/contexts/feed-scroll-context';
 import { useAppTheme } from '~/providers/theme-provider';
 import {
   mapFeedEmotionToApiEmotion,
@@ -33,7 +32,6 @@ const DELTA_THRESHOLD = 8;
 const HEADER_SHOW_DURATION = 240;
 const HEADER_HIDE_DURATION = 200;
 const EMOTION_DEBOUNCE_MS = 200;
-const MUSIC_SECTION_HEIGHT = 170;
 const FEED_FILTER_HEIGHT = 92;
 
 export default function NewfeedsScreen() {
@@ -131,11 +129,7 @@ export default function NewfeedsScreen() {
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
-    transform: [{ translateY: headerTranslateY.value }],
-  }));
-
-  const stickyMusicBarStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: headerTranslateY.value }],
+    marginTop: headerTranslateY.value,
   }));
 
   const onTabChange = React.useCallback(
@@ -154,11 +148,11 @@ export default function NewfeedsScreen() {
 
   const contentContainerStyle = React.useMemo(
     () => ({
-      paddingTop: headerHeight + MUSIC_SECTION_HEIGHT + FEED_FILTER_HEIGHT,
+      paddingTop: 0,
       paddingBottom: 132,
       paddingHorizontal: 16,
     }),
-    [headerHeight],
+    [],
   );
 
   return (
@@ -166,32 +160,20 @@ export default function NewfeedsScreen() {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         {/* Header */}
         <Animated.View
-          className="absolute left-0 right-0 top-0 z-20"
+          className="z-20"
           style={headerAnimatedStyle}
         >
           <NewfeedsHeader />
         </Animated.View>
 
-        <Animated.View
-          className="absolute left-0 right-0 z-10"
-          style={[stickyMusicBarStyle, { top: headerHeight }]}
-        >
-          <View className="px-4 py-2">
-            <RecommendedMusicSection />
-          </View>
-        </Animated.View>
-
-        <Animated.View
-          className="absolute left-0 right-0 z-[9]"
-          style={[stickyMusicBarStyle, { top: headerHeight + MUSIC_SECTION_HEIGHT }]}
-        >
+        <View className="z-[9]">
           <FeedHeader
             tab={feedType}
             emotion={emotion}
             onTabChange={onTabChange}
             onEmotionChange={onEmotionChange}
           />
-        </Animated.View>
+        </View>
 
         {/* Feed */}
         {feedType === 'trending' ? (

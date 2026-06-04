@@ -73,25 +73,18 @@ function CallViewInner() {
 
   const isCallActiveInStore = !!storeActiveCall || !!storeIncomingCall || !!storeOutgoingCall;
 
+  useEffect(() => {
+    if (!isCallActiveInStore) {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/chat');
+      }
+    }
+  }, [isCallActiveInStore, router]);
+
   if (!isCallActiveInStore) {
-    return (
-      <View className="flex-1 items-center justify-center bg-[#0f0f0f] px-6">
-        <MaterialCommunityIcons name="phone-hangup" size={64} color="#ef4444" className="mb-4" />
-        <AppTitle className="text-white text-xl font-bold mb-2">Cuộc gọi đã kết thúc</AppTitle>
-        <AppSubtitle className="text-white/50 text-center mb-8">
-          Cuộc gọi này đã kết thúc hoặc không còn khả dụng.
-        </AppSubtitle>
-        <Pressable
-          onPress={() => {
-            if (router.canGoBack()) router.back();
-            else router.replace('/chat');
-          }}
-          className="bg-white/10 px-8 py-3 rounded-full active:opacity-70"
-        >
-          <AppSubtitle className="text-white font-medium">Trở về</AppSubtitle>
-        </Pressable>
-      </View>
-    );
+    return null; // Render nothing while waiting for navigation to pop
   }
 
   if (!currentCall) {
@@ -286,7 +279,7 @@ function DialingView({ onCancel, conversationId }: { onCancel: () => void; conve
       className="flex-1 items-center justify-center bg-[#0f0f0f]"
     >
       <View className="items-center">
-        <View className="mb-10 relative items-center justify-center">
+        <View className="mb-10 relative items-center justify-center" style={{ width: size, height: size }}>
           <Svg width={size} height={size} className="absolute">
             <Circle
               cx={size / 2}

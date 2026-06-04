@@ -1,11 +1,12 @@
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, View, RefreshControlProps } from 'react-native';
 import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { cn } from '~/lib/cn';
 
 type ScreenProps = {
   children: React.ReactNode;
   className?: string;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 };
 
 export function AppScreen({ children, className = '' }: ScreenProps) {
@@ -29,12 +30,13 @@ export function AppCenteredScreen({ children, className = '' }: ScreenProps) {
   );
 }
 
-export function AppScrollScreen({ children, className = '' }: ScreenProps) {
+export function AppScrollScreen({ children, className = '', refreshControl }: ScreenProps) {
   const { handleScroll } = useTabBarAutoHide();
 
   return (
     <ScrollView
       className={cn('flex-1 bg-app-bg dark:bg-app-bg-dark', className)}
+      refreshControl={refreshControl}
       contentContainerStyle={{
         flexGrow: 1,
         paddingHorizontal: 24,

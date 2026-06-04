@@ -16,7 +16,8 @@ export const notificationService = {
   async getNotifications(params?: {
     cursor?: string;
     limit?: number;
-    status?: 'read' | 'unread';
+    isRead?: boolean;
+    type?: string;
   }): Promise<CursorPageResponse<NotificationDTO>> {
     return getApiClient().getCursorPage('/notifications', { params });
   },
@@ -39,7 +40,7 @@ export const notificationService = {
    * Mark all notifications as read
    */
   async markAllAsRead(): Promise<void> {
-    return getApiClient().post('/notifications/mark-all-read');
+    return getApiClient().patch('/notifications/read-all');
   },
 
   /**

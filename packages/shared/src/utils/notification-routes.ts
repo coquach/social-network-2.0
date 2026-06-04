@@ -75,20 +75,22 @@ export const getNotificationRoute = (
   if (platform === 'native') {
     switch (type) {
       case 'friendship_request':
+        return '/(stack)/friends?tab=requests';
       case 'friendship_accept':
       case 'friend':
+        return '/(stack)/friends';
       case 'follow':
         return '/profile';
       case 'comment':
       case 'reply_comment':
       case 'reaction':
       case 'share':
-        return targetId ? `/posts/${targetId}` : '/notifications';
+        return targetId ? `/(stack)/posts/${targetId}` : '/(stack)/notifications';
       case 'group_noti':
       case 'join_request_approved':
-        return targetId ? `/groups/${targetId}` : '/groups';
+        return targetId ? `/(stack)/groups/${targetId}` : '/(stack)/groups';
       default:
-        return '/notifications';
+        return '/(stack)/notifications';
     }
   }
 

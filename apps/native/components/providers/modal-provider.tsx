@@ -6,6 +6,7 @@ import { ShareBottomSheet } from '../modals/share-bottom-sheet';
 import { ShareListModal } from '../modals/share-list-modal';
 import { CreatePostSheet } from '../create-post/create-post-sheet';
 import { PostOptionsBottomSheet } from '../modals/post-options-bottom-sheet';
+import { DeletePostModal } from '../modals/delete-post-modal';
 
 /**
  * Global ModalProvider - mounts all post-related global modals once at root level.
@@ -27,6 +28,7 @@ export function ModalProvider() {
       <CreateReportModal />
       <PostEditHistoryModal />
       <PostOptionsBottomSheet />
+      <DeletePostModal />
       <CreatePostSheet />
     </>
   );

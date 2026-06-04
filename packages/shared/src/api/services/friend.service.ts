@@ -72,6 +72,8 @@ export interface FriendRecommendationAnalyticsDTO {
   sources: FriendRecommendationAnalyticsSourceBreakdown[];
 }
 
+
+
 export const friendService = {
   /**
    * Get relationship status with a user
@@ -161,7 +163,7 @@ export const friendService = {
    */
   async getFriends(
     userId?: string,
-    params?: { cursor?: string; limit?: number }
+    params?: { cursor?: string; limit?: number; search?: string }
   ): Promise<CursorPageResponse<string>> {
     const url = userId ? `/social/friends/${userId}` : '/social/friends/me';
     return getApiClient().getCursorPage(url, { params });
@@ -172,11 +174,10 @@ export const friendService = {
    */
   async getUserFriends(
     userId: string,
-    params?: { cursor?: string; limit?: number }
+    params?: { cursor?: string; limit?: number; search?: string }
   ): Promise<CursorPageResponse<string>> {
     return getApiClient().getCursorPage(`/social/friends/${userId}`, { params });
   },
-
   /**
    * Get friend suggestions/recommendations (paginated)
    */
@@ -208,3 +209,4 @@ export const friendService = {
     return getApiClient().getCursorPage('/social/blocked', { params });
   },
 };
+

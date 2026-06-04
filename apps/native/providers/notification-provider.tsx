@@ -96,6 +96,17 @@ export const NotificationProvider = ({
   const [error, setError] = useState<Error | null>(null);
   const registeredTokenRef = useRef<string | null>(null);
   const { setIncomingCall } = useCallStore();
+  const segmentsRef = useRef<string[]>([]);
+  
+  try {
+    const { useSegments } = require('expo-router');
+    const segs = useSegments();
+    useEffect(() => {
+      segmentsRef.current = segs;
+    }, [segs]);
+  } catch (e) {
+    // Ignore during tests
+  }
 
   // Handle FCM foreground messages
   useEffect(() => {
@@ -105,9 +116,13 @@ export const NotificationProvider = ({
       if (Platform.OS === 'android') {
         if (isCallNotificationData(incomingData)) {
           if (incomingData) {
-            void displayCallNotification(incomingData).catch((notificationError) => {
-              setError(normalizeError(notificationError));
-            });
+            const convId = incomingData.conversationId;
+            const isInsideTargetChat = Boolean(convId && segmentsRef.current.includes('chat') && segmentsRef.current.includes(convId));
+            if (!isInsideTargetChat) {
+              void displayCallNotification(incomingData).catch((notificationError) => {
+                setError(normalizeError(notificationError));
+              });
+            }
           }
           return;
         }

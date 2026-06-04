@@ -220,7 +220,7 @@ export const useUpdatePost = (postId: string) => {
 };
 
 export const useDeletePost = (postId: string) => {
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const queryClient = getQueryClient();
   return useMutation({
     mutationFn: async () => {
@@ -234,6 +234,9 @@ export const useDeletePost = (postId: string) => {
     onSuccess: () => {
       removePostFromCache(queryClient, postId);
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all, exact: false });
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.user.detail(userId) });
+      }
       toast.success('Xóa bài đăng thành công!');
     },
     onError: handleMutationError({ 
@@ -406,7 +409,7 @@ export const useApprovePostInGroup = (postId: string, groupId: string) => {
         throw new Error('Token is required');
       }
       // Assume approvePostInGroup is defined elsewhere
-      return await approvePostInGroup(token, postId);
+      return await approvePostInGroup(token, groupId, postId);
     },
     onSuccess: () => {
       removePostFromGroupCache(
@@ -434,7 +437,7 @@ export const useRejectPostInGroup = (postId: string, groupId: string) => {
         throw new Error('Token is required');
       }
       // Assume rejectPostInGroup is defined elsewhere
-      return await rejectPostInGroup(token, postId);
+      return await rejectPostInGroup(token, groupId, postId);
     },
     onSuccess: () => {
       removePostFromGroupCache(

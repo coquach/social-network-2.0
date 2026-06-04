@@ -1,7 +1,7 @@
 import { useSSO, useSignIn } from '@clerk/expo';
 import { Link, useRouter } from 'expo-router';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 
 import { AuthBrand } from '~/components/auth/auth-brand';
 import { AuthCard } from '~/components/auth/auth-card';
@@ -37,6 +37,8 @@ export default function SignInScreen() {
   const [code, setCode] = React.useState('');
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [localError, setLocalError] = React.useState<string | null>(null);
+
+  const passwordRef = React.useRef<TextInput>(null);
 
   const isSubmitting = fetchStatus === 'fetching';
   const isBusy = isSubmitting || isGoogleLoading;
@@ -249,13 +251,19 @@ export default function SignInScreen() {
           placeholder="ban@example.com"
           keyboardType="email-address"
           onChangeText={setEmailAddress}
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          blurOnSubmit={false}
         />
         <AuthField
+          ref={passwordRef}
           label="Mật khẩu"
           value={password}
           placeholder="Nhập mật khẩu"
           secureTextEntry
           onChangeText={setPassword}
+          returnKeyType="done"
+          onSubmitEditing={() => void handleSubmit()}
         />
         <View className="items-end">
           <Link href="/forgot-password" asChild>

@@ -22,7 +22,7 @@ type FeedListProps<TItem> = {
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   onLoadMore: () => void;
-  onScroll: any;
+  onScroll?: any;
   scrollEnabled: boolean;
   refreshing?: boolean;
   onRefresh?: () => void;
@@ -141,10 +141,6 @@ export function FeedList<TItem>({
       showsVerticalScrollIndicator={false}
       drawDistance={estimatedItemSize * 4}
       removeClippedSubviews={false}
-      overrideProps={{
-        initialDrawBatchSize: 8,
-        estimatedItemSize: estimatedItemSize,
-      }}
       getItemType={getItemTypeAdapter}
     />
   );

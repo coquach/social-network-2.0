@@ -1,7 +1,7 @@
 import { useSignIn } from '@clerk/expo';
 import { Link, useRouter } from 'expo-router';
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, TextInput } from 'react-native';
 
 import { AuthBrand } from '~/components/auth/auth-brand';
 import { AuthCard } from '~/components/auth/auth-card';
@@ -31,6 +31,8 @@ export default function ForgotPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [localError, setLocalError] = React.useState<string | null>(null);
   const [step, setStep] = React.useState<ForgotPasswordStep>('request');
+
+  const confirmPasswordRef = React.useRef<TextInput>(null);
 
   const isBusy = fetchStatus === 'fetching';
   const formError = resolveAuthError(localError, errors);
@@ -220,13 +222,19 @@ export default function ForgotPasswordScreen() {
               placeholder="Nhập mật khẩu mới"
               secureTextEntry
               onChangeText={setNewPassword}
+              returnKeyType="next"
+              onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+              blurOnSubmit={false}
             />
             <AuthField
+              ref={confirmPasswordRef}
               label="Xác nhận mật khẩu"
               value={confirmPassword}
               placeholder="Nhập lại mật khẩu mới"
               secureTextEntry
               onChangeText={setConfirmPassword}
+              returnKeyType="done"
+              onSubmitEditing={() => void handleSubmitNewPassword()}
             />
             <AuthAlert message={formError} />
             <AuthPrimaryButton

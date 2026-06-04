@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { Button } from 'heroui-native/button';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -147,14 +147,11 @@ export function NewfeedsHeader() {
     >
       <View className="flex-1 flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
-          <Button
-            accessibilityLabel="Mo menu"
-            variant="ghost"
-            className="h-10 w-10 min-h-10 rounded-full px-0"
-            onPress={() => handleComingSoon('Menu')}
-          >
-            <Ionicons name="menu-outline" size={24} color={colors.foreground} />
-          </Button>
+          <Image
+            source={require('~/assets/icon.png')}
+            className="h-8 w-8 rounded-lg"
+            resizeMode="contain"
+          />
           <Text className="text-2xl font-extrabold tracking-tight text-app-primary dark:text-app-primary-dark">
             Sentimeta
           </Text>

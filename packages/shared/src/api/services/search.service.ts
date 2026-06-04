@@ -61,7 +61,6 @@ export interface SearchUserFilter {
   email?: string;
   firstName?: string;
   lastName?: string;
-  isActive?: boolean;
   sortBy?: 'createdAt';
   sortOrder?: SortOrder;
 }
@@ -69,30 +68,24 @@ export interface SearchUserFilter {
 // ==================== Service ====================
 
 export const searchService = {
-  /**
-   * Search posts
-   */
   async searchPosts(
     filter: SearchPostFilter
   ): Promise<CursorPageResponse<PostSnapshotDTO>> {
-    return getApiClient().getCursorPage('/search/posts', { params: filter });
+    const { sortOrder, ...rest } = filter;
+    return getApiClient().getCursorPage('/search/posts', { params: { ...rest, order: sortOrder } });
   },
 
-  /**
-   * Search groups
-   */
   async searchGroups(
     filter: SearchGroupFilter
   ): Promise<CursorPageResponse<GroupSummaryDTO>> {
-    return getApiClient().getCursorPage('/search/groups', { params: filter });
+    const { sortOrder, ...rest } = filter;
+    return getApiClient().getCursorPage('/search/groups', { params: { ...rest, order: sortOrder } });
   },
 
-  /**
-   * Search users
-   */
   async searchUsers(
     filter: SearchUserFilter
   ): Promise<CursorPageResponse<UserDTO>> {
-    return getApiClient().getCursorPage('/search/users', { params: filter });
+    const { sortOrder, ...rest } = filter;
+    return getApiClient().getCursorPage('/search/users', { params: { ...rest, order: sortOrder } });
   },
 };

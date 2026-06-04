@@ -1,7 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheet } from 'heroui-native/bottom-sheet';
 import React from 'react';
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
+import { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { TargetType } from '@repo/shared';
 import {
   useDeletePostModal,
@@ -10,8 +16,11 @@ import {
   useUpdatePostModal,
   useUpdateSharePostModal,
 } from '@repo/shared';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { appThemeColors } from '~/constants/theme';
 import { usePostOptionsStore } from '~/store/use-post-options-store';
+import { useAppTheme } from '~/providers/theme-provider';
 
 // ─── Menu Item ─────────────────────────────────────────
 
@@ -76,23 +85,49 @@ function MenuItem({
 export function PostOptionsBottomSheet() {
   const { isOpen, postId, shareId, isShared, isOwner, closePostOptions } =
     usePostOptionsStore();
+  const insets = useSafeAreaInsets();
+  const { resolvedTheme } = useAppTheme();
+  const colors = appThemeColors[resolvedTheme];
+
+  const bottomSheetRef = React.useRef<BottomSheetModal>(null);
+  const hasOpenedRef = React.useRef(false);
+  const snapPoints = React.useMemo(() => ['36%'], []);
 
   const { openModal: deletePostModalOpen } = useDeletePostModal();
   const { openModal: updatePostModalOpen } = useUpdatePostModal();
   const { openModal: updateSharePostModalOpen } = useUpdateSharePostModal();
 
-  // Ensure sheet starts closed and logs state for debugging
   React.useEffect(() => {
-    // Force close on mount if somehow opened
     if (isOpen) {
-      closePostOptions();
+      hasOpenedRef.current = true;
+      const frame = requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
+
+      return () => {
+        cancelAnimationFrame(frame);
+      };
     }
 
-    return () => {
-      // Reset on unmount to ensure clean state
-      closePostOptions();
-    };
-  }, [closePostOptions]);
+    if (!hasOpenedRef.current) {
+      return;
+    }
+
+    bottomSheetRef.current?.dismiss();
+  }, [isOpen]);
+
+  const renderBackdrop = React.useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        opacity={0.4}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
 
   const handleEdit = React.useCallback(() => {
     if (isShared) {
@@ -146,57 +181,83 @@ export function PostOptionsBottomSheet() {
     closePostOptions();
   }, [closePostOptions, postId]);
 
-  // Properly control BottomSheet state - always reject unsolicited opens
-  const handleOpenChange = React.useCallback(
-    (newOpen: boolean) => {
-      if (!newOpen) {
-        // User dismissed the sheet
-        closePostOptions();
-      }
-      // Ignore attempts to open - they should only come through store
-    },
-    [closePostOptions, isOpen],
-  );
+  if (!isOpen) {
+    return null;
+  }
 
   return (
-    <BottomSheet isOpen={isOpen} onOpenChange={handleOpenChange}>
-      {/* Only render Portal content when actually open to prevent hidden interactions */}
-      {isOpen && (
-        <BottomSheet.Portal>
-          <BottomSheet.Overlay className="bg-black/40" />
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      onDismiss={() => {
+        hasOpenedRef.current = false;
+        Keyboard.dismiss();
+        closePostOptions();
+      }}
+      topInset={insets.top}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustPan"
+      enablePanDownToClose
+      enableDynamicSizing={false}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: 1,
+        borderBottomWidth: 0,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+      }}
+      handleIndicatorStyle={{ backgroundColor: colors.border }}
+    >
+      <View
+        className="px-4"
+        style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+      >
+        <View className="flex-row items-center justify-center gap-2 pb-3 pt-1">
+          <Ionicons
+            name="ellipsis-horizontal-circle-outline"
+            size={16}
+            color="#64748b"
+          />
+          <Text className="text-lg font-semibold text-app-fg dark:text-app-fg-dark">
+            Tùy chọn bài viết
+          </Text>
+        </View>
 
-          <BottomSheet.Content>
-            <MenuItem
-              icon="create-outline"
-              label="Chỉnh sửa"
-              onPress={handleEdit}
-              disabled={!isOwner}
-            />
+        <View className="gap-2">
+          <MenuItem
+            icon="create-outline"
+            label="Chỉnh sửa"
+            onPress={handleEdit}
+            disabled={!isOwner}
+          />
 
-            <MenuItem
-              icon="time-outline"
-              label="Lịch sử chỉnh sửa"
-              onPress={handleHistory}
-            />
+          <MenuItem
+            icon="time-outline"
+            label="Lịch sử chỉnh sửa"
+            onPress={handleHistory}
+          />
 
-            <MenuItem
-              icon="trash-outline"
-              label="Xoá bài viết"
-              variant="danger"
-              onPress={handleDelete}
-              disabled={!isOwner}
-            />
+          <MenuItem
+            icon="trash-outline"
+            label="Xoá bài viết"
+            variant="danger"
+            onPress={handleDelete}
+            disabled={!isOwner}
+          />
 
-            <MenuItem
-              icon="flag-outline"
-              label="Báo cáo"
-              variant="warning"
-              onPress={handleReport}
-              disabled={isOwner}
-            />
-          </BottomSheet.Content>
-        </BottomSheet.Portal>
-      )}
-    </BottomSheet>
+          <MenuItem
+            icon="flag-outline"
+            label="Báo cáo"
+            variant="warning"
+            onPress={handleReport}
+            disabled={isOwner}
+          />
+        </View>
+      </View>
+    </BottomSheetModal>
   );
 }
