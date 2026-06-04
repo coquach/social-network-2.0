@@ -110,7 +110,7 @@ function AvatarPrimitive({
         variant="soft"
         color="accent"
         animation="disable-all"
-        className="overflow-hidden"
+        className="overflow-hidden border border-slate-200/75 dark:border-slate-700/75"
         style={{
           width: visualSize.avatarPx,
           height: visualSize.avatarPx,

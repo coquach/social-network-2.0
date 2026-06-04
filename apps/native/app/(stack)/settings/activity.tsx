@@ -9,9 +9,9 @@ import {
   useUserActivity,
   type UserActivityDto,
   type UserActivityLogFilter,
+  formatAbsoluteTime,
 } from '@repo/shared';
 import { FlashList } from '@shopify/flash-list';
-import { format } from 'date-fns';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -61,31 +61,51 @@ const getActivityIcon = (type: string): keyof typeof Ionicons.glyphMap => {
   return 'pulse-outline';
 };
 
-const parseSafeDate = (date: any): Date => {
-  try {
-    let parsed: Date;
-    if (!date) parsed = new Date();
-    else if (date instanceof Date) parsed = date;
-    else if (Array.isArray(date)) {
-      const [y, m = 1, d = 1, h = 0, min = 0, s = 0] = date;
-      parsed = new Date(y, m - 1, d, h, min, s);
-    } else if (typeof date === 'string') {
-      if (!isNaN(Number(date)) && date.trim() !== '') parsed = new Date(Number(date));
-      else parsed = new Date(date.includes('T') ? date : date.replace(' ', 'T'));
-    } else if (typeof date === 'number') {
-      parsed = new Date(date);
-    } else {
-      parsed = new Date();
-    }
-    
-    // Nếu ngày không hợp lệ (Invalid Date), fallback về hiện tại
-    if (isNaN(parsed.getTime())) {
-      return new Date();
-    }
-    return parsed;
-  } catch (error) {
-    return new Date();
+const getActivityTheme = (type: string, isDark: boolean) => {
+  const normalized = type.toLowerCase();
+  if (normalized.includes('post') || normalized.includes('create') || normalized.includes('comment')) {
+    return {
+      bg: 'bg-indigo-50 dark:bg-indigo-900/30',
+      border: 'border-indigo-200 dark:border-indigo-800',
+      text: 'text-indigo-700 dark:text-indigo-300',
+      icon: isDark ? '#818cf8' : '#4f46e5',
+      selectedBg: 'bg-indigo-100 dark:bg-indigo-900/50 border-indigo-500',
+    };
   }
+  if (normalized.includes('friend') || normalized.includes('request')) {
+    if (normalized.includes('unfriend') || normalized.includes('reject') || normalized.includes('cancel') || normalized.includes('block')) {
+      return {
+        bg: 'bg-rose-50 dark:bg-rose-900/30',
+        border: 'border-rose-200 dark:border-rose-800',
+        text: 'text-rose-700 dark:text-rose-300',
+        icon: isDark ? '#fb7185' : '#e11d48',
+        selectedBg: 'bg-rose-100 dark:bg-rose-900/50 border-rose-500',
+      };
+    }
+    return {
+      bg: 'bg-emerald-50 dark:bg-emerald-900/30',
+      border: 'border-emerald-200 dark:border-emerald-800',
+      text: 'text-emerald-700 dark:text-emerald-300',
+      icon: isDark ? '#34d399' : '#10b981',
+      selectedBg: 'bg-emerald-100 dark:bg-emerald-900/50 border-emerald-500',
+    };
+  }
+  if (normalized.includes('group')) {
+    return {
+      bg: 'bg-amber-50 dark:bg-amber-900/30',
+      border: 'border-amber-200 dark:border-amber-800',
+      text: 'text-amber-700 dark:text-amber-300',
+      icon: isDark ? '#fbbf24' : '#d97706',
+      selectedBg: 'bg-amber-100 dark:bg-amber-900/50 border-amber-500',
+    };
+  }
+  return {
+    bg: 'bg-sky-50 dark:bg-sky-900/30',
+    border: 'border-sky-200 dark:border-sky-800',
+    text: 'text-sky-700 dark:text-sky-300',
+    icon: isDark ? '#38bdf8' : '#0284c7',
+    selectedBg: 'bg-sky-100 dark:bg-sky-900/50 border-sky-500',
+  };
 };
 
 function ActivityTimelineItem({
@@ -99,15 +119,16 @@ function ActivityTimelineItem({
   const IconName = getActivityIcon(item.activityType);
   const metadataEntries = Object.entries(item.metadata ?? {}).slice(0, 3);
   const isDark = resolvedTheme === 'dark';
+  const theme = getActivityTheme(item.activityType, isDark);
 
   return (
     <View className="flex-row gap-4 px-4 py-2">
       <View className="items-center">
-        <View className="h-10 w-10 items-center justify-center rounded-full border border-sky-100 bg-sky-50 dark:border-sky-900/50 dark:bg-sky-900/30">
+        <View className={`h-10 w-10 items-center justify-center rounded-full border ${theme.border} ${theme.bg}`}>
           <Ionicons
             name={IconName}
             size={18}
-            color={isDark ? '#38bdf8' : '#0284c7'}
+            color={theme.icon}
           />
         </View>
         {!isLast && (
@@ -117,8 +138,8 @@ function ActivityTimelineItem({
 
       <View className="flex-1 pb-4">
         <View className="flex-row items-center gap-2 flex-wrap">
-          <View className="rounded-full bg-sky-50 px-2.5 py-0.5 dark:bg-sky-900/30">
-            <Text className="text-[11px] font-medium text-sky-700 dark:text-sky-300">
+          <View className={`rounded-full px-2.5 py-0.5 ${theme.bg}`}>
+            <Text className={`text-[11px] font-medium ${theme.text}`}>
               {activityTypeLabels[item.activityType as ActivityType] ||
                 formatLabel(item.activityType)}
             </Text>
@@ -139,7 +160,7 @@ function ActivityTimelineItem({
         <View className="mt-1 flex-row items-center gap-1.5">
           <Ionicons name="time-outline" size={12} color="#64748b" />
           <Text className="text-[11px] text-slate-500 dark:text-slate-400">
-            {format(parseSafeDate(item.createdAt), 'dd/MM/yyyy HH:mm')}
+            {formatAbsoluteTime(item.createdAt, 'dd/MM/yyyy HH:mm')}
           </Text>
         </View>
 
@@ -340,7 +361,7 @@ export default function ActivityScreen() {
                 <Text className="text-xs text-slate-500 mb-1">Từ ngày</Text>
                 <Text className="text-sm font-medium text-slate-900 dark:text-slate-100">
                   {filters.fromDate
-                    ? format(filters.fromDate, 'dd/MM/yyyy')
+                    ? formatAbsoluteTime(filters.fromDate, 'dd/MM/yyyy')
                     : 'Chọn ngày'}
                 </Text>
               </Pressable>
@@ -352,7 +373,7 @@ export default function ActivityScreen() {
                 <Text className="text-xs text-slate-500 mb-1">Đến ngày</Text>
                 <Text className="text-sm font-medium text-slate-900 dark:text-slate-100">
                   {filters.toDate
-                    ? format(filters.toDate, 'dd/MM/yyyy')
+                    ? formatAbsoluteTime(filters.toDate, 'dd/MM/yyyy')
                     : 'Chọn ngày'}
                 </Text>
               </Pressable>
@@ -417,32 +438,37 @@ export default function ActivityScreen() {
                 </Text>
               </Pressable>
 
-              {Object.entries(activityTypeLabels).map(([type, label]) => (
-                <Pressable
-                  key={type}
-                  onPress={() =>
-                    setFilters((s) => ({
-                      ...s,
-                      activityType: type as ActivityType,
-                    }))
-                  }
-                  className={`rounded-full px-4 py-2 border ${
-                    filters.activityType === type
-                      ? 'border-sky-500 bg-sky-50 dark:bg-sky-500/20'
-                      : 'border-slate-200 bg-transparent dark:border-slate-700'
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-medium ${
-                      filters.activityType === type
-                        ? 'text-sky-700 dark:text-sky-300'
-                        : 'text-slate-600 dark:text-slate-300'
+              {Object.entries(activityTypeLabels).map(([type, label]) => {
+                const isSelected = filters.activityType === type;
+                const theme = getActivityTheme(type, resolvedTheme === 'dark');
+                
+                return (
+                  <Pressable
+                    key={type}
+                    onPress={() =>
+                      setFilters((s) => ({
+                        ...s,
+                        activityType: type as ActivityType,
+                      }))
+                    }
+                    className={`rounded-full px-4 py-2 border ${
+                      isSelected
+                        ? theme.selectedBg
+                        : 'border-slate-200 bg-transparent dark:border-slate-700'
                     }`}
                   >
-                    {label}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      className={`text-sm font-medium ${
+                        isSelected
+                          ? theme.text
+                          : 'text-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </ScrollView>
 

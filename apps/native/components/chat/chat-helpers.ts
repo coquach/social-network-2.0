@@ -5,13 +5,14 @@ import type {
   UserProfile,
 } from "@repo/shared";
 import {
+  parseSafeDate,
+  formatRelativeTime,
+} from "@repo/shared";
+import {
   format,
-  formatDistanceToNow,
   isSameYear,
   isToday,
   isYesterday,
-  parseISO,
-  isValid,
 } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -46,85 +47,16 @@ const hasParticipantDetails = (
   );
 };
 
-const coerceChatDate = (value: ChatDateValue): Date | null => {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  if (typeof value === "number") {
-    // Handle seconds vs milliseconds
-    return new Date(value < 10000000000 ? value * 1000 : value);
-  }
-
-  if (typeof value === "string") {
-    if (/^\d+$/.test(value)) {
-      const num = parseInt(value, 10);
-      return new Date(num < 10000000000 ? num * 1000 : num);
-    }
-  }
-
-  if (typeof value === "object") {
-    const candidate = value as {
-      $date?: Date | string | number;
-      date?: Date | string | number;
-      toDate?: () => Date;
-      seconds?: number;
-      _seconds?: number;
-    };
-
-    if (typeof candidate.toDate === "function") {
-      return coerceChatDate(candidate.toDate());
-    }
-
-    if (candidate.$date !== undefined) {
-      return coerceChatDate(candidate.$date);
-    }
-
-    if (candidate.date !== undefined) {
-      return coerceChatDate(candidate.date);
-    }
-
-    if (typeof candidate.seconds === "number") {
-      return new Date(candidate.seconds * 1000);
-    }
-
-    if (typeof candidate._seconds === "number") {
-      return new Date(candidate._seconds * 1000);
-    }
-  }
-
-  let date: Date;
-
-  if (value instanceof Date) {
-    date = value;
-  } else if (typeof value === "string") {
-    const normalized = value.replace(' ', 'T');
-    date = new Date(normalized);
-    if (!isValid(date)) {
-      date = parseISO(normalized);
-    }
-  } else {
-    date = new Date(value as any);
-  }
-
-  if (!isValid(date) || date.getTime() === 0) {
-    return null;
-  }
-
-  return date;
-};
 
 export const getChatDateMs = (value: ChatDateValue) => {
-  return coerceChatDate(value)?.getTime() ?? 0;
+  if (!value) return 0;
+  const parsed = parseSafeDate(value as any);
+  return parsed.getTime();
 };
 
 export const getChatDayKey = (value: ChatDateValue) => {
-  const date = coerceChatDate(value);
-
-  if (!date) {
-    return "";
-  }
-
+  if (!value) return "";
+  const date = parseSafeDate(value as any);
   return format(date, "yyyy-MM-dd");
 };
 
@@ -239,58 +171,35 @@ export const getConversationName = (
 };
 
 export const getConversationLastActivity = (conversation: ConversationDTO) => {
-  return (
-    coerceChatDate(
-      conversation.lastMessage?.createdAt ??
-        conversation.updatedAt ??
-        conversation.createdAt,
-    ) ?? new Date(0)
-  );
+  const value = conversation.lastMessage?.createdAt ??
+    conversation.updatedAt ??
+    conversation.createdAt;
+  if (!value) return new Date(0);
+  return parseSafeDate(value as any);
 };
 
 export const formatConversationTime = (value?: ChatDateValue) => {
-  const date = coerceChatDate(value);
-
-  if (!date) {
-    return "";
-  }
-
+  if (!value) return "";
+  const date = parseSafeDate(value as any);
   const now = new Date();
 
-  if (isToday(date)) {
-    return "Hôm nay";
-  }
-
-  if (isYesterday(date)) {
-    return "Hôm qua";
-  }
+  if (isToday(date)) return "Hôm nay";
+  if (isYesterday(date)) return "Hôm qua";
 
   return format(date, isSameYear(date, now) ? "dd/MM" : "dd/MM/yy");
 };
 
-export const formatTimeAgo = (
-  value?: ChatDateValue,
-  options?: { withPrefix?: boolean },
-) => {
-  const date = coerceChatDate(value);
-
-  if (!date) {
-    return "";
-  }
-
-  return formatDistanceToNow(date, {
-    addSuffix: options?.withPrefix ?? false,
-    locale: vi,
-  }).replace(/^khoảng\s+/i, "");
+export const formatTimeAgo = (value?: ChatDateValue) => {
+  if (!value) return "";
+  return formatRelativeTime(value as any);
 };
 
 export const getConversationPresenceSubtitle = (presence?: PresenceLike) => {
   if (!presence || presence.status === "offline") {
-    const lastSeenLabel = formatTimeAgo(presence?.lastSeen, {
-      withPrefix: true,
-    });
-
-    return lastSeenLabel ? `Hoạt động ${lastSeenLabel}` : "Ngoại tuyến";
+    const lastSeenLabel = formatTimeAgo(presence?.lastSeen);
+    return lastSeenLabel && lastSeenLabel !== "Vừa xong" 
+      ? `Hoạt động ${lastSeenLabel}` 
+      : "Ngoại tuyến";
   }
 
   if (presence.status === "away") {
@@ -305,33 +214,18 @@ export const getGroupConversationSubtitle = (participantCount: number) => {
 };
 
 export const formatMessageTimestamp = (value?: ChatDateValue) => {
-  const date = coerceChatDate(value);
-
-  if (!date) {
-    return "";
-  }
-
-  return format(date, "HH:mm");
+  if (!value) return "";
+  return format(parseSafeDate(value as any), "HH:mm");
 };
 
 export const formatMessageDateLabel = (value?: ChatDateValue) => {
-  const date = coerceChatDate(value);
+  if (!value) return "";
+  const date = parseSafeDate(value as any);
 
-  if (!date) {
-    return "";
-  }
+  if (isToday(date)) return "Hôm nay";
+  if (isYesterday(date)) return "Hôm qua";
 
-  if (isToday(date)) {
-    return "Hôm nay";
-  }
-
-  if (isYesterday(date)) {
-    return "Hôm qua";
-  }
-
-  return format(date, "EEEE, dd 'tháng' MM, yyyy", {
-    locale: vi,
-  });
+  return format(date, "EEEE, dd 'tháng' MM, yyyy", { locale: vi });
 };
 
 export const getConversationUnreadState = (

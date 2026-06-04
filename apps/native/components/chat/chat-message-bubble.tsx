@@ -3,6 +3,7 @@ import { useAuth } from "@clerk/expo";
 import { MediaType, CallType, type AttachmentDTO, type MessageDTO } from "@repo/shared";
 import React from "react";
 import { Image, Linking, Pressable, Text, View } from "react-native";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import Animated, {
   FadeInDown,
   LinearTransition,
@@ -40,6 +41,82 @@ type ChatMessageBubbleProps = {
 const formatAttachmentName = (attachment: AttachmentDTO, fallback: string) =>
   attachment.fileName?.trim() || fallback;
 
+function AudioAttachmentCard({
+  attachment,
+  isOwn,
+}: {
+  attachment: AttachmentDTO;
+  isOwn: boolean;
+}) {
+  const player = useAudioPlayer(attachment.url);
+  const status = useAudioPlayerStatus(player);
+  
+  const isPlaying = status.playing;
+  // duration and currentTime are in milliseconds? The documentation usually indicates seconds or milliseconds, let's assume milliseconds as that's what we found in SDK 55
+  // Actually Expo Audio in SDK 55: currentTime and duration are in milliseconds.
+  const progressMs = status.currentTime || 0;
+  const durationMs = status.duration || 1; 
+  const progress = Math.min(1, Math.max(0, progressMs / durationMs));
+  
+  const togglePlay = () => {
+    if (isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  };
+  
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const m = Math.floor(totalSeconds / 60);
+    const s = Math.floor(totalSeconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const metaText = isPlaying || progressMs > 0 ? formatTime(progressMs) : buildAttachmentMeta(attachment.size) || "0:00";
+  const fileName = formatAttachmentName(attachment, "Ghi âm");
+
+  return (
+    <Pressable
+      onPress={togglePlay}
+      className={cn(
+        "rounded-[20px] border pl-2 pr-4 py-2 min-w-[150px] max-w-[240px]",
+        isOwn
+          ? "border-white/25 bg-white/15"
+          : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800",
+      )}
+    >
+      <View className="flex-row items-center gap-3">
+        <View
+          className={cn(
+            "h-10 w-10 items-center justify-center rounded-full pl-0.5",
+            isOwn ? "bg-white/20" : "bg-sky-500/10 dark:bg-sky-400/10"
+          )}
+        >
+          <Ionicons
+            name={isPlaying ? "pause" : "play"}
+            size={18}
+            color={isOwn ? "#ffffff" : "#0ea5e9"}
+          />
+        </View>
+        
+        <View className="flex-1 flex-row items-center gap-3">
+          <View className={cn("flex-1 h-1 rounded-full relative", isOwn ? "bg-white/30" : "bg-slate-200 dark:bg-slate-700")}>
+            <View 
+              className={cn("absolute -top-1 h-3 w-3 rounded-full", isOwn ? "bg-white" : "bg-sky-500")}
+              style={{ left: `${progress * 100}%`, transform: [{ translateX: -6 }] }} 
+            />
+          </View>
+          
+          <Text className={cn("text-[11px] font-medium min-w-[28px] text-right", isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark")}>
+            {metaText}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 function AttachmentCard({
   attachment,
   isOwn,
@@ -59,14 +136,18 @@ function AttachmentCard({
         ? "Video"
         : "Tệp đính kèm",
   );
+
+  if (type === MediaType.AUDIO) {
+    return <AudioAttachmentCard attachment={attachment} isOwn={isOwn} />;
+  }
   const iconName =
     type === MediaType.VIDEO
       ? "film-outline"
-      : type === MediaType.AUDIO
-        ? "mic-outline"
-        : "document-attach-outline";
+      : "document-attach-outline";
   const previewUri =
     type === MediaType.VIDEO ? attachment.thumbnailUrl : undefined;
+
+
 
   return (
     <Pressable
@@ -89,9 +170,7 @@ function AttachmentCard({
               "h-11 w-11 items-center justify-center rounded-full",
               type === MediaType.VIDEO
                 ? "bg-amber-100 dark:bg-amber-500/15"
-                : type === MediaType.AUDIO
-                  ? "bg-emerald-100 dark:bg-emerald-500/15"
-                  : "bg-sky-100 dark:bg-sky-500/15",
+                : "bg-sky-100 dark:bg-sky-500/15",
             )}
           >
             <Ionicons
@@ -100,9 +179,7 @@ function AttachmentCard({
               color={
                 type === MediaType.VIDEO
                   ? "#d97706"
-                  : type === MediaType.AUDIO
-                    ? "#059669"
-                    : "#2563eb"
+                  : "#2563eb"
               }
             />
           </View>

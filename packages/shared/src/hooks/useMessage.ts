@@ -115,11 +115,20 @@ export const useSendMessage = (conversationId: string) => {
         _id: tempId,
         senderId: userId ?? 'me',
         conversationId,
-        content: content?.trim() || (hasMedia ? 'Đang gửi tệp...' : ''),
+        content: content?.trim() || '',
         status: MessageStatus.SENT,
         seenBy: userId ? [userId] : [],
         reactionStats: {},
-        attachments: [],
+        attachments: uploadFiles?.map((f, i) => {
+          const fileObj = f.file as any;
+          return {
+            url: f.previewUri || fileObj.uri || '',
+            publicId: `temp-attach-${i}`,
+            mimeType: toAttachmentMimeType(f.type, fileObj.type),
+            fileName: fileObj.name || '',
+            size: fileObj.size || 0,
+          };
+        }) || [],
         replyTo: replyMessage,
         isDeleted: false,
         createdAt: now,
@@ -149,7 +158,7 @@ export const useSendMessage = (conversationId: string) => {
             pages: [
               {
                 ...firstPage,
-                data: [...firstPage.data, optimisticMessage],
+                data: [optimisticMessage, ...firstPage.data],
               },
               ...old.pages.slice(1),
             ],

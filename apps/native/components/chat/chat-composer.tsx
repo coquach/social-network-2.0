@@ -201,6 +201,7 @@ export function ChatComposer({
   recordingDurationMs = 0,
 }: ChatComposerProps) {
   const [isFocused, setIsFocused] = React.useState(false);
+  const [isActionsExpanded, setIsActionsExpanded] = React.useState(false);
   const [inputHeight, setInputHeight] = React.useState(22);
   const inputRef = React.useRef<TextInput>(null);
   const [selection, setSelection] = React.useState({ start: 0, end: 0 });
@@ -228,6 +229,7 @@ export function ChatComposer({
 
       onChange(nextValue);
       setSelection({ start: caretPosition, end: caretPosition });
+      if (isActionsExpanded) setIsActionsExpanded(false);
 
       requestAnimationFrame(() => {
         inputRef.current?.focus();
@@ -300,35 +302,52 @@ export function ChatComposer({
           isFocused ? 'items-end' : 'items-center',
         )}
       >
-        {!isFocused || isRecording ? (
-          <View className="flex-row gap-2">
+        <View className="flex-row gap-2 items-end pb-1">
+          {!isFocused || isRecording || isActionsExpanded ? (
+            <>
+              {isFocused && !isRecording ? (
+                <ComposerActionButton
+                  icon="chevron-back"
+                  label="Thu gọn"
+                  onPress={() => setIsActionsExpanded(false)}
+                />
+              ) : null}
+              <ComposerActionButton
+                icon="camera-outline"
+                label="Chụp ảnh"
+                disabled={disabled || isRecording}
+                onPress={onPickCamera}
+              />
+              <ComposerActionButton
+                icon="images-outline"
+                label="Chọn ảnh hoặc video"
+                disabled={disabled || isRecording}
+                onPress={onPickMedia}
+              />
+              <ComposerActionButton
+                icon="document-attach-outline"
+                label="Chọn tệp"
+                disabled={disabled || isRecording}
+                onPress={onPickFile}
+              />
+              {(!isFocused || !isActionsExpanded) || isRecording ? (
+                <ComposerActionButton
+                  icon={isRecording ? 'stop-circle-outline' : 'mic-outline'}
+                  label={isRecording ? 'Dừng ghi âm' : 'Ghi âm'}
+                  active={isRecording}
+                  disabled={disabled}
+                  onPress={onToggleRecording}
+                />
+              ) : null}
+            </>
+          ) : (
             <ComposerActionButton
-              icon="camera-outline"
-              label="Chụp ảnh"
-              disabled={disabled || isRecording}
-              onPress={onPickCamera}
+              icon="chevron-forward"
+              label="Mở rộng công cụ"
+              onPress={() => setIsActionsExpanded(true)}
             />
-            <ComposerActionButton
-              icon="images-outline"
-              label="Chọn ảnh hoặc video"
-              disabled={disabled || isRecording}
-              onPress={onPickMedia}
-            />
-            <ComposerActionButton
-              icon="document-attach-outline"
-              label="Chọn tệp"
-              disabled={disabled || isRecording}
-              onPress={onPickFile}
-            />
-            <ComposerActionButton
-              icon={isRecording ? 'stop-circle-outline' : 'mic-outline'}
-              label={isRecording ? 'Dừng ghi âm' : 'Ghi âm'}
-              active={isRecording}
-              disabled={disabled}
-              onPress={onToggleRecording}
-            />
-          </View>
-        ) : null}
+          )}
+        </View>
 
         <View
           className={cn(
@@ -346,7 +365,10 @@ export function ChatComposer({
             placeholderTextColor="#6b8aa1"
             value={value}
             selection={selection}
-            onChangeText={onChange}
+            onChangeText={(val) => {
+              onChange(val);
+              if (isActionsExpanded) setIsActionsExpanded(false);
+            }}
             onSelectionChange={(event) => {
               setSelection(event.nativeEvent.selection);
             }}
@@ -354,6 +376,7 @@ export function ChatComposer({
             editable={!disabled}
             onFocus={() => {
               setIsFocused(true);
+              setIsActionsExpanded(false);
               setSelection((current) => ({
                 start: current.start ?? value.length,
                 end: current.end ?? value.length,
@@ -362,6 +385,7 @@ export function ChatComposer({
             }}
             onBlur={() => {
               setIsFocused(false);
+              setIsActionsExpanded(false);
               setInputHeight(22);
             }}
             onContentSizeChange={(event) => {
@@ -395,22 +419,27 @@ export function ChatComposer({
             className={cn('mb-1', !isFocused ? 'self-center mb-0' : '')}
           />
         </View>
-
-        <Button
-          variant={isSendDisabled ? 'secondary' : 'primary'}
-          className={cn(
-            'h-12 w-12 min-h-12 rounded-full px-0',
-            isSendDisabled ? 'opacity-70' : '',
-          )}
-          isDisabled={isSendDisabled}
-          onPress={onSend}
-        >
-          <Ionicons
-            name="paper-plane"
-            size={18}
-            color={isSendDisabled ? '#6b8aa1' : '#ffffff'}
-          />
-        </Button>
+        
+        <View className="pb-1 items-center justify-end">
+          <Button
+            variant={isSendDisabled ? 'secondary' : 'primary'}
+            className={cn(
+              'h-10 w-10 min-w-10 min-h-10 rounded-full px-0',
+              isSendDisabled ? 'opacity-70' : '',
+            )}
+            isDisabled={isSendDisabled}
+            onPress={() => {
+              onSend();
+              setIsActionsExpanded(false);
+            }}
+          >
+            <Ionicons
+              name="paper-plane"
+              size={18}
+              color={isSendDisabled ? '#6b8aa1' : '#ffffff'}
+            />
+          </Button>
+        </View>
       </View>
     </View>
   );

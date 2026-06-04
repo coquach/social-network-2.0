@@ -106,11 +106,26 @@ function ChatConversationRowComponent({
     !conversation.isGroup &&
     (presence?.status === "online" || otherParticipant?.isOnline === true);
   const isHidden = Boolean(userId && conversation.hiddenFor?.includes(userId));
+
+  const lastMessageSenderId = conversation.lastMessage?.senderId;
+  const shouldResolveSender = Boolean(
+    conversation.isGroup &&
+    lastMessageSenderId &&
+    lastMessageSenderId !== userId
+  );
+  
+  const { data: cachedSenderUser } = useUser(lastMessageSenderId ?? "", {
+    enabled: shouldResolveSender,
+  });
+
   const preview = getMessagePreview(
     conversation.lastMessage,
     conversation.isGroup,
     name,
-    { currentUserId: userId ?? null },
+    { 
+      currentUserId: userId ?? null,
+      senderName: cachedSenderUser ? `${cachedSenderUser.firstName || ""} ${cachedSenderUser.lastName || ""}`.trim() : undefined
+    },
   );
 
   return (
@@ -142,39 +157,42 @@ function ChatConversationRowComponent({
               <View className="flex-row items-start gap-3">
                 <Text
                   className={cn(
-                    "flex-1 text-[15px] text-app-fg dark:text-app-fg-dark",
+                    "flex-1 text-[16px] text-app-fg dark:text-app-fg-dark",
                     isUnread ? "font-extrabold" : "font-semibold",
                   )}
                   numberOfLines={1}
                 >
                   {name}
                 </Text>
-                <Text
-                  className={cn(
-                    "text-[11px]",
-                    isUnread
-                      ? "font-bold text-sky-600 dark:text-sky-300"
-                      : "text-app-muted-fg dark:text-app-muted-fg-dark",
-                  )}
-                >
-                  {formatConversationTime(lastActivity)}
-                </Text>
               </View>
 
-              <View className="mt-1.5 flex-row items-center gap-2">
+              <View className="mt-1 flex-row items-center">
                 <Text
                   className={cn(
-                    "flex-1 text-[13px] leading-5",
+                    "flex-shrink text-[13px] leading-5",
                     isHidden
                       ? "italic text-app-muted-fg/90 dark:text-app-muted-fg-dark/90"
                       : isUnread
-                        ? "font-semibold text-app-fg dark:text-app-fg-dark"
+                        ? "font-bold text-app-fg dark:text-app-fg-dark"
                         : "text-app-muted-fg dark:text-app-muted-fg-dark",
                   )}
-                  numberOfLines={2}
+                  numberOfLines={1}
                 >
                   {isHidden ? "Cuộc trò chuyện đang bị ẩn" : preview}
                 </Text>
+
+                {lastActivity ? (
+                  <Text
+                    className={cn(
+                      "flex-shrink-0 text-[12px] ml-1.5",
+                      isUnread
+                        ? "font-bold text-app-fg dark:text-app-fg-dark"
+                        : "text-app-muted-fg dark:text-app-muted-fg-dark",
+                    )}
+                  >
+                    • {formatConversationTime(lastActivity)}
+                  </Text>
+                ) : null}
               </View>
             </View>
           </View>

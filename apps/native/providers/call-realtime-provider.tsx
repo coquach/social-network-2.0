@@ -21,6 +21,15 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
   const client = useCallClient();
   const { setIncomingCall, setActiveCall, reset } = useCallStore();
   const { mutateAsync: joinCallSession } = useJoinCall();
+  const segmentsRef = useRef<string[]>([]);
+  
+  try {
+    const { useSegments } = require('expo-router');
+    const segs = useSegments();
+    useEffect(() => {
+      segmentsRef.current = segs;
+    }, [segs]);
+  } catch (e) {}
 
   // Guard so caller only calls joinCallSession once per accepted call
   const joinedCallIds = useRef<Set<string>>(new Set());
@@ -58,6 +67,15 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
               console.error('[CallRealtimeProvider] Pre-fetch incoming Stream call failed:', error);
             }
           }
+
+          // If the user is CURRENTLY in the chat screen for this conversation, auto-navigate to the call screen
+          try {
+            const isInsideTargetChat = segmentsRef.current.includes('chat') && segmentsRef.current.includes(payload.conversationId);
+            if (isInsideTargetChat) {
+              const { router } = require('expo-router');
+              router.push('/chat/call');
+            }
+          } catch (e) {}
         }
       }
     };
@@ -132,6 +150,16 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
         outgoingCall?.conversationId === conversationId
       ) {
         reset();
+        
+        // Ensure Stream SDK also drops the call if it's active
+        if (client) {
+          try {
+            const call = client.call('default', callId);
+            call.leave().catch(console.warn);
+          } catch (e) {
+            console.warn(e);
+          }
+        }
       }
     };
 
