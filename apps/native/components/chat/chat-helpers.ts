@@ -10,6 +10,8 @@ import {
   isSameYear,
   isToday,
   isYesterday,
+  parseISO,
+  isValid,
 } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -91,9 +93,21 @@ const coerceChatDate = (value: ChatDateValue): Date | null => {
     }
   }
 
-  const date = value instanceof Date ? value : new Date(value);
+  let date: Date;
 
-  if (Number.isNaN(date.getTime()) || date.getTime() === 0) {
+  if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === "string") {
+    const normalized = value.replace(' ', 'T');
+    date = new Date(normalized);
+    if (!isValid(date)) {
+      date = parseISO(normalized);
+    }
+  } else {
+    date = new Date(value as any);
+  }
+
+  if (!isValid(date) || date.getTime() === 0) {
     return null;
   }
 

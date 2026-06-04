@@ -113,7 +113,7 @@ export function AppModal({
                 {description}
               </Dialog.Description>
             ) : null}
-            {children ? <View className="mt-5">{children}</View> : null}
+            {children ? <View className="mt-5 flex-shrink">{children}</View> : null}
             {footer ? <View className={cn('mt-5 gap-3', footerClassName)}>{footer}</View> : null}
           </Dialog.Content>
         </KeyboardAvoidingView>

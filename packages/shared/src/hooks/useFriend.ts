@@ -146,7 +146,7 @@ export const useFriends = (
  */
 export const useFriendUsers = (
   userId: string,
-  params?: QueryParams,
+  params?: QueryParams & { search?: string },
   options?: FriendQueryOptions,
 ) => {
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({

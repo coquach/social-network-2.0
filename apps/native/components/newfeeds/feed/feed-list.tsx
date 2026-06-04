@@ -22,7 +22,7 @@ type FeedListProps<TItem> = {
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   onLoadMore: () => void;
-  onScroll: any;
+  onScroll?: any;
   scrollEnabled: boolean;
   refreshing?: boolean;
   onRefresh?: () => void;

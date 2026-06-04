@@ -11,7 +11,6 @@ import { Card } from 'heroui-native/card';
 import { useAppTheme } from '~/providers/theme-provider';
 import { MusicRecommendationModal } from './music/music-recommendation-modal';
 import { MusicRecommendationPlayer } from './music/music-recommendation-player';
-
 export function RecommendedMusicSection() {
   const { colors, resolvedTheme } = useAppTheme();
   const recommendationsQuery = useMusicRecommendations({ page: 1, limit: 20 });

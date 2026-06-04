@@ -1,28 +1,27 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useToast } from 'heroui-native/toast';
-import { 
-  useSendFriendRequest, 
+import {
+  useSendFriendRequest,
   useRemoveFriend,
   useAcceptFriendRequest,
   useRejectFriendRequest,
   RelationStatus,
   MessagePrivacy,
-  type UserProfile
+  type UserProfile,
 } from '@repo/shared';
 import { AppToast } from '~/components/ui/app-toast';
-
+import { useStartConversation } from '~/hooks/use-start-conversation';
 
 interface ProfileActionButtonsProps {
   user: UserProfile;
 }
 
 export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
-  const router = useRouter();
   const { toast } = useToast();
-  
+
   const showToast = React.useCallback(
     (title: string, message: string, variant: 'success' | 'error') => {
       toast.show({
@@ -37,18 +36,39 @@ export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
     },
     [toast],
   );
-  
+
   const sendFriendRequest = useSendFriendRequest();
   const removeFriend = useRemoveFriend();
   const acceptFriendRequest = useAcceptFriendRequest();
   const rejectFriendRequest = useRejectFriendRequest();
+  const { startConversation, isPending: isStartingChat } =
+    useStartConversation();
 
   const relationStatus = user.relation?.status || RelationStatus.NONE;
-  const privacySettings = user.privacySettings || { messagePrivacy: MessagePrivacy.EVERYONE };
+  const privacySettings = user.privacySettings || {
+    messagePrivacy: MessagePrivacy.EVERYONE,
+  };
 
-  const handleMessage = () => {
-    // Navigate to chat screen with this user
-    router.push(`/(stack)/chat/${user.id}`);
+  const handleMessage = async () => {
+    // 1. Proactive Privacy Check
+    if (
+      privacySettings.messagePrivacy === MessagePrivacy.FRIENDS &&
+      relationStatus !== RelationStatus.FRIEND
+    ) {
+      showToast(
+        'Không thể nhắn tin',
+        'Người dùng này chỉ nhận tin nhắn từ bạn bè',
+        'error',
+      );
+      return;
+    }
+
+    // 2. Start Conversation
+    try {
+      await startConversation(user.id);
+    } catch (e) {
+      showToast('Lỗi', 'Không thể bắt đầu cuộc trò chuyện', 'error');
+    }
   };
 
   const handleAddFriend = async () => {
@@ -88,8 +108,8 @@ export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
   };
 
   // Determine if messaging is allowed
-  const canMessage = 
-    privacySettings.messagePrivacy === MessagePrivacy.EVERYONE || 
+  const canMessage =
+    privacySettings.messagePrivacy === MessagePrivacy.EVERYONE ||
     relationStatus === RelationStatus.FRIEND;
 
   return (
@@ -108,7 +128,8 @@ export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
         </Pressable>
       )}
 
-      {(relationStatus === RelationStatus.PENDING || relationStatus === 'REQUESTED_OUT') && (
+      {(relationStatus === RelationStatus.PENDING ||
+        relationStatus === 'REQUESTED_OUT') && (
         <Pressable
           onPress={handleRemoveFriend}
           disabled={removeFriend.isPending}
@@ -160,17 +181,29 @@ export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
       {/* Message Button */}
       <Pressable
         onPress={handleMessage}
-        disabled={!canMessage}
+        disabled={!canMessage || isStartingChat}
         className={`h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl ${
-          canMessage 
+          canMessage
             ? 'bg-app-surface-elevated active:opacity-85 dark:bg-app-surface-elevated-dark'
             : 'bg-app-border dark:bg-app-border-dark opacity-50'
         }`}
       >
-        <Ionicons name="chatbubble-outline" size={18} color={canMessage ? "#334155" : "#94a3b8"} />
-        <Text className={`text-[15px] font-semibold ${canMessage ? 'text-app-fg dark:text-app-fg-dark' : 'text-app-muted-fg'}`}>
-          Nhắn tin
-        </Text>
+        {isStartingChat ? (
+          <ActivityIndicator size="small" color="#334155" />
+        ) : (
+          <>
+            <Ionicons
+              name="chatbubble-outline"
+              size={18}
+              color={canMessage ? '#334155' : '#94a3b8'}
+            />
+            <Text
+              className={`text-[15px] font-semibold ${canMessage ? 'text-app-fg dark:text-app-fg-dark' : 'text-app-muted-fg'}`}
+            >
+              Nhắn tin
+            </Text>
+          </>
+        )}
       </Pressable>
     </View>
   );

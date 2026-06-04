@@ -14,6 +14,7 @@ import {
   useEmotionDashboardTrend,
 } from '@repo/shared/hooks/useEmotion';
 import { EmotionInsightTone, EmotionLabel } from '@repo/shared/types/emotion.types';
+import { RecommendedMusicSection } from '~/components/newfeeds/recommended-music-section';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 16;
@@ -360,6 +361,11 @@ const getInsightTypeLabel = (type: string) => {
                 </View>
               )}
             </View>
+          </View>
+
+          {/* MUSIC RECOMMENDATION BENTO */}
+          <View className="mb-4">
+            <RecommendedMusicSection />
           </View>
 
           {/* AI ADVICE BENTO */}

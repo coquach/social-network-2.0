@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/expo';
 import { Redirect, withLayoutContext } from 'expo-router';
 import React from 'react';
+import { Dimensions } from 'react-native';
 
 import { FloatingTabBar } from '~/components/navigation/floating-tab-bar';
 import { TabBarVisibilityProvider } from '~/components/navigation/tab-bar-visibility-context';
@@ -23,6 +24,7 @@ export default function TabsLayout() {
     <TabBarVisibilityProvider>
       <SwipeableTabs
         tabBarPosition="bottom"
+        initialLayout={{ width: Dimensions.get('window').width }}
         screenOptions={{
           swipeEnabled: true,
           animationEnabled: true,

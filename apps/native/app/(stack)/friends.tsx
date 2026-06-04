@@ -18,12 +18,14 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
-import { RefreshControl, View } from 'react-native';
+import { RefreshControl, View, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 import {
   FriendCard,
   FriendCardSkeleton,
+  FriendListItem,
   type FriendCardAction,
   type FriendCardUser,
 } from '~/components/friends/friend-card';
@@ -36,6 +38,7 @@ import {
   FriendsTopTabs,
   type FriendsTabKey,
 } from '~/components/friends/friends-top-tabs';
+import { AppHeader } from '~/components/ui/app-header';
 import { AppToast, type AppToastData } from '~/components/ui/app-toast';
 
 const PAGE_SIZE = 20;
@@ -136,7 +139,7 @@ const getRequestedTab = (tab?: string | string[]): FriendsTabKey => {
 
 export default function FriendsScreen() {
   const router = useRouter();
-  const { tab } = useLocalSearchParams<{ tab?: string | string[] }>();
+  const { tab, userId, userName } = useLocalSearchParams<{ tab?: string | string[], userId?: string, userName?: string }>();
   const insets = useSafeAreaInsets();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = React.useState<FriendsTabKey>(() =>
@@ -145,6 +148,13 @@ export default function FriendsScreen() {
   const [pendingActionKey, setPendingActionKey] = React.useState<string | null>(
     null,
   );
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   React.useEffect(() => {
     setActiveTab(getRequestedTab(tab));
@@ -153,10 +163,13 @@ export default function FriendsScreen() {
   const currentUserQuery = useCurrentUser();
   const currentUser = currentUserQuery.data;
 
+  const isViewingOtherUser = Boolean(userId && userId !== currentUser?.id);
+  const targetUserId = isViewingOtherUser ? userId! : (currentUser?.id ?? '');
+
   const friendsQuery = useFriendUsers(
-    currentUser?.id ?? '',
-    { limit: PAGE_SIZE },
-    { enabled: activeTab === 'friends' && Boolean(currentUser?.id) },
+    targetUserId,
+    { limit: PAGE_SIZE, search: debouncedSearch },
+    { enabled: activeTab === 'friends' && Boolean(targetUserId) },
   );
   const requestsQuery = useFriendRequestUsers(
     { limit: PAGE_SIZE },
@@ -164,7 +177,7 @@ export default function FriendsScreen() {
   );
   const suggestionsQuery = useFriendSuggestions(
     { limit: PAGE_SIZE },
-    { enabled: activeTab === 'suggestions' },
+    { enabled: !isViewingOtherUser },
   );
   const blockedQuery = useBlockedUserProfiles(
     { limit: PAGE_SIZE },
@@ -448,6 +461,17 @@ export default function FriendsScreen() {
       primaryAction: FriendCardAction;
       secondaryAction?: FriendCardAction;
     } => {
+      if (isViewingOtherUser) {
+        return {
+          primaryAction: {
+            label: 'Xem hồ sơ',
+            icon: 'person-circle-outline',
+            variant: 'primary',
+            onPress: () => router.push(`/user/${item.user.id}`),
+          }
+        };
+      }
+
       if (activeTab === 'requests') {
         return {
           primaryAction: {
@@ -539,6 +563,16 @@ export default function FriendsScreen() {
     ({ item }: { item: FriendListItem }) => {
       const { primaryAction, secondaryAction } = getActionsForItem(item);
 
+      if (activeTab === 'friends' || activeTab === 'blocked') {
+        return (
+          <FriendListItem
+            user={item.user}
+            primaryAction={primaryAction}
+            secondaryAction={secondaryAction}
+          />
+        );
+      }
+
       return (
         <FriendCard
           user={item.user}
@@ -554,11 +588,35 @@ export default function FriendsScreen() {
   const emptyState = emptyCopy[activeTab];
 
   return (
-    <View
-      className="flex-1 bg-[#f0f2f5] dark:bg-app-bg-dark"
-      style={{ paddingTop: insets.top }}
-    >
-      <FriendsTopTabs activeTab={activeTab} onTabChange={setActiveTab} />
+    <View className="flex-1 bg-[#f0f2f5] dark:bg-app-bg-dark">
+      <AppHeader title={isViewingOtherUser ? `Bạn bè của ${userName ?? 'người dùng'}` : "Bạn bè"} variant="default" />
+      {!isViewingOtherUser && (
+        <FriendsTopTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      )}
+
+      {activeTab === 'friends' && (
+        <View className="bg-app-surface px-5 pb-3 pt-3 dark:bg-app-bg-dark">
+          <View className="h-11 flex-row items-center rounded-full bg-app-surface-elevated px-4 dark:bg-app-surface-elevated-dark">
+            <Ionicons name="search" size={20} color="#64748b" />
+            <TextInput
+              className="flex-1 ml-2 text-base text-app-fg dark:text-app-fg-dark font-medium"
+              placeholder="Tìm kiếm bạn bè..."
+              placeholderTextColor="#64748b"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <Ionicons 
+                name="close-circle" 
+                size={20} 
+                color="#64748b" 
+                onPress={() => setSearchQuery('')}
+              />
+            )}
+          </View>
+        </View>
+      )}
 
       {isInitialLoading && activeItems.length === 0 ? (
         <View className="gap-5 px-5 py-5">

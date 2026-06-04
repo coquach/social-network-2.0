@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useClerk } from '@clerk/expo';
 import { useRouter } from 'expo-router';
 import { Switch } from 'heroui-native/switch';
+import { useToast } from 'heroui-native/toast';
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,20 +12,23 @@ import { INDIGO_ETHER } from '~/components/profile/profile-theme';
 import { useProfileLogout } from '~/components/profile/use-profile-logout';
 import { AppCard } from '~/components/ui/app-card';
 import { AppHeader } from '~/components/ui/app-header';
+import { AppToast } from '~/components/ui/app-toast';
 import { useAppTheme } from '~/providers/theme-provider';
 
 
 const settingsItems = [
-  { id: 'account', label: 'Account center', icon: 'person-circle-outline' },
-  { id: 'privacy', label: 'Privacy', icon: 'lock-closed-outline', path: '/privacy' },
-  { id: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
-  { id: 'language', label: 'Language', icon: 'language-outline' },
-  { id: 'support', label: 'Help and support', icon: 'help-circle-outline', path: '/support' },
+  { id: 'account', label: 'Trung tâm tài khoản', icon: 'person-circle-outline' },
+  { id: 'privacy', label: 'Quyền riêng tư', icon: 'lock-closed-outline', path: '/settings/privacy-settings' },
+  { id: 'notifications', label: 'Thông báo', icon: 'notifications-outline', path: '/settings/notification-settings' },
+  { id: 'language', label: 'Ngôn ngữ', icon: 'language-outline' },
+  { id: 'privacy-policy', label: 'Chính sách bảo mật', icon: 'shield-checkmark-outline', path: '/settings/privacy-policy' },
+  { id: 'support', label: 'Trợ giúp và hỗ trợ', icon: 'help-circle-outline', path: '/settings/support' },
 ] as const;
 
 export default function SettingsScreen() {
   const { signOut } = useClerk();
   const router = useRouter();
+  const { toast } = useToast();
   const insets = useSafeAreaInsets();
   const { resolvedTheme, setThemePreference } = useAppTheme();
 
@@ -46,9 +50,26 @@ export default function SettingsScreen() {
 
   const handleItemPress = (id: string) => {
     if (id === 'notifications') {
-      router.push('/(stack)/notification-settings');
+      router.push('/(stack)/settings/notification-settings');
     } else if (id === 'privacy') {
-      router.push('/(stack)/privacy-settings');
+      router.push('/(stack)/settings/privacy-settings');
+    } else if (id === 'privacy-policy') {
+      router.push('/(stack)/settings/privacy-policy');
+    } else if (id === 'support') {
+      router.push('/(stack)/settings/support');
+    } else if (id === 'language' || id === 'account') {
+      toast.show({
+        component: (toastProps) => (
+          <AppToast
+            toastProps={toastProps}
+            toast={{
+              title: 'Tính năng đang phát triển',
+              message: 'Tính năng này hiện chưa được hỗ trợ.',
+              variant: 'info',
+            }}
+          />
+        ),
+      });
     }
   };
 
@@ -127,7 +148,7 @@ export default function SettingsScreen() {
               onPress={openLogoutModal}
               className="h-12 items-center justify-center rounded-2xl bg-rose-500/12 active:bg-rose-500/20 dark:bg-rose-500/16 dark:active:bg-rose-500/28"
             >
-              <Text className="text-[15px] font-semibold text-rose-500">Log out</Text>
+              <Text className="text-[15px] font-semibold text-rose-500">Đăng xuất</Text>
             </Pressable>
           </View>
         </ScrollView>

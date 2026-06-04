@@ -6,12 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
 import { AppCard } from '~/components/ui/app-card';
 import { AppBackButton, AppHeader } from '~/components/ui/app-header';
-import { 
-  useCurrentUser, 
+import {
+  useCurrentUser,
   useUpdateProfile,
-  PrivacyLevel, 
-  MessagePrivacy, 
-  type UserPrivacySettings 
+  PrivacyLevel,
+  MessagePrivacy,
+  type UserPrivacySettings,
 } from '@repo/shared';
 
 type SettingType = keyof UserPrivacySettings;
@@ -20,7 +20,7 @@ export default function PrivacySettingsScreen() {
   const insets = useSafeAreaInsets();
   const { data: currentUser } = useCurrentUser();
   const updateProfile = useUpdateProfile();
-  
+
   const [activeSheet, setActiveSheet] = useState<SettingType | null>(null);
 
   const privacySettings = currentUser?.privacySettings || {
@@ -41,25 +41,37 @@ export default function PrivacySettingsScreen() {
   };
 
   const renderOption = (
-    label: string, 
-    description: string, 
-    icon: any, 
-    isSelected: boolean, 
-    onSelect: () => void
+    label: string,
+    description: string,
+    icon: any,
+    isSelected: boolean,
+    onSelect: () => void,
   ) => (
     <Pressable
       onPress={onSelect}
       className={`flex-row items-center gap-3 rounded-2xl px-3 py-3 mb-2 ${
-        isSelected ? 'bg-sky-500/10 dark:bg-sky-400/15' : 'active:bg-app-surface-elevated dark:active:bg-app-surface-elevated-dark'
+        isSelected
+          ? 'bg-sky-500/10 dark:bg-sky-400/15'
+          : 'active:bg-app-surface-elevated dark:active:bg-app-surface-elevated-dark'
       }`}
     >
-      <View className={`h-10 w-10 items-center justify-center rounded-xl ${
-        isSelected ? 'bg-sky-500/20 dark:bg-sky-400/20' : 'bg-app-surface-elevated dark:bg-app-surface-elevated-dark'
-      }`}>
-        <Ionicons name={icon} size={20} color={isSelected ? '#0ea5e9' : '#64748b'} />
+      <View
+        className={`h-10 w-10 items-center justify-center rounded-xl ${
+          isSelected
+            ? 'bg-sky-500/20 dark:bg-sky-400/20'
+            : 'bg-app-surface-elevated dark:bg-app-surface-elevated-dark'
+        }`}
+      >
+        <Ionicons
+          name={icon}
+          size={20}
+          color={isSelected ? '#0ea5e9' : '#64748b'}
+        />
       </View>
       <View className="flex-1">
-        <Text className={`text-[15px] font-medium ${isSelected ? 'text-sky-600 dark:text-sky-400' : 'text-app-fg dark:text-app-fg-dark'}`}>
+        <Text
+          className={`text-[15px] font-medium ${isSelected ? 'text-sky-600 dark:text-sky-400' : 'text-app-fg dark:text-app-fg-dark'}`}
+        >
           {label}
         </Text>
         <Text className="mt-0.5 text-[12px] text-app-muted-fg dark:text-app-muted-fg-dark">
@@ -75,7 +87,11 @@ export default function PrivacySettingsScreen() {
   return (
     <>
       <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-        <AppHeader leading={<AppBackButton />} title="Quyền riêng tư" variant="default" />
+        <AppHeader
+          leading={<AppBackButton />}
+          title="Quyền riêng tư"
+          variant="default"
+        />
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
@@ -91,7 +107,11 @@ export default function PrivacySettingsScreen() {
                 onPress={() => setActiveSheet('profileVisibility')}
               >
                 <View className="h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/12 dark:bg-indigo-400/18">
-                  <Ionicons name="person-circle-outline" size={18} color="#818cf8" />
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={18}
+                    color="#818cf8"
+                  />
                 </View>
                 <View className="flex-1">
                   <Text className="text-[15px] font-medium text-app-fg dark:text-app-fg-dark">
@@ -103,7 +123,12 @@ export default function PrivacySettingsScreen() {
                 </View>
                 <View className="flex-row items-center gap-1">
                   <Text className="text-[13px] text-app-muted-fg dark:text-app-muted-fg-dark">
-                    {privacySettings.profileVisibility === PrivacyLevel.PUBLIC ? 'Công khai' : privacySettings.profileVisibility === PrivacyLevel.FRIENDS ? 'Bạn bè' : 'Chỉ mình tôi'}
+                    {privacySettings.profileVisibility === PrivacyLevel.PUBLIC
+                      ? 'Công khai'
+                      : privacySettings.profileVisibility ===
+                          PrivacyLevel.FRIENDS
+                        ? 'Bạn bè'
+                        : 'Chỉ mình tôi'}
                   </Text>
                   <Ionicons name="chevron-forward" size={16} color="#64748b" />
                 </View>
@@ -129,7 +154,13 @@ export default function PrivacySettingsScreen() {
                 </View>
                 <View className="flex-row items-center gap-1">
                   <Text className="text-[13px] text-app-muted-fg dark:text-app-muted-fg-dark">
-                    {privacySettings.friendListVisibility === PrivacyLevel.PUBLIC ? 'Công khai' : privacySettings.friendListVisibility === PrivacyLevel.FRIENDS ? 'Bạn bè' : 'Chỉ mình tôi'}
+                    {privacySettings.friendListVisibility ===
+                    PrivacyLevel.PUBLIC
+                      ? 'Công khai'
+                      : privacySettings.friendListVisibility ===
+                          PrivacyLevel.FRIENDS
+                        ? 'Bạn bè'
+                        : 'Chỉ mình tôi'}
                   </Text>
                   <Ionicons name="chevron-forward" size={16} color="#64748b" />
                 </View>
@@ -143,7 +174,11 @@ export default function PrivacySettingsScreen() {
                 onPress={() => setActiveSheet('messagePrivacy')}
               >
                 <View className="h-9 w-9 items-center justify-center rounded-xl bg-pink-500/12 dark:bg-pink-400/18">
-                  <Ionicons name="chatbubble-ellipses-outline" size={18} color="#f472b6" />
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={18}
+                    color="#f472b6"
+                  />
                 </View>
                 <View className="flex-1">
                   <Text className="text-[15px] font-medium text-app-fg dark:text-app-fg-dark">
@@ -155,7 +190,9 @@ export default function PrivacySettingsScreen() {
                 </View>
                 <View className="flex-row items-center gap-1">
                   <Text className="text-[13px] text-app-muted-fg dark:text-app-muted-fg-dark">
-                    {privacySettings.messagePrivacy === MessagePrivacy.EVERYONE ? 'Mọi người' : 'Chỉ bạn bè'}
+                    {privacySettings.messagePrivacy === MessagePrivacy.EVERYONE
+                      ? 'Mọi người'
+                      : 'Chỉ bạn bè'}
                   </Text>
                   <Ionicons name="chevron-forward" size={16} color="#64748b" />
                 </View>
@@ -177,21 +214,23 @@ export default function PrivacySettingsScreen() {
             'Bất kỳ ai cũng có thể xem hồ sơ của bạn',
             'globe-outline',
             privacySettings.profileVisibility === PrivacyLevel.PUBLIC,
-            () => handleUpdateSetting('profileVisibility', PrivacyLevel.PUBLIC)
+            () => handleUpdateSetting('profileVisibility', PrivacyLevel.PUBLIC),
           )}
           {renderOption(
             'Bạn bè',
             'Chỉ bạn bè của bạn mới có thể xem',
             'people-outline',
             privacySettings.profileVisibility === PrivacyLevel.FRIENDS,
-            () => handleUpdateSetting('profileVisibility', PrivacyLevel.FRIENDS)
+            () =>
+              handleUpdateSetting('profileVisibility', PrivacyLevel.FRIENDS),
           )}
           {renderOption(
             'Chỉ mình tôi',
             'Người khác sẽ thấy hồ sơ bị khoá',
             'lock-closed-outline',
             privacySettings.profileVisibility === PrivacyLevel.PRIVATE,
-            () => handleUpdateSetting('profileVisibility', PrivacyLevel.PRIVATE)
+            () =>
+              handleUpdateSetting('profileVisibility', PrivacyLevel.PRIVATE),
           )}
         </View>
       </AppBottomSheet>
@@ -208,21 +247,24 @@ export default function PrivacySettingsScreen() {
             'Bất kỳ ai trên ứng dụng',
             'globe-outline',
             privacySettings.friendListVisibility === PrivacyLevel.PUBLIC,
-            () => handleUpdateSetting('friendListVisibility', PrivacyLevel.PUBLIC)
+            () =>
+              handleUpdateSetting('friendListVisibility', PrivacyLevel.PUBLIC),
           )}
           {renderOption(
             'Bạn bè',
             'Chỉ bạn bè của bạn mới có thể xem',
             'people-outline',
             privacySettings.friendListVisibility === PrivacyLevel.FRIENDS,
-            () => handleUpdateSetting('friendListVisibility', PrivacyLevel.FRIENDS)
+            () =>
+              handleUpdateSetting('friendListVisibility', PrivacyLevel.FRIENDS),
           )}
           {renderOption(
             'Chỉ mình tôi',
             'Không ai khác thấy được danh sách này',
             'lock-closed-outline',
             privacySettings.friendListVisibility === PrivacyLevel.PRIVATE,
-            () => handleUpdateSetting('friendListVisibility', PrivacyLevel.PRIVATE)
+            () =>
+              handleUpdateSetting('friendListVisibility', PrivacyLevel.PRIVATE),
           )}
         </View>
       </AppBottomSheet>
@@ -239,14 +281,15 @@ export default function PrivacySettingsScreen() {
             'Ai cũng có thể nhắn tin cho bạn',
             'globe-outline',
             privacySettings.messagePrivacy === MessagePrivacy.EVERYONE,
-            () => handleUpdateSetting('messagePrivacy', MessagePrivacy.EVERYONE)
+            () =>
+              handleUpdateSetting('messagePrivacy', MessagePrivacy.EVERYONE),
           )}
           {renderOption(
             'Chỉ bạn bè',
             'Chỉ nhận tin nhắn từ bạn bè',
             'people-outline',
             privacySettings.messagePrivacy === MessagePrivacy.FRIENDS,
-            () => handleUpdateSetting('messagePrivacy', MessagePrivacy.FRIENDS)
+            () => handleUpdateSetting('messagePrivacy', MessagePrivacy.FRIENDS),
           )}
         </View>
       </AppBottomSheet>

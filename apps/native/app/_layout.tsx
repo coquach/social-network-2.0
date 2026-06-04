@@ -1,5 +1,5 @@
 import { ClerkProvider } from '@clerk/expo';
-import { tokenCache } from '@clerk/expo/token-cache';
+import { tokenCache } from '~/lib/token-cache';
 import { useFonts } from 'expo-font';
 import 'expo-keep-awake';
 import { SplashScreen, Stack } from 'expo-router';
@@ -90,16 +90,16 @@ export default function RootLayout() {
       >
         <SafeAreaProvider>
           <NativeQueryProvider>
-            <HeroUINativeProvider config={heroUIConfig}>
-              <NativeSharedProvider>
-                <NotificationProvider>
-                  <NativeSocketProvider>
-                    <NativeChatRealtimeProvider>
-                      <CallProvider>
-                        <CallRealtimeProvider>
-                          <NativePresenceProvider>
-                            <AppThemeProvider>
-                              <KeyboardProvider>
+            <KeyboardProvider>
+              <HeroUINativeProvider config={heroUIConfig}>
+                <NativeSharedProvider>
+                  <NotificationProvider>
+                    <NativeSocketProvider>
+                      <NativeChatRealtimeProvider>
+                        <CallProvider>
+                          <CallRealtimeProvider>
+                            <NativePresenceProvider>
+                              <AppThemeProvider>
                                 <BottomSheetModalProvider>
                                   <Stack screenOptions={{ headerShown: false }}>
                                     <Stack.Screen name="index" />
@@ -114,16 +114,16 @@ export default function RootLayout() {
                                   <CallManager />
                                   <CallMiniOverlay />
                                 </BottomSheetModalProvider>
-                              </KeyboardProvider>
-                            </AppThemeProvider>
-                          </NativePresenceProvider>
-                        </CallRealtimeProvider>
-                      </CallProvider>
-                    </NativeChatRealtimeProvider>
-                  </NativeSocketProvider>
-                </NotificationProvider>
-              </NativeSharedProvider>
-            </HeroUINativeProvider>
+                              </AppThemeProvider>
+                            </NativePresenceProvider>
+                          </CallRealtimeProvider>
+                        </CallProvider>
+                      </NativeChatRealtimeProvider>
+                    </NativeSocketProvider>
+                  </NotificationProvider>
+                </NativeSharedProvider>
+              </HeroUINativeProvider>
+            </KeyboardProvider>
           </NativeQueryProvider>
         </SafeAreaProvider>
       </ClerkProvider>

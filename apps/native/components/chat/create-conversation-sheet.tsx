@@ -3,7 +3,7 @@ import {
   type UserDTO,
   useCreateConversation,
   useCurrentUser,
-  useSearchUsers,
+  useFriendUsers,
 } from '@repo/shared';
 import { router } from 'expo-router';
 import { Button } from 'heroui-native/button';
@@ -99,12 +99,12 @@ export function CreateConversationSheet({
   const deferredDirectQuery = React.useDeferredValue(directQuery.trim());
   const deferredGroupQuery = React.useDeferredValue(groupQuery.trim());
 
-  const directSearch = useSearchUsers({
-    query: deferredDirectQuery,
+  const directSearch = useFriendUsers(currentUser?.id ?? '', {
+    search: deferredDirectQuery,
     limit: SEARCH_LIMIT,
   });
-  const groupSearch = useSearchUsers({
-    query: deferredGroupQuery,
+  const groupSearch = useFriendUsers(currentUser?.id ?? '', {
+    search: deferredGroupQuery,
     limit: SEARCH_LIMIT,
   });
 
@@ -265,6 +265,7 @@ export function CreateConversationSheet({
       titleClassName="text-center"
       descriptionClassName="text-center"
       bodyClassName="mt-4"
+      androidKeyboardInputMode="adjustResize"
       footer={
         <View className="flex-row gap-3">
           <Button

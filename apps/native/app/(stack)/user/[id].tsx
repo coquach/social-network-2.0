@@ -14,7 +14,6 @@ import React from 'react';
 import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
 import { FeedList } from '~/components/newfeeds/feed/feed-list';
 import { PostCardFull } from '~/components/post/post-card-full';
 import { SharePost } from '~/components/post/share-post';
@@ -29,21 +28,23 @@ const DEFAULT_COVER = Image.resolveAssetSource(
 ).uri;
 const DEFAULT_BIO = 'Chưa cập nhật tiểu sử.';
 
-
 export default function OtherUserProfileScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { handleScroll } = useTabBarAutoHide();
   const insets = useSafeAreaInsets();
-  
-  const [activePostTab, setActivePostTab] = React.useState<'posts' | 'shares'>('posts');
 
-  const { data: user, isLoading: isUserLoading } = useUser(id as string, { enabled: !!id });
+  const [activePostTab, setActivePostTab] = React.useState<'posts' | 'shares'>(
+    'posts',
+  );
 
-  const {
-    data: friendsData,
-    isLoading: isFriendsLoading,
-  } = useFriendUsers(id as string, { limit: 6 });
+  const { data: user, isLoading: isUserLoading } = useUser(id as string, {
+    enabled: !!id,
+  });
+
+  const { data: friendsData, isLoading: isFriendsLoading } = useFriendUsers(
+    id as string,
+    { limit: 6 },
+  );
 
   const displayName = React.useMemo(() => {
     const first = user?.firstName?.trim() ?? '';
@@ -57,25 +58,27 @@ export default function OtherUserProfileScreen() {
   const bioText = user?.bio?.trim() || DEFAULT_BIO;
 
   // Quyền riêng tư: Khoá trang cá nhân nếu PRIVATE và chưa phải bạn bè
-  const isPrivate = user?.privacySettings?.profileVisibility === PrivacyLevel.PRIVATE;
+  const isPrivate =
+    user?.privacySettings?.profileVisibility === PrivacyLevel.PRIVATE;
   const isFriend = user?.relation?.status === RelationStatus.FRIEND;
   const isLocked = isPrivate && !isFriend;
 
   const friendItems = React.useMemo(() => {
-    return (friendsData?.pages.flatMap((page) => page.data) ?? []).map(
-      (f) => ({
-        id: f.id,
-        name: `${f.firstName} ${f.lastName}`.trim(),
-        avatar: f.avatarUrl || DEFAULT_AVATAR,
-      }),
-    );
+    const friends = (friendsData?.pages ?? []).flatMap((page) => page.data);
+    return friends.slice(0, 3).map((friend) => ({
+      id: friend.id,
+      name:
+        [friend.firstName, friend.lastName].filter(Boolean).join(' ') ||
+        'Người dùng',
+      avatar: friend.avatarUrl || DEFAULT_AVATAR,
+    }));
   }, [friendsData?.pages]);
 
   const header = React.useMemo(
     () => (
       <View>
-        <Pressable 
-          onPress={() => router.back()} 
+        <Pressable
+          onPress={() => router.back()}
           className="absolute top-12 left-4 z-20 h-10 w-10 items-center justify-center rounded-full bg-black/40 active:bg-black/60"
         >
           <Ionicons name="chevron-back" size={24} color="#ffffff" />
@@ -110,7 +113,7 @@ export default function OtherUserProfileScreen() {
               <Text className="mt-1 text-[14px] leading-6 text-app-muted-fg dark:text-app-muted-fg-dark">
                 {bioText}
               </Text>
-              
+
               <View className="mt-4 flex-row items-center gap-6">
                 <View className="flex-row items-center gap-1.5">
                   <Text className="text-[15px] font-bold text-app-fg dark:text-app-fg-dark">
@@ -140,13 +143,18 @@ export default function OtherUserProfileScreen() {
             <View className="mt-6">
               <AppCard className="items-center justify-center rounded-3xl p-8 py-12 gap-4">
                 <View className="h-16 w-16 items-center justify-center rounded-full bg-app-surface-elevated dark:bg-app-surface-elevated-dark">
-                  <Ionicons name="lock-closed-outline" size={32} color="#64748b" />
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={32}
+                    color="#64748b"
+                  />
                 </View>
                 <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark text-center">
                   Hồ sơ riêng tư
                 </Text>
                 <Text className="text-[14px] text-app-muted-fg dark:text-app-muted-fg-dark text-center max-w-[250px]">
-                  Người dùng này đã khoá bảo vệ trang cá nhân. Hãy kết bạn để xem toàn bộ bài viết và thông tin chi tiết.
+                  Người dùng này đã khoá bảo vệ trang cá nhân. Hãy kết bạn để
+                  xem toàn bộ bài viết và thông tin chi tiết.
                 </Text>
               </AppCard>
             </View>
@@ -154,12 +162,28 @@ export default function OtherUserProfileScreen() {
             <View className="mt-5">
               <AppCard className="gap-3 rounded-3xl p-4">
                 <View className="flex-row items-center justify-between">
-                  <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
-                    Bạn bè
-                  </Text>
-                  <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
-                    {user?.friendCount ? `${user.friendCount}` : 'Xem tất cả'}
-                  </Text>
+                  <View>
+                    <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
+                      Bạn bè
+                    </Text>
+                    {typeof user?.friendCount === 'number' ? (
+                      <Text className="mt-0.5 text-[12px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                        {user.friendCount} người bạn
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Pressable
+                    onPress={() =>
+                      router.push(
+                        `/(stack)/friends?userId=${user?.id}&userName=${user?.firstName}`,
+                      )
+                    }
+                    className="rounded-full px-2 py-1 active:opacity-70"
+                  >
+                    <Text className="text-[14px] font-semibold text-app-primary dark:text-app-primary-dark">
+                      Xem tất cả
+                    </Text>
+                  </Pressable>
                 </View>
 
                 {isFriendsLoading ? (
@@ -236,7 +260,7 @@ export default function OtherUserProfileScreen() {
       isFriendsLoading,
       user,
       isLocked,
-      activePostTab
+      activePostTab,
     ],
   );
 
@@ -266,15 +290,19 @@ export default function OtherUserProfileScreen() {
 
   const feedItems = React.useMemo<ProfileFeedItem[]>(() => {
     if (activePostTab === 'posts') {
-      return (userPostsData?.pages.flatMap((page) => page.data) ?? []).map((post) => ({
-        type: 'post' as const,
-        data: post,
-      }));
+      return (userPostsData?.pages.flatMap((page) => page.data) ?? []).map(
+        (post) => ({
+          type: 'post' as const,
+          data: post,
+        }),
+      );
     }
-    return (userSharesData?.pages.flatMap((page) => page.data) ?? []).map((share) => ({
-      type: 'share' as const,
-      data: share,
-    }));
+    return (userSharesData?.pages.flatMap((page) => page.data) ?? []).map(
+      (share) => ({
+        type: 'share' as const,
+        data: share,
+      }),
+    );
   }, [activePostTab, userPostsData?.pages, userSharesData?.pages]);
 
   // 3. Render hàm cho từng bài viết trong danh sách
@@ -295,11 +323,18 @@ export default function OtherUserProfileScreen() {
     return `share-${item.data.shareId}`;
   }, []);
 
-  const isLoadingFeed = activePostTab === 'posts' ? isUserPostsLoading : isUserSharesLoading;
-  const isErrorFeed = activePostTab === 'posts' ? isUserPostsError : isUserSharesError;
-  const isFetchingNextFeed = activePostTab === 'posts' ? isFetchingNextPosts : isFetchingNextShares;
-  const hasNextFeed = activePostTab === 'posts' ? !!hasNextPosts : !!hasNextShares;
-  const loadMoreFeed = activePostTab === 'posts' ? () => fetchNextPosts() : () => fetchNextShares();
+  const isLoadingFeed =
+    activePostTab === 'posts' ? isUserPostsLoading : isUserSharesLoading;
+  const isErrorFeed =
+    activePostTab === 'posts' ? isUserPostsError : isUserSharesError;
+  const isFetchingNextFeed =
+    activePostTab === 'posts' ? isFetchingNextPosts : isFetchingNextShares;
+  const hasNextFeed =
+    activePostTab === 'posts' ? !!hasNextPosts : !!hasNextShares;
+  const loadMoreFeed =
+    activePostTab === 'posts'
+      ? () => fetchNextPosts()
+      : () => fetchNextShares();
 
   if (isUserLoading) {
     return (
@@ -312,7 +347,9 @@ export default function OtherUserProfileScreen() {
   if (!user) {
     return (
       <View className="flex-1 bg-app-bg items-center justify-center dark:bg-app-bg-dark">
-        <Text className="text-app-fg dark:text-app-fg-dark">Không tìm thấy người dùng</Text>
+        <Text className="text-app-fg dark:text-app-fg-dark">
+          Không tìm thấy người dùng
+        </Text>
       </View>
     );
   }
@@ -325,7 +362,6 @@ export default function OtherUserProfileScreen() {
           keyExtractor={() => 'empty'}
           renderItem={() => null}
           listHeaderComponent={header}
-          onScroll={handleScroll}
           isLoading={false}
           isError={false}
           isFetchingNextPage={false}
@@ -349,7 +385,6 @@ export default function OtherUserProfileScreen() {
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         listHeaderComponent={header}
-        onScroll={handleScroll}
         isLoading={isLoadingFeed}
         isError={isErrorFeed}
         isFetchingNextPage={isFetchingNextFeed}

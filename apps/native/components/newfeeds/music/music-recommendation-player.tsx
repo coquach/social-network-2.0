@@ -35,6 +35,7 @@ export function MusicRecommendationPlayer({
   onOpenList,
   palette,
 }: MusicRecommendationPlayerProps) {
+
   return (
     <View className="rounded-xl px-2.5 py-2.5">
       <View className="flex-row items-center gap-2.5">
@@ -66,25 +67,24 @@ export function MusicRecommendationPlayer({
           <Button isIconOnly size="sm" variant="ghost" feedbackVariant="scale" onPress={onNext} className="h-8 w-8 min-h-0 min-w-0">
             <Ionicons name="play-skip-forward" size={14} color={palette.subtle} />
           </Button>
+          <Button isIconOnly size="sm" variant="ghost" feedbackVariant="scale" onPress={onOpenList} className="h-8 w-8 min-h-0 min-w-0 ml-1">
+            <Ionicons name="list" size={16} color={palette.subtle} />
+          </Button>
         </View>
       </View>
 
-      <View className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: palette.rail }}>
-        <View className="h-full rounded-full" style={{ width: `${progress * 100}%`, backgroundColor: palette.accent }} />
-      </View>
-      <View className="mt-0.5 flex-row items-center justify-between">
-        <Text className="text-[10px]" style={{ color: palette.subtle }}>
-          {formatClock(status.currentTime)}
-        </Text>
-        <Text className="text-[10px]" style={{ color: palette.subtle }}>
-          {formatClock(status.duration)}
-        </Text>
-      </View>
-
-      <View className="mt-2">
-        <Button size="sm" variant="outline" onPress={onOpenList}>
-          <Button.Label>Xem thêm</Button.Label>
-        </Button>
+      <View>
+        <View className="mt-3 h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: palette.rail }}>
+          <View className="h-full rounded-full" style={{ width: `${progress * 100}%`, backgroundColor: palette.accent }} />
+        </View>
+        <View className="mt-1 flex-row items-center justify-between">
+          <Text className="text-[10px]" style={{ color: palette.subtle }}>
+            {formatClock(status.currentTime)}
+          </Text>
+          <Text className="text-[10px]" style={{ color: palette.subtle }}>
+            {formatClock(status.duration)}
+          </Text>
+        </View>
       </View>
     </View>
   );

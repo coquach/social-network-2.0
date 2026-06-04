@@ -30,7 +30,7 @@ export const INTEREST_OPTIONS = [
   'Ngoại ngữ',
 ] as const;
 
-export const InterestSchema = z.enum(INTEREST_OPTIONS);
+export const InterestSchema = z.string().trim().min(1).max(50);
 
 export const UserSchema = z.object({
   id: z.string().optional(),

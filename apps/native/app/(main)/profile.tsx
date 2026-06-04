@@ -159,6 +159,11 @@ export default function ProfileScreen() {
         firstName: values.firstName,
         lastName: values.lastName,
         bio: values.bio,
+        location: values.location,
+        jobTitle: values.jobTitle,
+        company: values.company,
+        school: values.school,
+        interests: values.interests,
         uploadAvatar: toUploadableImage(values.avatarFile),
         uploadCover: toUploadableImage(values.coverFile),
       });
@@ -491,6 +496,11 @@ export default function ProfileScreen() {
         defaultFirstName={currentUser?.firstName ?? ''}
         defaultLastName={currentUser?.lastName ?? ''}
         defaultBio={currentUser?.bio ?? ''}
+        defaultLocation={currentUser?.location ?? ''}
+        defaultJobTitle={currentUser?.jobTitle ?? ''}
+        defaultCompany={currentUser?.company ?? ''}
+        defaultSchool={currentUser?.school ?? ''}
+        defaultInterests={currentUser?.interests ?? []}
         defaultAvatarUrl={profileAvatar}
         defaultCoverUrl={coverImage}
         isSaving={updateProfile.isPending}

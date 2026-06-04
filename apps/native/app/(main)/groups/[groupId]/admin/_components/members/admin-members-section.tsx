@@ -3,18 +3,13 @@ import { View, Text, SectionList, ActivityIndicator, TouchableOpacity, ScrollVie
 import { useGroupMembers } from '@repo/shared/hooks';
 import { GroupMemberStatus, GroupRole } from '@repo/shared/types';
 import { GroupAdminMemberRow } from './member-row';
+import { roleLabel } from './change-role-form';
 
 const STATUS_OPTIONS = [
     { value: GroupMemberStatus.ACTIVE, label: 'Hoạt động' },
     { value: GroupMemberStatus.BANNED, label: 'Đã chặn' },
 ];
 
-export const roleLabel: Record<GroupRole, string> = {
-    OWNER: 'Chủ nhóm',
-    ADMIN: 'Quản trị viên',
-    MODERATOR: 'Người kiểm duyệt',
-    MEMBER: 'Thành viên',
-};
 
 export const GroupAdminMembersSection = ({ groupId }: { groupId: string }) => {
     const [statusFilter, setStatusFilter] = useState<GroupMemberStatus>(GroupMemberStatus.ACTIVE);

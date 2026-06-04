@@ -40,7 +40,7 @@ export const notificationService = {
    * Mark all notifications as read
    */
   async markAllAsRead(): Promise<void> {
-    return getApiClient().post('/notifications/mark-all-read');
+    return getApiClient().patch('/notifications/read-all');
   },
 
   /**
