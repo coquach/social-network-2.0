@@ -1,10 +1,15 @@
-import { BottomSheet } from "heroui-native/bottom-sheet";
-import React from "react";
-import { View, Keyboard } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import React, { useEffect, useRef } from 'react';
+import { Keyboard, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
-import { cn } from "~/lib/cn";
+import { appThemeColors } from '~/constants/theme';
+import { cn } from '~/lib/cn';
+import { useAppTheme } from '~/providers/theme-provider';
 
 type AppBottomSheetProps = {
   visible: boolean;
@@ -18,9 +23,9 @@ type AppBottomSheetProps = {
   footerClassName?: string;
   titleClassName?: string;
   descriptionClassName?: string;
-  keyboardBehavior?: "interactive" | "extend" | "fillParent";
-  keyboardBlurBehavior?: "none" | "restore";
-  androidKeyboardInputMode?: "adjustPan" | "adjustResize";
+  keyboardBehavior?: 'interactive' | 'extend' | 'fillParent';
+  keyboardBlurBehavior?: 'none' | 'restore';
+  androidKeyboardInputMode?: 'adjustPan' | 'adjustResize';
 };
 
 export function AppBottomSheet({
@@ -35,73 +40,113 @@ export function AppBottomSheet({
   footerClassName,
   titleClassName,
   descriptionClassName,
-  keyboardBehavior = "interactive",
-  keyboardBlurBehavior = "restore",
-  androidKeyboardInputMode = "adjustPan",
+  keyboardBehavior = 'interactive',
+  keyboardBlurBehavior = 'restore',
+  androidKeyboardInputMode = 'adjustPan',
 }: AppBottomSheetProps) {
   const insets = useSafeAreaInsets();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const { resolvedTheme } = useAppTheme();
+  const colors = appThemeColors[resolvedTheme];
+  const hasOpenedRef = useRef(false);
 
-  // Don't mount the sheet at all when not visible — prevents the
-  // "ghost render" flash where @gorhom/bottom-sheet briefly shows
-  // the handle before animating to the closed position.
-  if (!visible) return null;
+  useEffect(() => {
+    if (!visible) {
+      Keyboard.dismiss();
+      if (hasOpenedRef.current) {
+        bottomSheetRef.current?.dismiss();
+      }
+      return;
+    }
+
+    hasOpenedRef.current = true;
+    const frame = requestAnimationFrame(() => {
+      bottomSheetRef.current?.present();
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [visible]);
+
+  const renderBackdrop = React.useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        opacity={0.4}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior={dismissible ? 'close' : 'none'}
+      />
+    ),
+    [dismissible],
+  );
+
+  if (!visible && !hasOpenedRef.current) {
+    return null;
+  }
 
   return (
-    <BottomSheet
-      isOpen={visible}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) {
-          Keyboard.dismiss();
-          onClose();
-        }
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      enableDynamicSizing={true}
+      enablePanDownToClose={dismissible}
+      keyboardBehavior={keyboardBehavior}
+      keyboardBlurBehavior={keyboardBlurBehavior}
+      android_keyboardInputMode={androidKeyboardInputMode}
+      backdropComponent={renderBackdrop}
+      onDismiss={() => {
+        hasOpenedRef.current = false;
+        Keyboard.dismiss();
+        onClose();
       }}
+      backgroundStyle={{
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        borderWidth: 1,
+        borderBottomWidth: 0,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+      }}
+      handleIndicatorStyle={{ backgroundColor: colors.border }}
     >
-      <BottomSheet.Portal>
-        <BottomSheet.Overlay
-          className="bg-slate-950/35"
-          isCloseOnPress={dismissible}
-        />
-        <BottomSheet.Content
-          enableDynamicSizing
-          enablePanDownToClose={dismissible}
-          keyboardBehavior={keyboardBehavior}
-          keyboardBlurBehavior={keyboardBlurBehavior}
-          android_keyboardInputMode={androidKeyboardInputMode}
-          backgroundClassName="rounded-t-[32px] border border-b-0 border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark"
-          handleIndicatorClassName="bg-app-border dark:bg-app-border-dark"
-        >
-          <View style={{ paddingBottom: Math.max(insets.bottom, 16), alignItems: "stretch" }} className="px-5 pt-3">
-            {title ? (
-              <BottomSheet.Title
-                className={cn(
-                  "w-full text-2xl font-extrabold tracking-tight text-app-fg dark:text-app-fg-dark",
-                  titleClassName,
-                )}
-              >
-                {title}
-              </BottomSheet.Title>
-            ) : null}
-            {description ? (
-              <BottomSheet.Description
-                className={cn(
-                  "mt-2 w-full text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark",
-                  descriptionClassName,
-                )}
-              >
-                {description}
-              </BottomSheet.Description>
-            ) : null}
-            {children ? (
-              <View className={cn("mt-5 w-full", bodyClassName)}>{children}</View>
-            ) : null}
-            {footer ? (
-              <View className={cn("mt-5 w-full gap-3", footerClassName)}>
-                {footer}
-              </View>
-            ) : null}
+      <BottomSheetView
+        style={{
+          paddingBottom: Math.max(insets.bottom, 16),
+          alignItems: 'stretch',
+        }}
+        className="px-5 pt-3"
+      >
+        {title ? (
+          <Text
+            className={cn(
+              'w-full text-2xl font-extrabold tracking-tight text-app-fg dark:text-app-fg-dark',
+              titleClassName,
+            )}
+          >
+            {title}
+          </Text>
+        ) : null}
+        {description ? (
+          <Text
+            className={cn(
+              'mt-2 w-full text-sm leading-6 text-app-muted-fg dark:text-app-muted-fg-dark',
+              descriptionClassName,
+            )}
+          >
+            {description}
+          </Text>
+        ) : null}
+        {children ? (
+          <View className={cn('mt-5 w-full', bodyClassName)}>{children}</View>
+        ) : null}
+        {footer ? (
+          <View className={cn('mt-5 w-full gap-3', footerClassName)}>
+            {footer}
           </View>
-        </BottomSheet.Content>
-      </BottomSheet.Portal>
-    </BottomSheet>
+        ) : null}
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 }

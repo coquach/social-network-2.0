@@ -224,7 +224,12 @@ export function GroupChatAvatar({
     <View
       className="relative"
       style={{
-        width: visualSize.groupContainerPx,
+        width: circles.length > 0
+          ? Math.max(
+              visualSize.groupContainerPx,
+              visualSize.groupStepPx * (circles.length - 1) + visualSize.groupCirclePx
+            )
+          : visualSize.groupContainerPx,
         height: visualSize.groupContainerPx,
       }}
     >
@@ -242,7 +247,7 @@ export function GroupChatAvatar({
               variant="soft"
               color="accent"
               animation="disable-all"
-              className="absolute overflow-hidden bg-app-surface dark:bg-app-surface-dark"
+              className="absolute overflow-hidden bg-app-surface dark:bg-app-surface-dark border-1 border-app-surface dark:border-app-surface-dark"
               style={{
                 width: visualSize.groupCirclePx,
                 height: visualSize.groupCirclePx,

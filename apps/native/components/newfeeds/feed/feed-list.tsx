@@ -141,10 +141,6 @@ export function FeedList<TItem>({
       showsVerticalScrollIndicator={false}
       drawDistance={estimatedItemSize * 4}
       removeClippedSubviews={false}
-      overrideProps={{
-        initialDrawBatchSize: 8,
-        estimatedItemSize: estimatedItemSize,
-      }}
       getItemType={getItemTypeAdapter}
     />
   );

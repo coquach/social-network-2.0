@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Spinner } from 'heroui-native/spinner';
 import React, { useMemo } from 'react';
-import { Dimensions, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Dimensions, Pressable, RefreshControl, ScrollView, Text, View, TouchableOpacity } from 'react-native';
 import { LineChart, PieChart } from 'react-native-gifted-charts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,8 +12,11 @@ import {
   useEmotionDashboardInsights,
   useEmotionDashboardSummary,
   useEmotionDashboardTrend,
+  useEmotionHistory,
 } from '@repo/shared/hooks/useEmotion';
 import { EmotionInsightTone, EmotionLabel } from '@repo/shared/types/emotion.types';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { RecommendedMusicSection } from '~/components/newfeeds/recommended-music-section';
 
 const { width } = Dimensions.get('window');
@@ -53,15 +56,21 @@ export default function SentimentDashboard() {
   const { data: trendData, isLoading: loadingTrend, refetch: refetchTrend } = useEmotionDashboardTrend({
     window: '7d',
   });
+  const { data: historyData, isLoading: loadingHistory, refetch: refetchHistory } = useEmotionHistory();
 
   const onRefresh = () => {
     refetchSummary();
     refetchInsights();
     refetchDist();
     refetchTrend();
+    refetchHistory();
   };
 
-  const isLoading = loadingSummary || loadingInsights || loadingDist || loadingTrend;
+  const isLoading = loadingSummary || loadingInsights || loadingDist || loadingTrend || loadingHistory;
+
+  const recentHistory = useMemo(() => {
+    return historyData?.pages?.[0]?.data?.slice(0, 3) || [];
+  }, [historyData]);
 
   const distributionList = useMemo(() => {
     if (!distribution?.distribution) return [];
@@ -211,42 +220,87 @@ const getInsightTypeLabel = (type: string) => {
           </Pressable>
 
           {/* BENTO GRID: STATS */}
-          <View className="flex-row justify-between w-full">
-            {/* Box 1: Risk Score (Căng thẳng) */}
+          <View className="flex-row flex-wrap justify-between w-full gap-y-4">
+            {/* Box 1: Risk Score (Trạng thái) */}
             <View
               style={{ width: BENTO_WIDTH }}
-              className="bg-red-100 dark:bg-rose-900 rounded-[24px] p-5 border border-red-300 dark:border-rose-700"
+              className="bg-red-100 dark:bg-rose-900 rounded-[24px] p-5 border border-red-300 dark:border-rose-700 justify-between"
             >
               <View className="w-10 h-10 rounded-full bg-red-200 dark:bg-rose-800 items-center justify-center mb-4">
                 <Ionicons name="pulse" size={20} color="#e11d48" />
               </View>
-              <Text className="text-red-700 dark:text-rose-400 text-xs font-bold uppercase tracking-wider mb-1">
-                Căng thẳng
-              </Text>
-              <Text className="text-3xl font-extrabold text-red-900 dark:text-rose-100">
-                {summary?.riskScore ? (summary.riskScore * 10).toFixed(1) : 0}
-              </Text>
+              <View>
+                <Text className="text-red-700 dark:text-rose-400 text-xs font-bold uppercase tracking-wider mb-1">
+                  Trạng thái
+                </Text>
+                <Text className="text-xl font-extrabold text-red-900 dark:text-rose-100">
+                  {Number(summary?.riskScore || 0) >= 0.7 ? 'Nguy cấp' : Number(summary?.riskScore || 0) >= 0.4 ? 'Cảnh báo' : 'Bình thường'}
+                </Text>
+              </View>
             </View>
 
-            {/* Box 2: Momentum (Biến động) */}
+            {/* Box 2: Tỷ lệ tích cực */}
             <View
               style={{ width: BENTO_WIDTH }}
-              className="bg-blue-100 dark:bg-indigo-900 rounded-[24px] p-5 border border-blue-300 dark:border-indigo-700"
+              className="bg-sky-100 dark:bg-sky-900 rounded-[24px] p-5 border border-sky-300 dark:border-sky-700 justify-between"
             >
-              <View className="w-10 h-10 rounded-full bg-blue-200 dark:bg-indigo-800 items-center justify-center mb-4">
-                <Ionicons name="analytics" size={20} color="#2563eb" />
+              <View className="w-10 h-10 rounded-full bg-sky-200 dark:bg-sky-800 items-center justify-center mb-4">
+                <Ionicons name="trending-up" size={20} color="#0284c7" />
               </View>
-              <Text className="text-blue-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
-                Biến động
-              </Text>
-              <Text className="text-3xl font-extrabold text-blue-900 dark:text-indigo-100">
-                {summary?.emotionMomentum
-                  ? summary.emotionMomentum > 0
-                    ? `+${summary.emotionMomentum.toFixed(1)}`
-                    : summary.emotionMomentum.toFixed(1)
-                  : 0}
+              <View>
+                <Text className="text-sky-700 dark:text-sky-400 text-xs font-bold uppercase tracking-wider mb-1">
+                  Tích cực
+                </Text>
+                <Text className="text-2xl font-extrabold text-sky-900 dark:text-sky-100">
+                  {Math.max(0, 100 - (summary?.recentNegativityScore || 0)).toFixed(1)}%
+                </Text>
+              </View>
+            </View>
+
+            {/* Box 3: Biến động (Momentum) */}
+            <View
+              style={{ width: '100%' }}
+              className="bg-indigo-100 dark:bg-indigo-900 rounded-[24px] p-5 border border-indigo-300 dark:border-indigo-700 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 rounded-full bg-indigo-200 dark:bg-indigo-800 items-center justify-center mr-3">
+                  <Ionicons name="analytics" size={20} color="#4f46e5" />
+                </View>
+                <View>
+                  <Text className="text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+                    Biến động
+                  </Text>
+                  <Text className="text-xl font-extrabold text-indigo-900 dark:text-indigo-100">
+                    {summary?.emotionMomentum
+                      ? summary.emotionMomentum > 0
+                        ? `+${summary.emotionMomentum.toFixed(1)}`
+                        : summary.emotionMomentum.toFixed(1)
+                      : 0}
+                  </Text>
+                </View>
+              </View>
+              <Text className="text-xs text-indigo-600 dark:text-indigo-300 font-medium max-w-[120px] text-right leading-tight">
+                So với trung bình tuần trước
               </Text>
             </View>
+          </View>
+
+          {/* MUSIC THERAPY BENTO */}
+          <View className="bg-sky-50/50 dark:bg-[#1e293b]/50 rounded-[32px] p-6 border border-sky-100 dark:border-slate-800/50 mt-2">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full bg-sky-100 dark:bg-sky-900/50 items-center justify-center mr-3">
+                <Ionicons name="musical-notes" size={20} color="#0284c7" />
+              </View>
+              <View>
+                <Text className="text-lg font-extrabold text-slate-800 dark:text-slate-100">
+                  Liệu pháp Âm nhạc
+                </Text>
+                <Text className="text-xs text-slate-500">
+                  Phục hồi năng lượng tích cực cho bạn
+                </Text>
+              </View>
+            </View>
+            <RecommendedMusicSection />
           </View>
 
           {/* PIE CHART BENTO */}
@@ -363,10 +417,7 @@ const getInsightTypeLabel = (type: string) => {
             </View>
           </View>
 
-          {/* MUSIC RECOMMENDATION BENTO */}
-          <View className="mb-4">
-            <RecommendedMusicSection />
-          </View>
+
 
           {/* AI ADVICE BENTO */}
           <View className="mt-4 mb-8">
@@ -420,6 +471,75 @@ const getInsightTypeLabel = (type: string) => {
                   <Text className="text-base text-slate-500 text-center font-medium">
                     Tâm trí bạn đang tĩnh lặng. Hãy ghi lại cảm xúc hôm nay nhé!
                   </Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+
+          {/* RECENT HISTORY BENTO */}
+          <View className="mt-2 mb-6">
+            <View className="flex-row items-center justify-between mb-4 px-1">
+              <Text className="text-xl font-extrabold text-app-fg dark:text-app-fg-dark">
+                Lịch sử gần đây
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/(stack)/sentiment/history')}>
+                <Text className="text-sm font-bold text-app-primary dark:text-app-primary-dark">
+                  Xem tất cả
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="gap-3">
+              {recentHistory.length > 0 ? (
+                recentHistory.map((item: any, index: number) => {
+                  const rawEmotion = item.emotion || item.finalEmotion || 'NEUTRAL';
+                  const meta = getEmotionPremiumMeta(rawEmotion.toUpperCase() as EmotionLabel);
+                  
+                  let parsedDate = new Date(item.createdAt);
+                  if (isNaN(parsedDate.getTime()) && typeof item.createdAt === 'string') {
+                    const parts = item.createdAt.split(' ');
+                    if (parts.length >= 1 && parts[0].includes('/')) {
+                      const [year, month, day] = parts[0].split('/').map(Number);
+                      if (year && month && day) {
+                        parsedDate = new Date(year, month - 1, day);
+                      }
+                    }
+                  }
+                  const timeText = !isNaN(parsedDate.getTime())
+                    ? formatDistanceToNow(parsedDate, { addSuffix: true, locale: vi })
+                    : 'Gần đây';
+
+                  return (
+                    <TouchableOpacity
+                      key={item.targetId + item.createdAt + index}
+                      activeOpacity={0.7}
+                      onPress={() => router.push(`/(stack)/sentiment/analysis/${item.targetId}?targetType=${item.targetType}`)}
+                      className="flex-row items-center bg-white dark:bg-[#1e293b] p-4 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm"
+                    >
+                      <View 
+                        className="w-12 h-12 rounded-[16px] items-center justify-center mr-4"
+                        style={{ backgroundColor: meta.bgStart + '20' }}
+                      >
+                        <Text className="text-2xl">{meta.emoji}</Text>
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-base font-extrabold text-slate-800 dark:text-slate-100 mb-0.5">
+                          {meta.label}
+                        </Text>
+                        <View className="flex-row items-center">
+                          <Ionicons name="time-outline" size={12} color="#94a3b8" />
+                          <Text className="text-xs text-slate-500 font-medium ml-1">
+                            {timeText}
+                          </Text>
+                        </View>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+                    </TouchableOpacity>
+                  );
+                })
+              ) : !loadingHistory ? (
+                <View className="bg-slate-100 dark:bg-slate-800/50 rounded-[24px] p-6 items-center justify-center border border-slate-200 dark:border-slate-700">
+                  <Text className="text-sm text-slate-500 font-medium">Chưa có ghi nhận nào</Text>
                 </View>
               ) : null}
             </View>

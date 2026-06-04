@@ -24,6 +24,12 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { CallManager } from '~/components/chat/call-manager';
 import { CallMiniOverlay } from '~/components/chat/call-mini-overlay';
+import TrackPlayer from 'react-native-track-player';
+import { playbackService } from '~/service/track-player-service';
+
+// Register the background playback service for lock screen controls
+TrackPlayer.registerPlaybackService(() => playbackService);
+
 import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
 import { ModalProvider } from '~/components/providers/modal-provider';
 import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';

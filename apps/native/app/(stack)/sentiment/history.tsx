@@ -46,6 +46,8 @@ export default function EmotionHistoryScreen() {
     const rawEmotion = item.emotion || item.finalEmotion || 'NEUTRAL';
     const emotionKey = rawEmotion.toUpperCase();
     const meta = getEmotionMeta(emotionKey as EmotionLabel);
+    const confidenceRaw = item.finalConfidence || item.confidence || 0;
+    const confidence = confidenceRaw > 1 ? confidenceRaw : confidenceRaw * 100;
     
     return (
       <TouchableOpacity 
@@ -84,8 +86,8 @@ export default function EmotionHistoryScreen() {
               </Text>
             </View>
             
-            {/* Metadata Badges */}
-            <View className="flex-row mt-1.5 items-center gap-2">
+            {/* Metadata Badges & Confidence */}
+            <View className="flex-row mt-1.5 items-center gap-2 flex-wrap">
               <View className="flex-row items-center bg-white/60 dark:bg-black/20 px-2.5 py-1 rounded-full">
                 <Ionicons 
                   name={item.targetType === 'POST' ? 'document-text' : 'chatbubble'} 
@@ -107,6 +109,18 @@ export default function EmotionHistoryScreen() {
                 />
                 <Text className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   {item.riskHintLevel === 'low' ? 'An toàn' : item.riskHintLevel === 'medium' ? 'Lưu ý' : item.riskHintLevel === 'high' ? 'Căng thẳng' : 'Bình thường'}
+                </Text>
+              </View>
+
+              <View className="flex-row items-center bg-white/60 dark:bg-black/20 px-2.5 py-1 rounded-full">
+                <Ionicons 
+                  name="sparkles" 
+                  size={12} 
+                  color={meta.color} 
+                  style={{ marginRight: 4 }}
+                />
+                <Text className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                  {confidence.toFixed(1)}%
                 </Text>
               </View>
             </View>

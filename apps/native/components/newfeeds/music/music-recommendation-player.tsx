@@ -46,8 +46,8 @@ export function MusicRecommendationPlayer({
         />
 
         <View className="min-w-0 flex-1">
-          <Text className="text-[10px] uppercase tracking-[1.2px]" style={{ color: palette.meta }}>
-            Đang đề xuất
+          <Text className="text-[10px] font-bold uppercase tracking-[1.2px]" style={{ color: palette.meta }}>
+            ✨ Liệu pháp Âm nhạc
           </Text>
           <Text className="text-[13px] font-semibold" style={{ color: palette.title }} numberOfLines={1}>
             {track?.title ?? 'Chưa có bài hát đề xuất'}

@@ -5,6 +5,7 @@ import { useNotifications, useMarkAllNotificationsAsRead, useMarkNotificationAsR
 import { useRouter } from 'expo-router';
 import { AppScreen } from '~/components/ui/app-screen';
 import { AppHeader, AppBackButton, AppHeaderIconButton } from '~/components/ui/app-header';
+import { formatRelativeTime } from '~/utils/format-relative-time';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function NotificationsScreen() {
             {item.message || 'Bạn có một thông báo mới'}
           </Text>
           <Text className="text-xs text-app-fg-muted dark:text-app-fg-muted-dark mt-2 font-medium">
-            {getRelativeTime(item.createdAt)}
+            {formatRelativeTime(item.createdAt)}
           </Text>
         </View>
         {!isRead && (

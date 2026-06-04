@@ -1,20 +1,13 @@
 import React from 'react';
 import { useMusicFeatures, useMusicRecommendations } from '@repo/shared';
-import {
-  setAudioModeAsync,
-  useAudioPlayer,
-  useAudioPlayerStatus,
-} from 'expo-audio';
-import { Text, View } from 'react-native';
-import { Card } from 'heroui-native/card';
+import { Text, View, Pressable, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import TrackPlayer, { useActiveTrack, usePlaybackState, State } from 'react-native-track-player';
+import { setupTrackPlayer } from '~/service/track-player-service';
 
-import { useAppTheme } from '~/providers/theme-provider';
-import { MusicRecommendationModal } from './music/music-recommendation-modal';
-import { MusicRecommendationPlayer } from './music/music-recommendation-player';
 export function RecommendedMusicSection() {
-  const { colors, resolvedTheme } = useAppTheme();
-  const recommendationsQuery = useMusicRecommendations({ page: 1, limit: 20 });
-  const fallbackQuery = useMusicFeatures({ page: 1, limit: 20 });
+  const recommendationsQuery = useMusicRecommendations({ page: 1, limit: 10 });
+  const fallbackQuery = useMusicFeatures({ page: 1, limit: 10 });
   const recommendedTracks = recommendationsQuery.data?.data ?? [];
   const fallbackTracks = fallbackQuery.data?.data ?? [];
   const tracks = React.useMemo(() => {
@@ -22,174 +15,108 @@ export function RecommendedMusicSection() {
     return source.filter((track) => Boolean(track.audio?.url));
   }, [fallbackTracks, recommendedTracks]);
 
-  const [isListOpen, setIsListOpen] = React.useState(false);
-  const [activeIndex, setActiveIndex] = React.useState(0);
+  const activeTrack = useActiveTrack();
+  const playbackState = usePlaybackState();
+  const stateObj = (playbackState as any).state !== undefined ? (playbackState as any).state : playbackState;
+  const isPlaying = stateObj === State.Playing || stateObj === State.Buffering;
 
-  const player = useAudioPlayer(null, { updateInterval: 250 });
-  const status = useAudioPlayerStatus(player);
-  const activeTrack = tracks[activeIndex] ?? null;
-  const currentTrackUrlRef = React.useRef<string | null>(null);
-
-  React.useEffect(() => {
-    if (activeIndex >= tracks.length) {
-      setActiveIndex(0);
-    }
-  }, [activeIndex, tracks.length]);
-
-  React.useEffect(() => {
-    void setAudioModeAsync({
-      playsInSilentMode: true,
-      shouldPlayInBackground: true,
-      interruptionMode: 'doNotMix',
-      allowsRecording: false,
-      shouldRouteThroughEarpiece: false,
-    });
-  }, []);
-
-  const formatClock = React.useCallback((seconds: number) => {
-    const total = Number.isFinite(seconds)
-      ? Math.max(0, Math.floor(seconds))
-      : 0;
-    const mins = Math.floor(total / 60);
-    const secs = total % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, []);
-
-  const startPlayback = React.useCallback(
-    async (uri: string) => {
-      try {
-        if (currentTrackUrlRef.current !== uri) {
-          player.replace({ uri });
-          currentTrackUrlRef.current = uri;
-        }
-        player.play();
-      } catch (error) {
-        console.error('[music] playback failed:', error);
+  const playPlaylist = async (index: number) => {
+    try {
+      await setupTrackPlayer();
+      const queue = tracks.map(track => ({
+        id: String(track.id), // Bắt buộc phải là chuỗi (String) để tránh crash
+        url: track.audio?.url as string, 
+        title: track.title || 'Unknown Title',
+        artist: track.artist || 'Không rõ',
+        artwork: track.coverImage?.url,
+      }));
+      
+      await TrackPlayer.reset();
+      await TrackPlayer.add(queue);
+      if (index > 0) {
+        await TrackPlayer.skip(index);
       }
-    },
-    [player],
-  );
-
-  const playTrackAt = React.useCallback(
-    (index: number) => {
-      const track = tracks[index];
-      const uri = track?.audio?.url;
-      if (!track || !uri) {
-        return;
-      }
-
-      setActiveIndex(index);
-      void startPlayback(uri);
-    },
-    [startPlayback, tracks],
-  );
-
-  const handleTogglePlay = React.useCallback(() => {
-    const uri = activeTrack?.audio?.url;
-    if (!uri) {
-      return;
+      await TrackPlayer.play();
+    } catch (e) {
+      console.error('Lỗi khi phát nhạc:', e);
     }
+  };
 
-    if (status.playing) {
-      player.pause();
-      return;
-    }
+  if (recommendationsQuery.isLoading || fallbackQuery.isLoading) {
+    return (
+      <View className="items-center justify-center py-6">
+        <Text className="text-sm text-slate-500">Đang tải nhạc...</Text>
+      </View>
+    );
+  }
 
-    void startPlayback(uri);
-  }, [activeTrack?.audio?.url, player, startPlayback, status.playing]);
-
-  const handlePrevious = React.useCallback(() => {
-    if (tracks.length === 0) {
-      return;
-    }
-    const nextIndex = activeIndex === 0 ? tracks.length - 1 : activeIndex - 1;
-    playTrackAt(nextIndex);
-  }, [activeIndex, playTrackAt, tracks.length]);
-
-  const handleNext = React.useCallback(() => {
-    if (tracks.length === 0) {
-      return;
-    }
-    const nextIndex = activeIndex >= tracks.length - 1 ? 0 : activeIndex + 1;
-    playTrackAt(nextIndex);
-  }, [activeIndex, playTrackAt, tracks.length]);
-
-  React.useEffect(() => {
-    if (status.didJustFinish) {
-      handleNext();
-    }
-  }, [handleNext, status.didJustFinish]);
-
-  const progress = React.useMemo(() => {
-    if (!status.duration || status.duration <= 0) {
-      return 0;
-    }
-    return Math.min(1, status.currentTime / status.duration);
-  }, [status.currentTime, status.duration]);
-
-  const palette = React.useMemo(() => {
-    if (resolvedTheme === 'dark') {
-      return {
-        bg: '#102838',
-        meta: '#7dd3fc',
-        title: '#e6f4ff',
-        subtle: '#9fc1d8',
-        rail: '#27485f',
-        accent: '#38bdf8',
-        accentFg: '#082f49',
-      };
-    }
-
-    return {
-      bg: '#f7fbff',
-      meta: '#0369a1',
-      title: '#0f3a56',
-      subtle: '#5f7f95',
-      rail: '#dbeafe',
-      accent: '#0284c7',
-      accentFg: '#ffffff',
-    };
-  }, [resolvedTheme]);
+  if (tracks.length === 0) {
+    return (
+      <View className="items-center justify-center py-6">
+        <Text className="text-sm text-slate-500">Chưa có bài hát đề xuất lúc này.</Text>
+      </View>
+    );
+  }
 
   return (
-    <>
-      <Card
-        variant="secondary"
-        className="rounded-2xl px-2.5 py-2.5"
-        style={{ backgroundColor: palette.bg }}
-      >
-        <Card.Body className="px-0 py-0">
-          {recommendationsQuery.isError && fallbackQuery.isError ? (
-            <View className="px-2.5 py-2.5">
-              <Text className="text-xs text-red-500">
-                Không tải được nhạc đề xuất.
+    <View className="flex-col gap-2">
+      {tracks.slice(0, 4).map((track, index) => {
+        const isActive = activeTrack?.id === track.id;
+        return (
+          <Pressable
+            key={track.id}
+            onPress={async () => {
+              if (isActive) {
+                if (isPlaying) {
+                  await TrackPlayer.pause();
+                } else {
+                  await TrackPlayer.play();
+                }
+              } else {
+                await playPlaylist(index);
+              }
+            }}
+            className={`flex-row items-center gap-3 rounded-2xl border px-3 py-2 transition-colors ${
+              isActive
+                ? 'border-sky-500/50 bg-sky-500/10 dark:border-sky-400/50 dark:bg-sky-400/10'
+                : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+            }`}
+          >
+            <Image
+              source={{ uri: track.coverImage?.url }}
+              className="h-11 w-11 rounded-lg"
+              resizeMode="cover"
+            />
+            <View className="min-w-0 flex-1">
+              <Text
+                className={`text-sm font-semibold ${isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-800 dark:text-slate-200'}`}
+                numberOfLines={1}
+              >
+                {track.title}
+              </Text>
+              <Text
+                className="text-xs text-slate-500"
+                numberOfLines={1}
+              >
+                {track.artist ?? 'Không rõ nghệ sĩ'}
               </Text>
             </View>
-          ) : null}
-
-          <MusicRecommendationPlayer
-            track={activeTrack ?? tracks[0] ?? null}
-            status={status}
-            progress={progress}
-            formatClock={formatClock}
-            onPrevious={handlePrevious}
-            onTogglePlay={handleTogglePlay}
-            onNext={handleNext}
-            onOpenList={() => setIsListOpen(true)}
-            palette={palette}
-          />
-        </Card.Body>
-      </Card>
-
-      <MusicRecommendationModal
-        visible={isListOpen}
-        onClose={() => setIsListOpen(false)}
-        tracks={tracks}
-        activeIndex={activeIndex}
-        status={status}
-        colors={colors}
-        onSelectTrack={playTrackAt}
-      />
-    </>
+            {isActive ? (
+              <Ionicons
+                name={isPlaying ? 'pause-circle' : 'play-circle'}
+                size={28}
+                color="#0284c7"
+              />
+            ) : (
+              <Ionicons
+                name="play-circle-outline"
+                size={28}
+                color="#94a3b8"
+              />
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }

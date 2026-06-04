@@ -18,6 +18,7 @@ import { useAppTheme } from '~/providers/theme-provider';
 
 const settingsItems = [
   { id: 'account', label: 'Trung tâm tài khoản', icon: 'person-circle-outline' },
+  { id: 'activity', label: 'Nhật ký hoạt động', icon: 'time-outline', path: '/settings/activity' },
   { id: 'privacy', label: 'Quyền riêng tư', icon: 'lock-closed-outline', path: '/settings/privacy-settings' },
   { id: 'notifications', label: 'Thông báo', icon: 'notifications-outline', path: '/settings/notification-settings' },
   { id: 'language', label: 'Ngôn ngữ', icon: 'language-outline' },
@@ -51,6 +52,8 @@ export default function SettingsScreen() {
   const handleItemPress = (id: string) => {
     if (id === 'notifications') {
       router.push('/(stack)/settings/notification-settings');
+    } else if (id === 'activity') {
+      router.push('/(stack)/settings/activity');
     } else if (id === 'privacy') {
       router.push('/(stack)/settings/privacy-settings');
     } else if (id === 'privacy-policy') {

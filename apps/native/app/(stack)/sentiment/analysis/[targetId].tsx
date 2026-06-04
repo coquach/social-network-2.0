@@ -1,14 +1,13 @@
-import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
-import { Spinner } from 'heroui-native/spinner';
-import { Card } from 'heroui-native/card';
-import { useLocalSearchParams } from 'expo-router';
-import { useEmotionAnalysis } from '@repo/shared/hooks/useEmotion';
-import { TargetType } from '@repo/shared/types/enums';
-import { AppHeader } from '~/components/ui/app-header';
-import { PrimaryButton } from '~/components/ui/app-button';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useEmotionAnalysis, useSubmitEmotionFeedback } from '@repo/shared/hooks/useEmotion';
+import { TargetType } from '@repo/shared/types/enums';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams } from 'expo-router';
+import { Card } from 'heroui-native/card';
+import { Spinner } from 'heroui-native/spinner';
+import React, { useState } from 'react';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { AppHeader } from '~/components/ui/app-header';
 
 const getEmotionPremiumMeta = (emotion: string) => {
   switch (emotion) {
@@ -20,6 +19,72 @@ const getEmotionPremiumMeta = (emotion: string) => {
     case 'SURPRISE': return { emoji: '😲', bgStart: '#fbbf24', bgEnd: '#d97706', iconColor: '#fffbeb', label: 'Bất ngờ' };
     case 'NEUTRAL': default: return { emoji: '😐', bgStart: '#94a3b8', bgEnd: '#475569', iconColor: '#f8fafc', label: 'Bình tĩnh' };
   }
+};
+
+const FeedbackSection = ({ summary }: { summary: any }) => {
+  const submitFeedbackMutation = useSubmitEmotionFeedback();
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (isAccurate: boolean) => {
+    submitFeedbackMutation.mutate({
+      targetId: summary.targetId,
+      targetType: summary.targetType,
+      isAccurate,
+    }, {
+      onSuccess: () => {
+        setSubmitted(true);
+      },
+      onError: () => {
+        Alert.alert("Lỗi", "Không thể gửi phản hồi. Vui lòng thử lại.");
+      }
+    });
+  };
+
+  if (submitted) {
+    return (
+      <Card className="bg-emerald-50 dark:bg-emerald-900/20 rounded-[24px] p-6 shadow-sm border border-emerald-200 dark:border-emerald-800 mt-2">
+        <View className="flex-row items-center justify-center gap-3">
+          <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+          <Text className="text-emerald-700 dark:text-emerald-400 font-bold text-center">
+            Cảm ơn bạn đã gửi đánh giá!
+          </Text>
+        </View>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="bg-white dark:bg-[#1e293b] rounded-[24px] p-6 shadow-sm border border-slate-200 dark:border-slate-800 mt-2">
+      <View className="mb-4">
+        <Text className="text-lg font-extrabold text-slate-800 dark:text-slate-100">
+          Đánh giá kết quả
+        </Text>
+        <Text className="text-sm text-slate-500 mt-1">
+          Phân tích này có chính xác với cảm xúc thực tế của bạn không?
+        </Text>
+      </View>
+      
+      <View className="flex-row gap-3">
+        <TouchableOpacity 
+          disabled={submitFeedbackMutation.isPending}
+          onPress={() => handleSubmit(true)}
+          className="flex-1 flex-row items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 p-3 rounded-[16px] border border-slate-200 dark:border-slate-700"
+        >
+          <Ionicons name="thumbs-up-outline" size={20} color="#10b981" />
+          <Text className="font-bold text-slate-700 dark:text-slate-300">Chính xác</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          disabled={submitFeedbackMutation.isPending}
+          onPress={() => handleSubmit(false)}
+          className="flex-1 flex-row items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 p-3 rounded-[16px] border border-slate-200 dark:border-slate-700"
+        >
+          <Ionicons name="thumbs-down-outline" size={20} color="#f43f5e" />
+          <Text className="font-bold text-slate-700 dark:text-slate-300">Chưa đúng</Text>
+        </TouchableOpacity>
+      </View>
+    </Card>
+  );
 };
 
 export default function EmotionAnalysisScreen() {
@@ -123,15 +188,34 @@ export default function EmotionAnalysisScreen() {
                 })}
             </Card>
 
-            {/* BUTTON XEM GỐC */}
-            <View className="mt-4 px-1">
-              <PrimaryButton 
-                label="Xem lại nội dung gốc"
-                onPress={() => {
-                  console.log("Navigating to source:", targetType, targetId);
-                }}
-              />
-            </View>
+            {/* CONTENT PREVIEW */}
+            {analysis.content ? (
+              <Card className="bg-white dark:bg-[#1e293b] rounded-[24px] p-6 shadow-sm border border-slate-200 dark:border-slate-800 mt-2">
+                <View className="mb-4 flex-row items-center justify-between">
+                  <View>
+                    <Text className="text-lg font-extrabold text-slate-800 dark:text-slate-100">
+                      Nội dung phân tích
+                    </Text>
+                    <Text className="text-xs text-slate-500">
+                      Từ {targetType === 'POST' ? 'bài viết' : 'bình luận'} gốc
+                    </Text>
+                  </View>
+                  <View className="bg-sky-100 dark:bg-sky-900/30 px-3 py-1.5 rounded-full">
+                    <Text className="text-sky-700 dark:text-sky-400 text-xs font-bold uppercase tracking-wider">
+                      {targetType}
+                    </Text>
+                  </View>
+                </View>
+                <View className="bg-slate-50 dark:bg-black/20 p-4 rounded-[16px] border border-slate-100 dark:border-slate-800/50">
+                  <Text className="text-base text-slate-700 dark:text-slate-300 leading-6">
+                    {analysis.content.content || 'Không có nội dung văn bản.'}
+                  </Text>
+                </View>
+              </Card>
+            ) : null}
+
+            {/* FEEDBACK SECTION */}
+            <FeedbackSection summary={analysis} />
           </View>
         </ScrollView>
       ) : (
