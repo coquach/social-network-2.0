@@ -27,15 +27,19 @@ export const parseSafeDate = (
     } else {
       // Fix cho Hermes/JSC trên iOS/Android: dùng parseISO của date-fns cho chuẩn
       let normalized = date.includes('T') ? date : date.replace(' ', 'T');
+      
+      // PostgreSQL/Python thường trả về 6 số lẻ (microseconds), date-fns và Hermes chỉ hỗ trợ tối đa 3 số lẻ (milliseconds)
+      normalized = normalized.replace(/(\.\d{3})\d+/, '$1');
+
       // Nếu backend trả string không kèm timezone, mặc định là UTC
       if (!normalized.endsWith('Z') && !normalized.includes('+') && !normalized.match(/-\d\d:\d\d$/)) {
         normalized += 'Z';
       }
       parsed = parseISO(normalized);
       
-      // Nếu parseISO vẫn trả về invalid date, thử new Date fallback
+      // Nếu parseISO vẫn trả về invalid date, thử new Date fallback với chuỗi gốc
       if (!isValid(parsed)) {
-        parsed = new Date(normalized);
+        parsed = new Date(date);
       }
     }
   } else if (typeof date === 'object' && date !== null) {
@@ -43,10 +47,13 @@ export const parseSafeDate = (
     if (typeof candidate.toDate === 'function') {
       parsed = candidate.toDate();
     } else if (candidate.$date !== undefined) {
-      // Đệ quy nhẹ hoặc parse thẳng
-      parsed = new Date(candidate.$date);
+      let innerDate = candidate.$date;
+      if (typeof innerDate === 'object' && innerDate !== null && innerDate.$numberLong !== undefined) {
+        innerDate = Number(innerDate.$numberLong);
+      }
+      parsed = parseSafeDate(innerDate);
     } else if (candidate.date !== undefined) {
-      parsed = new Date(candidate.date);
+      parsed = parseSafeDate(candidate.date);
     } else if (typeof candidate.seconds === 'number') {
       parsed = new Date(candidate.seconds * 1000);
     } else if (typeof candidate._seconds === 'number') {

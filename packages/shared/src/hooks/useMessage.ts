@@ -7,22 +7,22 @@
  * For conversation management, see useConversation.ts
  */
 
-import { useMutation, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { messageService } from '../api/services/message.service';
-import { queryKeys } from './query-keys';
-import type { MessageDTO, CreateMessageInput, AttachmentDTO } from '../types/message.types';
-import type { ConversationDTO } from '../types/conversation.types';
-import type { CursorPageResponse, QueryParams } from '../types/common.types';
-import { ReactionType, MessageStatus, MediaType } from '../types/enums';
 import { useAuth } from '../contexts/auth-context';
 import { useUploadOptional } from '../contexts/upload-context';
+import type { CursorPageResponse, QueryParams } from '../types/common.types';
+import type { ConversationDTO } from '../types/conversation.types';
+import { MediaType, MessageStatus, ReactionType } from '../types/enums';
+import type { AttachmentDTO, CreateMessageInput, MessageDTO } from '../types/message.types';
 import type { UploadableFile } from '../types/upload.types';
 import {
-  invalidateQueries,
   cancelQueries,
+  invalidateQueries,
 } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
 import { getRecommendedUploadBatchOptions } from '../utils/upload.utils';
+import { queryKeys } from './query-keys';
 
 const toAttachmentMimeType = (type: MediaType, mimeType?: string) => {
   if (mimeType?.trim()) {
@@ -98,7 +98,6 @@ export const useSendMessage = (conversationId: string) => {
       // Generate temporary ID for optimistic message
       const tempId = `temp:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const now = new Date();
-      const hasMedia = !!uploadFiles?.length;
       const cachedMessagePages = queryClient.getQueriesData<
         InfiniteData<CursorPageResponse<MessageDTO>>
       >({

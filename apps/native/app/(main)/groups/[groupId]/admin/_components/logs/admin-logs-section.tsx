@@ -6,7 +6,7 @@ import { LogRow } from './log-row';
 
 
 export const GroupAdminLogsSection = ({ groupId }: { groupId: string }) => {
-    const [eventFilter, setEventFilter] = useState<'ALL' | GroupEventLog>('ALL');
+    const [eventFilter] = useState<'ALL' | GroupEventLog>('ALL');
 
     const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useGroupLogs(groupId, {
         eventType: eventFilter === 'ALL' ? undefined : eventFilter,

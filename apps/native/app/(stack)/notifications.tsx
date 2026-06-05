@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Pressable, View, ActivityIndicator, Text, FlatList } from 'react-native';
-import { useNotifications, useMarkAllNotificationsAsRead, useMarkNotificationAsRead, getRelativeTime } from '@repo/shared';
+import { getNotificationRoute, useMarkAllNotificationsAsRead, useMarkNotificationAsRead, useNotifications } from '@repo/shared';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { AppBackButton, AppHeader, AppHeaderIconButton } from '~/components/ui/app-header';
 import { AppScreen } from '~/components/ui/app-screen';
-import { AppHeader, AppBackButton, AppHeaderIconButton } from '~/components/ui/app-header';
 import { formatRelativeTime } from '~/utils/format-relative-time';
 
 export default function NotificationsScreen() {
@@ -36,12 +36,20 @@ export default function NotificationsScreen() {
         return { title: 'Yêu cầu kết bạn', icon: 'person-add', color: '#0ea5e9', bg: 'bg-sky-500/10' };
       case 'friendship_accept':
         return { title: 'Chấp nhận kết bạn', icon: 'person-add-outline', color: '#10b981', bg: 'bg-emerald-500/10' };
-      case 'post_like':
-        return { title: 'Lượt thích mới', icon: 'heart', color: '#ef4444', bg: 'bg-red-500/10' };
-      case 'post_comment':
+      case 'reaction':
+        return { title: 'Tương tác mới', icon: 'heart', color: '#ef4444', bg: 'bg-red-500/10' };
+      case 'comment':
         return { title: 'Bình luận mới', icon: 'chatbubble', color: '#3b82f6', bg: 'bg-blue-500/10' };
-      case 'post_share':
+      case 'reply_comment':
+        return { title: 'Phản hồi bình luận', icon: 'chatbubbles', color: '#3b82f6', bg: 'bg-blue-500/10' };
+      case 'share':
         return { title: 'Lượt chia sẻ mới', icon: 'share-social', color: '#8b5cf6', bg: 'bg-violet-500/10' };
+      case 'follow':
+        return { title: 'Người theo dõi mới', icon: 'person-circle', color: '#14b8a6', bg: 'bg-teal-500/10' };
+      case 'group_noti':
+        return { title: 'Thông báo nhóm', icon: 'people', color: '#f59e0b', bg: 'bg-amber-500/10' };
+      case 'group_invite':
+        return { title: 'Lời mời vào nhóm', icon: 'mail-open', color: '#f59e0b', bg: 'bg-amber-500/10' };
       case 'post_mention':
         return { title: 'Lượt nhắc đến', icon: 'at', color: '#f59e0b', bg: 'bg-amber-500/10' };
       case 'system':
@@ -57,23 +65,9 @@ export default function NotificationsScreen() {
     const isRead = item.isRead ?? item.status === 'read';
     if (!isRead) markAsRead(item._id);
 
-    const payload = item.payload || {};
-    switch (item.type) {
-      case 'friendship_request':
-      case 'friendship_accept':
-        if (payload.actorId) {
-          router.push(`/(stack)/user/${payload.actorId}`);
-        }
-        break;
-      case 'post_like':
-      case 'post_comment':
-      case 'post_share':
-      case 'post_mention':
-        const postId = payload.postId || payload.targetId;
-        if (postId) {
-          router.push(`/(stack)/post/${postId}`);
-        }
-        break;
+    const route = getNotificationRoute(item, 'native');
+    if (route && route !== '/notifications' && route !== '/(stack)/notifications') {
+      router.push(route as any);
     }
   };
 

@@ -15,7 +15,7 @@ import {
 } from '@repo/shared/hooks';
 import { ChangeRoleForm } from './change-role-form';
 import { ChangePermissionForm } from './change-permission-form';
-import { roleLabel } from './admin-members-section';
+import { roleLabel } from './change-role-form';
 
 export const GroupAdminMemberRow = ({ member, groupId }: { member: GroupMemberDTO, groupId: string }) => {
     const [modalType, setModalType] = useState<'NONE' | 'ROLE' | 'PERM'>('NONE');

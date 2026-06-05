@@ -46,6 +46,8 @@ export default function OtherUserProfileScreen() {
     { limit: 6 },
   );
 
+
+
   const displayName = React.useMemo(() => {
     const first = user?.firstName?.trim() ?? '';
     const last = user?.lastName?.trim() ?? '';
@@ -318,9 +320,11 @@ export default function OtherUserProfileScreen() {
 
   const keyExtractor = React.useCallback((item: ProfileFeedItem) => {
     if (item.type === 'post') {
-      return `post-${item.data.id}`;
+      const post = item.data as any;
+      const postId = post?.postId || post?.id || Math.random().toString();
+      return `post-${postId}`;
     }
-    return `share-${item.data.shareId}`;
+    return `share-${item.data?.shareId || Math.random().toString()}`;
   }, []);
 
   const isLoadingFeed =
@@ -391,11 +395,19 @@ export default function OtherUserProfileScreen() {
         hasNextPage={hasNextFeed}
         onLoadMore={loadMoreFeed}
         scrollEnabled={true}
-        emptyText="Chưa có nội dung hiển thị."
-        estimatedItemSize={300}
         contentContainerStyle={{
-          paddingBottom: Math.max(insets.bottom + 80, 100),
+          paddingBottom: Math.max(insets.bottom + 110, 130),
+          paddingHorizontal: 0,
+          paddingTop: insets.top + 8,
         }}
+        emptyText={
+          activePostTab === 'posts'
+            ? 'Chưa có bài viết nào.'
+            : 'Chưa có bài chia sẻ nào.'
+        }
+        estimatedItemSize={420}
+        getItemType={(item) => item.type}
+        bodyHorizontalPadding={16}
       />
     </View>
   );

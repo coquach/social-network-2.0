@@ -1,4 +1,4 @@
-﻿import { useGroup, useGroupPosts } from '@repo/shared/hooks';
+import { useGroup, useGroupPosts } from '@repo/shared/hooks';
 import type { PostDTO } from '@repo/shared/types';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -38,7 +38,7 @@ export default function GroupDetailScreen() {
   if (isGroupLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg dark:bg-app-bg-dark">
-        <AppLoadingBlock label="Ðang t?i nhóm" />
+        <AppLoadingBlock label="Đang tải nhóm" />
       </View>
     );
   }
@@ -47,7 +47,7 @@ export default function GroupDetailScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-app-bg px-6 dark:bg-app-bg-dark">
         <Text className="text-center text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-          Không th? t?i thông tin nhóm.
+          Không thể tải thông tin nhóm.
         </Text>
       </View>
     );
@@ -57,7 +57,7 @@ export default function GroupDetailScreen() {
     <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
       <FeedList
         items={posts}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id || (item as any).postId || Math.random().toString()}
         renderItem={({ item }) => <PostCardFull data={toPostSnapshot(item)} />}
         isLoading={isLoading}
         isError={isError}
@@ -71,12 +71,12 @@ export default function GroupDetailScreen() {
         scrollEnabled
         listHeaderComponent={
           <View>
-            <AppHeader title="Chi ti?t nhóm" subtitle="C?p nh?t th?o lu?n và ho?t d?ng nhóm" variant="bordered" />
+            <AppHeader title="Chi tiết nhóm" subtitle="Cập nhật thảo luận và hoạt động nhóm" variant="bordered" />
             <GroupHeader group={group} />
           </View>
         }
         contentContainerStyle={{ paddingBottom: 110, paddingTop: 0, paddingHorizontal: 12 }}
-        emptyText="Nhóm này chua có bài vi?t nào."
+        emptyText="Nhóm này chưa có bài viết nào."
         estimatedItemSize={420}
         getItemType={() => 'post'}
       />

@@ -133,7 +133,7 @@ export const CreateGroupConversationDialog = ({
     return () => clearTimeout(handle);
   }, [search]);
 
-  const usersQ = useSearchUsers(debouncedQuery, { limit: 10 });
+  const usersQ = useSearchUsers({ query: debouncedQuery, limit: 10 });
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage, isLoading } =
     usersQ;
 

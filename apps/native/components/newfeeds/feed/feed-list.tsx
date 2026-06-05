@@ -63,15 +63,15 @@ export function FeedList<TItem>({
   }, [hasNextPage, isError, isFetchingNextPage, isLoading, onLoadMore]);
 
   const footer = React.useMemo(() => {
-    if (isFetchingNextPage) {
-      return (
-        <View className="gap-3 pt-2" style={{ paddingHorizontal: bodyHorizontalPadding }}>
-          <PostCardFullSkeleton />
-        </View>
-      );
-    }
-
-    return <View style={{ height: 12 }} />;
+    return (
+      <View style={{ minHeight: 12, paddingHorizontal: bodyHorizontalPadding }}>
+        {isFetchingNextPage ? (
+          <View className="gap-3 pt-2">
+            <PostCardFullSkeleton />
+          </View>
+        ) : null}
+      </View>
+    );
   }, [bodyHorizontalPadding, isFetchingNextPage]);
 
   const empty = React.useMemo(() => {
@@ -120,10 +120,21 @@ export function FeedList<TItem>({
     [getItemType],
   );
 
+  const uniqueItems = React.useMemo(() => {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      const key = keyExtractorAdapter(item);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [items, keyExtractorAdapter]);
+
   return (
     <AnimatedFlashList
       style={{ flex: 1 }}
-      data={items as unknown[]}
+      data={uniqueItems as unknown[]}
+      extraData={[isFetchingNextPage, isLoading, items.length]}
       keyExtractor={keyExtractorAdapter}
       renderItem={renderItemAdapter}
       ListHeaderComponent={listHeaderComponent ?? null}

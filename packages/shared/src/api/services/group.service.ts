@@ -61,7 +61,7 @@ export const groupService = {
    * Get single group by ID
    */
   async getGroupById(groupId: string): Promise<GroupDTO> {
-    return getApiClient().get(`/groups/group/${groupId}`);
+    return getApiClient().get(`/groups/${groupId}`);
   },
 
   /**
@@ -75,14 +75,14 @@ export const groupService = {
    * Update existing group
    */
   async updateGroup(groupId: string, data: UpdateGroupInput): Promise<GroupDTO> {
-    return getApiClient().patch(`/groups/group/${groupId}`, data);
+    return getApiClient().patch(`/groups/${groupId}`, data);
   },
 
   /**
    * Delete group
    */
   async deleteGroup(groupId: string): Promise<boolean> {
-    return getApiClient().delete(`/groups/group/${groupId}`);
+    return getApiClient().delete(`/groups/${groupId}`);
   },
 
   // ==================== Group Settings ====================
@@ -91,7 +91,7 @@ export const groupService = {
    * Get group settings
    */
   async getGroupSettings(groupId: string): Promise<GroupSettingDTO> {
-    return getApiClient().get(`/groups/group/${groupId}/settings`);
+    return getApiClient().get(`/groups/${groupId}/settings`);
   },
 
   /**
@@ -101,7 +101,7 @@ export const groupService = {
     groupId: string,
     data: UpdateGroupSettingInput
   ): Promise<GroupSettingDTO> {
-    return getApiClient().patch(`/groups/group/${groupId}/settings`, data);
+    return getApiClient().patch(`/groups/${groupId}/settings`, data);
   },
 
   // ==================== Group Reports ====================
@@ -113,7 +113,7 @@ export const groupService = {
     groupId: string,
     data: CreateGroupReportInput
   ): Promise<GroupReportDTO> {
-    return getApiClient().post(`/groups/group/${groupId}/reports`, data);
+    return getApiClient().post(`/group-reports/${groupId}`, data);
   },
 
   // ==================== Member Management ====================

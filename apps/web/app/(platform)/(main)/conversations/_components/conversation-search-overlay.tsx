@@ -21,7 +21,7 @@ export function ConversationSearchOverlay({
   const trimmedQuery = query.trim();
   const hasQuery = trimmedQuery.length > 0;
 
-  const usersQ = useSearchUsers(trimmedQuery);
+  const usersQ = useSearchUsers({ query: trimmedQuery });
   const {
     data,
     isLoading,
