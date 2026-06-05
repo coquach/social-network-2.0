@@ -199,7 +199,7 @@ function PostDetailScreenContent() {
           style={{ flex: 1 }}
         />
 
-        {/* INPUT (FIX CHUáº¨N) */}
+        {/* INPUT (FIX CHUẨN) */}
         <View className="pb-4 pt-1 bg-app-bg dark:bg-app-bg-dark">
           <CommentInput
             ref={inputRef}

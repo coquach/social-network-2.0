@@ -74,7 +74,11 @@ export const groupService = {
   /**
    * Update existing group
    */
-  async updateGroup(groupId: string, data: UpdateGroupInput): Promise<GroupDTO> {
+
+  async updateGroup(
+    groupId: string,
+    data: UpdateGroupInput,
+  ): Promise<GroupDTO> {
     return getApiClient().patch(`/groups/${groupId}`, data);
   },
 
@@ -99,7 +103,7 @@ export const groupService = {
    */
   async updateGroupSettings(
     groupId: string,
-    data: UpdateGroupSettingInput
+    data: UpdateGroupSettingInput,
   ): Promise<GroupSettingDTO> {
     return getApiClient().patch(`/groups/${groupId}/settings`, data);
   },
@@ -111,7 +115,7 @@ export const groupService = {
    */
   async createGroupReport(
     groupId: string,
-    data: CreateGroupReportInput
+    data: CreateGroupReportInput,
   ): Promise<GroupReportDTO> {
     return getApiClient().post(`/group-reports/${groupId}`, data);
   },
@@ -129,21 +133,30 @@ export const groupService = {
    * Remove member from group
    */
   async removeMember(groupId: string, memberId: string): Promise<void> {
-    return getApiClient().post(`/groups/${groupId}/members/${memberId}/remove`, {});
+    return getApiClient().post(
+      `/groups/${groupId}/members/${memberId}/remove`,
+      {},
+    );
   },
 
   /**
    * Ban member from group
    */
   async banMember(groupId: string, memberId: string): Promise<void> {
-    return getApiClient().post(`/groups/${groupId}/members/${memberId}/ban`, {});
+    return getApiClient().post(
+      `/groups/${groupId}/members/${memberId}/ban`,
+      {},
+    );
   },
 
   /**
    * Unban member from group
    */
   async unbanMember(groupId: string, memberId: string): Promise<void> {
-    return getApiClient().post(`/groups/${groupId}/members/${memberId}/unban`, {});
+    return getApiClient().post(
+      `/groups/${groupId}/members/${memberId}/unban`,
+      {},
+    );
   },
 
   /**
@@ -152,11 +165,14 @@ export const groupService = {
   async changeMemberRole(
     groupId: string,
     memberId: string,
-    newRole: GroupRole
+    newRole: GroupRole,
   ): Promise<void> {
-    return getApiClient().put(`/groups/${groupId}/members/${memberId}/change-role`, {
-      newRole,
-    });
+    return getApiClient().put(
+      `/groups/${groupId}/members/${memberId}/change-role`,
+      {
+        newRole,
+      },
+    );
   },
 
   /**
@@ -165,11 +181,14 @@ export const groupService = {
   async changeMemberPermission(
     groupId: string,
     memberId: string,
-    permissions: GroupPermission[]
+    permissions: GroupPermission[],
   ): Promise<void> {
-    return getApiClient().put(`/groups/${groupId}/members/${memberId}/change-permission`, {
-      permissions,
-    });
+    return getApiClient().put(
+      `/groups/${groupId}/members/${memberId}/change-permission`,
+      {
+        permissions,
+      },
+    );
   },
 
   /**
@@ -177,9 +196,11 @@ export const groupService = {
    */
   async getGroupMembers(
     groupId: string,
-    params?: GroupMemberFilter
+    params?: GroupMemberFilter,
   ): Promise<CursorPageResponse<GroupMemberDTO>> {
-    return getApiClient().getCursorPage(`/groups/${groupId}/members`, { params });
+    return getApiClient().getCursorPage(`/groups/${groupId}/members`, {
+      params,
+    });
   },
 
   // ==================== Activity Logs ====================
@@ -189,7 +210,7 @@ export const groupService = {
    */
   async getGroupLogs(
     groupId: string,
-    params?: GroupLogFilter
+    params?: GroupLogFilter,
   ): Promise<CursorPageResponse<GroupLogDTO>> {
     return getApiClient().getCursorPage(`/groups/${groupId}/logs`, { params });
   },
@@ -206,22 +227,40 @@ export const groupService = {
   /**
    * Approve join request
    */
-  async approveJoinRequest(groupId: string, requestId: string): Promise<boolean> {
-    return getApiClient().post(`/groups/${groupId}/join-requests/${requestId}/approve`, {});
+  async approveJoinRequest(
+    groupId: string,
+    requestId: string,
+  ): Promise<boolean> {
+    return getApiClient().post(
+      `/groups/${groupId}/join-requests/${requestId}/approve`,
+      {},
+    );
   },
 
   /**
    * Reject join request
    */
-  async rejectJoinRequest(groupId: string, requestId: string): Promise<boolean> {
-    return getApiClient().post(`/groups/${groupId}/join-requests/${requestId}/reject`, {});
+  async rejectJoinRequest(
+    groupId: string,
+    requestId: string,
+  ): Promise<boolean> {
+    return getApiClient().post(
+      `/groups/${groupId}/join-requests/${requestId}/reject`,
+      {},
+    );
   },
 
   /**
    * Cancel join request
    */
-  async cancelJoinRequest(groupId: string, requestId: string): Promise<boolean> {
-    return getApiClient().post(`/groups/${groupId}/join-requests/${requestId}/cancel`, {});
+  async cancelJoinRequest(
+    groupId: string,
+    requestId: string,
+  ): Promise<boolean> {
+    return getApiClient().post(
+      `/groups/${groupId}/join-requests/${requestId}/cancel`,
+      {},
+    );
   },
 
   /**
@@ -229,9 +268,11 @@ export const groupService = {
    */
   async getGroupJoinRequests(
     groupId: string,
-    params?: JoinRequestFilter
+    params?: JoinRequestFilter,
   ): Promise<CursorPageResponse<JoinRequestResponseDTO>> {
-    return getApiClient().getCursorPage(`/groups/${groupId}/join-requests`, { params });
+    return getApiClient().getCursorPage(`/groups/${groupId}/join-requests`, {
+      params,
+    });
   },
 
   // ==================== Group Invitations ====================
@@ -239,7 +280,10 @@ export const groupService = {
   /**
    * Invite user to group
    */
-  async inviteUserToGroup(groupId: string, inviteeId: string): Promise<boolean> {
+  async inviteUserToGroup(
+    groupId: string,
+    inviteeId: string,
+  ): Promise<boolean> {
     return getApiClient().post(`/groups/${groupId}/invites/${inviteeId}`, {});
   },
 
