@@ -20,7 +20,7 @@ import { groupService } from '../api/services';
 import type { CursorPageResponse } from '../types';
 import { useUploadOptional } from '../contexts/upload-context';
 import type { UploadableFile } from '../types/upload.types';
-import type {
+import {
   CreateGroupInput,
   CreateGroupReportInput,
   GroupDTO,
@@ -36,6 +36,7 @@ import type {
   UpdateGroupInput,
   UpdateGroupSettingInput,
 } from '../types/group.types';
+import { MediaType } from '../types/enums';
 import {
   addItemToInfiniteCache,
   cancelQueries,
@@ -178,6 +179,7 @@ export const useGroupLogs = (groupId: string, filter?: GroupLogFilter) => {
 export const useGroupJoinRequests = (
   groupId: string,
   filter?: JoinRequestFilter,
+  options?: { enabled?: boolean }
 ) => {
   return useInfiniteQuery<CursorPageResponse<JoinRequestResponseDTO>>({
     queryKey: [...queryKeys.groups.joinRequests(groupId), filter] as const,
@@ -189,7 +191,7 @@ export const useGroupJoinRequests = (
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
-    enabled: !!groupId,
+    enabled: !!groupId && (options?.enabled ?? true),
     ...queryConfigs.realtime,
   });
 };
@@ -239,6 +241,9 @@ export const useCreateGroup = () => {
           console.error('Avatar upload failed:', uploadError);
           throw new Error('Failed to upload avatar. Please try again.');
         }
+      } else {
+        // WORKAROUND: Prevent backend crash (Cannot read properties of null (reading 'url'))
+        input.avatar = { type: MediaType.IMAGE, url: '' };
       }
 
       // Upload cover image if provided
@@ -259,6 +264,9 @@ export const useCreateGroup = () => {
           console.error('Cover image upload failed:', uploadError);
           throw new Error('Failed to upload cover image. Please try again.');
         }
+      } else {
+        // WORKAROUND: Prevent backend crash (Cannot read properties of null (reading 'url'))
+        input.coverImage = { type: MediaType.IMAGE, url: '' };
       }
 
       return groupService.createGroup(input);

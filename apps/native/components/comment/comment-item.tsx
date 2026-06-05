@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, Image } from 'react-native';
 
 import {
   ReactionType,
@@ -241,9 +241,19 @@ function CommentItemComponent({ comment, rootId, rootType }: CommentItemProps) {
               <Avatar.Name />
             </Avatar>
 
-            <Text className="mt-1 text-[15px] leading-5 text-app-fg dark:text-app-fg-dark">
-              {comment.content}
-            </Text>
+            {comment.content ? (
+              <Text className="mt-1 text-[15px] leading-5 text-app-fg dark:text-app-fg-dark">
+                {comment.content}
+              </Text>
+            ) : null}
+            
+            {comment.media && (
+              <Image
+                source={{ uri: comment.media.url }}
+                className="mt-2 h-40 w-full max-w-[240px] rounded-xl bg-slate-100 dark:bg-slate-800"
+                resizeMode="cover"
+              />
+            )}
           </View>
 
           <View className="flex-row items-center justify-between gap-3 pl-1">

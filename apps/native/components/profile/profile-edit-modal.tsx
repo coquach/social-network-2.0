@@ -54,14 +54,14 @@ export function ProfileEditModal({
   onClose,
   onSave,
 }: ProfileEditModalProps) {
-  const [firstName, setFirstName] = React.useState(defaultFirstName);
-  const [lastName, setLastName] = React.useState(defaultLastName);
-  const [bio, setBio] = React.useState(defaultBio);
-  const [location, setLocation] = React.useState(defaultLocation);
-  const [jobTitle, setJobTitle] = React.useState(defaultJobTitle);
-  const [company, setCompany] = React.useState(defaultCompany);
-  const [school, setSchool] = React.useState(defaultSchool);
-  const [interests, setInterests] = React.useState<string[]>(defaultInterests);
+  const [firstName, setFirstName] = React.useState(defaultFirstName || '');
+  const [lastName, setLastName] = React.useState(defaultLastName || '');
+  const [bio, setBio] = React.useState(defaultBio || '');
+  const [location, setLocation] = React.useState(defaultLocation || '');
+  const [jobTitle, setJobTitle] = React.useState(defaultJobTitle || '');
+  const [company, setCompany] = React.useState(defaultCompany || '');
+  const [school, setSchool] = React.useState(defaultSchool || '');
+  const [interests, setInterests] = React.useState<string[]>(defaultInterests || []);
   
   const [customInterest, setCustomInterest] = React.useState('');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -100,14 +100,14 @@ export function ProfileEditModal({
       return;
     }
 
-    setFirstName(defaultFirstName);
-    setLastName(defaultLastName);
-    setBio(defaultBio);
-    setLocation(defaultLocation);
-    setJobTitle(defaultJobTitle);
-    setCompany(defaultCompany);
-    setSchool(defaultSchool);
-    setInterests(defaultInterests);
+    setFirstName(defaultFirstName || '');
+    setLastName(defaultLastName || '');
+    setBio(defaultBio || '');
+    setLocation(defaultLocation || '');
+    setJobTitle(defaultJobTitle || '');
+    setCompany(defaultCompany || '');
+    setSchool(defaultSchool || '');
+    setInterests(defaultInterests || []);
     setCustomInterest('');
     avatarPicker.clearImage();
     coverPicker.clearImage();
@@ -369,7 +369,7 @@ export function ProfileEditModal({
             onSubmitEditing={handleSave}
           />
           <Text className="mt-1 text-right text-xs text-app-muted-fg dark:text-app-muted-fg-dark">
-            {bio.trim().length}/240
+            {(bio || '').trim().length}/240
           </Text>
         </View>
 

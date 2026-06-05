@@ -88,6 +88,17 @@ function ChatConversationRowComponent({
     otherUserId ? state.getById(otherUserId) : undefined,
   );
 
+  const lastMessageSenderId = conversation.lastMessage?.senderId;
+  const shouldResolveSender = Boolean(
+    conversation.isGroup &&
+    lastMessageSenderId &&
+    lastMessageSenderId !== userId
+  );
+  
+  const { data: cachedSenderUser } = useUser(lastMessageSenderId ?? "", {
+    enabled: shouldResolveSender,
+  });
+
   const shouldShowSkeleton =
     shouldResolveOtherUser &&
     !cachedOtherUser &&
@@ -106,17 +117,6 @@ function ChatConversationRowComponent({
     !conversation.isGroup &&
     (presence?.status === "online" || otherParticipant?.isOnline === true);
   const isHidden = Boolean(userId && conversation.hiddenFor?.includes(userId));
-
-  const lastMessageSenderId = conversation.lastMessage?.senderId;
-  const shouldResolveSender = Boolean(
-    conversation.isGroup &&
-    lastMessageSenderId &&
-    lastMessageSenderId !== userId
-  );
-  
-  const { data: cachedSenderUser } = useUser(lastMessageSenderId ?? "", {
-    enabled: shouldResolveSender,
-  });
 
   const preview = getMessagePreview(
     conversation.lastMessage,

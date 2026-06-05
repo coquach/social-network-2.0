@@ -21,6 +21,17 @@ export const parseSafeDate = (
   } else if (typeof date === 'number') {
     parsed = date < 100000000000 ? new Date(date * 1000) : new Date(date);
   } else if (typeof date === 'string') {
+    if (date.startsWith('[') && date.endsWith(']')) {
+      try {
+        const parsedArray = JSON.parse(date);
+        if (Array.isArray(parsedArray)) {
+          return parseSafeDate(parsedArray);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
     if (!isNaN(Number(date)) && date.trim() !== '') {
       const num = Number(date);
       parsed = num < 100000000000 ? new Date(num * 1000) : new Date(num);
@@ -28,6 +39,9 @@ export const parseSafeDate = (
       // Fix cho Hermes/JSC trên iOS/Android: dùng parseISO của date-fns cho chuẩn
       let normalized = date.includes('T') ? date : date.replace(' ', 'T');
       
+      // Chuyển đổi slash sang dash (VD: 2026/06/04 -> 2026-06-04)
+      normalized = normalized.replace(/\//g, '-');
+
       // PostgreSQL/Python thường trả về 6 số lẻ (microseconds), date-fns và Hermes chỉ hỗ trợ tối đa 3 số lẻ (milliseconds)
       normalized = normalized.replace(/(\.\d{3})\d+/, '$1');
 
@@ -65,13 +79,10 @@ export const parseSafeDate = (
     parsed = new Date(date as any);
   }
 
-  // Fallback nếu parse lỗi, trả về null thay vì new Date() để UI có thể handle
-  // Hoặc ở đây ta có thể trả về một mốc thời gian quá khứ, nhưng tốt nhất trả về new Date(0) hoặc giữ nguyên Date hiện tại.
-  // Vấn đề cũ: trả về new Date() làm UI luôn hiện "Vừa xong". 
-  // Sửa thành trả về new Date(0) (1/1/1970) để lộ ra lỗi parse hoặc fallback an toàn hơn.
+  // Fallback nếu parse lỗi
   if (!isValid(parsed) || isNaN(parsed.getTime())) {
-    // Trả về một mốc thời gian an toàn không phải hiện tại (để khỏi hiện Vừa xong)
-    return new Date(0); 
+    console.warn(`[parseSafeDate] Failed to parse date:`, date);
+    return new Date(); // Fallback về thời gian hiện tại để tránh hiện 1970
   }
 
   return parsed;

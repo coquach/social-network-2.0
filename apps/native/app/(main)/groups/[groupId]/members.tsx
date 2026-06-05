@@ -1,13 +1,14 @@
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { Text, View } from 'react-native';
+
 
 import { GroupPermission, useGroupPermission } from '@repo/shared';
 import { useGroup } from '@repo/shared/hooks';
 
-import { GroupAdminMembersSection } from '~/components/group-admin/members/admin-members-section';
+import { MemberSection } from './members/member-section';
 import { AppHeader } from '~/components/ui/app-header';
 import { AppLoadingBlock } from '~/components/ui/app-loading';
+import { Text, View } from 'react-native';
 
 export default function GroupMembersScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -32,35 +33,15 @@ export default function GroupMembersScreen() {
     );
   }
 
-  if (!can(GroupPermission.MANAGE_MEMBERS)) {
-    return (
-      <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
-        <AppHeader
-          title="Thành viên"
-          subtitle="Bạn không có quyền quản trị thành viên"
-          variant="bordered"
-        />
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-sm text-app-muted-fg dark:text-app-muted-fg-dark">
-            Tài khoản của bạn không đủ quyền để xem và chỉnh sửa danh sách thành viên.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
       <AppHeader
         title="Thành viên"
-        subtitle="Quản lý vai trò và quyền thành viên"
+        subtitle="Danh sách thành viên nhóm"
         variant="bordered"
       />
-      <GroupAdminMembersSection groupId={groupId ?? ''} />
+      <MemberSection groupId={groupId ?? ''} />
     </View>
   );
-
-
-
-
+}
 
