@@ -4,7 +4,12 @@
  */
 
 import { getApiClient } from '../client';
-import type { UserDTO, UserProfile, UpdateUserInput, CursorPageResponse } from '../../types';
+import type {
+  UserDTO,
+  UserProfile,
+  UpdateUserInput,
+  CursorPageResponse,
+} from '../../types';
 
 export const userService = {
   /**

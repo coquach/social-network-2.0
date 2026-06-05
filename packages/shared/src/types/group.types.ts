@@ -95,7 +95,6 @@ export interface GroupSettingDTO {
   requiredPostApproval: boolean;
   allowMemberInvite: boolean;
   maxMembers: number;
-  requireAdminApprovalToJoin: boolean;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;

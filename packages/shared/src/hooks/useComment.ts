@@ -163,9 +163,7 @@ export const useCreateComment = () => {
       );
 
       // Determine target query key (post comments or comment replies)
-      const targetKey = newComment.parentId
-        ? ([...queryKeys.comments.replies(newComment.parentId)] as unknown[])
-        : ([...queryKeys.comments.byPost(newComment.rootId)] as unknown[]);
+      const targetKey = ['comments', newComment.rootId, newComment.rootType, newComment.parentId];
 
       // Add to list cache
       addItemToInfiniteCache(queryClient, targetKey, newComment);

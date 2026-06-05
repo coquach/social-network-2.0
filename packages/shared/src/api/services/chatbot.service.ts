@@ -116,7 +116,7 @@ export const chatbotService = {
    * Get assistant chat history for a user
    */
   async getHistory(
-    userId: string,
+    _userId: string,
     query?: ChatbotHistoryQuery
   ): Promise<ChatbotHistoryPageDTO> {
     const params: Record<string, string | number> = {};
@@ -141,7 +141,7 @@ export const chatbotService = {
   /**
    * Clear assistant chat history for a user
    */
-  async clearHistory(userId: string): Promise<ChatbotClearHistoryResultDTO> {
+  async clearHistory(_userId: string): Promise<ChatbotClearHistoryResultDTO> {
     const response = await getApiClient().delete<ChatbotClearHistoryResultRaw>(
       `/assistant/chat-history/me`,
     );

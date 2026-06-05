@@ -16,6 +16,7 @@ import {
   useLeaveGroup,
   useRequestToJoinGroup,
   useUserFriends,
+  useDeleteGroup,
 } from '@repo/shared/hooks';
 import {
   GroupDTO,
@@ -52,10 +53,18 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
     limit: 100,
   });
 
-  const { data: requestData } = useGroupJoinRequests(group.id, {
-    status: JoinRequestStatus.PENDING,
-    limit: 100,
-  });
+  const { data: requestData } = useGroupJoinRequests(
+    group.id,
+    {
+      status: JoinRequestStatus.PENDING,
+      limit: 100,
+    },
+    {
+      enabled:
+        can(GroupPermission.INVITE_MEMBERS) ||
+        can(GroupPermission.MANAGE_JOIN_REQUESTS),
+    },
+  );
 
   const { mutate: joinGroup, isPending: isJoining } = useRequestToJoinGroup();
   const { mutate: leaveGroup, isPending: isLeaving } = useLeaveGroup();
@@ -64,8 +73,10 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
   const { mutate: declineInvite, isPending: isDecliningInvite } =
     useDeclineGroupInvite();
   const { mutate: inviteUser, isPending: isInviting } = useInviteUserToGroup();
+  const { mutate: deleteGroup, isPending: isDeleting } = useDeleteGroup();
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = React.useState(false);
   const [searchKeyword, setSearchKeyword] = React.useState('');
   const [selectedFriend, setSelectedFriend] = React.useState<UserDTO | null>(
@@ -141,6 +152,11 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
     </TouchableOpacity>
   );
 
+  const membershipStatus =
+    group.membershipStatus ??
+    (group.userRole ? MembershipStatus.MEMBER : MembershipStatus.NONE);
+  const isOwner = group.userRole === 'OWNER';
+
   return (
     <View className="rounded-3xl bg-app-surface pb-4 dark:bg-app-surface-dark">
       <View className="h-44 w-full overflow-hidden rounded-t-3xl bg-slate-200 dark:bg-slate-800">
@@ -173,10 +189,13 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
               • {group.members} thành viên
             </Text>
           </View>
+          <Text className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            {group.description || 'Chưa có mô tả'}
+          </Text>
         </View>
 
         <View className="mt-5 gap-2">
-          {group.membershipStatus === MembershipStatus.NONE ? (
+          {membershipStatus === MembershipStatus.NONE ? (
             <TouchableOpacity
               disabled={isJoining}
               onPress={() =>
@@ -202,7 +221,7 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
             </TouchableOpacity>
           ) : null}
 
-          {group.membershipStatus === MembershipStatus.PENDING_APPROVAL ? (
+          {membershipStatus === MembershipStatus.PENDING_APPROVAL ? (
             <View className="h-11 flex-row items-center justify-center gap-2 rounded-xl bg-amber-100 dark:bg-amber-900/30">
               <Ionicons name="time" size={18} color="#d97706" />
               <Text className="font-bold text-amber-600">
@@ -211,7 +230,7 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
             </View>
           ) : null}
 
-          {group.membershipStatus === MembershipStatus.INVITED ? (
+          {membershipStatus === MembershipStatus.INVITED ? (
             <View className="flex-row gap-2">
               <TouchableOpacity
                 disabled={isAcceptingInvite || isDecliningInvite}
@@ -254,7 +273,7 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
             </View>
           ) : null}
 
-          {group.membershipStatus === MembershipStatus.MEMBER ? (
+          {membershipStatus === MembershipStatus.MEMBER ? (
             <>
               <View className="flex-row gap-2">
                 {can(GroupPermission.INVITE_MEMBERS) ? (
@@ -271,27 +290,31 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
                   </TouchableOpacity>
                 ) : null}
 
-                <TouchableOpacity
-                  disabled={isLeaving}
-                  onPress={() => setIsLeaveModalOpen(true)}
-                  className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-70"
-                >
-                  <Ionicons name="log-out-outline" size={20} color="#64748b" />
-                </TouchableOpacity>
+                {isOwner ? (
+                  <View className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-slate-200 bg-app-surface dark:border-slate-700 dark:bg-app-surface-dark">
+                    <Ionicons name="key" size={18} color="#64748b" />
+                    <Text className="font-bold text-slate-700 dark:text-slate-300">
+                      Chủ nhóm
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    disabled={isLeaving}
+                    onPress={() => setIsLeaveModalOpen(true)}
+                    className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-70"
+                  >
+                    <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+                  </TouchableOpacity>
+                )}
               </View>
 
               <View className="flex-row flex-wrap gap-2">
                 {renderQuickAction('people-outline', 'Thành viên', () =>
                   router.push(`/(main)/groups/${group.id}/members`),
                 )}
-                {can(GroupPermission.MANAGE_JOIN_REQUESTS)
-                  ? renderQuickAction('checkmark-done-outline', 'Yêu cầu', () =>
-                      router.push(`/(main)/groups/${group.id}/requests`),
-                    )
-                  : null}
-                {can(GroupPermission.MANAGE_GROUP)
-                  ? renderQuickAction('time-outline', 'Nhật ký', () =>
-                      router.push(`/(main)/groups/${group.id}/logs`),
+                {can(GroupPermission.MANAGE_MEMBERS) || can(GroupPermission.MANAGE_JOIN_REQUESTS)
+                  ? renderQuickAction('shield-checkmark-outline', 'Quản trị nhóm', () =>
+                      router.push(`/(main)/groups/${group.id}/admin`),
                     )
                   : null}
                 {can(GroupPermission.UPDATE_GROUP_SETTINGS)
@@ -299,11 +322,24 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
                       router.push(`/(main)/groups/${group.id}/settings`),
                     )
                   : null}
+                {isOwner ? (
+                  <TouchableOpacity
+                    onPress={() => setIsDeleteModalOpen(true)}
+                    className="h-11 rounded-xl bg-red-100 px-4 dark:bg-red-900/30"
+                  >
+                    <View className="h-full flex-row items-center gap-2">
+                      <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                      <Text className="font-bold text-red-600 dark:text-red-400">
+                        Xóa nhóm
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             </>
           ) : null}
 
-          {group.membershipStatus === MembershipStatus.BANNED ? (
+          {membershipStatus === MembershipStatus.BANNED ? (
             <View className="h-11 flex-1 flex-row items-center justify-center rounded-xl bg-red-100">
               <Text className="font-bold text-red-600">
                 Bạn đã bị chặn khỏi nhóm
@@ -312,6 +348,49 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
           ) : null}
         </View>
       </View>
+
+      <AppModal
+        visible={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        variant="warning"
+        title="Xóa nhóm"
+        description={`Bạn có chắc chắn muốn xóa nhóm này không? Mọi dữ liệu của nhóm ${group.name} sẽ bị xóa vĩnh viễn và không thể khôi phục.`}
+        footer={
+          <>
+            <TouchableOpacity
+              onPress={() => setIsDeleteModalOpen(false)}
+              className="h-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+            >
+              <Text className="font-semibold text-slate-700 dark:text-slate-300">
+                Hủy
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              disabled={isDeleting}
+              onPress={() => {
+                deleteGroup(group.id, {
+                  onSuccess: () => {
+                    showToast(
+                      'Đã xóa nhóm',
+                      'Nhóm đã được xóa thành công.',
+                      'success',
+                    );
+                    router.replace('/groups');
+                  },
+                  onError: (error) =>
+                    showToast('Không thể xóa nhóm', error.message, 'error'),
+                });
+                setIsDeleteModalOpen(false);
+              }}
+              className="h-11 items-center justify-center rounded-xl bg-red-600 disabled:opacity-70"
+            >
+              <Text className="font-semibold text-white">
+                {isDeleting ? 'Đang xóa...' : 'Xóa nhóm'}
+              </Text>
+            </TouchableOpacity>
+          </>
+        }
+      />
 
       <AppModal
         visible={isLeaveModalOpen}

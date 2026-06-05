@@ -14,6 +14,7 @@ import { useCreatePostModal } from '@repo/shared/store/useCreatePostModal';
 
 export function CreatePostSheet() {
   const isOpen = useCreatePostModal((state) => state.isOpen);
+  const groupId = useCreatePostModal((state) => state.groupId);
   const close = useCreatePostModal((state) => state.close);
   const insets = useSafeAreaInsets();
   const createPostRef = React.useRef<BottomSheetModal>(null);
@@ -58,7 +59,7 @@ export function CreatePostSheet() {
 
   const content = (
     <View className="flex-1 bg-app-background dark:bg-app-background-dark">
-      <CreatePostProvider>
+      <CreatePostProvider groupId={groupId}>
         <ComposerLayout onClose={close} />
       </CreatePostProvider>
     </View>

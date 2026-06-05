@@ -72,7 +72,7 @@ export const resolveAuthError = (localError: string | null, errors?: ClerkErrorS
 
 export const createAuthNavigate =
   (
-    replace: (href: '/(main)/newfeeds') => void,
+    replace: (href: '/') => void,
     setError: (message: string) => void,
   ) =>
   ({ session }: SessionNavigateArgs) => {
@@ -81,7 +81,7 @@ export const createAuthNavigate =
       return;
     }
 
-    replace('/(main)/newfeeds');
+    replace('/');
   };
 
 type ClerkTokenGetter = (

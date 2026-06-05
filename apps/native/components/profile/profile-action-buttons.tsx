@@ -1,17 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useToast } from 'heroui-native/toast';
 import {
-  useSendFriendRequest,
-  useRemoveFriend,
+  MessagePrivacy,
+  RelationStatus,
   useAcceptFriendRequest,
   useRejectFriendRequest,
-  RelationStatus,
-  MessagePrivacy,
+  useRemoveFriend,
+  useSendFriendRequest,
   type UserProfile,
 } from '@repo/shared';
+import { useToast } from 'heroui-native/toast';
+import React from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { AppToast } from '~/components/ui/app-toast';
 import { useStartConversation } from '~/hooks/use-start-conversation';
 

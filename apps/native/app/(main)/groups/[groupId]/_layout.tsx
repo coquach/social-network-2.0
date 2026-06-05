@@ -1,4 +1,4 @@
-﻿import { Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 
 export default function GroupDetailLayout() {
   return (
@@ -8,6 +8,7 @@ export default function GroupDetailLayout() {
       <Stack.Screen name="requests" />
       <Stack.Screen name="logs" />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="admin" />
     </Stack>
   );
 }

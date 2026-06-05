@@ -1,34 +1,59 @@
-﻿# Sentimeta Monorepo
+# 🌟 Sentimeta - Mạng xã hội đa nền tảng tích hợp phân tích cảm xúc (Monorepo)
 
-Monorepo cho hệ sinh thái Sentimeta gồm Web (Next.js) và Mobile (Expo/React Native), dùng chung domain layer qua `@repo/shared`.
+👉 **Backend Repository:** [SE121-microservices](https://github.com/LeVanHuy84/SE121-microservices)
 
-## 1. Project Vision
+Sentimeta là một hệ sinh thái mạng xã hội đa nền tảng hiện đại, tích hợp sâu các công nghệ Trí tuệ nhân tạo (AI) như phân tích cảm xúc (Emotion Intelligence), Chatbot, và hệ thống gợi ý (Recommendation). Dự án được thiết kế theo kiến trúc Microservices ở Backend và Monorepo ở Frontend, đảm bảo khả năng mở rộng, hiệu năng cao và chia sẻ logic mượt mà.
 
-- Phát triển feature song song trên web và mobile.
-- Chia sẻ type/schema/hook/store để giảm duplicate logic.
-- Giữ app layer mỏng: routing + presentation + platform integration.
+---
 
-## 2. Architecture Overview
+## 📸 Màn hình / UI Showcase
 
-### 2.1 High-level system
+Dưới đây là một số giao diện nổi bật của ứng dụng trên cả nền tảng Web và Mobile.
+
+| Newsfeed (Web & App) | Realtime Chat & AI Chatbot | Profile & Phân tích cảm xúc |
+| :---: | :---: | :---: |
+| `![Newsfeed Placeholder]()` | `![Chat Placeholder]()` | `![Profile Placeholder]()` |
+| Bảng tin cá nhân hóa với thuật toán gợi ý (Recommendation AI). | Chat thời gian thực với bạn bè và tương tác với Trợ lý ảo AI. | Trang cá nhân tích hợp báo cáo phân tích cảm xúc (Emotion AI). |
+
+---
+
+## ✨ Tính năng Nổi bật (Key Features)
+
+- **🤖 AI-Powered Features:**
+  - **Emotion Intelligence:** Tự động phân tích cảm xúc người dùng qua nội dung đăng tải và lịch sử hoạt động.
+  - **Smart Chatbot:** Trợ lý ảo thông minh tích hợp ngay trong hệ thống chat.
+  - **Recommendation Engine:** Gợi ý nội dung, bạn bè và nhóm dựa trên sở thích và hành vi.
+- **📱 Đa Nền Tảng (Cross-platform):** 
+  - **Web App:** Xây dựng với Next.js 15 (App Router), React 19, Tailwind CSS v4.
+  - **Native App:** Ứng dụng di động mượt mà với Expo SDK 55, React Native, Uniwind (Tailwind cho RN) và HeroUI Native.
+- **⚡ Realtime & Social:**
+  - Nhắn tin theo thời gian thực (Realtime Chat).
+  - Quản lý Cộng đồng (Groups), Bạn bè, Notifications.
+- **🏗 Kiến trúc Monorepo:** Tái sử dụng tối đa logic (API Clients, Zod schemas, Zustand stores, React Query hooks) thông qua package `@repo/shared`.
+
+---
+
+## 🏗 Kiến trúc Hệ thống (Architecture)
+
+### 1. High-level System
 
 ```mermaid
 flowchart LR
   subgraph Clients
-    W[Web App - Next.js]
-    N[Native App - Expo]
+    W["Web App - Next.js"]
+    N["Native App - Expo"]
   end
 
   subgraph SharedMonorepo
-    S[@repo/shared\napi hooks schemas store types]
-    U[@repo/ui\nshared ui primitives]
+    S["@repo/shared\nAPI, Hooks, Schemas, Store, Types"]
+    U["@repo/ui\nShared UI Primitives"]
   end
 
-  B[(Backend APIs\nSE121-microservices)]
-  WS[(WebSocket Gateway)]
-  Auth[(Clerk)]
-  CDN[(Cloudinary)]
-  Push[(Firebase/Push Services)]
+  B[("Backend APIs\nSE121-microservices")]
+  WS[("WebSocket Gateway")]
+  Auth[("Clerk")]
+  CDN[("Cloudinary")]
+  Push[("Firebase / Push Services")]
 
   W --> S
   W --> U
@@ -46,16 +71,18 @@ flowchart LR
   N --> Push
 ```
 
-### 2.2 Monorepo dependency graph
+### 2. Monorepo Dependency Graph
+
+Dự án Frontend được quản lý bởi Turborepo, cho phép cache build và tối ưu hóa workflow.
 
 ```mermaid
 flowchart TD
-  Root[Root package.json + turbo]
-  Web[apps/web]
-  Native[apps/native]
-  Shared[packages/shared]
-  UI[packages/ui]
-  TS[packages/typescript-config]
+  Root["Root package.json + Turbo"]
+  Web["apps/web"]
+  Native["apps/native"]
+  Shared["packages/shared"]
+  UI["packages/ui"]
+  TS["packages/typescript-config"]
 
   Root --> Web
   Root --> Native
@@ -73,304 +100,148 @@ flowchart TD
   UI --> TS
 ```
 
-## 3. Repository Map
+### 3. Shared Domain Layer (`@repo/shared`)
 
-```text
-social-network-2.0/
-  apps/
-    native/
-      app/
-        (auth)/
-        (main)/          # tabs chính
-        (onboarding)/
-        (stack)/         # stack screens như post detail
-        chat/
-      app.json
-      app.config.js
-      eas.json
-    web/
-      app/
-        (platform)/
-          (clerk)/
-          (main)/
-          admin/
-        api/
-        marketing/
-      docs/
-        FCM_SETUP.md
-        SERVICE_WORKER_ENV.md
-  packages/
-    shared/
-      src/
-        api/
-        constants/
-        contexts/
-        hooks/
-        lib/
-        schemas/
-        store/
-        types/
-        utils/
-    ui/
-    typescript-config/
-```
-
-## 4. Shared Domain Layer (`@repo/shared`)
+Nguyên tắc phát triển:
+1. DTO/schema được định nghĩa trong `shared` trước.
+2. Web và Native import cùng contract (hooks, API clients) để đảm bảo đồng nhất (tránh drift).
 
 ```mermaid
 flowchart LR
-  API[api/\nrequest clients] --> Hooks[hooks/\nreact query hooks]
-  Schemas[schemas/\nzod validation] --> Types[types/\ndto contracts]
+  API["api/\nRequest Clients"] --> Hooks["hooks/\nReact Query Hooks"]
+  Schemas["schemas/\nZod Validation"] --> Types["types/\nDTO Contracts"]
   Types --> Hooks
-  Hooks --> Store[store/\nzustand]
-  Constants[constants/] --> Hooks
-  Utils[utils/ + lib/] --> API
-  Contexts[contexts/] --> Hooks
+  Hooks --> Store["store/\nZustand"]
+  Constants["constants/"] --> Hooks
+  Utils["utils/ + lib/"] --> API
+  Contexts["contexts/"] --> Hooks
 ```
 
-Nguyên tắc:
-- DTO/schema nằm trong `shared` trước, rồi mới triển khai UI.
-- Web và native import cùng contract để tránh drift.
+---
 
-## 5. Feature Data Flow
+## 🛠 Tech Stack
 
-### 5.1 Feed/Post flow (web/native)
-
-```mermaid
-sequenceDiagram
-  participant UI as Screen Component
-  participant Hook as @repo/shared hook
-  participant API as Shared API Client
-  participant BE as Backend
-  participant Cache as React Query Cache
-
-  UI->>Hook: useFeed/usePost(...)
-  Hook->>Cache: get cached data
-  Hook->>API: fetch if stale/missing
-  API->>BE: HTTP request
-  BE-->>API: DTO response
-  API-->>Hook: typed data
-  Hook->>Cache: update cache
-  Hook-->>UI: render/update
-```
-
-### 5.2 Realtime + push
-
-```mermaid
-flowchart LR
-  UI[Web/Native UI] --> WS[WebSocket client]
-  WS --> G[Gateway]
-  G --> UI
-  G --> Push[Push notification provider]
-```
-
-## 6. Tech Stack
-
-| Layer | Stack |
+| Layer | Công nghệ (Tech Stack) |
 |---|---|
-| Monorepo | npm workspaces, Turbo |
-| Web | Next.js 15, React 19, Clerk, React Query |
-| Native | Expo SDK 55, React Native 0.83, Expo Router, Clerk |
-| Shared | TypeScript, Axios, Zod, Zustand |
-| Tooling | TypeScript, ESLint (web), Prettier, GitHub Actions |
+| **Monorepo** | npm workspaces, Turborepo |
+| **Web** | Next.js 15, React 19, Tailwind CSS v4, Clerk, React Query |
+| **Native** | Expo SDK 55, React Native 0.83, Expo Router, Uniwind, HeroUI Native, Clerk |
+| **Shared** | TypeScript, Axios, Zod, Zustand |
+| **Tooling** | ESLint, Prettier, GitHub Actions |
 
-## 7. Environment Requirements
+---
 
+## 🚀 Hướng dẫn Cài đặt & Khởi chạy (Quick Start)
+
+### Yêu cầu môi trường (Prerequisites)
 - Node.js >= 18 (khuyến nghị Node 20)
 - npm >= 10
 - Git
-- Native development:
-  - Expo Go/dev client
-  - Android Studio (Android)
-  - Xcode (iOS trên macOS)
+- Docker & Docker Compose (cho Backend)
+- **Native development:** Expo Go / Expo Dev Client, Android Studio (cho Android) hoặc Xcode (cho iOS trên macOS).
 
-## 8. Getting Started
+### Bước 1: Khởi chạy Backend (Microservices)
 
-### 8.1 Install dependencies
+Sentimeta Frontend giao tiếp trực tiếp với hệ thống Backend Microservices (`SE121-microservices`). Bạn cần chạy Backend trước:
 
 ```bash
-npm ci
+# Clone repo backend (đặt ngang hàng với thư mục frontend)
+git clone https://github.com/LeVanHuy84/SE121-microservices SE121-microservices
+cd SE121-microservices
+
+# Cài đặt dependencies
+npm install
+
+# Khởi chạy hạ tầng local (Kafka, Redis, Postgres, MongoDB...)
+docker-compose up -d
+
+# Khởi chạy tất cả các microservices
+npm run start:dev
 ```
 
-### 8.2 Create env files
+*Lưu ý: Để xem chi tiết các port và biến môi trường của Backend, vui lòng tham khảo file `README.md` bên trong repo `SE121-microservices`.*
+
+### Bước 2: Khởi chạy Frontend (Monorepo)
 
 ```bash
+# Quay lại thư mục dự án frontend
+cd ../social-network-2.0
+
+# Cài đặt dependencies
+npm ci
+
+# Setup biến môi trường
 cp apps/web/.env.example apps/web/.env
 cp apps/native/.env.example apps/native/.env
 ```
 
-### 8.3 Run apps
+*Tiến hành điền các key của Clerk, Firebase, Cloudinary... vào các file `.env` vừa tạo.*
 
 ```bash
+# Khởi chạy toàn bộ (cả Web & Native)
+npm run dev
+
+# Hoặc khởi chạy từng workspace độc lập:
 npm run dev --workspace web
 npm run dev --workspace sentimeta-native
 ```
 
-Native platform commands:
-
+**Lệnh riêng cho Native Platform:**
 ```bash
 npm run android --workspace sentimeta-native
 npm run ios --workspace sentimeta-native
 ```
 
-## 9. Environment Variables
+---
 
-### 9.1 Web (`apps/web/.env`)
+## 🔐 Environment Variables
 
-| Group | Variables |
+### 1. Web (`apps/web/.env`)
+
+| Nhóm | Biến môi trường |
 |---|---|
-| Clerk | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET` |
-| Auth route config | `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` |
-| Backend | `NEXT_PUBLIC_BACKEND_API_URL`, `NEXT_PUBLIC_WS_URL` |
-| Cloudinary | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` |
-| AI | `OPENAI_API_KEY` |
-| Google | `GOOGLE_API_KEY` |
-| Firebase push | `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `NEXT_PUBLIC_FIREBASE_VAPID_KEY` |
+| **Clerk Auth** | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET` |
+| **Clerk Routes** | `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` |
+| **Backend & WS** | `NEXT_PUBLIC_BACKEND_API_URL`, `NEXT_PUBLIC_WS_URL` |
+| **Cloudinary** | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` |
+| **Firebase Push** | `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `NEXT_PUBLIC_FIREBASE_VAPID_KEY` |
 
-### 9.2 Native (`apps/native/.env`)
+### 2. Native (`apps/native/.env`)
 
-| Group | Variables |
+| Nhóm | Biến môi trường |
 |---|---|
-| Clerk | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` |
-| Backend | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_WS_URL` |
-| Cloudinary | `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME`, `EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET` |
+| **Clerk Auth** | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` |
+| **Backend & WS** | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_WS_URL` |
+| **Cloudinary** | `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME`, `EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET` |
 
-### 9.3 EAS secret files
+---
 
-- `GOOGLE_SERVICES_JSON`
-- `GOOGLE_SERVICE_INFO_PLIST`
+## 📜 Các Scripts Hữu Ích
 
-## 10. Scripts
+Thực thi tại root directory (`social-network-2.0/`):
 
-### 10.1 Root scripts
-
-| Script | Purpose |
+| Lệnh | Chức năng |
 |---|---|
-| `npm run dev` | `turbo run dev` |
-| `npm run lint` | lint all workspaces that expose lint |
-| `npm run typecheck` | typecheck all workspaces |
-| `npm run build` | turbo build respecting dependency graph |
-| `npm run ci` | lint + typecheck + build |
-| `npm run format` | prettier write |
+| `npm run dev` | Chạy dev mode bằng Turbo |
+| `npm run lint` | Lint code cho tất cả workspace |
+| `npm run typecheck` | Kiểm tra TypeScript toàn dự án |
+| `npm run build` | Build dự án theo dependency graph của Turbo |
+| `npm run ci` | Chạy lint + typecheck + build |
+| `npm run format` | Chạy Prettier format code |
 
-### 10.2 Backend bridge scripts
+*(Lưu ý: Các lệnh `se121:*` dùng để call script sang thư mục Backend `../SE121-microservices`)*
 
-Các script `se121:*` trong root gọi sang repo backend: `../SE121-microservices`.
+---
 
-## 11. Quality Gate
 
-Run before pushing:
+## 📄 Tài liệu Công nghệ (Official Documentation)
 
-```bash
-npm run lint
-npm run typecheck
-npm run build
-```
-
-Per app:
-
-```bash
-npm run lint --workspace web
-npm run typecheck --workspace web
-npm run build --workspace web
-npm run typecheck --workspace sentimeta-native
-```
-
-## 12. CI Pipeline
-
-Workflow: `.github/workflows/ci.yml`
-
-```mermaid
-flowchart TD
-  A[Trigger PR/Push] --> B[Checkout]
-  B --> C[Setup Node 20]
-  C --> D[npm ci]
-  D --> E[Seed apps/web/.env if missing]
-  E --> F[npm run lint]
-  F --> G[npm run typecheck]
-  G --> H[npm run build]
-```
-
-Notes:
-- Lint hiện chạy ở web.
-- Native được gate chính qua typecheck/build.
-
-## 13. Release Flow
-
-```mermaid
-flowchart LR
-  Dev[Developer PR] --> CI[CI Pass]
-  CI --> Merge[Merge develop/main]
-  Merge --> WebRel[Web Deploy]
-  Merge --> MobileRel[EAS Build]
-  MobileRel --> Stores[App Store / Play Store]
-```
-
-### 13.1 Web
-
-- Build: `npm run build --workspace web`
-- Deploy target: Vercel hoặc hạ tầng Node tương thích Next.js
-
-### 13.2 Native
-
-EAS profiles trong `apps/native/eas.json`:
-- `development`
-- `development-simulator`
-- `preview`
-- `production`
-
-Ví dụ:
-
-```bash
-cd apps/native
-npx eas build --platform android --profile preview
-npx eas build --platform ios --profile production
-```
-
-## 14. Troubleshooting
-
-### 14.1 `expo-doctor` không chạy từ script
-
-Nếu `expo-doctor` không có trong PATH:
-
-```bash
-cd apps/native
-npx expo-doctor
-```
-
-### 14.2 Expo version mismatch
-
-```bash
-cd apps/native
-npx expo install --check
-```
-
-### 14.3 Env issues
-
-- Xác nhận đã copy `.env.example`.
-- Xác nhận `API_URL`/`WS_URL` có thể truy cập từ thiết bị/emulator/browser.
-
-### 14.4 Service Worker env trên web
-
-Xem:
-- `apps/web/docs/SERVICE_WORKER_ENV.md`
-
-### 14.5 TS6133 trong native
-
-```bash
-npm run typecheck --workspace sentimeta-native
-```
-
-Dọn biến không dùng hoặc rename theo convention `_unused`.
-
-## 15. Security Notes
-
-- Không commit secrets thực (`.env` thật).
-- Nếu key lộ, rotate ngay ở provider (Clerk/Firebase/OpenAI/Cloudinary).
-- Dùng secrets manager cho CI/deploy.
-
-## 16. Additional Docs
-
-- `apps/web/docs/FCM_SETUP.md`
-- `apps/web/docs/SERVICE_WORKER_ENV.md`
-- `apps/native/README.md`
+- **Next.js (Web Framework):** [https://nextjs.org/docs](https://nextjs.org/docs)
+- **Expo (Mobile Framework):** [https://docs.expo.dev](https://docs.expo.dev)
+- **Clerk (Authentication):** [https://clerk.com/docs](https://clerk.com/docs)
+- **Turborepo (Monorepo Build System):** [https://turbo.build/repo/docs](https://turbo.build/repo/docs)
+- **Tailwind CSS v4:** [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+- **React Query (Data Fetching):** [https://tanstack.com/query](https://tanstack.com/query)
+- **Zustand (State Management):** [https://docs.pmnd.rs/zustand](https://docs.pmnd.rs/zustand)
+- **Zod (Schema Validation):** [https://zod.dev](https://zod.dev)
+- **HeroUI Native (Mobile UI):** [https://heroui.com](https://heroui.com)

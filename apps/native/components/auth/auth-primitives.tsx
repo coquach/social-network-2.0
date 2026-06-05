@@ -68,7 +68,7 @@ export const AuthField = React.forwardRef<any, AuthFieldProps>(({
           <Pressable
             className="absolute bottom-0 right-3 top-0 items-center justify-center rounded-full px-2 active:opacity-80"
             accessibilityRole="button"
-            accessibilityLabel={isPasswordVisible ? '?n m?t kh?u' : 'Hi?n m?t kh?u'}
+            accessibilityLabel={isPasswordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
             onPress={() => setIsPasswordVisible((current) => !current)}
           >
             <Ionicons

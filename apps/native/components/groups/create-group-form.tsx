@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppKeyboardScrollView } from '~/components/ui/app-keyboard-scroll-view';
 
 import { useCreateGroup } from '@repo/shared/hooks';
-import { CreateGroupInput, GroupPrivacy } from '@repo/shared/types';
+import { CreateGroupInput, GroupPrivacy, MediaType } from '@repo/shared/types';
 import { AppAlert, type AppAlertVariant } from '~/components/ui/app-alert';
 
 interface CreateGroupFormProps {
@@ -48,18 +48,22 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
 
     if (!result.canceled) {
       const uri = result.assets[0].uri;
-      const fileData = {
-        uri,
-        type: 'image/jpeg',
-        name: type === 'avatar' ? 'avatar.jpg' : 'cover.jpg',
+      const uploadable = {
+        file: {
+          uri,
+          type: 'image/jpeg',
+          name: type === 'avatar' ? 'avatar.jpg' : 'cover.jpg',
+        },
+        type: MediaType.IMAGE,
+        previewUri: uri,
       };
 
       if (type === 'avatar') {
         setAvatarPreview(uri);
-        (setValue as any)('uploadAvatar', fileData);
+        (setValue as any)('uploadAvatar', uploadable);
       } else {
         setCoverPreview(uri);
-        (setValue as any)('uploadCover', fileData);
+        (setValue as any)('uploadCover', uploadable);
       }
     }
   };

@@ -1,4 +1,4 @@
-﻿import { useGroupSettings, useUpdateGroupSettings, useGroup } from '@repo/shared/hooks';
+import { useGroupSettings, useUpdateGroupSettings, useGroup } from '@repo/shared/hooks';
 import { useLocalSearchParams } from 'expo-router';
 import { Switch } from 'heroui-native/switch';
 import React from 'react';
@@ -19,13 +19,11 @@ export default function GroupSettingsScreen() {
 
   const [allowMemberInvite, setAllowMemberInvite] = React.useState(false);
   const [requiredPostApproval, setRequiredPostApproval] = React.useState(false);
-  const [requireAdminApprovalToJoin, setRequireAdminApprovalToJoin] = React.useState(false);
 
   React.useEffect(() => {
     if (!data) return;
     setAllowMemberInvite(data.allowMemberInvite);
     setRequiredPostApproval(data.requiredPostApproval);
-    setRequireAdminApprovalToJoin(data.requireAdminApprovalToJoin);
   }, [data]);
 
   const onSave = React.useCallback(async () => {
@@ -35,10 +33,9 @@ export default function GroupSettingsScreen() {
       input: {
         allowMemberInvite,
         requiredPostApproval,
-        requireAdminApprovalToJoin,
       },
     });
-  }, [allowMemberInvite, groupId, requireAdminApprovalToJoin, requiredPostApproval, updateSettings]);
+  }, [allowMemberInvite, groupId, requiredPostApproval, updateSettings]);
 
   if (isGroupLoading || isLoading) {
     return (
@@ -96,12 +93,7 @@ export default function GroupSettingsScreen() {
           <Switch isSelected={requiredPostApproval} onSelectedChange={setRequiredPostApproval} />
         </View>
 
-        <View className={rowClass}>
-          <View className="flex-1 pr-3">
-            <Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">Tham gia cần admin duyệt</Text>
-          </View>
-          <Switch isSelected={requireAdminApprovalToJoin} onSelectedChange={setRequireAdminApprovalToJoin} />
-        </View>
+
 
         <TouchableOpacity
           disabled={isPending}

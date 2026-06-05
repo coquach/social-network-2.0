@@ -24,8 +24,11 @@ export const shareService = {
   /**
    * Update a share post
    */
-  async updateShare(shareId: string, input: UpdateShareInput): Promise<SharePostDTO> {
-    return getApiClient().patch(`/shares/share/${shareId}`, input);
+  async updateShare(
+    shareId: string,
+    input: UpdateShareInput,
+  ): Promise<SharePostDTO> {
+    return getApiClient().patch(`/shares/${shareId}`, input);
   },
 
   /**
@@ -39,7 +42,7 @@ export const shareService = {
    * Get a single share by ID
    */
   async getShareById(shareId: string): Promise<SharePostDTO> {
-    return getApiClient().get(`/shares/share/${shareId}`);
+    return getApiClient().get(`/shares/${shareId}`);
   },
 
   /**
@@ -47,7 +50,7 @@ export const shareService = {
    */
   async getPostShares(
     postId: string,
-    params?: GetShareQueryParams
+    params?: GetShareQueryParams,
   ): Promise<CursorPageResponse<SharePostSnapshotDTO>> {
     return getApiClient().getCursorPage(`/shares/post/${postId}`, { params });
   },
@@ -56,7 +59,7 @@ export const shareService = {
    * Get current user's shares
    */
   async getMyShares(
-    params?: GetShareQueryParams
+    params?: GetShareQueryParams,
   ): Promise<CursorPageResponse<SharePostSnapshotDTO>> {
     return getApiClient().getCursorPage('/shares/me', { params });
   },
@@ -66,7 +69,7 @@ export const shareService = {
    */
   async getUserShares(
     userId: string,
-    params?: GetShareQueryParams
+    params?: GetShareQueryParams,
   ): Promise<CursorPageResponse<SharePostSnapshotDTO>> {
     return getApiClient().getCursorPage(`/shares/user/${userId}`, { params });
   },

@@ -115,7 +115,7 @@ export const Search = () => {
   // ---- Suggestions fetch (optional)
   const postsQ = useSearchPosts({ query: debouncedQ });
   const groupsQ = useSearchGroups({ query: debouncedQ });
-  const usersQ = useSearchUsers(debouncedQ);
+  const usersQ = useSearchUsers({ query: debouncedQ });
 
   const active =
     type === 'posts' ? postsQ : type === 'groups' ? groupsQ : usersQ;

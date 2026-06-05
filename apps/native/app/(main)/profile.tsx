@@ -1,4 +1,4 @@
-import {
+﻿import {
   MediaType,
   useFriendUsers,
   useCurrentUser,
@@ -45,7 +45,6 @@ type ProfileFeedItem =
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { handleScroll } = useTabBarAutoHide();
   const insets = useSafeAreaInsets();
   const { toast } = useToast();
 
@@ -472,7 +471,6 @@ export default function ProfileScreen() {
           onLoadMore={handleLoadMore}
           refreshing={refreshing}
           onRefresh={() => void handleRefresh()}
-          onScroll={handleScroll}
           scrollEnabled
           listHeaderComponent={header}
           contentContainerStyle={{

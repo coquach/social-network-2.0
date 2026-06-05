@@ -52,7 +52,7 @@ export default function SearchPageClient() {
   // Queries
   const postsQ = useSearchPosts({ query: q, emotion });
   const groupsQ = useSearchGroups({ query: q, privacy, sortBy });
-  const usersQ = useSearchUsers(q);
+  const usersQ = useSearchUsers({ query: q });
 
   const activeQ =
     type === 'posts' ? postsQ : type === 'groups' ? groupsQ : usersQ;

@@ -428,8 +428,8 @@ export const useApproveGroupPost = () => {
   const queryClient = useQueryClient();
 
   return useMutation<boolean, Error, { postId: string; groupId: string }>({
-    mutationFn: async ({ postId }) => {
-      return postService.approvePostInGroup(postId);
+    mutationFn: async ({ postId, groupId }) => {
+      return postService.approvePostInGroup(postId, groupId);
     },
     onSuccess: (_, { postId, groupId }) => {
       // Remove from pending list
@@ -456,8 +456,8 @@ export const useRejectGroupPost = () => {
   const queryClient = useQueryClient();
 
   return useMutation<boolean, Error, { postId: string; groupId: string }>({
-    mutationFn: async ({ postId }) => {
-      return postService.rejectPostInGroup(postId);
+    mutationFn: async ({ postId, groupId }) => {
+      return postService.rejectPostInGroup(postId, groupId);
     },
     onSuccess: (_, { postId, groupId }) => {
       // Remove from pending list

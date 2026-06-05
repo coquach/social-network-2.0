@@ -97,18 +97,19 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <NativeQueryProvider>
             <KeyboardProvider>
-              <HeroUINativeProvider config={heroUIConfig}>
-                <NativeSharedProvider>
-                  <NotificationProvider>
-                    <NativeSocketProvider>
-                      <NativeChatRealtimeProvider>
-                        <CallProvider>
-                          <CallRealtimeProvider>
-                            <NativePresenceProvider>
-                              <AppThemeProvider>
+              <AppThemeProvider>
+                <HeroUINativeProvider config={heroUIConfig}>
+                  <NativeSharedProvider>
+                    <NotificationProvider>
+                      <NativeSocketProvider>
+                        <NativeChatRealtimeProvider>
+                          <CallProvider>
+                            <CallRealtimeProvider>
+                              <NativePresenceProvider>
                                 <BottomSheetModalProvider>
                                   <Stack screenOptions={{ headerShown: false }}>
                                     <Stack.Screen name="index" />
+                                    <Stack.Screen name="sso-callback" />
                                     <Stack.Screen name="(onboarding)" />
                                     <Stack.Screen name="(auth)" />
                                     <Stack.Screen name="(main)" />
@@ -120,15 +121,15 @@ export default function RootLayout() {
                                   <CallManager />
                                   <CallMiniOverlay />
                                 </BottomSheetModalProvider>
-                              </AppThemeProvider>
-                            </NativePresenceProvider>
-                          </CallRealtimeProvider>
-                        </CallProvider>
-                      </NativeChatRealtimeProvider>
-                    </NativeSocketProvider>
-                  </NotificationProvider>
-                </NativeSharedProvider>
-              </HeroUINativeProvider>
+                              </NativePresenceProvider>
+                            </CallRealtimeProvider>
+                          </CallProvider>
+                        </NativeChatRealtimeProvider>
+                      </NativeSocketProvider>
+                    </NotificationProvider>
+                  </NativeSharedProvider>
+                </HeroUINativeProvider>
+              </AppThemeProvider>
             </KeyboardProvider>
           </NativeQueryProvider>
         </SafeAreaProvider>
