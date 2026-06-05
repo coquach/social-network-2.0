@@ -95,11 +95,9 @@ export function ProfileEditModal({
     fileNamePrefix: 'cover',
   });
 
-  React.useEffect(() => {
-    if (!visible) {
-      return;
-    }
+  const [prevVisible, setPrevVisible] = React.useState(visible);
 
+  if (visible && !prevVisible) {
     setFirstName(defaultFirstName || '');
     setLastName(defaultLastName || '');
     setBio(defaultBio || '');
@@ -109,22 +107,18 @@ export function ProfileEditModal({
     setSchool(defaultSchool || '');
     setInterests(defaultInterests || []);
     setCustomInterest('');
-    avatarPicker.clearImage();
-    coverPicker.clearImage();
     setErrorMessage(null);
-  }, [
-    defaultBio,
-    defaultFirstName,
-    defaultLastName,
-    defaultLocation,
-    defaultJobTitle,
-    defaultCompany,
-    defaultSchool,
-    defaultInterests,
-    visible,
-    avatarPicker.clearImage,
-    coverPicker.clearImage,
-  ]);
+    setPrevVisible(true);
+  } else if (!visible && prevVisible) {
+    setPrevVisible(false);
+  }
+
+  React.useEffect(() => {
+    if (visible) {
+      avatarPicker.clearImage();
+      coverPicker.clearImage();
+    }
+  }, [visible, avatarPicker.clearImage, coverPicker.clearImage]);
 
   const avatarPreview = avatarPicker.selectedImage?.previewUri ?? defaultAvatarUrl;
   const coverPreview = coverPicker.selectedImage?.previewUri ?? defaultCoverUrl;

@@ -75,11 +75,16 @@ function CallViewInner() {
 
   useEffect(() => {
     if (!isCallActiveInStore) {
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.replace('/chat');
-      }
+      // Small delay so the screen doesn't flash white while the navigator
+      // processes the back() command during the exit animation.
+      const t = setTimeout(() => {
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/chat');
+        }
+      }, 150);
+      return () => clearTimeout(t);
     }
   }, [isCallActiveInStore, router]);
 
