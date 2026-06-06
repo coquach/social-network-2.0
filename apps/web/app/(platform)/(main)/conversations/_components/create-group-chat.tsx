@@ -29,12 +29,10 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { useCreateConversation } from '@/hooks/use-conversation';
-import { useSearchUsers } from '@repo/shared';
+import { useCreateConversation, useSearchUsers, CreateConversationInput } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import {
   ConversarionSchema,
-  CreateConversationForm,
 } from '@/models/conversation/conversationDTO';
 import { MediaType } from '@/models/social/enums/social.enum';
 import { UserDTO } from '@/models/user/userDTO';
@@ -72,7 +70,7 @@ export const CreateGroupConversationDialog = ({
       isGroup: true,
       participants: [],
       groupName: '',
-    } as CreateConversationForm,
+    } as CreateConversationInput,
     validators: {
       onSubmit: ({ value }) => {
         const parsed = GroupConversationSchema.safeParse({
@@ -86,31 +84,30 @@ export const CreateGroupConversationDialog = ({
     onSubmit: async ({ value, formApi }) => {
       if (!currentUserId) return;
 
-      const payload: CreateConversationForm = {
+      const payload = {
         isGroup: true,
         participants: Array.from(
           new Set([currentUserId, ...(value.participants ?? [])])
         ),
         groupName: (value.groupName ?? '').trim(),
+        uploadGroupAvatar: avatarMedia ? { file: avatarMedia.file, type: avatarMedia.type as any } : undefined
       };
 
-      const promise = createConversation(
-        {
-          dto: payload,
-          media: avatarMedia ?? undefined,
-        },
-        {
-          onSuccess: () => {
-            formApi.reset();
-            setSelectedUsers([]);
-            setSearch('');
-            clearAvatar();
-            handleInternalOpenChange(false);
-          },
-        }
-      );
+      const promise = createConversation(payload);
 
-      toast.promise(promise, { loading: 'Đang tạo nhóm chat...' });
+      toast.promise(promise, { 
+        loading: 'Đang tạo nhóm chat...',
+        success: () => {
+          formApi.reset();
+          setSelectedUsers([]);
+          setSearch('');
+          clearAvatar();
+          handleInternalOpenChange(false);
+          return 'Tạo nhóm chat thành công!';
+        },
+        error: 'Không thể tạo nhóm chat.'
+      });
+      
       await promise;
     },
   });

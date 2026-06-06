@@ -49,7 +49,6 @@ export const SettingForm = ({ open }: SettingFormProps) => {
   const form = useForm({
     defaultValues: {
       requiredPostApproval: false,
-      requireAdminApprovalToJoin: false,
       allowMemberInvite: false,
       maxMembers: 1,
     },
@@ -72,7 +71,6 @@ export const SettingForm = ({ open }: SettingFormProps) => {
             input: {
               requiredPostApproval: value.requiredPostApproval,
               maxMembers: value.maxMembers,
-              requireAdminApprovalToJoin: value.requireAdminApprovalToJoin,
               allowMemberInvite: value.allowMemberInvite,
             },
           },
@@ -92,7 +90,6 @@ export const SettingForm = ({ open }: SettingFormProps) => {
     if (!settingsData || !open) return;
     form.reset({
       requiredPostApproval: settingsData.requiredPostApproval,
-      requireAdminApprovalToJoin: settingsData.requireAdminApprovalToJoin,
       allowMemberInvite: settingsData.allowMemberInvite,
       maxMembers: settingsData.maxMembers ?? 1,
     });
@@ -181,7 +178,7 @@ export const SettingForm = ({ open }: SettingFormProps) => {
                         Nếu bật, yêu cầu tham gia cần admin/phê duyệt thủ công.
                       </p>
                     </div>
-                    <form.Field name="requireAdminApprovalToJoin">
+                    {/* <form.Field name="requireAdminApprovalToJoin">
                       {(field) => (
                         <Switch
                           checked={!!field.state.value}
@@ -191,7 +188,7 @@ export const SettingForm = ({ open }: SettingFormProps) => {
                           disabled={!canEditSettings}
                         />
                       )}
-                    </form.Field>
+                    </form.Field> */}
                   </div>
                 </div>
 

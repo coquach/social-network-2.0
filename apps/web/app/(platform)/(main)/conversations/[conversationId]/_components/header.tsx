@@ -9,11 +9,9 @@ import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNow } from 'date-fns';
 import { vi as viVN } from 'date-fns/locale';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO, useUser, usePresenceStore } from '@repo/shared';
 import { ProfileDrawer } from './drawer/profile-drawer';
 
-import { usePresenceStore } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
 import { GroupAvatar } from '../../_components/group-avatar';
 import { DirectAvatar } from '../../_components/direct-avatar';
 
@@ -30,7 +28,7 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
     return others[0];
   }, [conversation.isGroup, conversation.participants, currentUserId]);
 
-  const { data: otherUser } = useGetUser(otherUserId ?? '');
+  const { data: otherUser } = useUser(otherUserId ?? '', { enabled: !!otherUserId });
 
   /** ----------- PRESENCE (1–1) ----------- */
   const presence = usePresenceStore((state) =>

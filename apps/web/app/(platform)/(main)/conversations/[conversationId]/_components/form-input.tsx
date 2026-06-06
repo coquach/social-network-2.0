@@ -1,12 +1,14 @@
 'use client';
 import { EmojiButton } from '@/components/emoji-button';
 import { Button } from '@/components/ui/button';
-import { useConversation } from '@/hooks/use-conversation';
-import { useSendMessage } from '@/hooks/use-message';
+import { useConversationNav } from '@/hooks/use-conversation-nav';
 import { MediaItem } from '@/lib/types/media';
-import { CreateMessageForm, MessageDTO as LocalMessageDTO } from '@/models/message/messageDTO';
-import { MediaType } from '@/models/social/enums/social.enum';
-import { useChatStore } from '@repo/shared';
+import {
+  useSendMessage,
+  MediaType,
+  MessageDTO,
+  useChatStore,
+} from '@repo/shared';
 import { SendHorizonal, X } from 'lucide-react';
 import Image from 'next/image';
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
@@ -17,7 +19,7 @@ import { MessageReply } from './message-reply';
 const MAX_MEDIA = 5;
 
 export const FormInput = () => {
-  const { conversationId } = useConversation();
+  const { conversationId } = useConversationNav();
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [previews, setPreviews] = useState<
@@ -32,7 +34,7 @@ export const FormInput = () => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // ---- hook gửi tin nhắn (REST) ----
-  const { mutateAsync: sendMessageMutate, isPending } = useSendMessage();
+  const { mutateAsync: sendMessageMutate, isPending } = useSendMessage(conversationId);
 
   // --- AUTO RESIZE TEXTAREA ---
   const autoResize = (el: HTMLTextAreaElement | null) => {
@@ -118,16 +120,14 @@ export const FormInput = () => {
     if (isPending) return;
     if (!content.trim() && media.length === 0) return;
 
-    const form: CreateMessageForm = {
+    await sendMessageMutate({
       conversationId,
       content: content.trim(),
       replyTo: replyTo?._id,
-      // attachments sẽ được hook tự gán sau khi upload
-    };
-
-    await sendMessageMutate({
-      form,
-      media,
+      uploadFiles: media.map((m) => ({
+        file: m.file,
+        type: m.type,
+      })),
     });
 
     setContent('');
@@ -199,7 +199,7 @@ export const FormInput = () => {
       <div className="flex-1 flex flex-col gap-2">
         {replyTo && (
           <div className="flex items-center gap-2">
-            <MessageReply replyTo={replyTo as LocalMessageDTO} />
+            <MessageReply replyTo={replyTo as MessageDTO} />
             <button
               onClick={() => setReplyTo(null)}
               className="text-gray-400 hover:text-gray-200 hover:bg-neutral-400 rounded-full p-1"

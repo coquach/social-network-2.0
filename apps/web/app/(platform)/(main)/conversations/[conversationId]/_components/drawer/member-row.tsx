@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser } from '@repo/shared';
 
 import { useAuth } from '@clerk/nextjs';
 import {
@@ -31,7 +31,7 @@ export const MemberRow = ({
   onKick: (userId: string) => void;
 }) => {
   const { userId: me } = useAuth();
-  const { data: u } = useGetUser(userId);
+  const { data: u } = useUser(userId);
 
   const isSelf = me === userId;
   const isTargetAdmin = admins.includes(userId);

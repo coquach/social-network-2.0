@@ -5,6 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
 import { InvitedGroupsList } from './invited-groups-list';
+import { queryKeys } from '@repo/shared';
 
 export const metadata: Metadata = {
   title: 'Lời mời nhóm',
@@ -20,7 +21,7 @@ export default async function InvitedGroupsPage() {
   }
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery({
-    queryKey: ['get-invited-groups', { limit: 10 }],
+    queryKey: queryKeys.groups.invited({ limit: 10 }),
     queryFn: () => getInvitedGroups(token, { limit: 10 }),
   });
   return (

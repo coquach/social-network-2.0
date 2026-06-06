@@ -4,8 +4,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import clsx from 'clsx';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { ConversationDTO, useUser } from '@repo/shared';
 
 type GroupConversationAvatarProps = {
   conversation: ConversationDTO;
@@ -24,9 +23,9 @@ export const GroupAvatar = ({
   const otherMemberIds = conversation.participants.slice(0, 3);
 
   const [memberId1, memberId2, memberId3] = otherMemberIds;
-  const { data: member1 } = useGetUser(memberId1 ?? '');
-  const { data: member2 } = useGetUser(memberId2 ?? '');
-  const { data: member3 } = useGetUser(memberId3 ?? '');
+  const { data: member1 } = useUser(memberId1 ?? '', { enabled: !!memberId1 });
+  const { data: member2 } = useUser(memberId2 ?? '', { enabled: !!memberId2 });
+  const { data: member3 } = useUser(memberId3 ?? '', { enabled: !!memberId3 });
 
   const availableCount = otherMemberIds.length;
 

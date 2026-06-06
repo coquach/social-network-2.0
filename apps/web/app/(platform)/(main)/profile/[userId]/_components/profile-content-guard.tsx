@@ -1,6 +1,6 @@
 'use client';
 
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser } from '@repo/shared';
 import { useParams } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -10,7 +10,7 @@ export const ProfileContentGuard = ({
   children: ReactNode;
 }) => {
   const { userId } = useParams<{ userId: string }>();
-  const { data: fetchedUser, isLoading } = useGetUser(userId as string);
+  const { data: fetchedUser, isLoading } = useUser(userId as string);
 
   if (isLoading) {
     return (

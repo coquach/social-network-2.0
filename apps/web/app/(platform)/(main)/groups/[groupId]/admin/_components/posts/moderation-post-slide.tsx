@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { useApprovePostInGroup, useRejectPostInGroup } from '@/hooks/use-post-hook';
+import { useApproveGroupPost, useRejectGroupPost } from '@repo/shared';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 type ModerationPostSlideProps = {
@@ -26,29 +26,27 @@ export const ModerationPostSlide = ({ groupId, post }: ModerationPostSlideProps)
     null
   );
 
-  // chú ý: DTO của bạn dùng post.postId (như PostCard)
-  const { mutateAsync: approveMutation, isPending: approveMutationPending } =
-    useApprovePostInGroup(post.postId, groupId);
-  const { mutateAsync: rejectMutation, isPending: rejectMutationPending } =
-    useRejectPostInGroup(post.postId, groupId);
+  const { mutate: approve, isPending: approveMutationPending } =
+    useApproveGroupPost();
+  const { mutate: reject, isPending: rejectMutationPending } =
+    useRejectGroupPost();
 
   const isProcessing = approveMutationPending || rejectMutationPending;
 
-  const handleApprove = async () => {
-    try {
-      return await approveMutation();
-    } finally {
-      return setConfirmType(null);
-    }
+  const handleApprove = () => {
+    approve(
+      { postId: post.postId, groupId },
+      { onSettled: () => setConfirmType(null) }
+    );
   };
 
-  const handleReject = async () => {
-    try {
-      return await rejectMutation();
-    } finally {
-      return setConfirmType(null);
-    }
+  const handleReject = () => {
+    reject(
+      { postId: post.postId, groupId },
+      { onSettled: () => setConfirmType(null) }
+    );
   };
+
 
   return (
     <>

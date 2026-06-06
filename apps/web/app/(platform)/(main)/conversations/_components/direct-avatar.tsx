@@ -1,7 +1,7 @@
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser } from '@repo/shared';
 
 type DirectConversationAvatarProps = {
   userId?: string;
@@ -12,7 +12,7 @@ export const DirectAvatar = ({
   userId,
   className,
 }: DirectConversationAvatarProps) => {
-  const { data: user } = useGetUser(userId ?? '');
+  const { data: user } = useUser(userId ?? '', { enabled: !!userId });
 
   const url = user?.avatarUrl;
   const initial = (() => {

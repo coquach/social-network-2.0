@@ -63,7 +63,10 @@ export const usePost = (postId: string, options?: { enabled?: boolean }) => {
 /**
  * Get current user's posts with infinite scroll
  */
-export const useMyPosts = (params?: { feeling?: Emotion }) => {
+export const useMyPosts = (
+  params?: { feeling?: Emotion },
+  options?: { enabled?: boolean },
+) => {
   return useInfiniteQuery<CursorPageResponse<PostSnapshotDTO>>({
     queryKey: queryKeys.posts.myPosts(),
     queryFn: async ({ pageParam }) => {
@@ -75,6 +78,7 @@ export const useMyPosts = (params?: { feeling?: Emotion }) => {
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
+    enabled: options?.enabled !== false,
     ...queryConfigs.standard,
   });
 };
@@ -85,6 +89,7 @@ export const useMyPosts = (params?: { feeling?: Emotion }) => {
 export const useUserPosts = (
   userId: string,
   params?: { feeling?: Emotion },
+  options?: { enabled?: boolean },
 ) => {
   return useInfiniteQuery<CursorPageResponse<PostDTO>>({
     queryKey: queryKeys.posts.list(userId),
@@ -97,7 +102,7 @@ export const useUserPosts = (
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
-    enabled: !!userId,
+    enabled: !!userId && options?.enabled !== false,
     ...queryConfigs.standard,
   });
 };
@@ -107,7 +112,7 @@ export const useUserPosts = (
  */
 export const useGroupPosts = (
   groupId: string,
-  params?: { mainEmotion?: Emotion; status?: PostGroupStatus },
+  params?: { mainEmotion?: Emotion; status?: PostGroupStatus; limit?: number },
 ) => {
   return useInfiniteQuery<CursorPageResponse<PostDTO>>({
     queryKey: params?.status

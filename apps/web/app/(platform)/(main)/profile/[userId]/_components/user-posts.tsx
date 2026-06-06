@@ -1,14 +1,30 @@
 'use client';
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
-import { useProfilePosts } from '@/hooks/use-post-hook';
+import { useMyPosts, useUserPosts } from '@repo/shared';
+import { mapPostToSnapshot } from '@/utils/map-post-to-snapshot';
+import type { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { useAuth } from '@clerk/nextjs';
 
 import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 export const UserPosts = ({ userId }: { userId: string }) => {
-  const { data: allPosts = [], isLoading, isError, error, fetchNextPage, isFetchingNextPage, hasNextPage } =
-    useProfilePosts(userId, { limit: 10 });
+  const { userId: currentUserId } = useAuth();
+  const isOwnProfile = userId === currentUserId;
+
+  const myPostsQuery = useMyPosts(undefined, { enabled: isOwnProfile });
+  const userPostsQuery = useUserPosts(userId, undefined, { enabled: !isOwnProfile });
+
+  // Derive allPosts per-branch so TS knows the exact DTO shape in each path.
+  // myPostsQuery already returns PostSnapshotDTO; userPostsQuery returns PostDTO and needs mapping.
+  const allPosts: PostSnapshotDTO[] = isOwnProfile
+    ? (myPostsQuery.data?.pages ?? []).flatMap((p) => p.data ?? [])
+    : (userPostsQuery.data?.pages ?? []).flatMap((p) => p.data ?? []).map((post) => mapPostToSnapshot(post));
+
+  // Use the active query only for loading/error/pagination state
+  const query = isOwnProfile ? myPostsQuery : userPostsQuery;
+  const { isLoading, isError, error, fetchNextPage, isFetchingNextPage, hasNextPage } = query;
 
   const { ref, inView } = useInView();
 
@@ -26,7 +42,7 @@ export const UserPosts = ({ userId }: { userId: string }) => {
             <PostCardFull.Skeleton />
           </div>
         ))}
-      {isError && <ErrorFallback message={error.message} />}
+      {isError && <ErrorFallback message={error instanceof Error ? error.message : 'Lỗi không xác định'} />}
       {!isLoading && !isError && allPosts.length === 0 && (
         <div className="w-full py-10 text-center text-slate-500">
           Hiện chưa có bài đăng nào.

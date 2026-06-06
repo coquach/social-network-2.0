@@ -11,13 +11,16 @@ import { useSocket } from '@/components/providers/socket-provider';
 import { SearchInputBasic } from '@/components/search/search-input-basic';
 import { SearchInputWithBack } from '@/components/search/search-input-with-back';
 import {
-  useConversation,
-  useGetConversationList,
-} from '@/hooks/use-conversation';
+  useConversationNav,
+} from '@/hooks/use-conversation-nav';
 import { useStartConversation } from '@/hooks/use-start-conversation';
 import { UserDTO } from '@/models/user/userDTO';
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
-import { MessageDTO } from '@/models/message/messageDTO';
+import {
+  ConversationDTO,
+  MessageDTO,
+  useConversations,
+  queryKeys,
+} from '@repo/shared';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { ConversationBox } from './conversation-box';
@@ -26,7 +29,7 @@ import { CreateGroupConversationDialog } from './create-group-chat';
 
 export const ConversationList = () => {
   const { chatSocket } = useSocket();
-  const { conversationId, isOpen } = useConversation();
+  const { conversationId, isOpen } = useConversationNav();
   const queryClient = useQueryClient();
   const [createGroupChatOpen, setCreateGroupChatOpen] = useState(false);
 
@@ -38,7 +41,7 @@ export const ConversationList = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetConversationList({ limit: 20 });
+  } = useConversations({ limit: 20 });
 
   const { ref, inView } = useInView();
 
@@ -85,7 +88,7 @@ export const ConversationList = () => {
       if (!id) return;
 
       queryClient.setQueriesData(
-        { queryKey: ['conversations'] },
+        { queryKey: queryKeys.conversations.list() },
         (old: any) => {
           if (!old?.pages) return old;
           return {
@@ -112,7 +115,7 @@ export const ConversationList = () => {
       const updatedAt = message.createdAt ?? new Date().toISOString();
 
       queryClient.setQueriesData(
-        { queryKey: ['conversations'] },
+        { queryKey: queryKeys.conversations.list() },
         (old: any) => {
           if (!old?.pages) return old;
           return {

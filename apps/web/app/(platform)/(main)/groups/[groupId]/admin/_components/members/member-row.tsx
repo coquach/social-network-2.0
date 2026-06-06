@@ -14,9 +14,9 @@ import {
   useChangeMemberRole,
   useRemoveMember,
   useUnbanMember,
+  useUser,
+  UserDTO,
 } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
-import { UserDTO } from '@/models/user/userDTO';
 
 import {
   AlertDialog,
@@ -58,7 +58,7 @@ export const GroupAdminMemberRow = ({
 }: AdminMemberRowProps) => {
   const { role: currentRole, can } = useGroupPermissionContext();
 
-  const { data: user, isLoading: userLoading } = useGetUser(member.userId);
+  const { data: user, isLoading: userLoading } = useUser(member.userId);
 
   const [removeOpen, setRemoveOpen] = useState(false);
   const [banOpen, setBanOpen] = useState(false);
@@ -306,7 +306,7 @@ export const GroupAdminMemberRow = ({
   );
 };
 
-const getDisplayName = (user?: UserDTO): string => {
+const getDisplayName = (user?: Partial<UserDTO> | null): string => {
   if (!user) return '';
   if (user.firstName || user.lastName) {
     return `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
