@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
+import { GroupRole } from '@repo/shared';
 
 const ADMIN_ROLES = new Set<GroupRole>([
   GroupRole.OWNER,

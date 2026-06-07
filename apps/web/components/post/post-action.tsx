@@ -1,15 +1,16 @@
 'use client';
 
-import { useDisReact, useReact } from '@/hooks/use-reaction-hook';
-import { Reaction, reactionMap } from '@/lib/types/reaction';
-import { cn } from '@/lib/utils';
 import {
+  useDisReact,
+  useReact,
   ReactionType,
   RootType,
   TargetType,
-} from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+  PostSnapshotDTO,
+  SharePostSnapshotDTO,
+} from '@repo/shared';
+import { Reaction, reactionMap } from '@/lib/types/reaction';
+import { cn } from '@/lib/utils';
 import { useCommentModal, useCreateShareModal } from '@/store/use-post-modal';
 import { MessageCircle, Share2, ThumbsUp } from '@/lib/icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -36,8 +37,8 @@ export default function PostActions({
   isShare,
   disableCommentModal = false,
 }: PostActionsProps) {
-  const { mutateAsync: react } = useReact(rootId);
-  const { mutateAsync: disReact } = useDisReact(rootId);
+  const { mutateAsync: react } = useReact();
+  const { mutateAsync: disReact } = useDisReact();
 
   const { openModal: openCommentModal } = useCommentModal();
   const { openModal: openCreateShareModal } = useCreateShareModal();
@@ -87,12 +88,12 @@ export default function PostActions({
     async (next: Reaction | null, prev: Reaction | null) => {
       try {
         if (!next) {
-          await disReact({ targetId: rootId, targetType });
+          await disReact({ targetId: rootId, targetType: targetType as any });
         } else {
           await react({
             targetId: rootId,
-            targetType,
-            reactionType: next.type,
+            targetType: targetType as any,
+            reactionType: next.type as any,
           });
         }
       } catch (e) {

@@ -29,18 +29,20 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 
-import { useCreatePost } from '@/hooks/use-post-hook';
+import {
+  useCreatePost,
+  useCreatePostInGroup,
+  Audience,
+  Emotion,
+  MediaType,
+  PostGroupStatus,
+  CreatePostInput,
+  CreatePostInputSchema,
+} from '@repo/shared';
 import { feelingMap } from '@/lib/types/feeling';
 import { MediaItem } from '@/lib/types/media';
 import { cn } from '@/lib/utils';
 import { countChars } from '@/utils/count-chars';
-
-import {
-  Audience,
-  Emotion,
-  MediaType,
-} from '@/models/social/enums/social.enum';
-import { CreatePostForm, PostSchema } from '@/models/social/post/postDTO';
 
 import { EmojiButton } from './emoji-button';
 import { FeelingPopover } from './feeling-hover-popup';
@@ -55,7 +57,7 @@ const MAX_MEDIA = 5;
 const MAX_WORDS = 2000;
 
 // Hoisted constants to prevent re-renders
-const getDefaultFormValues = (groupId?: string): CreatePostForm => ({
+const getDefaultFormValues = (groupId?: string): CreatePostInput => ({
   content: '',
   audience: Audience.PUBLIC as Audience,
   feeling: undefined as Emotion | undefined,
@@ -81,7 +83,10 @@ export const CreatePost = ({
   const feelingWrapRef = useRef<HTMLDivElement>(null!);
   const feelingButtonRef = useRef<HTMLButtonElement>(null!);
 
-  const { mutateAsync: createPost, isPending } = useCreatePost();
+  const createPostMutation = useCreatePost();
+  const createGroupPostMutation = useCreatePostInGroup();
+
+  const isPending = createPostMutation.isPending || createGroupPostMutation.isPending;
 
   const defaultFormValues = useMemo(
     () => getDefaultFormValues(groupId),
@@ -93,30 +98,44 @@ export const CreatePost = ({
 
     validators: {
       onSubmit: ({ value }) => {
-        const r = PostSchema.safeParse(value);
+        const r = CreatePostInputSchema.safeParse(value);
         if (r.success) return undefined;
         return r.error.issues.map((i) => i.message);
       },
     },
 
     onSubmit: async ({ value }) => {
-      const promise = createPost(
-        { form: {
-          content: value.content.trim(),
-          audience: value.audience,
-          feeling: value.feeling,
-          groupId: value.groupId,
-        }, media },
-        {
-          onSuccess: () => {
-            form.reset(getDefaultFormValues(groupId));
-            setMedia(EMPTY_MEDIA);
-          },
-        }
-      );
+      const input = {
+        content: value.content.trim(),
+        audience: value.audience,
+        feeling: value.feeling,
+        groupId: value.groupId,
+        uploadFiles: media,
+      };
+
+      const promise = value.groupId
+        ? createGroupPostMutation.mutateAsync(input).then((res) => {
+            if (res.status === PostGroupStatus.PUBLISHED) {
+              toast.success('Đăng bài trong nhóm thành công!');
+            } else {
+              toast.success('Bài đăng đã được gửi và chờ duyệt bởi quản trị viên nhóm.');
+            }
+            return res.post;
+          })
+        : createPostMutation.mutateAsync(input).then((res) => {
+            toast.success('Đăng bài thành công!');
+            return res;
+          });
 
       toast.promise(promise, { loading: 'Đang đăng bài...' });
-      await promise;
+      
+      try {
+        await promise;
+        form.reset(getDefaultFormValues(groupId));
+        setMedia(EMPTY_MEDIA);
+      } catch (error) {
+        // Error handled by toast/mutation
+      }
     },
   });
 
@@ -186,7 +205,7 @@ export const CreatePost = ({
         form.handleSubmit();
       }}
     >
-      <Card className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-">
+      <Card className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-4">
         {/* Header */}
         <div className="flex items-center gap-3 flex-wrap">
           <CreatePostAvatar userId={userId as string} showName={!!groupId} />

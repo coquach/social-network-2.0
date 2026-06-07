@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { NotificationCardCompact } from '@/components/notification-card-compact';
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,31 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useNotifications } from '@/hooks/use-notification-hooks';
+import { 
+  useNotifications, 
+  useUnreadCount, 
+  useMarkNotificationAsRead, 
+  useMarkAllNotificationsAsRead 
+} from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import { Bell } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export const NotificationDropdown = () => {
   const { userId } = useAuth();
-  const { notifications, isLoading, markRead, markReadAll, unreadCount } =
-    useNotifications(userId as string);
+  
+  const { data, isLoading } = useNotifications();
+  const { data: unreadCountData } = useUnreadCount();
+  const markReadMutation = useMarkNotificationAsRead();
+  const markReadAllMutation = useMarkAllNotificationsAsRead();
+
+  const notifications = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data]
+  );
+  
+  const unreadCount = unreadCountData ?? 0;
 
   const [open, setOpen] = useState(false);
   return (
@@ -44,7 +59,7 @@ export const NotificationDropdown = () => {
             size="sm"
             variant="outline"
             onClick={() => {
-              markReadAll();
+              markReadAllMutation.mutate();
               setOpen(false);
             }}
             disabled={unreadCount === 0}
@@ -69,7 +84,10 @@ export const NotificationDropdown = () => {
                 asChild
                 className="p-0 focus:bg-transparent"
               >
-                <NotificationCardCompact notif={notif} onClick={markRead} />
+                <NotificationCardCompact 
+                  notif={notif} 
+                  onClick={(id) => markReadMutation.mutate(id)} 
+                />
               </DropdownMenuItem>
             ))
           )}

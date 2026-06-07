@@ -2,13 +2,11 @@
 
 import { useState } from 'react';
 
-import { GroupMemberStatus } from '@/models/group/enums/group-member-status.enum';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
-import { GroupMemberDTO } from '@/models/group/groupMemberDTO';
-
-import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 import {
+  GroupMemberStatus,
+  GroupPermission,
+  GroupRole,
+  GroupMemberDTO,
   useBanMember,
   useChangeMemberPermission,
   useChangeMemberRole,
@@ -17,6 +15,8 @@ import {
   useUser,
   UserDTO,
 } from '@repo/shared';
+
+import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 
 import {
   AlertDialog,

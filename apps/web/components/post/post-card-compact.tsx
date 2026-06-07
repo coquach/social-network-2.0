@@ -1,7 +1,6 @@
 'use client';
 
-import { RootType, TargetType } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { RootType, TargetType, PostSnapshotDTO } from '@repo/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import { TextCollapse } from '../text-collapse';

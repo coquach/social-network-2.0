@@ -13,7 +13,7 @@ import { format, formatDistanceToNowStrict } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { History, PencilLine, Loader2 } from '@/lib/icons';
 import { useMemo } from 'react';
-import { useGetPostEditHistories } from '@/hooks/use-post-hook';
+import { usePostEditHistory } from '@repo/shared';
 
 export interface EditHistoryDTO {
   id: string;
@@ -33,13 +33,12 @@ export function PostEditHistoryModal({
   // ✅ chỉ fetch khi modal mở + có postId
   const enabled = open && !!postId;
 
-  // Nếu hook của bạn đang nhận string: (postId: string)
   const {
     data: histories = [],
     isLoading,
     isFetching,
     isError,
-  } = useGetPostEditHistories(enabled ? postId! : '');
+  } = usePostEditHistory(enabled ? postId! : '', { enabled });
 
   const sorted = useMemo(() => {
     return (histories ?? [])

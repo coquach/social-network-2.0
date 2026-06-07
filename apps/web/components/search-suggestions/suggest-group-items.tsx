@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { GroupSummaryDTO } from '@/models/group/groupDTO';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
+import { GroupSummaryDTO, GroupPrivacy } from '@repo/shared';
 
 export function SuggestionGroupItem({
   group,

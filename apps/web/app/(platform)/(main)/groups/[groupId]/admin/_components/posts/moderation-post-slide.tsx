@@ -1,7 +1,9 @@
 'use client';
 import { PostCardPreview } from '@/components/post/post-card-preview';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { PostSnapshotDTO, useApproveGroupPost, useRejectGroupPost } from '@repo/shared';
 import { useState } from 'react';
+import { CheckCircle, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,9 +14,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { useApproveGroupPost, useRejectGroupPost } from '@repo/shared';
-import { CheckCircle, XCircle } from 'lucide-react';
 
 type ModerationPostSlideProps = {
   groupId: string;

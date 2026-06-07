@@ -11,10 +11,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 import { useImageViewerModal } from '@/store/use-image-viewer-modal';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
 import { format as formatDate } from 'date-fns';
-import { MembershipStatus } from '@/models/group/groupDTO';
 
 // shadcn ui
 import {
@@ -40,6 +37,9 @@ import {
   useDeleteGroup,
   useLeaveGroup,
   useRequestToJoinGroup,
+  GroupPermission,
+  GroupRole,
+  MembershipStatus,
 } from '@repo/shared';
 import { FaKey } from 'react-icons/fa';
 import { LuSettings2 } from 'react-icons/lu';

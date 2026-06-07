@@ -1,6 +1,6 @@
 'use client';
 
-import { getQueryClient } from '@/lib/query-client';
+import { getSharedQueryClient } from '@repo/shared';
 // Since QueryClientProvider relies on useContext under the hood, we have to put 'use client' on top
 import {
   QueryClientProvider
@@ -15,7 +15,7 @@ export default function QueryClientProviders({
   //       have a suspense boundary between this and the code that may
   //       suspend because React will throw away the client on the initial
   //       render if it suspends and there is no boundary
-  const queryClient = getQueryClient();
+  const queryClient = getSharedQueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

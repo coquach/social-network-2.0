@@ -3,7 +3,7 @@
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
+import { GroupRole } from '@repo/shared';
 
 type GroupTabId = 'discussion' | 'members' | 'admin';
 

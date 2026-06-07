@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserDTO } from '@/models/user/userDTO';
+import { UserDTO } from '@repo/shared';
 
 export function SuggestionUserItem({
   user,

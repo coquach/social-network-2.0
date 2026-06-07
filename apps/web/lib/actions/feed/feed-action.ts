@@ -1,8 +1,11 @@
 import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { FeedDTO } from '@/models/feed/feedDTO';
-import { Emotion } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import {
+  CursorPageResponse,
+  CursorPagination,
+  FeedDTO,
+  Emotion,
+  PostSnapshotDTO,
+} from '@repo/shared';
 
 export interface PersonalFeedQuery extends CursorPagination {
   mainEmotion?: Emotion;

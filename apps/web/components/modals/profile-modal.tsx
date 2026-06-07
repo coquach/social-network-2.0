@@ -28,20 +28,20 @@ import {
   useUser,
   useUpdateProfile,
   UpdateUserInput,
+  UserDTO,
 } from '@repo/shared';
-import { ImageIcon, Pencil } from '@/lib/icons';
 import {
   INTEREST_OPTIONS,
-  ProfileUpdateForm,
-  ProfileUpdateSchema,
-} from '@/models/user/userDTO';
+  UpdateUserInputSchema,
+} from '@repo/shared/schemas';
+import { ProfileUpdateSchema, ProfileUpdateForm } from '@/models/user/userDTO';
 import { useProfileModal } from '@/store/use-profile-modal';
 import { useUser as useClerkUser } from '@clerk/nextjs';
 import { useForm } from '@tanstack/react-form';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+import { ImageIcon, Pencil, Plus } from 'lucide-react';
 
 const isFile = (value: unknown): value is File => value instanceof File;
 

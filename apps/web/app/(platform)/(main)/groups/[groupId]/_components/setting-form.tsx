@@ -5,8 +5,6 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupSettingSchema } from '@/models/group/groupSettingDTO';
 
 import { Loader } from '@/components/loader-componnet';
 import { Button } from '@/components/ui/button';
@@ -27,7 +25,9 @@ import { Switch } from '@/components/ui/switch';
 import {
   useGroupSettings,
   useUpdateGroupSettings,
+  GroupPermission,
 } from '@repo/shared';
+import { UpdateGroupInputSchema } from '@repo/shared/schemas';
 import { cn } from '@/lib/utils';
 
 type SettingFormProps = {
@@ -55,9 +55,9 @@ export const SettingForm = ({ open }: SettingFormProps) => {
 
     validators: {
       onSubmit: ({ value }) => {
-        const result = GroupSettingSchema.safeParse(value);
+        const result = UpdateGroupInputSchema.safeParse(value);
         if (result.success) return undefined;
-        return result.error.issues.map((i) => i.message);
+        return result.error.issues.map((i: any) => i.message);
       },
     },
 

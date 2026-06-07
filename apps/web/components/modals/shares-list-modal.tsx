@@ -5,7 +5,7 @@ import { Loader2 } from '@/lib/icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
 
-import { useGetSharesByPostId } from '@/hooks/use-share-hook';
+import { usePostShares } from '@repo/shared';
 import { useEffect, useMemo } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { ErrorFallback } from '../error-fallback';
@@ -23,7 +23,7 @@ export const ShareListModal = () => {
     isLoading,
     isError,
     error,
-  } = useGetSharesByPostId(postId ?? '', {});
+  } = usePostShares(postId ?? '', {});
 
   const { ref, inView } = useInView({
     threshold: 0.2,

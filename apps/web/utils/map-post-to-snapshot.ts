@@ -1,4 +1,4 @@
-import type { PostDTO, PostSnapshotDTO } from '@/models/social/post/postDTO';
+import type { PostDTO, PostSnapshotDTO } from '@repo/shared';
 
 
 const PREVIEW_LIMIT = 4;

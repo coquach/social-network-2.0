@@ -1,8 +1,6 @@
 'use client';
 
-import { useGetReactions } from '@/hooks/use-reaction-hook';
-import { reactionsUI, reactionMap } from '@/lib/types/reaction';
-import { ReactionType, TargetType } from '@/models/social/enums/social.enum';
+import { useReactions, ReactionType, TargetType } from '@repo/shared';
 import { useReactionModal } from '@/store/use-post-modal';
 import { Loader2 } from '@/lib/icons';
 import { useEffect, useMemo, useState } from 'react';
@@ -11,6 +9,7 @@ import { AvatarWithName } from '../avatar';
 import { ErrorFallback } from '../error-fallback';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { reactionMap, reactionsUI } from '@/lib/types/reaction';
 
 // Hoisted constants to prevent re-creation on every render
 const createEmptyReactionGroups = (): Record<ReactionType, any[]> => ({
@@ -39,11 +38,12 @@ export const PostReactionsModal = () => {
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useGetReactions({
-    targetId: targetId ?? '',
-    targetType: targetType ?? TargetType.POST,
-    reactionType: filter,
-  });
+  } = useReactions(
+    targetId ?? '',
+    (targetType as any) ?? TargetType.POST,
+    filter as any,
+    { enabled: !!targetId }
+  );
 
   const { ref } = useInView({
     threshold: 0.5,

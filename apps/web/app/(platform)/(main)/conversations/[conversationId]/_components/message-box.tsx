@@ -18,8 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageDTO } from '@/models/message/messageDTO';
-import { useChatStore, type MessageDTO as SharedMessageDTO } from '@repo/shared';
+import { useChatStore, type MessageDTO } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import clsx from 'clsx';
 import { format, formatDistanceToNowStrict } from 'date-fns';
@@ -56,7 +55,7 @@ export const MessageBox = memo(function MessageBox({
   const [openAlert, setOpenAlert] = useState(false);
   const { setReplyTo } = useChatStore();
 
-  const handleReply = useCallback(() => setReplyTo(data as unknown as SharedMessageDTO), [data, setReplyTo]);
+  const handleReply = useCallback(() => setReplyTo(data), [data, setReplyTo]);
   const handleDeleteClick = useCallback(() => setOpenAlert(true), []);
 
   const handleCopy = useCallback(async () => {

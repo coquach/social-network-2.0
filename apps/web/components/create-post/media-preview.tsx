@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from '@/lib/icons';
-import { MediaType } from '@/models/social/enums/social.enum';
+import { MediaType } from '@repo/shared';
 import Image from 'next/image';
 import { useCreatePostContext } from './context';
 

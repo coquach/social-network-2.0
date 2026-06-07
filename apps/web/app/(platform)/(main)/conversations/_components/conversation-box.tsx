@@ -1,8 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUser } from "@repo/shared";
-import { ConversationDTO } from "@/models/conversation/conversationDTO";
+import { useUser, ConversationDTO } from "@repo/shared";
 import { ensureLastSeenMap } from "@/utils/ensure-last-seen-map";
 import { useAuth } from "@clerk/nextjs";
 import clsx from "clsx";

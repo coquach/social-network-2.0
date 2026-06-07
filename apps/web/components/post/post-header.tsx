@@ -5,13 +5,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useUser, TargetType } from '@repo/shared';
 import {
+  useUser,
+  TargetType,
   Audience,
   Emotion,
-} from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+  PostSnapshotDTO,
+  SharePostSnapshotDTO,
+} from '@repo/shared';
 import {
   useDeletePostModal,
   useUpdatePostModal,

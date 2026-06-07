@@ -32,8 +32,8 @@ import { Input } from '@/components/ui/input';
 import { useCreateConversation, useSearchUsers, CreateConversationInput } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import {
-  ConversarionSchema,
-} from '@/models/conversation/conversationDTO';
+  CreateConversationInputSchema,
+} from '@repo/shared/schemas';
 import { MediaType } from '@/models/social/enums/social.enum';
 import { UserDTO } from '@/models/user/userDTO';
 
@@ -42,7 +42,7 @@ type CreateGroupConversationDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-const GroupConversationSchema = ConversarionSchema.extend({
+const GroupConversationSchema = CreateConversationInputSchema.extend({
   groupName: z.string().trim().min(1, 'Vui lòng nhập tên nhóm.'),
   participants: z
     .array(z.string())

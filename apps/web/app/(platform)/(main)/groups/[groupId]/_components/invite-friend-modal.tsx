@@ -16,8 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { useFriends, useUser, useInviteUserToGroup } from '@repo/shared';
+import { useFriends, useUser, useInviteUserToGroup, GroupPermission } from '@repo/shared';
 import { DirectAvatar } from '@/app/(platform)/(main)/conversations/_components/direct-avatar';
 import { toast } from 'sonner';
 

@@ -34,9 +34,8 @@ import {
 
 import { cn } from '@/lib/utils';
 
-import { useCreateReport } from '@/hooks/use-report-hook';
-import { CreateReportForm, ReportSchema } from '@/models/report/reportDTO';
-import { TargetType } from '@/models/social/enums/social.enum'; // chỉnh path
+import { useCreateReport, CreateReportInput, TargetType } from '@repo/shared';
+import { CreateReportInputSchema } from '@repo/shared/schemas';
 import { LiveRegion } from '@/components/ui/live-region';
 
 const MAX_REASON = 1000;
@@ -55,43 +54,46 @@ export function CreateReportModal({
   targetId,
   targetType,
 }: CreateReportModalProps) {
-  const { mutateAsync, isPending } = useCreateReport();
+  const createReportMutation = useCreateReport();
+  const isPending = createReportMutation.isPending;
 
   const form = useForm({
     defaultValues: {
       targetId,
       targetType,
       reason: '',
-    } satisfies CreateReportForm,
+    } satisfies CreateReportInput,
 
     onSubmit: async ({ value }) => {
       // Validate with Zod
-      const result = ReportSchema.safeParse(value);
+      const result = CreateReportInputSchema.safeParse(value);
       if (!result.success) {
         toast.error('Invalid form data');
         return;
       }
 
       // value đã qua zod (targetId/targetType/reason)
-      const p = mutateAsync(
+      const p = createReportMutation.mutateAsync(
         {
           targetId: result.data.targetId,
-          targetType: result.data.targetType,
+          targetType: result.data.targetType as any,
           reason: result.data.reason,
-        },
-        {
-          onSuccess: () => {
+        }
+      ).then(() => {
             form.reset({
               targetId,
               targetType,
               reason: '',
             });
             onOpenChange(false);
-          },
-        }
-      );
+            toast.success('Gửi báo cáo thành công!');
+      });
       toast.promise(p, { loading: 'Đang gửi báo cáo...' });
-      await p;
+      try {
+        await p;
+      } catch (error) {
+        // Error handled by toast/mutation
+      }
     },
   });
 

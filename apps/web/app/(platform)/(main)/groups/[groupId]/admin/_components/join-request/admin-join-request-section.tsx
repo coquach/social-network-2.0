@@ -7,12 +7,13 @@ import {
   useApproveJoinRequest,
   useGroupJoinRequests,
   useRejectJoinRequest,
+  GroupPermission,
+  JoinRequestSortBy,
+  JoinRequestStatus,
+  JoinRequestResponseDTO,
 } from '@repo/shared';
 
-
-
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
 
 import {
   Select,
@@ -23,8 +24,6 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { JoinRequestSortBy, JoinRequestStatus } from '@/models/group/enums/group-invite-status.enum';
-import { JoinRequestResponseDTO } from '@/models/group/groupRequestDTO';
 import { JoinRequestRow } from './join-request-row';
 
 type Props = {

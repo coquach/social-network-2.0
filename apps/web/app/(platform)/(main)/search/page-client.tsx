@@ -11,14 +11,15 @@ import {
   useSearchGroups,
   useSearchPosts,
   useSearchUsers,
+  GroupDTO,
+  GroupSummaryDTO,
+  GroupPrivacy,
+  GroupStatus,
+  PostSnapshotDTO,
+  Emotion,
+  UserDTO,
 } from '@repo/shared';
 import { SearchGroupSortBy } from '@/lib/actions/search/search-actions';
-import { GroupDTO, GroupSummaryDTO } from '@/models/group/groupDTO';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { GroupStatus } from '@/models/group/enums/group-status.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { Emotion } from '@/models/social/enums/social.enum';
-import { UserDTO } from '@/models/user/userDTO';
 import { UserSearchCard } from './_components/user-search-card';
 
 type SearchType = 'posts' | 'groups' | 'users';

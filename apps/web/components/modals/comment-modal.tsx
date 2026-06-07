@@ -1,7 +1,5 @@
 'use client';
-import { RootType } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+import { RootType, PostSnapshotDTO, SharePostSnapshotDTO } from '@repo/shared';
 import { useCommentModal } from '@/store/use-post-modal';
 import { useMemo } from 'react';
 import { CommentInput } from '../comment/comment-input';

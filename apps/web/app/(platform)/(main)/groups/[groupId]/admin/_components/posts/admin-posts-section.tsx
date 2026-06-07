@@ -4,8 +4,7 @@ import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { useGroupPosts, PostGroupStatus } from '@repo/shared';
+import { GroupPermission, useGroupPosts, PostGroupStatus } from '@repo/shared';
 import { mapPostToSnapshot } from '@/utils/map-post-to-snapshot';
 
 import { PostCardFull } from '@/components/post/post-card-full';

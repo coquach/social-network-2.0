@@ -1,6 +1,5 @@
 import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { NotificationDTO } from '@/models/notification/notificationDTO';
+import { CursorPageResponse, CursorPagination, NotificationDTO } from '@repo/shared';
 
 export const getNotifications = async (
   token: string,

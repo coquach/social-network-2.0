@@ -1,9 +1,8 @@
 'use client';
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
-import { useMyPosts, useUserPosts } from '@repo/shared';
+import { useMyPosts, useUserPosts, PostSnapshotDTO } from '@repo/shared';
 import { mapPostToSnapshot } from '@/utils/map-post-to-snapshot';
-import type { PostSnapshotDTO } from '@/models/social/post/postDTO';
 import { useAuth } from '@clerk/nextjs';
 
 import { useEffect } from 'react';

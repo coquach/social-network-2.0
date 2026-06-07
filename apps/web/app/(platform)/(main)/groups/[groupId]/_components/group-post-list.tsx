@@ -6,8 +6,7 @@ import { useInView } from "react-intersection-observer";
 import { ErrorFallback } from "@/components/error-fallback";
 import { PostCardFull } from "@/components/post/post-card-full";
 import { useGroupPermissionContext } from "@/contexts/group-permission-context";
-import { useGroupPosts, PostGroupStatus } from "@repo/shared";
-import { MembershipStatus } from "@/models/group/groupDTO";
+import { useGroupPosts, PostGroupStatus, MembershipStatus } from "@repo/shared";
 import { mapPostToSnapshot } from "@/utils/map-post-to-snapshot";
 
 export const GroupPostList = ({ groupId }: { groupId: string }) => {
