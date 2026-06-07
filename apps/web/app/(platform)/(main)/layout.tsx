@@ -1,6 +1,6 @@
-
 import { ChatBox } from './_components/chat-box';
 import { Navbar } from './_components/navbar';
+import { CallOverlay } from '@/components/chat/call-overlay';
 
 const GeneralLayout = ({
   children,
@@ -27,6 +27,8 @@ const GeneralLayout = ({
       <aside aria-label="Tin nhắn">
         <ChatBox />
       </aside>
+
+      <CallOverlay />
     </div>
   );
 };
