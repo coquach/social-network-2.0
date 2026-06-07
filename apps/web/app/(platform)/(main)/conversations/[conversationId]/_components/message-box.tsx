@@ -23,13 +23,21 @@ import { useAuth } from '@clerk/nextjs';
 import clsx from 'clsx';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { Copy, Info, MoreHorizontal, Pin, Reply, Trash2 } from 'lucide-react';
+import { Copy, Download, FileIcon, Info, MoreHorizontal, Music, Pin, Reply, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { HiForward } from 'react-icons/hi2';
 import { toast } from 'sonner';
 import { MessageReply } from './message-reply';
 import { useImageViewerModal } from '@/store/use-image-viewer-modal';
+
+const formatFileSize = (bytes?: number) => {
+  if (!bytes) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 const MAX_SEEN_AVATARS = 3;
 
@@ -239,50 +247,116 @@ export const MessageBox = memo(function MessageBox({
                       : 'grid-cols-2'
                   )}
                 >
-                  {attachments.map((att, i) =>
-                    att.mimeType?.startsWith('image') ? (
+                  {attachments.map((att, i) => {
+                    const isImage = att.mimeType?.startsWith('image');
+                    const isVideo = att.mimeType?.startsWith('video');
+                    const isAudio = att.mimeType?.startsWith('audio');
+
+                    if (isImage) {
+                      return (
+                        <div
+                          key={`${att.url}-${i}`}
+                          className={clsx(
+                            'overflow-hidden rounded-lg border bg-black/5',
+                            attachments.length === 1
+                              ? 'max-w-[360px]'
+                              : 'max-w-[220px]'
+                          )}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => openImageViewer(att.url, att.fileName)}
+                            className="block w-full cursor-zoom-in"
+                            aria-label="Xem ảnh"
+                          >
+                            <Image
+                              src={att.url}
+                              alt={att.fileName || ''}
+                              width={360}
+                              height={360}
+                              loading="lazy"
+                              className={clsx(
+                                'w-full object-cover',
+                                attachments.length === 1 ? 'h-64' : 'h-36'
+                              )}
+                            />
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    if (isVideo) {
+                      return (
+                        <video
+                          key={`${att.url}-${i}`}
+                          src={att.url}
+                          controls
+                          className={clsx(
+                            'rounded-lg border bg-black/5 object-cover',
+                            attachments.length === 1
+                              ? 'h-64 max-w-[360px]'
+                              : 'h-36 max-w-[220px]'
+                          )}
+                        />
+                      );
+                    }
+
+                    if (isAudio) {
+                      return (
+                        <div
+                          key={`${att.url}-${i}`}
+                          className={clsx(
+                            'flex items-center gap-2 p-3 rounded-xl border bg-white/50 backdrop-blur shadow-sm min-w-[240px]',
+                            isOwn ? 'border-sky-200' : 'border-gray-200'
+                          )}
+                        >
+                          <div className="h-10 w-10 flex items-center justify-center rounded-full bg-sky-100 text-sky-600">
+                            <Music className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <audio
+                              src={att.url}
+                              controls
+                              className="h-8 w-full accent-sky-500"
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Default to file
+                    return (
                       <div
                         key={`${att.url}-${i}`}
                         className={clsx(
-                          'overflow-hidden rounded-lg border bg-black/5',
-                          attachments.length === 1
-                            ? 'max-w-[360px]'
-                            : 'max-w-[220px]'
+                          'flex items-center gap-3 p-3 rounded-xl border bg-white/50 backdrop-blur shadow-sm min-w-[200px] group/file transition-all hover:shadow-md',
+                          isOwn ? 'border-sky-200' : 'border-gray-200'
                         )}
                       >
-                        <button
-                          type="button"
-                          onClick={() => openImageViewer(att.url, att.fileName)}
-                          className="block w-full cursor-zoom-in"
-                          aria-label="Xem ảnh"
+                        <div className="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 group-hover/file:bg-sky-100 group-hover/file:text-sky-600 transition-colors">
+                          <FileIcon className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {att.fileName}
+                          </div>
+                          <div className="text-[10px] text-gray-500">
+                            {formatFileSize(att.size)}
+                          </div>
+                        </div>
+                        <a
+                          href={att.url}
+                          download={att.fileName}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-8 w-8 flex items-center justify-center rounded-full text-gray-400 hover:text-sky-600 hover:bg-sky-50 transition-all"
+                          title="Tải về"
                         >
-                          <Image
-                            src={att.url}
-                            alt={att.fileName || ''}
-                            width={360}
-                            height={360}
-                            loading="lazy"
-                            className={clsx(
-                              'w-full object-cover',
-                              attachments.length === 1 ? 'h-64' : 'h-36'
-                            )}
-                          />
-                        </button>
+                          <Download className="h-4 w-4" />
+                        </a>
                       </div>
-                    ) : (
-                      <video
-                        key={`${att.url}-${i}`}
-                        src={att.url}
-                        controls
-                        className={clsx(
-                          'rounded-lg border bg-black/5 object-cover',
-                          attachments.length === 1
-                            ? 'h-64 max-w-[360px]'
-                            : 'h-36 max-w-[220px]'
-                        )}
-                      />
-                    )
-                  )}
+                    );
+                  })}
                 </div>
               )}
 
