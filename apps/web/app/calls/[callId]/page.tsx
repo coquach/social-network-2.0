@@ -30,16 +30,28 @@ export default function CallPage() {
     
     const initCall = async () => {
       try {
-        await currentCall.get();
+        // Automatically join the call
+        await currentCall.join();
+        
+        // Sync media state based on call type
+        if (type === 'audio') {
+          await currentCall.camera.disable();
+        } else {
+          await currentCall.camera.enable();
+        }
+        
+        // Always enable microphone by default for a new call
+        await currentCall.microphone.enable();
+        
         setCall(currentCall);
       } catch (err: any) {
-        console.error('Failed to get call:', err);
-        setError('Không thể tìm thấy cuộc gọi hoặc cuộc gọi đã kết thúc.');
+        console.error('Failed to join call:', err);
+        setError('Không thể tham gia cuộc gọi hoặc cuộc gọi đã kết thúc.');
       }
     };
 
     initCall();
-  }, [client, callId]);
+  }, [client, callId, type]);
 
   if (error) {
     return (

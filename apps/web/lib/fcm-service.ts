@@ -6,6 +6,7 @@
 import { getToken, onMessage } from 'firebase/messaging';
 import { getFirebaseMessaging } from './firebase-config';
 import { notificationService } from '@repo/shared';
+import { toast } from 'sonner';
 
 /**
  * Request notification permission from the user
@@ -20,11 +21,6 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     return true;
   }
 
-  if (Notification.permission === 'denied') {
-    console.warn('Notification permission denied');
-    return false;
-  }
-
   try {
     const permission = await Notification.requestPermission();
     return permission === 'granted';
@@ -35,19 +31,32 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 };
 
 /**
+ * Register Service Worker for FCM
+ */
+export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    return null;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+      scope: '/',
+    });
+    console.log('✅ FCM Service Worker registered:', registration.scope);
+    return registration;
+  } catch (error) {
+    console.error('❌ FCM Service Worker registration failed:', error);
+    return null;
+  }
+};
+
+/**
  * Get FCM device token
  */
 export const getFCMToken = async (): Promise<string | null> => {
   try {
     const messaging = await getFirebaseMessaging();
-    if (!messaging) {
-      return null;
-    }
-
-    const hasPermission = await requestNotificationPermission();
-    if (!hasPermission) {
-      return null;
-    }
+    if (!messaging) return null;
 
     const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
     if (!vapidKey) {
@@ -55,7 +64,16 @@ export const getFCMToken = async (): Promise<string | null> => {
       return null;
     }
 
-    const token = await getToken(messaging, { vapidKey });
+    // Explicitly register SW and pass it to getToken
+    const serviceWorkerRegistration = await registerServiceWorker();
+    if (!serviceWorkerRegistration) {
+      console.warn('Service Worker registration failed, attempting default token retrieval');
+    }
+
+    const token = await getToken(messaging, { 
+      vapidKey,
+      serviceWorkerRegistration: serviceWorkerRegistration || undefined
+    });
     return token;
   } catch (error) {
     console.error('Error getting FCM token:', error);
@@ -68,15 +86,18 @@ export const getFCMToken = async (): Promise<string | null> => {
  */
 export const registerFCMToken = async (): Promise<boolean> => {
   try {
-    const token = await getFCMToken();
-    if (!token) {
-      console.warn('No FCM token available');
-      return false;
-    }
+    const hasPermission = await requestNotificationPermission();
+    if (!hasPermission) return false;
 
-    // Get device info
-    const deviceId = localStorage.getItem('deviceId') || generateDeviceId();
-    localStorage.setItem('deviceId', deviceId);
+    const token = await getFCMToken();
+    if (!token) return false;
+
+    // Get or generate device info
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+      deviceId = generateDeviceId();
+      localStorage.setItem('deviceId', deviceId);
+    }
 
     const deviceName = getBrowserInfo();
 
@@ -86,6 +107,7 @@ export const registerFCMToken = async (): Promise<boolean> => {
       platform: 'web',
       deviceId,
       deviceName,
+      provider: 'fcm',
     });
 
     console.log('✅ FCM token registered successfully');
@@ -113,32 +135,36 @@ export const unregisterFCMToken = async (): Promise<void> => {
 
 /**
  * Setup foreground message listener
- * @param callback Function to call when message received
  */
 export const setupForegroundMessageListener = (
-  callback: (payload: any) => void,
+  callback?: (payload: any) => void,
 ): (() => void) | void => {
+  if (typeof window === 'undefined') return;
+
   getFirebaseMessaging().then((messaging) => {
     if (!messaging) return;
 
-    onMessage(messaging, (payload) => {
+    return onMessage(messaging, (payload) => {
       console.log('📩 Foreground message received:', payload);
 
-      // Show notification
+      // Show in-app Toast instead of system notification if browser is active
       if (payload.notification) {
-        const { title, body } = payload.notification;
-        if (Notification.permission === 'granted') {
-          new Notification(title || 'New notification', {
-            body: body || '',
-            icon: '/logo.svg',
-            badge: '/logo.svg',
-            data: payload.data,
-          });
-        }
+        const url = payload.data?.url;
+        toast(payload.notification.title || 'Thông báo mới', {
+          description: payload.notification.body,
+          action: url ? {
+            label: 'Xem',
+            onClick: () => {
+              if (typeof window !== 'undefined') {
+                window.location.href = url;
+              }
+            }
+          } : undefined,
+        });
       }
 
-      // Call custom callback
-      callback(payload);
+      // Call custom callback for UI updates (e.g., updating notification store)
+      if (callback) callback(payload);
     });
   });
 };
