@@ -89,7 +89,7 @@ export const CreateGroupConversationDialog = ({
       const payload: CreateConversationForm = {
         isGroup: true,
         participants: Array.from(
-          new Set([currentUserId, ...(value.participants ?? [])])
+          new Set([currentUserId, ...(value.participants ?? [])]),
         ),
         groupName: (value.groupName ?? '').trim(),
       };
@@ -107,7 +107,7 @@ export const CreateGroupConversationDialog = ({
             clearAvatar();
             handleInternalOpenChange(false);
           },
-        }
+        },
       );
 
       toast.promise(promise, { loading: 'Đang tạo nhóm chat...' });
@@ -133,7 +133,7 @@ export const CreateGroupConversationDialog = ({
     return () => clearTimeout(handle);
   }, [search]);
 
-  const usersQ = useSearchUsers(debouncedQuery, { limit: 10 });
+  const usersQ = useSearchUsers({ query: debouncedQuery, limit: 10 });
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage, isLoading } =
     usersQ;
 
@@ -299,7 +299,7 @@ export const CreateGroupConversationDialog = ({
                   const ids = field.state.value ?? [];
 
                   const availableSearchResults = searchResults.filter(
-                    (u) => !ids.includes(u.id) && u.id !== currentUserId
+                    (u) => !ids.includes(u.id) && u.id !== currentUserId,
                   );
 
                   const handleSelectUser = (user: UserDTO) => {
@@ -311,9 +311,11 @@ export const CreateGroupConversationDialog = ({
 
                   const handleRemoveUser = (userId: string) => {
                     setSelectedUsers((prev) =>
-                      prev.filter((u) => u.id !== userId)
+                      prev.filter((u) => u.id !== userId),
                     );
-                    field.handleChange(ids.filter((id: string) => id !== userId));
+                    field.handleChange(
+                      ids.filter((id: string) => id !== userId),
+                    );
                   };
 
                   return (
@@ -347,11 +349,11 @@ export const CreateGroupConversationDialog = ({
                               {isLoading ? (
                                 <div className="px-3 py-6 text-sm text-slate-500 flex items-center gap-2 justify-center">
                                   <Loader2 className="h-4 w-4 animate-spin" />
-                                Đang tìm kiếm...
+                                  Đang tìm kiếm...
                                 </div>
                               ) : availableSearchResults.length === 0 ? (
                                 <div className="px-3 py-6 text-sm text-slate-500 text-center">
-                                Không tìm thấy người dùng nào.
+                                  Không tìm thấy người dùng nào.
                                 </div>
                               ) : (
                                 <div className="space-y-1">
@@ -363,9 +365,7 @@ export const CreateGroupConversationDialog = ({
                                       className="w-full text-left rounded-xl px-2 py-1.5 hover:bg-slate-100 disabled:opacity-60"
                                       disabled={isPending}
                                     >
-                                      <AvatarWithStatus
-                                        userId={user.id}
-                                      />
+                                      <AvatarWithStatus userId={user.id} />
                                     </button>
                                   ))}
 
@@ -431,7 +431,6 @@ export const CreateGroupConversationDialog = ({
             </Button>
           </DialogFooter>
         </form>
-        
       </DialogContent>
     </Dialog>
   );

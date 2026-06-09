@@ -134,7 +134,7 @@ export const useCreatePost = () => {
           const uploaded = await uploadMultipleToCloudinary(
             media,
             `posts/${userId}`,
-            signal
+            signal,
           );
           form.media = uploaded.map((item) => ({
             url: item.url,
@@ -185,13 +185,13 @@ export const useCreatePost = () => {
           // queryClient.invalidateQueries({ queryKey: ['group-posts', groupId] });
         } else {
           toast.success(
-            'Bài đăng đã được gửi và chờ duyệt bởi quản trị viên nhóm.'
+            'Bài đăng đã được gửi và chờ duyệt bởi quản trị viên nhóm.',
           );
         }
       }
     },
-    onError: handleMutationError({ 
-      userMessage: 'Đăng bài thất bại. Vui lòng thử lại.' 
+    onError: handleMutationError({
+      userMessage: 'Đăng bài thất bại. Vui lòng thử lại.',
     }),
   });
 };
@@ -210,11 +210,14 @@ export const useUpdatePost = (postId: string) => {
     },
     onSuccess: (updatedPost) => {
       updatePostInCache(queryClient, updatedPost);
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all, exact: false });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.all,
+        exact: false,
+      });
       toast.success('Chỉnh sửa bài đăng thành công!');
     },
-    onError: handleMutationError({ 
-      userMessage: 'Chỉnh sửa bài đăng thất bại. Vui lòng thử lại.' 
+    onError: handleMutationError({
+      userMessage: 'Chỉnh sửa bài đăng thất bại. Vui lòng thử lại.',
     }),
   });
 };
@@ -233,11 +236,14 @@ export const useDeletePost = (postId: string) => {
     },
     onSuccess: () => {
       removePostFromCache(queryClient, postId);
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all, exact: false });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.all,
+        exact: false,
+      });
       toast.success('Xóa bài đăng thành công!');
     },
-    onError: handleMutationError({ 
-      userMessage: 'Xóa bài đăng thất bại. Vui lòng thử lại.' 
+    onError: handleMutationError({
+      userMessage: 'Xóa bài đăng thất bại. Vui lòng thử lại.',
     }),
   });
 };
@@ -245,7 +251,7 @@ export const useDeletePost = (postId: string) => {
 const addPostToCache = (
   queryClient: QueryClient,
   newPost: PostSnapshotDTO,
-  groupId?: string
+  groupId?: string,
 ) => {
   if (groupId) {
     // Post tren trang ca nhan (me)
@@ -263,7 +269,7 @@ const addPostToCache = (
           return {
             ...infinite,
             pages: infinite.pages.map((page, index) =>
-              index === 0 ? { ...page, data: [newPost, ...page.data] } : page
+              index === 0 ? { ...page, data: [newPost, ...page.data] } : page,
             ),
           };
         }
@@ -277,7 +283,7 @@ const addPostToCache = (
         }
 
         return old;
-      }
+      },
     );
     return;
   }
@@ -290,17 +296,17 @@ const addPostToCache = (
       return {
         ...old,
         pages: old.pages.map((page, index) =>
-          index === 0 ? { ...page, data: [newPost, ...page.data] } : page
+          index === 0 ? { ...page, data: [newPost, ...page.data] } : page,
         ),
       };
-    }
+    },
   );
 };
 
 // ⚙️ Update 1 post trong mọi page
 const updatePostInCache = (
   queryClient: QueryClient,
-  updated: PostSnapshotDTO
+  updated: PostSnapshotDTO,
 ) => {
   queryClient.setQueriesData<InfiniteData<CursorPageResponse<PostSnapshotDTO>>>(
     { queryKey: queryKeys.posts.all },
@@ -312,11 +318,11 @@ const updatePostInCache = (
         pages: old.pages.map((page) => ({
           ...page,
           data: page.data.map((post) =>
-            post.postId === updated.postId ? updated : post
+            post.postId === updated.postId ? updated : post,
           ),
         })),
       };
-    }
+    },
   );
 
   queryClient.setQueriesData<InfiniteData<CursorPageResponse<PostSnapshotDTO>>>(
@@ -329,11 +335,11 @@ const updatePostInCache = (
         pages: old.pages.map((page) => ({
           ...page,
           data: page.data.map((post) =>
-            post.postId === updated.postId ? updated : post
+            post.postId === updated.postId ? updated : post,
           ),
         })),
       };
-    }
+    },
   );
 };
 
@@ -351,7 +357,7 @@ const removePostFromCache = (queryClient: QueryClient, postId: string) => {
           data: page.data.filter((post) => post.postId !== postId),
         })),
       };
-    }
+    },
   );
 
   queryClient.setQueriesData<InfiniteData<CursorPageResponse<PostSnapshotDTO>>>(
@@ -366,14 +372,14 @@ const removePostFromCache = (queryClient: QueryClient, postId: string) => {
           data: page.data.filter((post) => post.postId !== postId),
         })),
       };
-    }
+    },
   );
 };
 
 export const useGetPostByGroup = (
   groupId: string,
   query: GetGroupPostQueryDTO,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean },
 ) => {
   const { getToken } = useAuth();
   return useInfiniteQuery<CursorPageResponse<PostSnapshotDTO>>({
@@ -406,16 +412,19 @@ export const useApprovePostInGroup = (postId: string, groupId: string) => {
         throw new Error('Token is required');
       }
       // Assume approvePostInGroup is defined elsewhere
-      return await approvePostInGroup(token, postId);
+      return await approvePostInGroup(token, groupId, postId);
     },
     onSuccess: () => {
       removePostFromGroupCache(
         queryClient,
         groupId,
         postId,
-        PostGroupStatus.PENDING
+        PostGroupStatus.PENDING,
       );
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all, exact: false });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.all,
+        exact: false,
+      });
       toast.success('Duyệt bài đăng trong nhóm thành công!');
     },
     onError: (error) => {
@@ -434,16 +443,19 @@ export const useRejectPostInGroup = (postId: string, groupId: string) => {
         throw new Error('Token is required');
       }
       // Assume rejectPostInGroup is defined elsewhere
-      return await rejectPostInGroup(token, postId);
+      return await rejectPostInGroup(token, groupId, postId);
     },
     onSuccess: () => {
       removePostFromGroupCache(
         queryClient,
         groupId,
         postId,
-        PostGroupStatus.PENDING
+        PostGroupStatus.PENDING,
       );
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all, exact: false });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.all,
+        exact: false,
+      });
       toast.success('Từ chối bài đăng trong nhóm thành công!');
     },
     onError: (error) => {
@@ -455,7 +467,7 @@ export const removePostFromGroupCache = (
   queryClient: QueryClient,
   groupId: string,
   postId: string,
-  filterStatus?: PostGroupStatus
+  filterStatus?: PostGroupStatus,
 ) => {
   const queries = queryClient.getQueriesData<
     InfiniteData<CursorPageResponse<PostSnapshotDTO>>

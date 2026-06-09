@@ -21,7 +21,7 @@ export function ConversationSearchOverlay({
   const trimmedQuery = query.trim();
   const hasQuery = trimmedQuery.length > 0;
 
-  const usersQ = useSearchUsers(trimmedQuery);
+  const usersQ = useSearchUsers({ query: trimmedQuery });
   const {
     data,
     isLoading,
@@ -33,7 +33,7 @@ export function ConversationSearchOverlay({
   } = usersQ;
 
   const items = hasQuery
-    ? data?.pages.flatMap((page) => page.data ?? []) ?? []
+    ? (data?.pages.flatMap((page) => page.data ?? []) ?? [])
     : [];
 
   const { ref, inView } = useInView({ rootMargin: '260px' });

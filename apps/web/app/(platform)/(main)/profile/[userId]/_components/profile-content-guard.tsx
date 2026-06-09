@@ -4,12 +4,8 @@ import { useGetUser } from '@/hooks/use-user-hook';
 import { useParams } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-export const ProfileContentGuard = ({
-  children,
-}: {
-  children: ReactNode;
-}) => {
-  const { userId } = useParams<{ userId: string }>();
+export const ProfileContentGuard = ({ children }: { children: ReactNode }) => {
+  const { userId } = useParams<{ userId: string }>() as { userId: string };
   const { data: fetchedUser, isLoading } = useGetUser(userId as string);
 
   if (isLoading) {
