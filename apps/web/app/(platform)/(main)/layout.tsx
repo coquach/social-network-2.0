@@ -20,7 +20,7 @@ const GeneralLayout = ({
       <main 
         id="main-content"
         aria-label="Nội dung chính"
-        className="mt-16 h-[calc(100vh-4rem)] w-full overflow-y-scroll app-scroll"
+        className="mt-16 h-[calc(100vh-4rem)] w-full overflow-y-auto app-scroll"
       >
         {children}
       </main>
