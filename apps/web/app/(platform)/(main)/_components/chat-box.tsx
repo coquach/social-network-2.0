@@ -10,27 +10,16 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useChat } from '@ai-sdk/react';
-import { TextStreamChatTransport, type UIMessage } from 'ai';
+import { useAuth } from '@clerk/nextjs';
+import { useAssistantChatSession } from '@repo/shared';
 import { AnimatePresence, motion, useDragControls } from 'framer-motion';
 import { Send, X } from 'lucide-react';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { TbMessageChatbotFilled } from 'react-icons/tb';
 import { useClickOutside } from '@/hooks/use-click-outside';
 
-const welcomeMessage: UIMessage = {
-  id: 'welcome',
-  role: 'assistant' as const,
-  parts: [
-    {
-      type: 'text' as const,
-      text: "Chào bạn! Tôi là trợ lý AI của Sentimeta. Tôi có thể giúp gì cho bạn hôm nay?",
-    },
-  ],
-};
-
 export const ChatBox = () => {
-  const featureLocked = true;
+  const { userId } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible] = useState(true);
   const [input, setInput] = useState('');
@@ -41,12 +30,16 @@ export const ChatBox = () => {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dragControls = useDragControls();
 
-  const { messages, sendMessage, status } = useChat({
-    transport: new TextStreamChatTransport({ api: '/api/chat' }),
-    messages: [welcomeMessage],
-  });
+  const { 
+    messages, 
+    sendMessage, 
+    isResponding,
+    clearHistory,
+    isClearing,
+    error 
+  } = useAssistantChatSession(userId ?? '', { enabled: isOpen });
 
-  const isLoading = status === 'submitted' || status === 'streaming';
+  const isLoading = isResponding;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -69,11 +62,13 @@ export const ChatBox = () => {
 
   const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
-    if (featureLocked) return;
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
-    sendMessage({ text: trimmed });
+    
+    // Clear input first for better UX
     setInput('');
+    
+    sendMessage(trimmed);
   };
 
   return (
@@ -106,9 +101,20 @@ export const ChatBox = () => {
                 className="relative border-b border-slate-200 cursor-move"
                 onPointerDown={(event) => dragControls.start(event)}
               >
-                <CardTitle className="text-xl font-bold text-sky-500">
-                  Trợ lý Sentimeta AI
-                </CardTitle>
+                <div className="flex flex-col">
+                  <CardTitle className="text-xl font-bold text-sky-500">
+                    Trợ lý Sentimeta AI
+                  </CardTitle>
+                  {messages.length > 0 && (
+                    <button 
+                      onClick={() => clearHistory()}
+                      disabled={isClearing || isResponding}
+                      className="text-[10px] text-slate-400 hover:text-rose-500 transition-colors text-left"
+                    >
+                      {isClearing ? 'Đang xóa...' : 'Xóa lịch sử trò chuyện'}
+                    </button>
+                  )}
+                </div>
                 <div className="absolute right-3 top-0">
                   <Button
                     type="button"
@@ -125,40 +131,51 @@ export const ChatBox = () => {
               <CardContent className="pt-4">
                 <ScrollArea className="h-[340px] pr-3">
                   <div className="flex flex-col gap-3 text-sm">
-                    {featureLocked ? (
-                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                        Tính năng chat AI hiện chưa hoàn thiện.
+                    {messages.length === 0 && !isLoading && (
+                      <div className="text-center py-10 text-slate-400">
+                        <TbMessageChatbotFilled className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                        <p>Chào bạn! Tôi là trợ lý AI của Sentimeta. Tôi có thể giúp gì cho bạn hôm nay?</p>
                       </div>
-                    ) : (
-                      messages.map((message) => {
-                        const text = message.parts
-                          .filter((part) => part.type === 'text')
-                          .map((part) => part.text)
-                          .join('');
-                        const isUser = message.role === 'user';
-                        return (
-                          <div
-                            key={message.id}
-                            className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div
-                              className={`max-w-[85%] rounded-2xl px-3 py-2 ${
-                                isUser
-                                  ? 'bg-sky-500 text-white'
-                                  : 'bg-slate-100 text-slate-900'
-                              }`}
-                            >
-                              {text}
-                            </div>
-                          </div>
-                        );
-                      })
                     )}
-                    {isLoading ? (
-                      <div className="text-xs text-slate-500">
-                        Đang suy nghĩ...
+                    {messages.map((message) => {
+                      const isUser = message.role === 'user';
+                      const isStreaming = message.metadata?.isPending === true && !isUser;
+                      
+                      return (
+                        <div
+                          key={message.id}
+                          className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[85%] rounded-2xl px-3 py-2 ${
+                              isUser
+                                ? 'bg-sky-500 text-white'
+                                : 'bg-slate-100 text-slate-900'
+                            } ${message.metadata?.isPending === true && isUser ? 'opacity-70' : ''}`}
+                          >
+                            {message.content}
+                            {isStreaming && (
+                              <span className="inline-block w-1.5 h-4 ml-1 bg-sky-500 animate-pulse align-middle" />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {isLoading && (!messages.length || (messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content)) ? (
+                      <div className="flex items-center gap-1 text-xs text-slate-500">
+                        <div className="flex gap-0.5">
+                          <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                        Trợ lý đang suy nghĩ...
                       </div>
                     ) : null}
+                    {error && (
+                      <div className="text-[10px] text-rose-500 text-center bg-rose-50 rounded-lg py-1">
+                        Lỗi: {error.message}
+                      </div>
+                    )}
                     <div ref={endRef} />
                   </div>
                 </ScrollArea>
@@ -172,13 +189,13 @@ export const ChatBox = () => {
                     value={input}
                     onChange={(event) => setInput(event.target.value)}
                     placeholder="Nhập nội dung..."
-                    disabled={featureLocked}
+                    disabled={isLoading}
                   />
                   <Button
                     type="submit"
                     size="icon"
                     disabled={
-                      featureLocked || isLoading || input.trim().length === 0
+                      isLoading || input.trim().length === 0
                     }
                     aria-label="Gửi"
                   >

@@ -106,10 +106,70 @@ const normalizeClearHistory = (
 
 export const chatbotService = {
   /**
-   * Send a message to assistant/chatbot
+   * Stream response from assistant/chatbot
    */
-  async respond(data: AssistantMessageInput): Promise<AssistantRespondDataDTO> {
-    return getApiClient().post<AssistantRespondDataDTO>('/assistant/messages', data);
+  async *streamRespond(data: AssistantMessageInput): AsyncGenerator<AssistantRespondDataDTO> {
+    const client = getApiClient();
+    const axiosInstance = client.getAxiosInstance();
+    const baseURL = axiosInstance.defaults.baseURL;
+    
+    const token = await client.getToken();
+    
+    // Construct URL with query params for SSE GET request (matching API Gateway @Sse)
+    const url = new URL(`${baseURL}/assistant/messages-stream`);
+    url.searchParams.append('message', data.message);
+    if (data.clientMessageId) {
+      url.searchParams.append('clientMessageId', data.clientMessageId);
+    }
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'text/event-stream',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`Chat stream failed: ${response.status} ${errorText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('ReadableStream not supported by this platform');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        
+        // Keep the last partial line in buffer
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.replace('data: ', '').trim();
+            if (jsonStr) {
+              try {
+                const chunk = JSON.parse(jsonStr);
+                yield chunk;
+              } catch (e) {
+                console.error('[chatbotService] Failed to parse SSE chunk:', e);
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
   },
 
   /**

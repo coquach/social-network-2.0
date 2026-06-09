@@ -46,16 +46,6 @@ export const useAssistantHistory = (
 };
 
 /**
- * Send a message to assistant/chatbot.
- */
-export const useAssistantRespond = () => {
-  return useMutation<AssistantRespondDataDTO, Error, AssistantMessageInput>({
-    mutationFn: (input) => chatbotService.respond(input),
-    retry: false,
-  });
-};
-
-/**
  * Clear assistant chat history and invalidate cached history query.
  */
 export const useClearAssistantHistory = () => {
@@ -251,6 +241,7 @@ const createLocalHistoryMessage = (
 /**
  * High-level assistant chat session hook.
  * Encapsulates history query, send/clear mutations, and optimistic cache update.
+ * Supports real-time streaming responses.
  */
 export const useAssistantChatSession = (
   userId: string,
@@ -261,11 +252,11 @@ export const useAssistantChatSession = (
   const historyEnabled = options?.enabled ?? true;
   const [lastError, setLastError] = useState<Error | null>(null);
   const [isSyncingHistory, setIsSyncingHistory] = useState(false);
+  const [isResponding, setIsResponding] = useState(false);
   const isSendingMessageRef = useRef(false);
   const historyQueryKey = queryKeys.chatbot.history(userId, historyLimit);
 
   const historyQuery = useAssistantHistory(userId, historyLimit, historyEnabled);
-  const respondMutation = useAssistantRespond();
   const clearMutation = useClearAssistantHistory();
 
   const historyMessages = useMemo(() => {
@@ -279,7 +270,7 @@ export const useAssistantChatSession = (
       if (
         !normalizedMessage ||
         !userId ||
-        respondMutation.isPending ||
+        isResponding ||
         clearMutation.isPending ||
         isSendingMessageRef.current ||
         isSyncingHistory
@@ -288,6 +279,7 @@ export const useAssistantChatSession = (
       }
 
       isSendingMessageRef.current = true;
+      setIsResponding(true);
       setLastError(null);
 
       const optimisticUserMessage = createLocalHistoryMessage({
@@ -300,116 +292,105 @@ export const useAssistantChatSession = (
         },
       });
 
-      // Keep cache order as newest -> oldest (same as backend).
+      const assistantMessageId = `local:assistant:${Date.now()}`;
+      const optimisticAssistantMessage = createLocalHistoryMessage({
+        userId,
+        role: 'assistant',
+        content: '',
+        metadata: {
+          source: LOCAL_PENDING_SOURCE,
+          isPending: true,
+        },
+      }, 1);
+      optimisticAssistantMessage.id = assistantMessageId;
+
+      // Prepend optimistic messages to cache
       queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
         historyQueryKey,
         (old) => {
           if (!old) {
             return {
-              pages: [
-                {
-                  data: [optimisticUserMessage],
-                  nextCursor: null,
-                  hasNextPage: false,
-                },
-              ],
+              pages: [{ data: [optimisticAssistantMessage, optimisticUserMessage], nextCursor: null, hasNextPage: false }],
               pageParams: [undefined],
             };
           }
-
-          const firstPage = old.pages[0] ?? {
-            data: [],
-            nextCursor: null,
-            hasNextPage: false,
-          };
-
+          const firstPage = old.pages[0];
           return {
             ...old,
             pages: [
-              {
-                ...firstPage,
-                data: [optimisticUserMessage, ...firstPage.data],
-              },
+              { ...firstPage, data: [optimisticAssistantMessage, optimisticUserMessage, ...firstPage.data] },
               ...old.pages.slice(1),
             ],
           };
         },
       );
 
+      let fullReply = '';
+      let lastResult: AssistantRespondDataDTO | null = null;
+
       try {
-        const result = await respondMutation.mutateAsync({
-          message: normalizedMessage,
-        });
+        const stream = chatbotService.streamRespond({ message: normalizedMessage });
 
-        const confirmedUserMessage: ChatbotHistoryMessageDTO = {
-          ...optimisticUserMessage,
-          metadata: {
-            ...optimisticUserMessage.metadata,
-            source: LOCAL_CACHE_SOURCE,
-            isPending: false,
-          },
-        };
-        const assistantHistoryMessage = createLocalHistoryMessage(
-          {
-            userId,
-            role: 'assistant',
-            content: result.reply,
-            sources: result.sources ?? [],
-            metadata: {
-              source: LOCAL_CACHE_SOURCE,
-              model: result.model,
-              provider: result.provider,
+        for await (const chunk of stream) {
+          fullReply += chunk.reply;
+          lastResult = chunk;
+
+          // Update assistant message in cache with partial reply
+          queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
+            historyQueryKey,
+            (old) => {
+              if (!old) return old;
+              return {
+                ...old,
+                pages: old.pages.map((page, idx) => 
+                  idx === 0 
+                    ? {
+                        ...page,
+                        data: page.data.map(msg => 
+                          msg.id === assistantMessageId 
+                            ? { ...msg, content: fullReply, sources: chunk.sources.length > 0 ? chunk.sources : msg.sources } 
+                            : msg
+                        )
+                      }
+                    : page
+                ),
+              };
             },
-          },
-          1,
-        );
+          );
+        }
 
-        // Remove pending local then prepend latest assistant/user into newest-first cache.
+        if (!lastResult) throw new Error('No response from assistant');
+
+        // Mark as finished (isPending: false)
         queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
           historyQueryKey,
           (old) => {
-            if (!old) {
-              return {
-                pages: [
-                  {
-                    data: [assistantHistoryMessage, confirmedUserMessage],
-                    nextCursor: null,
-                    hasNextPage: false,
-                  },
-                ],
-                pageParams: [undefined],
-              };
-            }
-
-            const firstPage = old.pages[0] ?? {
-              data: [],
-              nextCursor: null,
-              hasNextPage: false,
-            };
-
+            if (!old) return old;
             return {
               ...old,
-              pages: [
-                {
-                  ...firstPage,
-                  data: (() => {
-                    const withoutPending = firstPage.data.filter(
-                      (item) => item.id !== optimisticUserMessage.id,
-                    );
-                    const hadPending = firstPage.data.some(
-                      (item) => item.id === optimisticUserMessage.id,
-                    );
-                    return hadPending
-                      ? [
-                          assistantHistoryMessage,
-                          confirmedUserMessage,
-                          ...withoutPending,
-                        ]
-                      : [assistantHistoryMessage, confirmedUserMessage, ...withoutPending];
-                  })(),
-                },
-                ...old.pages.slice(1),
-              ],
+              pages: old.pages.map((page, idx) => 
+                idx === 0 
+                  ? {
+                      ...page,
+                      data: page.data.map(msg => 
+                        msg.id === assistantMessageId 
+                          ? { 
+                              ...msg, 
+                              metadata: { 
+                                ...msg.metadata, 
+                                isPending: false, 
+                                source: LOCAL_CACHE_SOURCE,
+                                model: lastResult?.model,
+                                provider: lastResult?.provider
+                              } 
+                            } 
+                          : msg.id === optimisticUserMessage.id
+                            ? { ...msg, metadata: { ...msg.metadata, isPending: false, source: LOCAL_CACHE_SOURCE } }
+                            : msg
+                      )
+                    }
+                  : page
+              ),
             };
           },
         );
@@ -419,41 +400,30 @@ export const useAssistantChatSession = (
           try {
             const hasPersistedReply = await waitForAssistantReplyPersistence(
               userId,
-              result.reply,
+              fullReply,
               historyLimit,
             );
-            if (!hasPersistedReply) {
-              return;
+            if (hasPersistedReply) {
+              await queryClient.invalidateQueries({ queryKey: historyQueryKey });
             }
-
-            await queryClient.invalidateQueries({
-              queryKey: historyQueryKey,
-            });
           } finally {
             setIsSyncingHistory(false);
           }
         })();
       } catch (error) {
+        // Rollback on error
         queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
           historyQueryKey,
           (old) => {
-            if (!old) {
-              return old;
-            }
-
-            const firstPage = old.pages[0] ?? {
-              data: [],
-              nextCursor: null,
-              hasNextPage: false,
-            };
-
+            if (!old) return old;
+            const firstPage = old.pages[0];
             return {
               ...old,
               pages: [
                 {
                   ...firstPage,
                   data: firstPage.data.filter(
-                    (item) => item.id !== optimisticUserMessage.id,
+                    (item) => item.id !== optimisticUserMessage.id && item.id !== assistantMessageId,
                   ),
                 },
                 ...old.pages.slice(1),
@@ -464,24 +434,17 @@ export const useAssistantChatSession = (
         setLastError(error as Error);
       } finally {
         isSendingMessageRef.current = false;
+        setIsResponding(false);
       }
     },
-    [
-      clearMutation.isPending,
-      historyLimit,
-      historyQueryKey,
-      isSyncingHistory,
-      queryClient,
-      respondMutation,
-      userId,
-    ],
+    [historyLimit, historyQueryKey, isResponding, isSyncingHistory, queryClient, userId, clearMutation.isPending],
   );
 
   const clearHistory = useCallback(async () => {
     if (
       !userId ||
       clearMutation.isPending ||
-      respondMutation.isPending ||
+      isResponding ||
       isSyncingHistory
     ) {
       return;
@@ -494,13 +457,12 @@ export const useAssistantChatSession = (
     } catch (error) {
       setLastError(error as Error);
     }
-  }, [clearMutation, isSyncingHistory, respondMutation.isPending, userId]);
+  }, [clearMutation, isResponding, isSyncingHistory, userId]);
 
   const resetError = useCallback(() => {
     setLastError(null);
-    respondMutation.reset();
     clearMutation.reset();
-  }, [clearMutation, respondMutation]);
+  }, [clearMutation]);
 
   const retryHistory = useCallback(async () => {
     await historyQuery.refetch();
@@ -517,7 +479,6 @@ export const useAssistantChatSession = (
   const error =
     lastError ??
     historyQuery.error ??
-    respondMutation.error ??
     clearMutation.error ??
     null;
 
@@ -533,7 +494,7 @@ export const useAssistantChatSession = (
     refreshHistory,
     isRefreshingHistory,
     isSyncingHistory,
-    isResponding: respondMutation.isPending,
+    isResponding,
     isClearing: clearMutation.isPending,
     error,
     isHistoryError: historyQuery.isError,
