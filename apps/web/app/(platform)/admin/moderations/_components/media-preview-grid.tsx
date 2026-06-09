@@ -11,7 +11,7 @@ type Props = {
 };
 
 const isVideoMedia = (item: MediaDTO) => {
-  if (item.type === MediaType.VIDEO) {
+  if (item.type === 'video') {
     return true;
   }
 

@@ -21,7 +21,7 @@ export const EmotionDetailClient = ({
   targetId,
   targetType,
 }: EmotionDetailClientProps) => {
-  const detailQuery = useEmotionAnalysis(TargetType[targetType], targetId);
+  const detailQuery = useEmotionAnalysis(targetType as TargetType, targetId);
   const summary = detailQuery.data;
 
   return (

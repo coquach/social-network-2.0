@@ -41,7 +41,7 @@ export function ConversationSearchOverlay({
   } = friendsQ;
 
   const items = hasQuery
-    ? data?.pages.flatMap((page) => page.data ?? []) ?? []
+    ? (data?.pages.flatMap((page) => page.data ?? []) ?? [])
     : [];
 
   const { ref, inView } = useInView({ rootMargin: '260px' });

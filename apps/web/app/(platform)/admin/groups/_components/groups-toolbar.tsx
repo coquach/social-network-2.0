@@ -40,15 +40,18 @@ export function GroupsToolbar({
   const latestNameRef = React.useRef(name);
 
   React.useEffect(() => {
-    setName(filter.name ?? "");
+    const next = filter.name ?? "";
+    setName((prev) => (prev === next ? prev : next));
   }, [filter.name]);
 
   React.useEffect(() => {
-    setStatus(filter.status ?? "all");
+    const next = filter.status ?? "all";
+    setStatus((prev) => (prev === next ? prev : next));
   }, [filter.status]);
 
   React.useEffect(() => {
-    setMemberRange(filter.memberRange ?? "all");
+    const next = filter.memberRange ?? "all";
+    setMemberRange((prev) => (prev === next ? prev : next));
   }, [filter.memberRange]);
 
   React.useEffect(() => {
@@ -67,9 +70,6 @@ export function GroupsToolbar({
     },
     [onFilterChange],
   );
-  React.useEffect(() => {
-    applyFilters(latestNameRef.current, status, memberRange);
-  }, [applyFilters, status, memberRange]);
 
   const debouncedSearch = useDebouncedCallback(
     (text: string) => {

@@ -14,30 +14,50 @@ import { GroupReportsDrawer } from './_components/group-reports-drawer';
 import { GroupsTable } from './_components/groups-table';
 import { GroupsToolbar } from './_components/groups-toolbar';
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 8;
+
+function parseFilterFromParams(paramsStr: string): AdminGroupQuery {
+  const sp = new URLSearchParams(paramsStr);
+  const page = Number(sp.get('page') ?? String(DEFAULT_PAGE));
+  const limit = Number(sp.get('limit') ?? String(DEFAULT_LIMIT));
+  const name = sp.get('name') || undefined;
+  const status = sp.get('status') || undefined;
+  const memberRange = sp.get('memberRange') || undefined;
+
+  return {
+    page: Number.isFinite(page) && page > 0 ? page : DEFAULT_PAGE,
+    limit: Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT,
+    name,
+    status: status as any,
+    memberRange: memberRange as any,
+  };
+}
+
+function createQueryString(filter: AdminGroupQuery) {
+  const params = new URLSearchParams();
+  params.set('page', String(filter.page ?? DEFAULT_PAGE));
+  params.set('limit', String(filter.limit ?? DEFAULT_LIMIT));
+  if (filter.name) params.set('name', filter.name);
+  if (filter.status) params.set('status', filter.status);
+  if (filter.memberRange) params.set('memberRange', filter.memberRange);
+  return params.toString();
+}
+
 export default function AdminGroupsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const paramsString = searchParams.toString();
+  const paramsString = searchParams?.toString() ?? '';
+  const filter = React.useMemo(
+    () => parseFilterFromParams(paramsString),
+    [paramsString],
+  );
 
-  const parseFilterFromParams = React.useCallback((paramsStr: string): AdminGroupQuery => {
-    const sp = new URLSearchParams(paramsStr);
-    const page = Number(sp.get('page') ?? '1');
-    const limit = Number(sp.get('limit') ?? '8');
-    const name = sp.get('name') || undefined;
-    const status = sp.get('status') || undefined;
-    const memberRange = sp.get('memberRange') || undefined;
-    return {
-      page: Number.isFinite(page) && page > 0 ? page : 1,
-      limit: Number.isFinite(limit) && limit > 0 ? limit : 8,
-      name,
-      status: status as any,
-      memberRange: memberRange as any,
-    };
-  }, []);
-
-  const [filter, setFilter] = React.useState<AdminGroupQuery>(() => parseFilterFromParams(paramsString));
-  const [selectedGroup, setSelectedGroup] = React.useState<AdminGroupDTO | null>(null);
-  const [detailGroup, setDetailGroup] = React.useState<AdminGroupDTO | null>(null);
+  const [selectedGroup, setSelectedGroup] =
+    React.useState<AdminGroupDTO | null>(null);
+  const [detailGroup, setDetailGroup] = React.useState<AdminGroupDTO | null>(
+    null,
+  );
 
   const groupsQuery = useAdminGroups(filter);
   const groups = groupsQuery.data?.data ?? [];
@@ -45,40 +65,37 @@ export default function AdminGroupsPage() {
   const page = groupsQuery.data?.page ?? filter.page ?? 1;
   const pageSize = groupsQuery.data?.limit ?? filter.limit ?? 8;
 
-  const { banMutation, unbanMutation, updateStatusLocally } = useGroupModeration();
+  const { banMutation, unbanMutation, updateStatusLocally } =
+    useGroupModeration();
 
-  const handleFilterChange = (changes: Partial<AdminGroupQuery>) => {
-    setFilter((prev) => ({ ...prev, page: 1, ...changes }));
-  };
+  const replaceFilter = React.useCallback(
+    (nextFilter: AdminGroupQuery) => {
+      const next = createQueryString(nextFilter);
+      if (next !== paramsString) router.replace(`?${next}`);
+    },
+    [paramsString, router],
+  );
 
-  const handleReset = () => {
-    setFilter({ page: 1, limit: filter.limit });
-  };
+  const handleFilterChange = React.useCallback(
+    (changes: Partial<AdminGroupQuery>) => {
+      replaceFilter({ ...filter, page: DEFAULT_PAGE, ...changes });
+    },
+    [filter, replaceFilter],
+  );
 
-  React.useEffect(() => {
-    const params = new URLSearchParams();
-    params.set('page', String(filter.page ?? 1));
-    params.set('limit', String(filter.limit ?? 8));
-    if (filter.name) params.set('name', filter.name);
-    if (filter.status) params.set('status', filter.status);
-    if (filter.memberRange) params.set('memberRange', filter.memberRange);
-    const next = params.toString();
-    if (next !== paramsString) router.replace(`?${next}`);
-  }, [filter, router, paramsString]);
-
-  React.useEffect(() => {
-    const next = parseFilterFromParams(paramsString);
-    setFilter((prev) => {
-      const same =
-        prev.page === next.page &&
-        prev.limit === next.limit &&
-        prev.name === next.name &&
-        prev.status === next.status &&
-        prev.memberRange === next.memberRange;
-      return same ? prev : next;
+  const handleReset = React.useCallback(() => {
+    replaceFilter({
+      page: DEFAULT_PAGE,
+      limit: filter.limit ?? DEFAULT_LIMIT,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramsString]);
+  }, [filter.limit, replaceFilter]);
+
+  const handlePageChange = React.useCallback(
+    (nextPage: number) => {
+      replaceFilter({ ...filter, page: nextPage });
+    },
+    [filter, replaceFilter],
+  );
 
   const handleBan = (group: AdminGroupDTO) => {
     updateStatusLocally(group.id, GroupStatus.BANNED);
@@ -96,13 +113,19 @@ export default function AdminGroupsPage() {
         <div>
           <h1 className="text-xl font-semibold text-sky-600">Quản lý nhóm</h1>
           <p className="text-sm text-slate-500">
-            Theo dõi sức khỏe cộng đồng, báo cáo vi phạm và trạng thái duyệt nhóm.
+            Theo dõi sức khỏe cộng đồng, báo cáo vi phạm và trạng thái duyệt
+            nhóm.
           </p>
         </div>
       </div>
 
       <div className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-        <GroupsToolbar filter={filter} onFilterChange={handleFilterChange} onReset={handleReset} loading={groupsQuery.isLoading} />
+        <GroupsToolbar
+          filter={filter}
+          onFilterChange={handleFilterChange}
+          onReset={handleReset}
+          loading={groupsQuery.isLoading}
+        />
         <div className="mt-4">
           <GroupsTable
             groups={groups}
@@ -110,7 +133,7 @@ export default function AdminGroupsPage() {
             page={page}
             pageSize={pageSize}
             total={total}
-            onPageChange={(nextPage) => setFilter((prev) => ({ ...prev, page: nextPage }))}
+            onPageChange={handlePageChange}
             onViewReports={(group) => setSelectedGroup(group)}
             onViewDetail={(group) => setDetailGroup(group)}
             onBanGroup={handleBan}
