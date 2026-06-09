@@ -70,11 +70,6 @@ const PostReactionsModal = dynamic(
   { loading: () => null, ssr: false }
 );
 
-const CommentPostModal = dynamic(
-  () => import('../modals/comment-modal').then((mod) => ({ default: mod.CommentPostModal })),
-  { loading: () => null, ssr: false }
-);
-
 const DeleteCommentModal = dynamic(
   () => import('../modals/delete-comment-modal').then((mod) => ({ default: mod.DeleteCommentModal })),
   { loading: () => null, ssr: false }
@@ -122,7 +117,6 @@ export const ModalProvider = () => {
       <ProfileModal />
       <ImageViewerModal />
       <PostReactionsModal />
-      <CommentPostModal />
       <DeleteCommentModal />
       <CreateShareModal />
       <ShareListModal />

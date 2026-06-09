@@ -2,9 +2,10 @@
 
 import { SidebarCustom } from '@/components/side-bar-custom';
 import { useAuth } from '@clerk/nextjs';
-import { Bell, ContactRound, Sparkles, Users, UserCircle } from 'lucide-react';
+import { FcBusinessman, FcCollaboration, FcConferenceCall, FcAdvertising, FcLike } from 'react-icons/fc';
 import { ContactList } from './_components/contact-list';
 import { QuickLinksCard } from './_components/quick-links-card';
+import { MusicRecommendations } from './_components/music-recommendations';
 
 const NewsFeedLayout = ({
   children,
@@ -20,27 +21,27 @@ const NewsFeedLayout = ({
             {
               label: 'Trang cá nhân',
               href: `/profile/${userId}`,
-              icon: UserCircle,
+              icon: FcBusinessman,
             },
             {
               label: 'Bạn bè',
               href: '/friends',
-              icon: ContactRound,
+              icon: FcCollaboration,
             },
             {
               label: 'Nhóm',
               href: '/groups',
-              icon: Users,
+              icon: FcConferenceCall,
             },
             {
               label: 'Thông báo',
               href: '/notifications',
-              icon: Bell,
+              icon: FcAdvertising,
             },
             {
               label: 'Nhật ký cảm xúc',
               href: '/emotions',
-              icon: Sparkles,
+              icon: FcLike,
             },
           ]}
         />
@@ -50,7 +51,8 @@ const NewsFeedLayout = ({
         {children}
       </main>
 
-      <div className="hidden lg:flex lg:flex-col lg:fixed lg:right-0 lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-1/4 pt-4 mr-4 overflow-hidden">
+      <div className="hidden lg:flex lg:flex-col lg:fixed lg:right-0 lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-1/4 pt-4 mr-4 overflow-y-auto app-scroll space-y-4 pb-10">
+        <MusicRecommendations />
         <ContactList />
         <QuickLinksCard />
       </div>

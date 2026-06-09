@@ -17,33 +17,6 @@ export const useReactionModal = create<ReactionModalStore>((set) => ({
   closeModal: () => set({ isOpen: false, targetId: null, targetType: null }),
 }));
 
-interface CommentModalStore {
-  rootId: string | null;
-  rootType: RootType | null;
-  ownerPostId: string | null;
-  data?: PostSnapshotDTO | SharePostSnapshotDTO;
-  isOpen: boolean;
-  openModal: (
-    rootId: string,
-    rootType: RootType,
-    ownerPostId: string,
-    data?: PostSnapshotDTO | SharePostSnapshotDTO
-  ) => void;
-  closeModal: () => void;
-}
-
-export const useCommentModal = create<CommentModalStore>((set) => ({
-  rootId: null,
-  rootType: null,
-  ownerPostId: null,
-  data: undefined,
-  isOpen: false,
-  openModal: (rootId, rootType, ownerPostId, data) =>
-    set({ isOpen: true, rootId, rootType, ownerPostId, data }),
-  closeModal: () =>
-    set({ isOpen: false, rootId: null, rootType: null, data: undefined }),
-}));
-
 interface DeleteCommentModalStore {
   isOpen: boolean;
   commentId: string | null;

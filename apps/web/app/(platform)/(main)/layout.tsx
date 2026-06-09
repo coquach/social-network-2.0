@@ -4,8 +4,10 @@ import { CallOverlay } from '@/components/chat/call-overlay';
 
 const GeneralLayout = ({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode;
+  modal: React.ReactNode;
 }>) => {
   return (
     <div className="relative h-screen bg-slate-50 overflow-hidden">
@@ -22,6 +24,8 @@ const GeneralLayout = ({
       >
         {children}
       </main>
+
+      {modal}
 
       {/* Complementary landmark - chat feature */}
       <aside aria-label="Tin nhắn">

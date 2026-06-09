@@ -22,7 +22,7 @@ const quickLinks = [
 
 export function QuickLinksCard() {
   return (
-    <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="bg-linear-to-r from-sky-50 via-white to-indigo-50 px-4 py-3">
         <p className="text-lg font-bold text-sky-500">Gợi ý nhanh</p>
       </div>

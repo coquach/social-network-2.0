@@ -11,11 +11,12 @@ import {
 } from '@repo/shared';
 import { Reaction, reactionMap } from '@/lib/types/reaction';
 import { cn } from '@/lib/utils';
-import { useCommentModal, useCreateShareModal } from '@/store/use-post-modal';
+import { useCreateShareModal } from '@/store/use-post-modal';
 import { MessageCircle, Share2, ThumbsUp } from '@/lib/icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ReactionHoverPopup } from '../reaction-hover-popup';
 import { Button } from '../ui/button';
+import { useRouter } from 'next/navigation';
 
 // Hoisted constants to prevent re-computation
 const LIKE_REACTION = reactionMap.get(ReactionType.LIKE) ?? null;
@@ -39,8 +40,8 @@ export default function PostActions({
 }: PostActionsProps) {
   const { mutateAsync: react } = useReact();
   const { mutateAsync: disReact } = useDisReact();
+  const router = useRouter();
 
-  const { openModal: openCommentModal } = useCommentModal();
   const { openModal: openCreateShareModal } = useCreateShareModal();
 
   const targetType: TargetType = useMemo(() => {
@@ -140,9 +141,10 @@ export default function PostActions({
   );
 
   const handleOpenComment = useCallback(() => {
-      if (disableCommentModal) return;
-      openCommentModal(rootId, rootType, data.userId ,data);
-    }, [disableCommentModal, openCommentModal, rootId, rootType, data]);
+    if (disableCommentModal) return;
+    const path = rootType === RootType.POST ? `/posts/${rootId}` : `/shares/${rootId}`;
+    router.push(path, { scroll: false });
+  }, [disableCommentModal, rootId, rootType, router]);
 
   return (
     <div className="relative border-t border-gray-100 pt-2">

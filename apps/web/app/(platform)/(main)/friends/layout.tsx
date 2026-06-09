@@ -11,7 +11,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { ShieldOff, Sparkles, UserPlus, Users } from 'lucide-react';
+import { FcContacts, FcInvite, FcIdea, FcCancel } from 'react-icons/fc';
 
 export default function FriendsLayout({
   children,
@@ -40,22 +40,22 @@ export default function FriendsLayout({
                 {
                   label: 'Danh sách bạn bè',
                   href: `/friends`,
-                  icon: Users,
+                  icon: FcContacts,
                 },
                 {
                   label: 'Lời mời kết bạn',
                   href: '/friends/requests',
-                  icon: UserPlus,
+                  icon: FcInvite,
                 },
                 {
                   label: 'Gợi ý kết bạn',
                   href: '/friends/suggestions',
-                  icon: Sparkles,
+                  icon: FcIdea,
                 },
                 {
                   label: 'Danh sách chặn',
                   href: '/friends/blocked',
-                  icon: ShieldOff,
+                  icon: FcCancel,
                 },
               ]}
             />

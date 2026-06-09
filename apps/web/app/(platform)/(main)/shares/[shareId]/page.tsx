@@ -1,29 +1,29 @@
 import type { Metadata } from 'next';
-import { getCachedPost } from '@/lib/cached-fetchers';
 import { QueryErrorBoundary } from '@/components/query-error-boundary';
 import { getQueryClient } from '@/lib/query-client';
 import { auth } from '@clerk/nextjs/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import PostDetailViewWrapper from './post-detail';
+import ShareDetailViewWrapper from './share-detail';
+import { getCachedShare } from '@/lib/cached-fetchers';
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ postId: string }>;
+  params: Promise<{ shareId: string }>;
 }): Promise<Metadata> {
-  await params; // Await params to satisfy Next.js type requirements
+  await params;
   return {
-    title: 'Bài viết',
-    description: 'Chi tiết bài viết trên Sentimeta.',
+    title: 'Bài chia sẻ',
+    description: 'Chi tiết bài chia sẻ trên Sentimeta.',
   };
 }
 
-export default async function PostDetailPage({
+export default async function ShareDetailPage({
   params,
 }: {
-  params: Promise<{ postId: string }>;
+  params: Promise<{ shareId: string }>;
 }) {
-  const { postId } = await params;
+  const { shareId } = await params;
   const { getToken } = await auth();
   const token = await getToken();
   if (!token) {
@@ -32,14 +32,14 @@ export default async function PostDetailPage({
   const qc = getQueryClient();
 
   qc.prefetchQuery({
-    queryKey: ['post', postId],
-    queryFn: async () => getCachedPost(token, postId),
+    queryKey: ['share', shareId],
+    queryFn: async () => getCachedShare(token, shareId),
   });
 
   return (
     <HydrationBoundary state={dehydrate(qc)}>
       <QueryErrorBoundary>
-        <PostDetailViewWrapper postId={postId} />
+        <ShareDetailViewWrapper shareId={shareId} />
       </QueryErrorBoundary>
     </HydrationBoundary>
   );

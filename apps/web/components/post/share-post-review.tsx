@@ -16,7 +16,7 @@ const SharedPostPreview = ({ post }: SharedPostPreviewProps) => {
 
   const goToPost = useCallback(() => {
     if (!post?.postId) return;
-    router.push(`/post/${post.postId}`);
+    router.push(`/posts/${post.postId}`, { scroll: false });
   }, [router, post?.postId]);
 
 
