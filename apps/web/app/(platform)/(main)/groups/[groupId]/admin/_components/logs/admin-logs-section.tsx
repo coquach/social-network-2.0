@@ -4,9 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { useGroupLogs } from '@repo/shared';
-
-import { GroupRole } from '@/models/group/enums/group-role.enum';
+import { useGroupLogs, GroupRole, GroupEventLog, GroupPermission } from '@repo/shared';
 
 import {
   Select,
@@ -16,8 +14,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { GroupEventLog } from '@/models/group/enums/group-envent-log.enum';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
 import { LogRow } from './log-row';
 
 // ===== single source of truth =====

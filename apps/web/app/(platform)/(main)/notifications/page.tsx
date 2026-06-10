@@ -3,20 +3,29 @@
 import { NotificationCardFull } from '@/components/notification-card-full';
 import { QueryErrorBoundary } from '@/components/query-error-boundary';
 import { Button } from '@/components/ui/button';
-import { useNotifications } from '@/hooks/use-notification-hooks';
+import { 
+  useNotifications, 
+  useUnreadCount, 
+  useMarkNotificationAsRead, 
+  useMarkAllNotificationsAsRead 
+} from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
+import { useMemo } from 'react';
 
 export default function NotificationsPage() {
   const { userId } = useAuth();
-  const {
-    notifications,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    markRead,
-    markReadAll,
-    unreadCount,
-  } = useNotifications(userId as string);
+  
+  const { data, isLoading, fetchNextPage, hasNextPage } = useNotifications();
+  const { data: unreadCountData } = useUnreadCount();
+  const markReadMutation = useMarkNotificationAsRead();
+  const markReadAllMutation = useMarkAllNotificationsAsRead();
+
+  const notifications = useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data]
+  );
+  
+  const unreadCount = unreadCountData ?? 0;
 
   return (
     <QueryErrorBoundary>
@@ -26,7 +35,7 @@ export default function NotificationsPage() {
         <Button
           size="sm"
           variant="outline"
-          onClick={markReadAll}
+          onClick={() => markReadAllMutation.mutate()}
           disabled={unreadCount === 0}
         >
           Đánh dấu đã đọc tất cả
@@ -52,7 +61,7 @@ export default function NotificationsPage() {
           <NotificationCardFull
             key={notif._id}
             notif={notif}
-            onClick={() => markRead(notif._id)}
+            onClick={() => markReadMutation.mutate(notif._id)}
           />
         ))}
       </div>

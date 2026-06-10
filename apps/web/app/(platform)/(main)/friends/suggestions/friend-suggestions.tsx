@@ -3,11 +3,11 @@
 import { Loader } from '@/components/loader-componnet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { useGetUser } from '@/hooks/use-user-hook';
 import {
   useDismissFriendRecommendation,
   useFriendSuggestions,
   useSendFriendRequest,
+  useUser,
 } from '@repo/shared';
 import { UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -29,7 +29,7 @@ const MutualFriendAvatar = ({
   userId: string;
   user?: MutualFriendSnapshot;
 }) => {
-  const { data: fetchedUser } = useGetUser(userId, {
+  const { data: fetchedUser } = useUser(userId, {
     enabled: !user,
   });
   const resolvedUser = user ?? fetchedUser;

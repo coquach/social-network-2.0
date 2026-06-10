@@ -4,9 +4,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { NotificationDTO } from '@/models/notification/notificationDTO';
+import { NotificationDTO, getNotificationRoute } from '@repo/shared';
 import { getNotificationTypeLabel } from '@/lib/notification-type-labels';
-import { getNotificationTypeHref } from '@/lib/notification-type-links';
 import { BLUR_PLACEHOLDERS } from '@/lib/blur-placeholder';
 
 interface NotificationCardFullProps {
@@ -23,7 +22,7 @@ export const NotificationCardFull = ({
   onClick,
 }: NotificationCardFullProps) => {
   const { payload, message, status, createdAt } = notif;
-  const href = getNotificationTypeHref(notif);
+  const href = getNotificationRoute(notif, 'web');
   const safePayload =
     payload && typeof payload === 'object'
       ? (payload as Record<string, unknown>)

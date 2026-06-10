@@ -4,10 +4,10 @@ import {
   Audience,
   RootType,
   TargetType,
-} from '@/models/social/enums/social.enum';
+  SharePostSnapshotDTO,
+} from '@repo/shared';
 import PostActions from './post-action';
 import PostHeader from './post-header';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
 import { Skeleton } from '../ui/skeleton';
 import PostStats from './post-stats';
 import SharedPostPreview from './share-post-review';

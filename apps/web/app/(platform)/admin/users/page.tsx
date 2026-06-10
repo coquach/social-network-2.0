@@ -1,92 +1,97 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { UserPlus } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import * as React from 'react';
+import { UserPlus } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-import { Button } from "@/components/ui/button";
-import { useSystemUsers } from "@/hooks/use-admin-users";
-import { SystemUserFilter } from "@/lib/actions/admin/admin-users-action";
-import { LogType } from "@/models/log/logDTO";
-import { AdminActivityLog } from "../_components/admin-activity-log";
-import { UsersTable } from "./_components/table";
-import { UsersToolbar } from "./_components/toolbar";
-import { CreateUserDialog } from "./_components/create-user-dialog";
+import { Button } from '@/components/ui/button';
+import { useSystemUsers } from '@/hooks/use-admin-users';
+import { SystemUserFilter } from '@/lib/actions/admin/admin-users-action';
+import { LogType } from '@/models/log/logDTO';
+import { AdminActivityLog } from '../_components/admin-activity-log';
+import { UsersTable } from './_components/table';
+import { UsersToolbar } from './_components/toolbar';
+import { CreateUserDialog } from './_components/create-user-dialog';
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+
+function parseFilterFromParams(paramsStr: string): SystemUserFilter {
+  const sp = new URLSearchParams(paramsStr);
+  const page = Number(sp.get('page') ?? String(DEFAULT_PAGE));
+  const limit = Number(sp.get('limit') ?? String(DEFAULT_LIMIT));
+  const status = sp.get('status') || undefined;
+  const role = sp.get('role') || undefined;
+  const query = sp.get('query') || undefined;
+
+  return {
+    page: Number.isFinite(page) && page > 0 ? page : DEFAULT_PAGE,
+    limit: Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT,
+    status: status as any,
+    role: role as any,
+    query,
+  };
+}
+
+function createQueryString(filter: SystemUserFilter) {
+  const params = new URLSearchParams();
+  params.set('page', String(filter.page ?? DEFAULT_PAGE));
+  params.set('limit', String(filter.limit ?? DEFAULT_LIMIT));
+  if (filter.query) params.set('query', filter.query);
+  if (filter.status) params.set('status', filter.status);
+  if (filter.role) params.set('role', filter.role);
+  return params.toString();
+}
 
 export default function AdminUsersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const paramsString = searchParams.toString();
-
-  const parseFilterFromParams = React.useCallback(
-    (paramsStr: string): SystemUserFilter => {
-      const sp = new URLSearchParams(paramsStr);
-      const page = Number(sp.get("page") ?? "1");
-      const limit = Number(sp.get("limit") ?? "10");
-      const status = sp.get("status") || undefined;
-      const role = sp.get("role") || undefined;
-      const query = sp.get("query") || undefined;
-      return {
-        page: Number.isFinite(page) && page > 0 ? page : 1,
-        limit: Number.isFinite(limit) && limit > 0 ? limit : 10,
-        status: status as any,
-        role: role as any,
-        query,
-      };
-    },
-    []
-  );
-
-  const [filter, setFilter] = React.useState<SystemUserFilter>(() =>
-    parseFilterFromParams(paramsString)
+  const paramsString = searchParams?.toString() ?? '';
+  const filter = React.useMemo(
+    () => parseFilterFromParams(paramsString),
+    [paramsString],
   );
   const [createOpen, setCreateOpen] = React.useState(false);
 
   const { data, isLoading, isFetching } = useSystemUsers(filter);
 
-  const handleFilterChange = (changes: Partial<SystemUserFilter>) => {
-    setFilter((prev) => ({ ...prev, page: 1, ...changes }));
-  };
+  const replaceFilter = React.useCallback(
+    (nextFilter: SystemUserFilter) => {
+      const next = createQueryString(nextFilter);
+      if (next !== paramsString) router.replace(`?${next}`);
+    },
+    [paramsString, router],
+  );
 
-  const handleReset = () => {
-    setFilter({ page: 1, limit: filter.limit ?? 10 });
-  };
+  const handleFilterChange = React.useCallback(
+    (changes: Partial<SystemUserFilter>) => {
+      replaceFilter({ ...filter, page: DEFAULT_PAGE, ...changes });
+    },
+    [filter, replaceFilter],
+  );
 
-  // sync URL with filter
-  // sync filter -> URL (avoid replace if unchanged)
-  React.useEffect(() => {
-    const params = new URLSearchParams();
-    params.set("page", String(filter.page ?? 1));
-    params.set("limit", String(filter.limit ?? 10));
-    if (filter.query) params.set("query", filter.query);
-    if (filter.status) params.set("status", filter.status);
-    if (filter.role) params.set("role", filter.role);
-    const next = params.toString();
-    if (next !== paramsString) router.replace(`?${next}`);
-  }, [filter, router, paramsString]);
+  const handleReset = React.useCallback(() => {
+    replaceFilter({ page: DEFAULT_PAGE, limit: filter.limit ?? DEFAULT_LIMIT });
+  }, [filter.limit, replaceFilter]);
 
-  // update state when search params change (back/forward)
-  React.useEffect(() => {
-    const next = parseFilterFromParams(paramsString);
-    setFilter((prev) => {
-      const same =
-        prev.page === next.page &&
-        prev.limit === next.limit &&
-        prev.query === next.query &&
-        prev.status === next.status &&
-        prev.role === next.role;
-      return same ? prev : next;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramsString]);
+  const handlePageChange = React.useCallback(
+    (page: number) => {
+      replaceFilter({ ...filter, page });
+    },
+    [filter, replaceFilter],
+  );
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-sky-600">Quản lý người dùng</h1>
-          <p className="text-sm text-slate-500">Theo dõi tài khoản, trạng thái hoạt động và thông tin hồ sơ.</p>
+          <h1 className="text-xl font-semibold text-sky-600">
+            Quản lý người dùng
+          </h1>
+          <p className="text-sm text-slate-500">
+            Theo dõi tài khoản, trạng thái hoạt động và thông tin hồ sơ.
+          </p>
         </div>
         <Button
           className="w-full sm:w-auto bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
@@ -111,7 +116,7 @@ export default function AdminUsersPage() {
           pageSize={filter.limit ?? 10}
           total={data?.total ?? 0}
           loading={isLoading || isFetching}
-          onPageChange={(page) => setFilter((prev) => ({ ...prev, page }))}
+          onPageChange={handlePageChange}
         />
       </div>
 

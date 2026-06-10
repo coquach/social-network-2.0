@@ -10,7 +10,6 @@ import {
 import { ErrorFallback } from '@/components/error-fallback';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetUser } from '@/hooks/use-user-hook';
 import { useStartConversation } from '@/hooks/use-start-conversation';
 import { useImageViewerModal } from '@/store/use-image-viewer-modal';
 import { useProfileModal } from '@/store/use-profile-modal';
@@ -22,6 +21,7 @@ import {
   useRemoveFriend,
   useSendFriendRequest,
   useUnblockUser,
+  useUser,
 } from '@repo/shared';
 import { format as formatDate } from 'date-fns';
 import {
@@ -46,14 +46,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 export const UserProfileInfo = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId } = useParams<{ userId: string }>() as { userId: string };
   const router = useRouter();
   const {
     data: fetchedUser,
     isLoading,
     isError,
     error,
-  } = useGetUser(userId as string);
+  } = useUser(userId as string);
 
   const { mutate: requestFriend, isPending: isRequesting } =
     useSendFriendRequest();

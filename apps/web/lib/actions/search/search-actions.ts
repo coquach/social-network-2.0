@@ -2,11 +2,11 @@ import api from '@/lib/api-client';
 import {
   CursorPageResponse,
   CursorPagination,
+  GroupPrivacy,
+  GroupSummaryDTO,
+  PostSnapshotDTO,
+  UserDTO,
 } from '@repo/shared';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { GroupSummaryDTO } from '@/models/group/groupDTO';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { UserDTO } from '@/models/user/userDTO';
 
 export interface SearchPostDto extends CursorPagination {
   query: string;

@@ -1,6 +1,5 @@
 'use client';
-import { JoinRequestResponseDTO } from "@/models/group/groupRequestDTO";
-import { InviteStatus } from "@/models/group/enums/group-invite-status.enum";
+import { JoinRequestResponseDTO, InviteStatus } from "@repo/shared";
 import { useState } from "react";
 import {
   AlertDialog,

@@ -1,9 +1,8 @@
 'use client';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO, useUser } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import { useMemo } from 'react';
-import { useGetUser } from '@/hooks/use-user-hook';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,7 @@ export const DirectHeader = ({
     return conversation.participants.find((p) => p !== currentUserId);
   }, [conversation.participants, currentUserId]);
 
-  const { data: otherUser, isLoading } = useGetUser(otherUserId ?? '');
+  const { data: otherUser, isLoading } = useUser(otherUserId ?? '', { enabled: !!otherUserId });
 
   const title = useMemo(() => {
     if (isLoading) return 'Đang tải...';

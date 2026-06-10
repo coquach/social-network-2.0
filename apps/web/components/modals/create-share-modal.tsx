@@ -1,80 +1,73 @@
 'use client';
 
-import { useSharePost } from '@/hooks/use-share-hook';
-import { Audience } from '@/models/social/enums/social.enum';
+import { useSharePost, Audience } from '@repo/shared';
 import {
-  SharePostSchema
-} from '@/models/social/post/sharePostDTO';
+  CreateShareInputSchema
+} from '@repo/shared/schemas';
 import { useCreateShareModal } from '@/store/use-post-modal';
-import { useAuth } from '@clerk/nextjs';
-import { useEffect } from 'react';
+import { useForm } from '@tanstack/react-form';
 import { toast } from 'sonner';
 
-import { useForm } from '@tanstack/react-form';
-
-import { cn } from '@/lib/utils';
-import { AudienceSelect } from '../audience-select';
-import { LargeAvatar } from '../avatar';
-import SharedPostPreview from '../post/share-post-review';
-import { Button } from '../ui/button';
+import { AudienceSelect } from '@/components/audience-select';
+import { CreatePostAvatar } from '@/components/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
-import { ScrollArea } from '../ui/scroll-area';
-
-import { countChars } from '@/utils/count-chars';
-import { EmojiButton } from '../emoji-button';
+} from '@/components/ui/dialog';
+import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from '@/components/ui/input-group';
+import { useAuth } from '@clerk/nextjs';
 import { LiveRegion } from '@/components/ui/live-region';
+import { countChars } from '@/utils/count-chars';
 
-const MAX_WORDS = 200;
+const MAX_WORDS = 1000;
 
 export const CreateShareModal = () => {
-  const { userId } = useAuth();
   const { isOpen, closeModal, data } = useCreateShareModal();
+  const { userId } = useAuth();
+  const { mutateAsync: sharePost, isPending } = useSharePost();
 
-  const postId = data?.postId || '';
-  const { mutateAsync, isPending } = useSharePost(postId);
+  const postId = typeof data === 'string' ? data : (data as any)?.postId ?? '';
 
   const form = useForm({
     defaultValues: {
+      postId,
       content: '',
       audience: Audience.PUBLIC,
-      postId,
-    }  ,
+    },
     onSubmit: async ({ value }) => {
       // validate toàn form bằng zod
-      const parsed = SharePostSchema.safeParse(value);
+      const parsed = CreateShareInputSchema.safeParse(value);
       if (!parsed.success) {
-        toast.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
+        toast.error('Nội dung không hợp lệ');
         return;
       }
-      if (!parsed.data.postId) return;
 
-      const promise = mutateAsync(parsed.data, {
-        onSuccess: () => {
-          form.reset();
-          closeModal();
-        },
+      const p = sharePost({
+        postId: value.postId,
+        content: value.content,
+        audience: value.audience,
+      }).then(() => {
+        toast.success('Đã chia sẻ bài viết thành công!');
+        closeModal();
+        form.reset();
       });
 
-      toast.promise(promise, { loading: 'Đang chia sẻ...' });
+      toast.promise(p, {
+        loading: 'Đang chia sẻ bài viết...',
+      });
+
+      try {
+        await p;
+      } catch (err) {
+        // Error handled by mutation
+      }
     },
   });
-
-  // reset khi mở modal / đổi post
-  useEffect(() => {
-    if (!data) return;
-    form.reset({
-      content: '',
-      audience: Audience.PUBLIC,
-      postId: data.postId,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.postId]);
 
   return (
     <Dialog open={isOpen} onOpenChange={closeModal}>
@@ -82,140 +75,64 @@ export const CreateShareModal = () => {
         message={isPending ? 'Đang chia sẻ bài viết...' : ''} 
         politeness="polite"
       />
-      <DialogContent
-        className={cn(
-          'sm:max-w-xl p-0 overflow-hidden',
-          'h-[80vh] max-h-[80vh] flex flex-col'
-        )}
-      >
-        {/* Header cố định */}
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         <DialogHeader className="shrink-0 border-b border-sky-100 bg-white/95 px-4 py-3">
-          <DialogTitle className="text-lg font-semibold text-center">
+          <DialogTitle className="text-base font-semibold text-center">
             Chia sẻ bài viết
           </DialogTitle>
+          <DialogDescription className="text-center text-xs text-gray-500 mt-1">
+            Nội dung chia sẻ sẽ xuất hiện trên bảng tin của bạn.
+          </DialogDescription>
         </DialogHeader>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            e.stopPropagation();
             form.handleSubmit();
           }}
-          className="flex flex-col flex-1 min-h-0"
+          className="p-4"
         >
-          {/* Body scroll (tất cả nằm trong scroll, footer vẫn cố định) */}
-          <ScrollArea className="flex-1 min-h-0">
-            <div className="p-4 space-y-4">
-              {/* Row avatar + input */}
-              <div className="flex items-start gap-3">
-                <LargeAvatar userId={userId as string} hasBorder />
-
-                <div className="flex-1 min-w-0 space-y-2">
-                  {/* Audience */}
-                  <form.Field name="audience">
-                    {(field) => (
-                      <AudienceSelect
-                        value={field.state.value}
-                        onChange={(value) => field.handleChange(value)}
-                      />
-                    )}
-                  </form.Field>
-
-                  {/* Textarea + counter */}
-                  <form.Field
-                    name="content"
-                    validators={{
-                      onChange: ({ value }) => {
-                        const cc = countChars(value ?? '');
-                        if (cc > MAX_WORDS) return `Tối đa ${MAX_WORDS} ký tự.`;
-                        return undefined;
-                      },
-                    }}
-                  >
-                    {(field) => {
-                      const value = field.state.value ?? '';
-                      const charCount = countChars(value);
-                      const hasError = Boolean(field.state.meta.errors?.length);
-
-                      return (
-                        
-                          <>
-                            <textarea
-                              id="content"
-                              value={value}
-                              placeholder="Viết gì đó..."
-                              onBlur={field.handleBlur}
-                              onChange={(e) =>
-                                field.handleChange(e.target.value)
-                              }
-                              className={cn(
-                                'w-full rounded-xl border border-gray-200 bg-transparent',
-                                'px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400',
-                                'focus:outline-none focus:ring-2 focus:ring-sky-500',
-
-                                'min-h-24 max-h-40 overflow-y-auto resize-none',
-
-                                'whitespace-pre-wrap wrap-break-word'
-                              )}
-                            />
-
-                            {/* Counter + helper */}
-                            <div className="mt-1 flex items-center justify-between text-xs">
-                              <span
-                                className={cn(
-                                  'text-gray-500',
-                                hasError && 'text-red-600'
-                                )}
-                              >
-                                {charCount}/{MAX_WORDS} ký tự
-                              </span>
-                              {/* Emoji button nằm trong khung textarea */}
-                              <EmojiButton
-                                disabled={isPending}
-                                popupSide="bottom"
-                                align="right"
-                                onPick={(emoji) => {
-                                  const current = field.state.value ?? '';
-                                  field.handleChange(current + emoji);
-                                  const el = document.getElementById(
-                                    'content'
-                                  ) as HTMLTextAreaElement | null;
-                                  el?.focus();
-                                }}
-                              />
-                            </div>
-                          </>
-                       
-                      );
-                    }}
-                  </form.Field>
-
-                  {/* postId hidden field (đảm bảo luôn sync) */}
-                  <form.Field name="postId">
-                    {(field) => (
-                      <input
-                        type="hidden"
-                        value={field.state.value ?? ''}
-                        readOnly
-                      />
-                    )}
-                  </form.Field>
-                </div>
-              </div>
-
-              {/* Shared post preview (nằm trong scroll, hợp lý) */}
-              {data && (
-               
-                  <SharedPostPreview post={data} />
-              
+          <div className="flex items-center gap-3 mb-4">
+            <CreatePostAvatar userId={userId as string} />
+            <form.Field name="audience">
+              {(field) => (
+                <AudienceSelect
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                />
               )}
-            </div>
-          </ScrollArea>
+            </form.Field>
+          </div>
 
-          {/* Footer cố định */}
-          <DialogFooter className="shrink-0 border-t border-sky-100 bg-white/95 px-4 py-3">
-            <Button type="button" variant="ghost" onClick={closeModal}>
-              Huỷ
+          <form.Field name="content">
+            {(field) => (
+              <InputGroup className="rounded-xl">
+                <InputGroupTextarea
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Nói gì đó về bài viết này..."
+                  rows={4}
+                  className="min-h-24 resize-none"
+                  disabled={isPending}
+                />
+                <InputGroupAddon align="block-end">
+                    <InputGroupText className="tabular-nums">
+                        {countChars(field.state.value)}/{MAX_WORDS}
+                    </InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
+            )}
+          </form.Field>
+
+          <DialogFooter className="mt-4 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeModal}
+              disabled={isPending}
+            >
+              Hủy
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? 'Đang chia sẻ…' : 'Chia sẻ'}

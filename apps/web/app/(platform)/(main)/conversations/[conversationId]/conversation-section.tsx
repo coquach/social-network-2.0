@@ -8,8 +8,11 @@ import { toast } from 'sonner';
 
 import { useSocket } from '@/components/providers/socket-provider';
 import { useActiveChannel } from '@/hooks/use-active-channel';
-import { useGetConversationById } from '@/hooks/use-conversation';
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import {
+  ConversationDTO,
+  useConversation,
+  queryKeys,
+} from '@repo/shared';
 import { ensureLastSeenMap } from '@/utils/ensure-last-seen-map';
 import { EmptyState } from '../_components/empty-state';
 import { Body } from './_components/body';
@@ -27,7 +30,7 @@ export const ConversationSection = ({ conversationId }: Props) => {
   const { userId } = useAuth();
 
   // data conversation
-  const { data: conversation } = useGetConversationById(conversationId);
+  const { data: conversation } = useConversation(conversationId);
 
 
   // lastSeenMap (from cache)
@@ -58,20 +61,20 @@ export const ConversationSection = ({ conversationId }: Props) => {
 
     const handleUpdated = (payload: ConversationDTO) => {
       if (payload._id !== conversationId) return;
-      queryClient.setQueryData(['conversation', conversationId], payload);
+      queryClient.setQueryData(queryKeys.conversations.detail(conversationId), payload);
     };
 
     const handleDeleted = (payload: { id: string }) => {
       if (payload.id !== conversationId) return;
       toast.info('Cuộc trò chuyện đã bị xóa.');
-      queryClient.removeQueries({ queryKey: ['conversation', conversationId] });
+      queryClient.removeQueries({ queryKey: queryKeys.conversations.detail(conversationId) });
       router.replace('/conversations');
     };
     const handleLeft = (payload: { conversationId: string }) => {
       const id = payload?.conversationId;
       if (!id) return;
       toast.info('Bạn đã rời khỏi cuộc trò chuyện.');
-      queryClient.removeQueries({ queryKey: ['conversation', id] });
+      queryClient.removeQueries({ queryKey: queryKeys.conversations.detail(id) });
       router.replace('/conversations');
     };
 
@@ -83,7 +86,7 @@ export const ConversationSection = ({ conversationId }: Props) => {
       if (payload.conversationId !== conversationId) return;
 
       queryClient.setQueryData<ConversationDTO>(
-        ['conversation', conversationId],
+        queryKeys.conversations.detail(conversationId),
         (old) => {
           if (!old) return old;
           const map = ensureLastSeenMap(old.lastSeenMessageId);
@@ -95,7 +98,7 @@ export const ConversationSection = ({ conversationId }: Props) => {
       );
 
       queryClient.setQueriesData(
-        { queryKey: ['conversations'] },
+        { queryKey: queryKeys.conversations.list() },
         (old: any) => {
           if (!old?.pages) return old;
           return {

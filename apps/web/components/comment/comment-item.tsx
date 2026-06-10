@@ -2,17 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useDisReact, useReact } from '@/hooks/use-reaction-hook';
-import { useGetComments, useUpdateComment } from '@/hooks/user-comment-hook';
+import { useDisReact, useReact, useComments, useUpdateComment, CommentDTO, CommentStatDTO, MediaType, ReactionType, RootType, TargetType } from '@repo/shared';
 import { Reaction, reactionMap } from '@/lib/types/reaction';
 import { cn } from '@/lib/utils';
-import { CommentDTO, CommentStatDTO } from '@/models/social/comment/commentDTO';
-import {
-  MediaType,
-  ReactionType,
-  RootType,
-  TargetType,
-} from '@/models/social/enums/social.enum';
 import {
   useDeleteCommentModal,
   useReactionModal,
@@ -63,9 +55,9 @@ export const CommentItem = ({
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
 
-  const { data: replyData, isLoading: loadingReplies } = useGetComments({
+  const { data: replyData, isLoading: loadingReplies } = useComments({
     rootId,
-    rootType,
+    rootType: rootType as any,
     parentId: comment.id,
   });
 
@@ -82,20 +74,20 @@ export const CommentItem = ({
   // =========================
   // Reactions (optimized)
   // =========================
-  const { mutateAsync: react } = useReact(comment.id);
-  const { mutateAsync: disReact } = useDisReact(comment.id);
+  const { mutateAsync: react } = useReact();
+  const { mutateAsync: disReact } = useDisReact();
 
   const [showReactions, setShowReactions] = useState(false);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
   //  local selected + sync when server changes
   const [selected, setSelected] = useState<Reaction | null>(
-    findReaction(comment.reactedType)
+    findReaction(comment.reactedType as any)
   );
 
   useEffect(() => {
     // sync after refetch/invalidate
-    setSelected(findReaction(comment.reactedType));
+    setSelected(findReaction(comment.reactedType as any));
   }, [comment.reactedType]);
 
   const handleMouseEnter = () => {
@@ -123,13 +115,13 @@ export const CommentItem = ({
         if (isSame) {
           await disReact({
             targetId: comment.id,
-            targetType: TargetType.COMMENT,
+            targetType: TargetType.COMMENT as any,
           });
         } else {
           await react({
             targetId: comment.id,
-            targetType: TargetType.COMMENT,
-            reactionType: r.type,
+            targetType: TargetType.COMMENT as any,
+            reactionType: r.type as any,
           });
         }
       } catch {
@@ -151,13 +143,13 @@ export const CommentItem = ({
       if (prev) {
         await disReact({
           targetId: comment.id,
-          targetType: TargetType.COMMENT,
+          targetType: TargetType.COMMENT as any,
         });
       } else {
         await react({
           targetId: comment.id,
-          targetType: TargetType.COMMENT,
-          reactionType: ReactionType.LIKE,
+          targetType: TargetType.COMMENT as any,
+          reactionType: ReactionType.LIKE as any,
         });
       }
     } catch {
@@ -212,7 +204,8 @@ export const CommentItem = ({
     if (!editing) setDraftContent(comment.content);
   }, [comment.content, editing]); // intentionally not include editing to avoid reset while typing
 
-  const { mutateAsync: updateComment, isPending } = useUpdateComment(rootId);
+  const updateCommentMutation = useUpdateComment(comment.id);
+  const isPending = updateCommentMutation.isPending;
 
   const onSave = useCallback(async () => {
     const next = draftContent.trim();
@@ -224,21 +217,20 @@ export const CommentItem = ({
     setLocalContent(next);
     setEditing(false);
 
-    const promise = updateComment(
-      { commentId: comment.id, data: { content: next } },
-      {
-        onError: () => {
+    const promise = updateCommentMutation.mutateAsync({ content: next }).catch(() => {
           // rollback
           setLocalContent(prev);
           setDraftContent(prev);
           setEditing(true);
-        },
-      }
-    );
+          throw new Error('Cập nhật bình luận thất bại!');
+    });
 
-    toast.promise(promise, { loading: 'Đang cập nhật bình luận...' });
+    toast.promise(promise, { 
+        loading: 'Đang cập nhật bình luận...',
+        success: 'Cập nhật bình luận thành công!',
+    });
     await promise;
-  }, [draftContent, localContent, updateComment, comment.id]);
+  }, [draftContent, localContent, updateCommentMutation]);
 
   // =========================
   // UI (unchanged)

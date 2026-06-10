@@ -7,6 +7,7 @@ import { ReactNode } from "react";
 import { getGroupById } from "@/lib/actions/group/group-action";
 import { GroupPermissionProvider } from "@/contexts/group-permission-context";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { queryKeys } from "@repo/shared";
 
 type Props = {
   children: ReactNode;
@@ -26,7 +27,7 @@ const GroupDetailsLayout = async ({ children, params }: Props) => {
 
   // SSR prefetch cho query 'get-group-by-id'
   await queryClient.prefetchQuery({
-    queryKey: ["get-group-by-id", groupId],
+    queryKey: queryKeys.groups.detail(groupId),
     queryFn: async () => getGroupById(token, groupId),
   });
 

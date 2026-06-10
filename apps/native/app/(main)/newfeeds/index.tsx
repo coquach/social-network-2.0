@@ -32,7 +32,6 @@ const DELTA_THRESHOLD = 8;
 const HEADER_SHOW_DURATION = 240;
 const HEADER_HIDE_DURATION = 200;
 const EMOTION_DEBOUNCE_MS = 200;
-const FEED_FILTER_HEIGHT = 92;
 
 export default function NewfeedsScreen() {
   const insets = useSafeAreaInsets();

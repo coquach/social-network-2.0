@@ -1,5 +1,5 @@
 'use client';
-import { GroupLogDTO } from "@/models/group/groupLogDTO";
+import { GroupLogDTO } from "@repo/shared";
 
 import { MediumAvatar } from "@/components/avatar";
 import { Badge } from "@/components/ui/badge";

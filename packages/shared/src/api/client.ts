@@ -157,6 +157,16 @@ export class ApiClient {
   }
 
   /**
+   * Get the current authentication token
+   */
+  async getToken(): Promise<string | null> {
+    if (this.getAuthToken) {
+      return this.getAuthToken();
+    }
+    return null;
+  }
+
+  /**
    * Get the raw Axios instance for advanced usage
    */
   getAxiosInstance(): AxiosInstance {

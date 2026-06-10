@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Audience } from '@/models/social/enums/social.enum';
+import { Audience } from '@repo/shared';
 import { Globe, Lock, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

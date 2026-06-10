@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import {
   Dialog,
@@ -13,8 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { useMemo, useState } from 'react';
 
-import { useFriends } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useFriends, useUser } from '@repo/shared';
 import { DirectAvatar } from '../../../_components/direct-avatar';
 
 const FriendRow = ({
@@ -32,7 +31,7 @@ const FriendRow = ({
   disabledAll: boolean;
   onToggle: (id: string) => void;
 }) => {
-  const { data: user, isPending } = useGetUser(userId);
+  const { data: user, isPending } = useUser(userId);
 
   if (isPending) {
     return (

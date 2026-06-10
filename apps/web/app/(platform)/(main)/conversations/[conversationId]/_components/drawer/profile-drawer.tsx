@@ -20,18 +20,16 @@ import {
 } from '@/components/ui/sheet';
 
 import {
-  useDeleteConversation,
-  useHideConversation,
-  useLeaveConversation,
-  useUnhideConversation,
   useUpdateConversation,
-} from '@/hooks/use-conversation';
+  useDeleteConversation,
+  useLeaveConversation,
+  useHideConversation,
+  useUnhideConversation,
+  ConversationDTO,
+  UpdateConversationInput,
+} from '@repo/shared';
 
 import { MediaItem } from '@/lib/types/media';
-import {
-  ConversationDTO,
-  UpdateConversationForm,
-} from '@/models/conversation/conversationDTO';
 import { useAuth } from '@clerk/nextjs';
 import { EyeOff, Eye, LogOut, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -66,33 +64,36 @@ export const ProfileDrawer = ({
     useUpdateConversation(conversation._id);
 
   const { mutate: deleteConversation, isPending: isDeleting } =
-    useDeleteConversation(conversation._id);
+    useDeleteConversation();
 
   const { mutate: leaveConversation, isPending: isLeaving } =
-    useLeaveConversation(conversation._id);
+    useLeaveConversation();
 
-  const { mutate: hideConversation, isPending: isHiding } = useHideConversation(
-    conversation._id
-  );
+  const { mutate: hideConversation, isPending: isHiding } = useHideConversation();
 
   const { mutate: unhideConversation, isPending: isUnhiding } =
-    useUnhideConversation(conversation._id);
+    useUnhideConversation();
 
   const handleUpdateGroup = (
-    dto: UpdateConversationForm,
+    dto: UpdateConversationInput,
     media?: MediaItem,
-    publicId?: string
   ) => {
-    updateConversation({ dto, media, publicId }, { onSuccess: () => {} });
+    updateConversation({ 
+      ...dto, 
+      uploadGroupAvatar: media ? { file: media.file, type: media.type as any } : undefined 
+    });
   };
 
   const handleDelete = () => {
-    deleteConversation();
-    router.replace('/conversations');
+    deleteConversation(conversation._id, {
+      onSuccess: () => {
+        router.replace('/conversations');
+      }
+    });
   };
 
   const handleLeave = () => {
-    leaveConversation(undefined, { onSuccess: () => onClose() });
+    leaveConversation(conversation._id, { onSuccess: () => onClose() });
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -114,8 +115,8 @@ export const ProfileDrawer = ({
 
   const toggleHide = () => {
     if (!currentUserId) return;
-    if (isHidden) unhideConversation();
-    else hideConversation();
+    if (isHidden) unhideConversation(conversation._id);
+    else hideConversation(conversation._id);
   };
 
   const hidePending = isHiding || isUnhiding;

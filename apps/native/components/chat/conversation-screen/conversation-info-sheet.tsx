@@ -313,13 +313,6 @@ export function ConversationInfoSheet({
         ? isDeleting
         : false;
 
-  const metaPrimaryValue = isGroup
-    ? `${conversation?.participants.length ?? 0} thành viên`
-    : getConversationPresenceSubtitle(presence);
-  const metaSecondaryValue = isGroup
-    ? `${conversation?.admins.length ?? 0} quản trị`
-    : formatMetaDate(directUser?.createdAt);
-
   return (
     <>
       <AppBottomSheet

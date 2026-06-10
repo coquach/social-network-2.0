@@ -1,7 +1,7 @@
 'use client';
 
 import { ImageIcon, VideoIcon } from '@/lib/icons';
-import { MediaType } from '@/models/social/enums/social.enum';
+import { MediaType } from '@repo/shared';
 import { toast } from 'sonner';
 import { useCreatePostContext } from './context';
 

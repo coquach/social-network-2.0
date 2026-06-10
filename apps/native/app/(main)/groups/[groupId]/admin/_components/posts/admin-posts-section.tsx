@@ -21,7 +21,6 @@ export const GroupAdminPostsSection = ({ groupId }: { groupId: string }) => {
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-        refetch,
         isError
     } = useGroupPosts(groupId, {
         status: PostGroupStatus.PENDING,

@@ -1,11 +1,5 @@
 import api from '@/lib/api-client';
-import { PageResponse, Pagination } from '@repo/shared';
-import {
-  CommentDTO,
-  CreateCommentForm,
-  UpdateCommentForm,
-} from '@/models/social/comment/commentDTO';
-import { RootType } from '@/models/social/enums/social.enum';
+import { PageResponse, Pagination, CommentDTO, CreateCommentInput, UpdateCommentInput, RootType } from '@repo/shared';
 
 export interface GetCommentsQuery extends Pagination {
   rootId?: string;
@@ -13,7 +7,7 @@ export interface GetCommentsQuery extends Pagination {
   parentId?: string;
 }
 
-export const createComment = async (token: string, dto: CreateCommentForm) : Promise<CommentDTO> => {
+export const createComment = async (token: string, dto: CreateCommentInput) : Promise<CommentDTO> => {
   try {
     const response = await api.post(`/comments`, dto, {
       headers: {
@@ -59,7 +53,7 @@ export const getCommentById = async (token: string, commentId: string) : Promise
 export const updateComment = async (
   token: string,
   commentId: string,
-  update: UpdateCommentForm
+  update: UpdateCommentInput
 ) : Promise<CommentDTO> => {
   try {
     const response = await api.put(`/comments/${commentId}`, update, {

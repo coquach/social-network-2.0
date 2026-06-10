@@ -5,8 +5,6 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupSettingSchema } from '@/models/group/groupSettingDTO';
 
 import { Loader } from '@/components/loader-componnet';
 import { Button } from '@/components/ui/button';
@@ -27,7 +25,9 @@ import { Switch } from '@/components/ui/switch';
 import {
   useGroupSettings,
   useUpdateGroupSettings,
+  GroupPermission,
 } from '@repo/shared';
+import { UpdateGroupInputSchema } from '@repo/shared/schemas';
 import { cn } from '@/lib/utils';
 
 type SettingFormProps = {
@@ -49,16 +49,15 @@ export const SettingForm = ({ open }: SettingFormProps) => {
   const form = useForm({
     defaultValues: {
       requiredPostApproval: false,
-      requireAdminApprovalToJoin: false,
       allowMemberInvite: false,
       maxMembers: 1,
     },
 
     validators: {
       onSubmit: ({ value }) => {
-        const result = GroupSettingSchema.safeParse(value);
+        const result = UpdateGroupInputSchema.safeParse(value);
         if (result.success) return undefined;
-        return result.error.issues.map((i) => i.message);
+        return result.error.issues.map((i: any) => i.message);
       },
     },
 
@@ -72,7 +71,6 @@ export const SettingForm = ({ open }: SettingFormProps) => {
             input: {
               requiredPostApproval: value.requiredPostApproval,
               maxMembers: value.maxMembers,
-              requireAdminApprovalToJoin: value.requireAdminApprovalToJoin,
               allowMemberInvite: value.allowMemberInvite,
             },
           },
@@ -92,7 +90,6 @@ export const SettingForm = ({ open }: SettingFormProps) => {
     if (!settingsData || !open) return;
     form.reset({
       requiredPostApproval: settingsData.requiredPostApproval,
-      requireAdminApprovalToJoin: settingsData.requireAdminApprovalToJoin,
       allowMemberInvite: settingsData.allowMemberInvite,
       maxMembers: settingsData.maxMembers ?? 1,
     });
@@ -181,7 +178,7 @@ export const SettingForm = ({ open }: SettingFormProps) => {
                         Nếu bật, yêu cầu tham gia cần admin/phê duyệt thủ công.
                       </p>
                     </div>
-                    <form.Field name="requireAdminApprovalToJoin">
+                    {/* <form.Field name="requireAdminApprovalToJoin">
                       {(field) => (
                         <Switch
                           checked={!!field.state.value}
@@ -191,7 +188,7 @@ export const SettingForm = ({ open }: SettingFormProps) => {
                           disabled={!canEditSettings}
                         />
                       )}
-                    </form.Field>
+                    </form.Field> */}
                   </div>
                 </div>
 

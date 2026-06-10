@@ -1,6 +1,4 @@
-import { RootType, TargetType } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+import { RootType, TargetType, PostSnapshotDTO, SharePostSnapshotDTO } from '@repo/shared';
 import { create } from 'zustand';
 
 interface ReactionModalStore {
@@ -17,33 +15,6 @@ export const useReactionModal = create<ReactionModalStore>((set) => ({
   openModal: (targetType: TargetType, targetId: string) =>
     set({ isOpen: true, targetType, targetId }),
   closeModal: () => set({ isOpen: false, targetId: null, targetType: null }),
-}));
-
-interface CommentModalStore {
-  rootId: string | null;
-  rootType: RootType | null;
-  ownerPostId: string | null;
-  data?: PostSnapshotDTO | SharePostSnapshotDTO;
-  isOpen: boolean;
-  openModal: (
-    rootId: string,
-    rootType: RootType,
-    ownerPostId: string,
-    data?: PostSnapshotDTO | SharePostSnapshotDTO
-  ) => void;
-  closeModal: () => void;
-}
-
-export const useCommentModal = create<CommentModalStore>((set) => ({
-  rootId: null,
-  rootType: null,
-  ownerPostId: null,
-  data: undefined,
-  isOpen: false,
-  openModal: (rootId, rootType, ownerPostId, data) =>
-    set({ isOpen: true, rootId, rootType, ownerPostId, data }),
-  closeModal: () =>
-    set({ isOpen: false, rootId: null, rootType: null, data: undefined }),
 }));
 
 interface DeleteCommentModalStore {

@@ -9,6 +9,7 @@ import {
   getPost,
   getPostsByGroup,
 } from './actions/social/post/post-action';
+import { getShareById } from './actions/social/share/share-action';
 import type { PostGroupStatus } from '@/models/social/enums/social.enum';
 
 /**
@@ -21,6 +22,17 @@ import type { PostGroupStatus } from '@/models/social/enums/social.enum';
  *
  * @see https://react.dev/reference/react/cache
  */
+
+// ==================== Share Fetchers ====================
+
+/**
+ * Fetch a single share by ID with automatic deduplication
+ */
+export const getCachedShare = cache(
+  async (token: string, shareId: string) => {
+    return getShareById(token, shareId);
+  }
+);
 
 // ==================== Post Fetchers ====================
 

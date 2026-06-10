@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getQueryClient } from "@/lib/query-client";
 import { getUser } from "@/lib/actions/user/user-actions";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { queryKeys } from "@repo/shared";
 
 const ProfileLayout = async ({
   children,
@@ -23,7 +24,7 @@ const ProfileLayout = async ({
 
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery({
-    queryKey: ["user", userId],
+    queryKey: queryKeys.user.detail(userId),
     queryFn: async () => getUser(token, userId),
   });
 

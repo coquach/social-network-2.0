@@ -1,7 +1,7 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { GroupDTO } from '@/models/group/groupDTO';
+import { GroupDTO } from '@repo/shared';
 import clsx from 'clsx';
 import { Globe, Lock, Users, Calendar } from 'lucide-react';
 import Image from 'next/image';

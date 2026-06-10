@@ -29,13 +29,11 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { useCreateConversation } from '@/hooks/use-conversation';
-import { useSearchUsers } from '@repo/shared';
+import { useCreateConversation, useSearchUsers, CreateConversationInput } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import {
-  ConversarionSchema,
-  CreateConversationForm,
-} from '@/models/conversation/conversationDTO';
+  CreateConversationInputSchema,
+} from '@repo/shared/schemas';
 import { MediaType } from '@/models/social/enums/social.enum';
 import { UserDTO } from '@/models/user/userDTO';
 
@@ -44,7 +42,7 @@ type CreateGroupConversationDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-const GroupConversationSchema = ConversarionSchema.extend({
+const GroupConversationSchema = CreateConversationInputSchema.extend({
   groupName: z.string().trim().min(1, 'Vui lòng nhập tên nhóm.'),
   participants: z
     .array(z.string())
@@ -72,7 +70,7 @@ export const CreateGroupConversationDialog = ({
       isGroup: true,
       participants: [],
       groupName: '',
-    } as CreateConversationForm,
+    } as CreateConversationInput,
     validators: {
       onSubmit: ({ value }) => {
         const parsed = GroupConversationSchema.safeParse({
@@ -86,31 +84,30 @@ export const CreateGroupConversationDialog = ({
     onSubmit: async ({ value, formApi }) => {
       if (!currentUserId) return;
 
-      const payload: CreateConversationForm = {
+      const payload = {
         isGroup: true,
         participants: Array.from(
-          new Set([currentUserId, ...(value.participants ?? [])])
+          new Set([currentUserId, ...(value.participants ?? [])]),
         ),
         groupName: (value.groupName ?? '').trim(),
+        uploadGroupAvatar: avatarMedia ? { file: avatarMedia.file, type: avatarMedia.type as any } : undefined
       };
 
-      const promise = createConversation(
-        {
-          dto: payload,
-          media: avatarMedia ?? undefined,
-        },
-        {
-          onSuccess: () => {
-            formApi.reset();
-            setSelectedUsers([]);
-            setSearch('');
-            clearAvatar();
-            handleInternalOpenChange(false);
-          },
-        }
-      );
+      const promise = createConversation(payload);
 
-      toast.promise(promise, { loading: 'Đang tạo nhóm chat...' });
+      toast.promise(promise, { 
+        loading: 'Đang tạo nhóm chat...',
+        success: () => {
+          formApi.reset();
+          setSelectedUsers([]);
+          setSearch('');
+          clearAvatar();
+          handleInternalOpenChange(false);
+          return 'Tạo nhóm chat thành công!';
+        },
+        error: 'Không thể tạo nhóm chat.'
+      });
+      
       await promise;
     },
   });
@@ -299,7 +296,7 @@ export const CreateGroupConversationDialog = ({
                   const ids = field.state.value ?? [];
 
                   const availableSearchResults = searchResults.filter(
-                    (u) => !ids.includes(u.id) && u.id !== currentUserId
+                    (u) => !ids.includes(u.id) && u.id !== currentUserId,
                   );
 
                   const handleSelectUser = (user: UserDTO) => {
@@ -311,9 +308,11 @@ export const CreateGroupConversationDialog = ({
 
                   const handleRemoveUser = (userId: string) => {
                     setSelectedUsers((prev) =>
-                      prev.filter((u) => u.id !== userId)
+                      prev.filter((u) => u.id !== userId),
                     );
-                    field.handleChange(ids.filter((id: string) => id !== userId));
+                    field.handleChange(
+                      ids.filter((id: string) => id !== userId),
+                    );
                   };
 
                   return (
@@ -347,11 +346,11 @@ export const CreateGroupConversationDialog = ({
                               {isLoading ? (
                                 <div className="px-3 py-6 text-sm text-slate-500 flex items-center gap-2 justify-center">
                                   <Loader2 className="h-4 w-4 animate-spin" />
-                                Đang tìm kiếm...
+                                  Đang tìm kiếm...
                                 </div>
                               ) : availableSearchResults.length === 0 ? (
                                 <div className="px-3 py-6 text-sm text-slate-500 text-center">
-                                Không tìm thấy người dùng nào.
+                                  Không tìm thấy người dùng nào.
                                 </div>
                               ) : (
                                 <div className="space-y-1">
@@ -363,9 +362,7 @@ export const CreateGroupConversationDialog = ({
                                       className="w-full text-left rounded-xl px-2 py-1.5 hover:bg-slate-100 disabled:opacity-60"
                                       disabled={isPending}
                                     >
-                                      <AvatarWithStatus
-                                        userId={user.id}
-                                      />
+                                      <AvatarWithStatus userId={user.id} />
                                     </button>
                                   ))}
 
@@ -431,7 +428,6 @@ export const CreateGroupConversationDialog = ({
             </Button>
           </DialogFooter>
         </form>
-        
       </DialogContent>
     </Dialog>
   );

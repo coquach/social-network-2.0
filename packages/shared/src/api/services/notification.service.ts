@@ -26,7 +26,10 @@ export const notificationService = {
    * Get unread notification count
    */
   async getUnreadCount(): Promise<{ count: number }> {
-    return getApiClient().get('/notifications/unread-count');
+    const response = await getApiClient().get('/notifications/unread-count');
+    if (typeof response === 'number') return { count: response };
+    if (!response) return { count: 0 };
+    return { count: (response as any).count ?? 0 };
   },
 
   /**

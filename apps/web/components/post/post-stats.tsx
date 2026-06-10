@@ -4,23 +4,21 @@ import {
   ReactionType,
   RootType,
   TargetType,
-} from '@/models/social/enums/social.enum';
-import { MessageCircle, Repeat2 } from '@/lib/icons';
-import { useCallback, useMemo } from 'react';
-
-import { PostSnapshotDTO, PostStatDTO } from '@/models/social/post/postDTO';
-import {
+  PostSnapshotDTO,
+  PostStatDTO,
   SharePostSnapshotDTO,
   SharePostStatDTO,
-} from '@/models/social/post/sharePostDTO';
+} from '@repo/shared';
+import { MessageCircle, Repeat2 } from '@/lib/icons';
+import { useCallback, useMemo } from 'react';
 import {
-  useCommentModal,
   useReactionModal,
   useShareListModal,
 } from '@/store/use-post-modal';
 import { formatCount } from '@/utils/format-count';
 import { getTopReactions } from '@/utils/get-top-reactions';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface PostStatsProps {
   targetId: string;
@@ -38,8 +36,8 @@ export default function PostStats({
   isShare = false,
 }: PostStatsProps) {
   const reactionModal = useReactionModal();
-  const commentModal = useCommentModal();
   const shareListModal = useShareListModal();
+  const router = useRouter();
   const computed = useMemo(() => {
     if (!stats) return null;
 
@@ -74,13 +72,9 @@ export default function PostStats({
   }, [reactionModal, targetType, targetId]);
 
   const onOpenComments = useCallback(() => {
-    commentModal.openModal(
-      targetId,
-      isShare ? RootType.POST : RootType.SHARE,
-      data.userId,
-      data
-    );
-  }, [commentModal, targetId, isShare, data]);
+    const path = isShare ? `/shares/${targetId}` : `/posts/${targetId}`;
+    router.push(path, { scroll: false });
+  }, [router, targetId, isShare]);
 
   const onOpenShares = useCallback(() => {
     shareListModal.openModal(targetId);

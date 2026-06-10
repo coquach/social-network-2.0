@@ -1,6 +1,6 @@
 import { Card } from 'heroui-native/card';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import { cn } from '~/lib/cn';
 
 type AppCardProps = {

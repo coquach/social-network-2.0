@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RefreshCcw, SlidersHorizontal } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, RefreshCcw, SlidersHorizontal } from 'lucide-react';
 
 import { ModerationDetailSheet } from './_components/moderation-history-detail-sheet';
 import { EmptyModerationState } from './_components/moderation-history-empty-state';
@@ -80,6 +81,8 @@ export default function SettingsModerationHistoryPage() {
   const activeTargetTypeLabel =
     targetType === 'all' ? 'Tất cả' : getTargetLabel(targetType);
 
+  const router = useRouter();
+
   return (
     <div className="relative min-h-full overflow-hidden bg-slate-50 dark:bg-slate-950">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.18),transparent_65%)] dark:bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.16),transparent_68%)]" />
@@ -88,14 +91,24 @@ export default function SettingsModerationHistoryPage() {
 
       <div className="relative space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-sky-600 dark:text-slate-50">
-              Lịch sử kiểm duyệt
-            </h1>
-            <p className="max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
-              Xem lại các bản ghi kiểm duyệt của tài khoản hiện tại với bố cục
-              dễ scan, filter rõ hơn và chi tiết nhất quán giữa các trạng thái.
-            </p>
+          <div className="flex items-start gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => router.back()} 
+              className="md:hidden shrink-0 mt-1"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-tight text-sky-600 dark:text-slate-50">
+                Lịch sử kiểm duyệt
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+                Xem lại các bản ghi kiểm duyệt của tài khoản hiện tại với bố cục
+                dễ scan, filter rõ hơn và chi tiết nhất quán giữa các trạng thái.
+              </p>
+            </div>
           </div>
 
           <Button

@@ -1,8 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCreateConversation } from '@/hooks/use-conversation';
-import type { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { useCreateConversation, ConversationDTO } from '@repo/shared';
 
 export const useStartConversation = () => {
   const router = useRouter();
@@ -14,10 +13,8 @@ export const useStartConversation = () => {
   ) => {
     createConversation(
       {
-        dto: {
-          isGroup: false,
-          participants: [targetId],
-        },
+        isGroup: false,
+        participants: [targetId],
       },
       {
         onSuccess: (conversation) => {

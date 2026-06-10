@@ -48,7 +48,19 @@ function CallViewInner() {
     activeCall: storeActiveCall,
     outgoingCall: storeOutgoingCall,
     incomingCall: storeIncomingCall,
+    autoAcceptCallId,
+    setAutoAcceptCallId,
   } = useCallStore();
+
+  // Auto-accept call if triggered from background/notification
+  useEffect(() => {
+    if (autoAcceptCallId && storeIncomingCall) {
+      if (storeIncomingCall.id === autoAcceptCallId || storeIncomingCall._id === autoAcceptCallId) {
+        setAutoAcceptCallId(null);
+        void answerCall();
+      }
+    }
+  }, [autoAcceptCallId, storeIncomingCall, answerCall, setAutoAcceptCallId]);
 
 
   // We strictly bind the Stream call to our Zustand store to ensure immediate UI updates

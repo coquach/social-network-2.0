@@ -5,14 +5,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useGetUser } from '@/hooks/use-user-hook';
 import {
+  useUser,
+  TargetType,
   Audience,
   Emotion,
-  TargetType,
-} from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+  PostSnapshotDTO,
+  SharePostSnapshotDTO,
+} from '@repo/shared';
 import {
   useDeletePostModal,
   useUpdatePostModal,
@@ -70,7 +70,7 @@ export default function PostHeader({
 }: PostHeaderProps) {
   const { userId: currentUserId } = useAuth();
   const router = useRouter();
-  const { data: fetchedUser } = useGetUser(userId);
+  const { data: fetchedUser } = useUser(userId);
 
   const { openModal: deletePostModalOpen } = useDeletePostModal();
   const { openModal: updatePostModalOpen } = useUpdatePostModal();

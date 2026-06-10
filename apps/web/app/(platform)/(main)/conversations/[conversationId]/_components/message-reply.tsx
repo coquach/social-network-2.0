@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageDTO } from '@/models/message/messageDTO';
+import { MessageDTO } from '@repo/shared';
 import { Reply } from 'lucide-react';
 import Image from 'next/image';
 

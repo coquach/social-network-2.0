@@ -9,11 +9,16 @@ import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNow } from 'date-fns';
 import { vi as viVN } from 'date-fns/locale';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import {
+  ConversationDTO,
+  useUser,
+  usePresenceStore,
+  CallType,
+} from '@repo/shared';
 import { ProfileDrawer } from './drawer/profile-drawer';
+import { useCallActions } from '@/hooks/use-call-actions';
+import { toast } from 'sonner';
 
-import { usePresenceStore } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
 import { GroupAvatar } from '../../_components/group-avatar';
 import { DirectAvatar } from '../../_components/direct-avatar';
 
@@ -21,20 +26,37 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
   const { userId: currentUserId } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const { startCall, joinOngoingCall } = useCallActions();
+
+  const handleStartCall = async (type: CallType) => {
+    if (!conversation._id) return;
+    const result = await startCall(conversation._id, type);
+    if (!result.ok) {
+      toast.error(result.message);
+    }
+  };
+
+  const handleJoinCall = async () => {
+    if (!conversation.activeCallId) return;
+    await joinOngoingCall(conversation.activeCallId);
+  };
+
   /** ----------- OTHER USER (1–1) ----------- */
   const otherUserId = useMemo(() => {
     if (conversation.isGroup) return undefined;
     const others = conversation.participants.filter(
-      (participant) => participant !== currentUserId
+      (participant) => participant !== currentUserId,
     );
     return others[0];
   }, [conversation.isGroup, conversation.participants, currentUserId]);
 
-  const { data: otherUser } = useGetUser(otherUserId ?? '');
+  const { data: otherUser } = useUser(otherUserId ?? '', {
+    enabled: !!otherUserId,
+  });
 
   /** ----------- PRESENCE (1–1) ----------- */
   const presence = usePresenceStore((state) =>
-    otherUserId ? state.getById(otherUserId) : undefined
+    otherUserId ? state.getById(otherUserId) : undefined,
   );
 
   /** ----------- TITLE ----------- */
@@ -129,8 +151,8 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
         presence?.status === 'online'
           ? 'bg-green-500'
           : presence?.status === 'away'
-          ? 'bg-yellow-500'
-          : 'bg-gray-400'
+            ? 'bg-yellow-500'
+            : 'bg-gray-400'
       }
     `}
                   />
@@ -141,10 +163,32 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-sky-500 cursor-pointer  transition">
-          <MdCall size={24} className="hover:text-sky-600" />
-          <IoMdVideocam size={24} className="hover:text-sky-600" />
+        <div className="flex items-center gap-4 text-sky-500 cursor-pointer transition">
           <Search size={24} className="hover:text-sky-600" />
+          
+          {conversation.activeCallId ? (
+            <button
+              onClick={handleJoinCall}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold text-sm px-4 py-1.5 rounded-full flex items-center gap-1.5 transition duration-200 shadow-sm"
+            >
+              <IoMdVideocam size={16} />
+              <span>Tham gia</span>
+            </button>
+          ) : (
+            <>
+              <MdCall
+                size={24}
+                className="hover:text-sky-600"
+                onClick={() => handleStartCall(CallType.AUDIO)}
+              />
+              <IoMdVideocam
+                size={24}
+                className="hover:text-sky-600"
+                onClick={() => handleStartCall(CallType.VIDEO)}
+              />
+            </>
+          )}
+
           <Ellipsis
             size={32}
             onClick={() => {

@@ -1,10 +1,5 @@
 import api from '@/lib/api-client';
-import { CursorPagination } from '@repo/shared';
-import { ReactionType, TargetType } from '@/models/social/enums/social.enum';
-import {
-  CreateReactionForm,
-  DisReactionForm,
-} from '@/models/social/reaction/reactionDTO';
+import { CursorPagination, ReactionType, TargetType, CreateReactionInput, RemoveReactionInput } from '@repo/shared';
 
 export interface GetReactionsDto extends CursorPagination {
   targetId: string;
@@ -12,7 +7,7 @@ export interface GetReactionsDto extends CursorPagination {
   reactionType?: ReactionType;
 }
 
-export const react = async (token: string, dto: CreateReactionForm) => {
+export const react = async (token: string, dto: CreateReactionInput) => {
   try {
     const response = await api.post(`/reactions`, dto, {
       headers: {
@@ -26,7 +21,7 @@ export const react = async (token: string, dto: CreateReactionForm) => {
   }
 };
 
-export const disReact = async (token: string, dto: DisReactionForm) => {
+export const disReact = async (token: string, dto: RemoveReactionInput) => {
   try {
     const response = await api.delete(`/reactions`, {
       data: dto,

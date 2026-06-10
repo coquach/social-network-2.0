@@ -74,7 +74,6 @@ function AudioAttachmentCard({
   };
 
   const metaText = isPlaying || progressMs > 0 ? formatTime(progressMs) : buildAttachmentMeta(attachment.size) || "0:00";
-  const fileName = formatAttachmentName(attachment, "Ghi âm");
 
   return (
     <Pressable

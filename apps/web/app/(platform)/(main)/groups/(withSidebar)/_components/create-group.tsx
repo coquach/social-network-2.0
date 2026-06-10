@@ -37,13 +37,10 @@ import {
   FieldTitle,
 } from '@/components/ui/field';
 
-import { useCreateGroup } from '@repo/shared';
+import { useCreateGroup, GroupPrivacy, MediaType, type CreateGroupInput as CreateGroupForm, CreateGroupInputSchema as GroupSchema } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import { cn } from '@/lib/utils';
 import { countChars } from '@/utils/count-chars';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { CreateGroupForm, GroupSchema } from '@/models/group/groupDTO';
-import { MediaType } from '@/models/social/enums/social.enum';
 
 type CreateGroupDialogProps = {
   open: boolean;

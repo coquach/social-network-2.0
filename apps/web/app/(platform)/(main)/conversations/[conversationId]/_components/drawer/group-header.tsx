@@ -6,8 +6,8 @@ import { PencilLine, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   ConversationDTO,
-  UpdateConversationForm,
-} from '@/models/conversation/conversationDTO';
+  UpdateConversationInput,
+} from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import { MediaType } from '@/models/social/enums/social.enum';
 import { GroupAvatar } from '../../../_components/group-avatar';
@@ -25,7 +25,7 @@ export const GroupHeader = ({
   isAdmin: boolean;
   isUpdating: boolean;
   onUpdateGroup: (
-    dto: UpdateConversationForm,
+    dto: UpdateConversationInput,
     media?: MediaItem,
     publicId?: string
   ) => void;
@@ -72,7 +72,7 @@ export const GroupHeader = ({
   };
 
   const handleSave = () => {
-    const dto: UpdateConversationForm = {};
+    const dto: UpdateConversationInput = {};
     const trimmed = groupName.trim();
 
     if (trimmed && trimmed !== (originalName || '')) dto.groupName = trimmed;

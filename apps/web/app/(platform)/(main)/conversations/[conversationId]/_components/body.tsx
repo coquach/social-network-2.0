@@ -10,10 +10,14 @@ import { useScrollListener } from '@/hooks/use-scroll-listener';
 
 import { ErrorFallback } from '@/components/error-fallback';
 import { useSocket } from '@/components/providers/socket-provider';
-import { useConversation } from '@/hooks/use-conversation';
-import { useDeleteMessage, useGetMessages } from '@/hooks/use-message';
-import { MessageDTO } from '@/models/message/messageDTO';
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { useConversationNav } from '@/hooks/use-conversation-nav';
+import {
+  MessageDTO,
+  ConversationDTO,
+  useMessages,
+  useDeleteMessage,
+  queryKeys,
+} from '@repo/shared';
 import { MessageBox } from './message-box';
 import { useMarkReadBuffer } from '@/contexts/mark-read-context';
 import { useQueryClient } from '@tanstack/react-query';
@@ -24,7 +28,7 @@ type BodyProps = {
 
 export const Body = ({ lastSeenMap }: BodyProps) => {
   const { userId: currentUserId } = useAuth();
-  const { conversationId } = useConversation();
+  const { conversationId } = useConversationNav();
   const { chatSocket } = useSocket();
   const queryClient = useQueryClient();
 
@@ -75,7 +79,7 @@ export const Body = ({ lastSeenMap }: BodyProps) => {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useGetMessages(conversationId, { limit: 20 });
+  } = useMessages(conversationId, { limit: 20 });
 
   /** ----------- MERGE DATA ----------- */
   useEffect(() => {
@@ -194,7 +198,7 @@ export const Body = ({ lastSeenMap }: BodyProps) => {
       const updatedAt = message.createdAt ?? new Date().toISOString();
 
       queryClient.setQueryData<ConversationDTO>(
-        ['conversation', conversationId],
+        queryKeys.conversations.detail(conversationId),
         (old) => {
           if (!old) return old;
           return {
@@ -206,7 +210,7 @@ export const Body = ({ lastSeenMap }: BodyProps) => {
       );
 
       queryClient.setQueriesData(
-        { queryKey: ['conversations'] },
+        { queryKey: queryKeys.conversations.list() },
         (old: any) => {
           if (!old?.pages) return old;
           return {
@@ -356,7 +360,7 @@ export const Body = ({ lastSeenMap }: BodyProps) => {
 
  
 
-  const { mutate: deleteMutation } = useDeleteMessage();
+  const { mutate: deleteMutation } = useDeleteMessage(conversationId);
 
   const handleDelete = useCallback(
     (messageId: string) => {

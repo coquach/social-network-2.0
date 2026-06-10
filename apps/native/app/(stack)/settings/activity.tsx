@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, {
+import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
@@ -400,7 +400,7 @@ export default function ActivityScreen() {
                     ? filters.toDate
                     : new Date()
                 }
-                onChange={(event, selectedDate) => {
+                onChange={(_event, selectedDate) => {
                   setShowPicker(null);
                   if (selectedDate) {
                     setFilters((s) => ({

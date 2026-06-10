@@ -6,6 +6,7 @@ import { auth } from '@clerk/nextjs/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
 import { MyGroupsList } from './my-groups-list';
+import { queryKeys } from '@repo/shared';
 
 export const metadata: Metadata = {
   title: 'Nhóm của tôi',
@@ -21,7 +22,7 @@ export default async function MyGroupsPage() {
   }
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery({
-    queryKey: ['my-groups'],
+    queryKey: queryKeys.groups.myGroups(),
     queryFn: () => getMyGroups(token, { limit: 10 }),
   });
   return (

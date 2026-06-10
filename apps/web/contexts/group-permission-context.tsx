@@ -2,11 +2,7 @@
 'use client';
 
 import { createContext, useContext, useMemo, ReactNode } from 'react';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupDTO } from '@/models/group/groupDTO';
-import { useGroup } from '@repo/shared';
-import { hasGroupPermission } from '@/lib/auth/group-permission';
+import { GroupRole, GroupPermission, GroupDTO, useGroup, hasGroupPermission } from '@repo/shared';
 
 type Ctx = {
   group: GroupDTO | undefined;
@@ -30,9 +26,9 @@ export const GroupPermissionProvider = ({
   const value: Ctx = useMemo(
     () => ({
       group,
-      role: group?.userRole,
+      role: group?.userRole as GroupRole | undefined,
       can: (permission: GroupPermission) =>
-        hasGroupPermission(group?.userRole, permission),
+        hasGroupPermission(group?.userRole as GroupRole | undefined, permission as any),
       isLoading,
       isError,
     }),

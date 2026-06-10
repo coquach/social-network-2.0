@@ -9,7 +9,9 @@ import { SIDEBAR_ITEMS } from '@/config/admin-sidebar.config';
 export function AdminTopbar() {
   const pathname = usePathname();
   const title = useMemo(() => {
-    const currentItem = SIDEBAR_ITEMS.find((item) => pathname === item.url || pathname.startsWith(item.url + '/'));
+    const currentItem = SIDEBAR_ITEMS.find(
+      (item) => pathname === item.url || pathname?.startsWith(item.url + '/'),
+    );
     return currentItem ? currentItem.title : 'Bảng điều khiển';
   }, [pathname]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { PostSnapshotDTO } from '@repo/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import { TextCollapse } from '../text-collapse';
@@ -16,7 +16,7 @@ const SharedPostPreview = ({ post }: SharedPostPreviewProps) => {
 
   const goToPost = useCallback(() => {
     if (!post?.postId) return;
-    router.push(`/post/${post.postId}`);
+    router.push(`/posts/${post.postId}`, { scroll: false });
   }, [router, post?.postId]);
 
 

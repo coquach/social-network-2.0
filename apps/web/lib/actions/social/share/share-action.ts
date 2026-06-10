@@ -1,12 +1,5 @@
 import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { Audience } from '@/models/social/enums/social.enum';
-import {
-  CreateSharePostForm,
-  SharePostDTO,
-  SharePostSnapshotDTO,
-  UpdateSharePostForm,
-} from '@/models/social/post/sharePostDTO';
+import { CursorPageResponse, CursorPagination, Audience, CreateShareInput, SharePostDTO, SharePostSnapshotDTO, UpdateShareInput } from '@repo/shared';
 
 export interface GetShareQuery extends CursorPagination {
   userId?: string;
@@ -16,7 +9,7 @@ export interface GetShareQuery extends CursorPagination {
 
 export const sharePost = async (
   token: string,
-  dto: CreateSharePostForm,
+  dto: CreateShareInput,
 ): Promise<SharePostDTO> => {
   try {
     const response = await api.post(`/shares`, dto, {
@@ -34,7 +27,7 @@ export const sharePost = async (
 export const updateSharePost = async (
   token: string,
   shareId: string,
-  dto: UpdateSharePostForm,
+  dto: UpdateShareInput,
 ): Promise<SharePostDTO> => {
   try {
     const response = await api.patch(`/shares/${shareId}`, dto, {
