@@ -8,6 +8,8 @@ import {
   useRejectCall,
   queryKeys,
   ConversationDTO,
+  callService,
+  useLeaveCall,
 } from '@repo/shared';
 import { useCallClient } from '@/providers/call-provider';
 import { useCallback, useRef } from 'react';
@@ -24,26 +26,43 @@ export type StartCallResult =
   | { ok: true }
   | { ok: false; code: CallErrorCode; message: string };
 
-function parseCallError(error: unknown): { code: CallErrorCode; message: string } {
-  const backendMsg = (error as any)?.responseData?.message || (error as any)?.response?.data?.message;
+function parseCallError(error: unknown): {
+  code: CallErrorCode;
+  message: string;
+} {
+  const backendMsg =
+    (error as any)?.responseData?.message ||
+    (error as any)?.response?.data?.message;
   const msg = backendMsg || (error as any)?.message || String(error);
 
   if (msg.includes('USER_BUSY_IN_ANOTHER_CALL')) {
-    return { code: 'USER_BUSY_IN_ANOTHER_CALL', message: 'Bạn đang trong một cuộc gọi khác.' };
+    return {
+      code: 'USER_BUSY_IN_ANOTHER_CALL',
+      message: 'Bạn đang trong một cuộc gọi khác.',
+    };
   }
   if (msg.includes('RECIPIENT_BUSY')) {
     return { code: 'RECIPIENT_BUSY', message: 'Người nhận đang bận.' };
   }
   if (msg.includes('Conversation already has an active call')) {
-    return { code: 'CONVERSATION_BUSY', message: 'Cuộc trò chuyện đang có cuộc gọi.' };
+    return {
+      code: 'CONVERSATION_BUSY',
+      message: 'Cuộc trò chuyện đang có cuộc gọi.',
+    };
   }
   if (msg.includes('media infrastructure')) {
-    return { code: 'STREAM_ERROR', message: 'Không thể kết nối dịch vụ cuộc gọi. Vui lòng thử lại.' };
+    return {
+      code: 'STREAM_ERROR',
+      message: 'Không thể kết nối dịch vụ cuộc gọi. Vui lòng thử lại.',
+    };
   }
-  return { code: 'UNKNOWN', message: 'Không thể tạo cuộc gọi. Vui lòng thử lại.' };
+  return {
+    code: 'UNKNOWN',
+    message: 'Không thể tạo cuộc gọi. Vui lòng thử lại.',
+  };
 }
 
-const openCallWindow = (callId: string, type: CallType) => {
+export const openCallWindow = (callId: string, type: CallType) => {
   const width = 1000;
   const height = 700;
   const left = window.screen.width / 2 - width / 2;
@@ -53,7 +72,7 @@ const openCallWindow = (callId: string, type: CallType) => {
   window.open(
     url,
     `call-${callId}`,
-    `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`
+    `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`,
   );
 };
 
@@ -76,14 +95,22 @@ export function useCallActions() {
   const { mutateAsync: acceptCallSession } = useAcceptCall();
   const { mutateAsync: rejectCallSession } = useRejectCall();
   const { mutateAsync: endCallSession } = useEndCall();
+  const { mutateAsync: leaveCallSession } = useLeaveCall();
   const { mutateAsync: joinCallSession } = useJoinCall();
 
   const startCall = useCallback(
-    async (conversationId: string, type: CallType): Promise<StartCallResult> => {
+    async (
+      conversationId: string,
+      type: CallType,
+    ): Promise<StartCallResult> => {
       // Hard guard: prevent double-call
       if (isStartingCall.current) {
         console.warn('[Call] startCall already in progress, ignoring.');
-        return { ok: false, code: 'UNKNOWN', message: 'Cuộc gọi đang được khởi tạo.' };
+        return {
+          ok: false,
+          code: 'UNKNOWN',
+          message: 'Cuộc gọi đang được khởi tạo.',
+        };
       }
       isStartingCall.current = true;
 
@@ -106,8 +133,10 @@ export function useCallActions() {
           user_id: id,
         }));
 
+        const isGroup = conversation?.isGroup;
+
         await call.getOrCreate({
-          ring: true,
+          ring: !isGroup,
           data: {
             members,
             custom: { type },
@@ -121,11 +150,14 @@ export function useCallActions() {
           await call.camera.enable();
         }
 
-        setOutgoingCall({ conversationId, type, status: 'accepted' });
-        
-        // Open call window
-        openCallWindow(session.id, type);
-        
+        // control camera after
+        if (isGroup) {
+          setOutgoingCall({ conversationId, type, status: 'accepted' });
+          openCallWindow(session.id, type);
+        } else {
+          setOutgoingCall({ conversationId, type, status: 'ringing' });
+        }
+
         return { ok: true };
       } catch (error) {
         console.error('[Call] Failed to start call:', error);
@@ -135,7 +167,14 @@ export function useCallActions() {
         isStartingCall.current = false;
       }
     },
-    [client, createCallSession, setActiveCall, setOutgoingCall, reset, queryClient],
+    [
+      client,
+      createCallSession,
+      setActiveCall,
+      setOutgoingCall,
+      reset,
+      queryClient,
+    ],
   );
 
   const answerCall = useCallback(async () => {
@@ -161,26 +200,34 @@ export function useCallActions() {
 
       setActiveCall(incomingCall);
       setIncomingCall(null);
-      
+
       // Open call window
       openCallWindow(incomingCall.id, incomingCall.type);
     } catch (error) {
       console.error('[Call] Failed to answer call:', error);
     }
-  }, [acceptCallSession, joinCallSession, client, setActiveCall, setIncomingCall, incomingCall]);
+  }, [
+    acceptCallSession,
+    joinCallSession,
+    client,
+    setActiveCall,
+    setIncomingCall,
+    incomingCall,
+  ]);
 
   const rejectCall = useCallback(async () => {
-    if (!incomingCall || !client) return;
+    if (!incomingCall) return;
 
     try {
-      const call = client.call('default', incomingCall.id);
-      // Fire-and-forget both — don't let either block the UI reset
-      void rejectCallSession(incomingCall.id).catch((e) =>
-        console.warn('[Call] rejectCallSession error:', e),
-      );
-      void call.reject().catch((e) =>
-        console.warn('[Call] call.reject error:', e),
-      );
+      if (!incomingCall.isGroupCall && client) {
+        const call = client.call('default', incomingCall.id);
+        void rejectCallSession(incomingCall.id).catch((e) =>
+          console.warn('[Call] rejectCallSession error:', e),
+        );
+        void call
+          .reject()
+          .catch((e) => console.warn('[Call] call.reject error:', e));
+      }
     } finally {
       setIncomingCall(null);
     }
@@ -188,6 +235,7 @@ export function useCallActions() {
 
   const endCall = useCallback(async () => {
     const callId = activeCall?.id;
+    const isGroup = activeCall?.isGroupCall;
 
     // Reset store immediately so UI unblocks right away
     reset();
@@ -196,53 +244,86 @@ export function useCallActions() {
 
     if (client) {
       const call = client.call('default', callId);
-      void call.leave().catch((e) =>
-        console.warn('[Call] call.leave error:', e),
+      void call
+        .leave()
+        .catch((e) => console.warn('[Call] call.leave error:', e));
+    }
+    
+    if (isGroup) {
+      void leaveCallSession(callId).catch((e) =>
+        console.warn('[Call] leaveCallSession error:', e),
+      );
+    } else {
+      void endCallSession(callId).catch((e) =>
+        console.warn('[Call] endCallSession error:', e),
       );
     }
-    void endCallSession(callId).catch((e) =>
-      console.warn('[Call] endCallSession error:', e),
-    );
-  }, [activeCall, client, endCallSession, reset]);
+  }, [activeCall, client, endCallSession, leaveCallSession, reset]);
 
-  const joinOngoingCall = useCallback(async (callId: string, type: CallType = CallType.VIDEO) => {
-    if (!client) return;
-    try {
-      const call = client.call('default', callId);
-      await call.join();
+  const joinOngoingCall = useCallback(
+    async (callId: string, defaultType: CallType = CallType.VIDEO) => {
+      if (!client) return;
+      try {
+        let type = defaultType;
+        let existingCall = queryClient.getQueryData<any>(
+          queryKeys.calls.detail(callId),
+        );
 
-      void joinCallSession(callId).catch((e) =>
-        console.warn('[Call] joinCallSession error:', e),
-      );
+        if (!existingCall) {
+          try {
+            existingCall = await callService.getCallById(callId);
+            if (existingCall) {
+              queryClient.setQueryData(
+                queryKeys.calls.detail(callId),
+                existingCall,
+              );
+            }
+          } catch (e) {
+            console.warn(
+              '[Call] Failed to fetch call details dynamically, using default type:',
+              e,
+            );
+          }
+        }
 
-      if (type === CallType.AUDIO) {
-        await call.camera.disable();
-      } else {
-        await call.camera.enable();
+        if (existingCall?.type) {
+          type = existingCall.type as CallType;
+        }
+
+        const call = client.call('default', callId);
+        await call.join();
+
+        void joinCallSession(callId).catch((e) =>
+          console.warn('[Call] joinCallSession error:', e),
+        );
+
+        if (type === CallType.AUDIO) {
+          await call.camera.disable();
+        } else {
+          await call.camera.enable();
+        }
+
+        if (existingCall) {
+          setActiveCall(existingCall);
+        } else {
+          setActiveCall({
+            _id: callId,
+            id: callId,
+            conversationId: 'unknown',
+            initiatorId: 'unknown',
+            type: type,
+            status: 'accepted' as any,
+            participants: [],
+          } as any);
+        }
+
+        openCallWindow(callId, type);
+      } catch (error) {
+        console.error('[Call] Failed to join ongoing call:', error);
       }
-
-      const existingCall = queryClient.getQueryData(queryKeys.calls.detail(callId)) as any;
-      if (existingCall) {
-        setActiveCall(existingCall);
-      } else {
-        // Fallback: create a dummy active call state so UI opens
-        setActiveCall({
-          _id: callId,
-          id: callId,
-          conversationId: 'unknown',
-          initiatorId: 'unknown',
-          type: type,
-          status: 'accepted' as any,
-          participants: [],
-        } as any);
-      }
-      
-      // Open call window
-      openCallWindow(callId, type);
-    } catch (error) {
-      console.error('[Call] Failed to join ongoing call:', error);
-    }
-  }, [client, joinCallSession, setActiveCall, queryClient]);
+    },
+    [client, joinCallSession, setActiveCall, queryClient],
+  );
 
   return {
     startCall,
@@ -252,4 +333,3 @@ export function useCallActions() {
     joinOngoingCall,
   };
 }
-

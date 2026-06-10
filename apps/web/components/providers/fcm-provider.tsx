@@ -119,6 +119,8 @@ export const FCMProvider = ({ children }: { children: React.ReactNode }) => {
                     <Image
                       src={iconUrl}
                       alt="icon"
+                      width={40}
+                      height={40}
                       className="h-full w-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/logo.svg';

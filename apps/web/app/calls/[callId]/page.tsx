@@ -8,10 +8,11 @@ import {
   SpeakerLayout,
   StreamCall,
   useCallStateHooks,
+  useCall,
 } from '@stream-io/video-react-sdk';
 import { useCallClient } from '@/providers/call-provider';
 import { useCallActions } from '@/hooks/use-call-actions';
-import { Loader2, Users, Minimize2, Maximize2, X } from 'lucide-react';
+import { Loader2, Users, Minimize2, Maximize2, X, Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function CallPage() {
@@ -145,7 +146,7 @@ function CallViewContent() {
       {/* Floating Messenger Controls */}
       <div className="absolute bottom-12 left-0 right-0 z-30 flex justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 pointer-events-none">
         <div className="pointer-events-auto bg-neutral-900/90 backdrop-blur-3xl px-10 py-5 rounded-[2.5rem] border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.8)] flex items-center gap-8 ring-1 ring-white/5">
-          <CallControls 
+          <CustomCallControls 
             onLeave={() => {
               void endCall();
               window.close();
@@ -181,5 +182,69 @@ function CallTimer() {
     <span className="text-[11px] font-mono font-bold text-white/90 tabular-nums tracking-wider leading-none">
       {format(seconds)}
     </span>
+  );
+}
+
+function CustomCallControls({ onLeave }: { onLeave: () => void }) {
+  const call = useCall();
+  const { useCameraState, useMicrophoneState, useScreenShareState } = useCallStateHooks();
+  
+  const { status: camStatus } = useCameraState();
+  const { status: micStatus } = useMicrophoneState();
+  const { status: screenStatus } = useScreenShareState();
+  
+  const isCamEnabled = camStatus === 'enabled';
+  const isMicEnabled = micStatus === 'enabled';
+  const isScreenEnabled = screenStatus === 'enabled';
+
+  if (!call) return null;
+
+  return (
+    <div className="flex items-center gap-6">
+      <button
+        onClick={() => call.microphone.toggle()}
+        className={cn(
+          "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 shadow-lg",
+          isMicEnabled 
+            ? "bg-white/10 hover:bg-white/20 text-white" 
+            : "bg-white text-black"
+        )}
+      >
+        {isMicEnabled ? <Mic size={24} /> : <MicOff size={24} />}
+      </button>
+
+      <button
+        onClick={() => call.camera.toggle()}
+        className={cn(
+          "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 shadow-lg",
+          isCamEnabled 
+            ? "bg-white/10 hover:bg-white/20 text-white" 
+            : "bg-white text-black"
+        )}
+      >
+        {isCamEnabled ? <Video size={24} /> : <VideoOff size={24} />}
+      </button>
+
+      <button
+        onClick={() => call.screenShare.toggle()}
+        className={cn(
+          "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 shadow-lg",
+          isScreenEnabled 
+            ? "bg-sky-500 hover:bg-sky-400 text-white" 
+            : "bg-white/10 hover:bg-white/20 text-white"
+        )}
+      >
+        <MonitorUp size={24} />
+      </button>
+
+      <div className="w-[1px] h-8 bg-white/10 mx-2" />
+
+      <button
+        onClick={onLeave}
+        className="w-16 h-12 rounded-[1.5rem] bg-rose-500 hover:bg-rose-600 flex items-center justify-center text-white transition-all duration-200 active:scale-95 shadow-lg shadow-rose-500/20"
+      >
+        <PhoneOff size={24} />
+      </button>
+    </div>
   );
 }

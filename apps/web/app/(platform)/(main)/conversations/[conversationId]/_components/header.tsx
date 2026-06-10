@@ -26,7 +26,7 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
   const { userId: currentUserId } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { startCall } = useCallActions();
+  const { startCall, joinOngoingCall } = useCallActions();
 
   const handleStartCall = async (type: CallType) => {
     if (!conversation._id) return;
@@ -34,6 +34,11 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
     if (!result.ok) {
       toast.error(result.message);
     }
+  };
+
+  const handleJoinCall = async () => {
+    if (!conversation.activeCallId) return;
+    await joinOngoingCall(conversation.activeCallId);
   };
 
   /** ----------- OTHER USER (1–1) ----------- */
@@ -160,16 +165,29 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
 
         <div className="flex items-center gap-4 text-sky-500 cursor-pointer transition">
           <Search size={24} className="hover:text-sky-600" />
-          <MdCall
-            size={24}
-            className="hover:text-sky-600"
-            onClick={() => handleStartCall(CallType.AUDIO)}
-          />
-          <IoMdVideocam
-            size={24}
-            className="hover:text-sky-600"
-            onClick={() => handleStartCall(CallType.VIDEO)}
-          />
+          
+          {conversation.activeCallId ? (
+            <button
+              onClick={handleJoinCall}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold text-sm px-4 py-1.5 rounded-full flex items-center gap-1.5 transition duration-200 shadow-sm"
+            >
+              <IoMdVideocam size={16} />
+              <span>Tham gia</span>
+            </button>
+          ) : (
+            <>
+              <MdCall
+                size={24}
+                className="hover:text-sky-600"
+                onClick={() => handleStartCall(CallType.AUDIO)}
+              />
+              <IoMdVideocam
+                size={24}
+                className="hover:text-sky-600"
+                onClick={() => handleStartCall(CallType.VIDEO)}
+              />
+            </>
+          )}
 
           <Ellipsis
             size={32}

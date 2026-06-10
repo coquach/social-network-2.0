@@ -90,7 +90,7 @@ export function CallProvider({ children }: CallProviderProps) {
     return () => {
       active = false;
     };
-  }, [isLoaded, user, issueToken]);
+  }, [isLoaded, user, issueToken, client]);
 
   if (!client) {
     return (
