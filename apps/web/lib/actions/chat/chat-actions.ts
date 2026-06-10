@@ -2,13 +2,12 @@ import api from '@/lib/api-client';
 import {
   CursorPageResponse,
   CursorPagination,
-} from '@repo/shared';
-import {
   ConversationDTO,
-  CreateConversationForm,
-  UpdateConversationForm,
-} from '@/models/conversation/conversationDTO';
-import { CreateMessageForm, MessageDTO } from '@/models/message/messageDTO';
+  CreateConversationInput,
+  UpdateConversationInput,
+  CreateMessageInput,
+  MessageDTO,
+} from '@repo/shared';
 
 export const getConversationList = async (
   token: string,
@@ -72,7 +71,7 @@ export const getMessagesByConversationId = async (
 
 export const createConversation = async (
   token: string,
-  dto: CreateConversationForm
+  dto: CreateConversationInput
 ): Promise<ConversationDTO> => {
   try {
     const response = await api.post('/chats/conversations', dto, {
@@ -89,7 +88,7 @@ export const createConversation = async (
 export const updateConversation = async (
   token: string,
   conversationId: string,
-  dto: UpdateConversationForm
+  dto: UpdateConversationInput
 ) => {
   try {
     const response = await api.put(
@@ -215,7 +214,7 @@ export const markConversationAsRead = async (
 
 export const sendMessage = async (
   token: string,
-  dto: CreateMessageForm
+  dto: CreateMessageInput
 ): Promise<MessageDTO> => {
   try {
     const response = await api.post('/chats/messages', dto, {

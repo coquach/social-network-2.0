@@ -59,19 +59,23 @@ export function ContentToolbar({
   const latestKeywordRef = React.useRef(keyword);
 
   React.useEffect(() => {
-    setKeyword(filter.query ?? "");
+    const next = filter.query ?? "";
+    setKeyword((prev) => (prev === next ? prev : next));
   }, [filter.query]);
 
   React.useEffect(() => {
-    setDraftTargetType(filter.targetType ?? TargetType.POST);
+    const next = filter.targetType ?? TargetType.POST;
+    setDraftTargetType((prev) => (prev === next ? prev : next));
   }, [filter.targetType]);
 
   React.useEffect(() => {
-    setDraftStatus(filter.status ?? "all");
+    const next = filter.status ?? "all";
+    setDraftStatus((prev) => (prev === next ? prev : next));
   }, [filter.status]);
 
   React.useEffect(() => {
-    setDraftCreateAt(toDateInputValue(filter.createAt as any));
+    const next = toDateInputValue(filter.createAt as any);
+    setDraftCreateAt((prev) => (prev === next ? prev : next));
   }, [filter.createAt]);
 
   React.useEffect(() => {
@@ -90,14 +94,6 @@ export function ContentToolbar({
     },
     [onFilterChange],
   );
-  React.useEffect(() => {
-    applyFilters(
-      latestKeywordRef.current,
-      draftTargetType,
-      draftStatus,
-      draftCreateAt,
-    );
-  }, [applyFilters, draftTargetType, draftStatus, draftCreateAt]);
 
   const debouncedSearch = useDebouncedCallback(
     (text: string) => {

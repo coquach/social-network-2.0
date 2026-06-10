@@ -7,9 +7,8 @@ import { toast } from 'sonner';
 import { PencilLine, UserCircle2 } from 'lucide-react';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { UpdateGroupSchema } from '@/models/group/groupDTO';
-import type { UpdateGroupForm as UpdateGroupFormValues } from '@/models/group/groupDTO';
+import { GroupPermission, UpdateGroupInput } from '@repo/shared';
+import { UpdateGroupInputSchema } from '@repo/shared/schemas';
 import { MediaType } from '@/models/social/enums/social.enum';
 
 import { Button } from '@/components/ui/button';
@@ -76,11 +75,11 @@ export const UpdateGroupForm = ({ open }: UpdateGroupFormProps) => {
     defaultValues: {
       name: group?.name ?? '',
       description: group?.description ?? '',
-    } satisfies UpdateGroupFormValues,
+    } satisfies UpdateGroupInput,
 
     validators: {
       onSubmit: ({ value }) => {
-        const result = UpdateGroupSchema.safeParse({
+        const result = UpdateGroupInputSchema.safeParse({
           name: value.name?.trim() || undefined,
           description: value.description?.trim() || undefined,
         });

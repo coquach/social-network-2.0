@@ -1,9 +1,13 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useGetConversationList } from '@/hooks/use-conversation';
+import {
+  useConversations,
+  queryKeys,
+  ConversationDTO,
+  MessageDTO,
+} from '@repo/shared';
 import { useSocket } from '@/components/providers/socket-provider';
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
 import { ensureLastSeenMap } from '@/utils/ensure-last-seen-map';
 import {
   DropdownMenu,
@@ -14,7 +18,6 @@ import {
 import { MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
-import { MessageDTO } from '@/models/message/messageDTO';
 import { ConversationBox } from '../../conversations/_components/conversation-box';
 import { useAuth } from '@clerk/nextjs';
 
@@ -25,7 +28,7 @@ export const MessageDropdown = () => {
   const { userId } = useAuth();
   const { chatSocket } = useSocket();
   const queryClient = useQueryClient();
-  const { data, isLoading } = useGetConversationList({ limit: 10 });
+  const { data, isLoading } = useConversations({ limit: 10 });
   const [liveConversations, setLiveConversations] = useState<
     Record<string, ConversationDTO>
   >({});
@@ -74,7 +77,7 @@ export const MessageDropdown = () => {
       const updatedAt = message.createdAt ?? new Date().toISOString();
 
       queryClient.setQueriesData(
-        { queryKey: ['conversations'] },
+        { queryKey: queryKeys.conversations.list() },
         (old: any) => {
           if (!old?.pages) return old;
           return {

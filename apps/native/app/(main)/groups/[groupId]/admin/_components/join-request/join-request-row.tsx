@@ -22,13 +22,13 @@ export const JoinRequestRow = ({ request, canManage, approving, rejecting, onApp
             <View className="flex-row items-center flex-1">
                 {/* Giả sử bạn có avatarUrl trong request, nếu không dùng inviteeId để fetch */}
                 <View className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                    <Image source={{ uri: `https://api.dicebear.com/7.x/avataaars/svg?seed=${request.inviteeId}` }} className="w-full h-full" />
+                    <Image source={{ uri: `https://api.dicebear.com/7.x/avataaars/svg?seed=${request.inviteeId || 'unknown'}` }} className="w-full h-full" />
                 </View>
                 <View className="ml-3 flex-1">
                     <Text className="text-sm font-bold text-slate-900 dark:text-white" numberOfLines={1}>
-                        ID: {request.inviteeId.substring(0, 8)}...
+                        ID: {request.inviteeId ? `${request.inviteeId.substring(0, 8)}...` : 'N/A'}
                     </Text>
-                    <Text className="text-[10px] text-slate-500 uppercase">{request.status}</Text>
+                    <Text className="text-[10px] text-slate-500 uppercase">{request.status || 'UNKNOWN'}</Text>
                 </View>
             </View>
 

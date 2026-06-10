@@ -24,20 +24,24 @@ import {
 } from '@/components/ui/input-group';
 import { LiveRegion } from '@/components/ui/live-region';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetUser, useUpdateUser } from '@/hooks/use-user-hook';
-import { ImageIcon, Pencil } from '@/lib/icons';
+import {
+  useUser,
+  useUpdateProfile,
+  UpdateUserInput,
+  UserDTO,
+} from '@repo/shared';
 import {
   INTEREST_OPTIONS,
-  ProfileUpdateForm,
-  ProfileUpdateSchema,
-} from '@/models/user/userDTO';
+  UpdateUserInputSchema,
+} from '@repo/shared/schemas';
+import { ProfileUpdateSchema, ProfileUpdateForm } from '@/models/user/userDTO';
 import { useProfileModal } from '@/store/use-profile-modal';
-import { useUser } from '@clerk/nextjs';
+import { useUser as useClerkUser } from '@clerk/nextjs';
 import { useForm } from '@tanstack/react-form';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+import { ImageIcon, Pencil, Plus } from 'lucide-react';
 
 const isFile = (value: unknown): value is File => value instanceof File;
 
@@ -53,11 +57,9 @@ export const ProfileModal = () => {
     isLoading,
     isError,
     error,
-  } = useGetUser(profileModal.id as string);
-  const { mutateAsync: updateUser, isPending } = useUpdateUser(
-    profileModal.id as string,
-  );
-  const { user } = useUser();
+  } = useUser(profileModal.id as string);
+  const { mutateAsync: updateProfile, isPending } = useUpdateProfile();
+  const { user: clerkUser } = useClerkUser();
   const [customInterest, setCustomInterest] = useState('');
 
   const form = useForm({
@@ -84,10 +86,18 @@ export const ProfileModal = () => {
       },
     },
     onSubmit: async ({ value }) => {
-      const promise = updateUser(value, {
+      const { avatarUrl, coverImageUrl, ...rest } = value;
+      
+      const payload: UpdateUserInput & { uploadAvatar?: { file: File, type: any }, uploadCover?: { file: File, type: any } } = {
+        ...rest,
+        uploadAvatar: isFile(avatarUrl) ? { file: avatarUrl, type: 'IMAGE' } : undefined,
+        uploadCover: isFile(coverImageUrl) ? { file: coverImageUrl, type: 'IMAGE' } : undefined,
+      };
+
+      const promise = updateProfile(payload as any, {
         onSuccess: () => {
           profileModal.onClose();
-          user?.reload();
+          clerkUser?.reload();
         },
       });
 

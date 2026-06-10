@@ -6,6 +6,7 @@ import {
   useEndCall,
   useJoinCall,
   useRejectCall,
+  useLeaveCall,
   queryKeys,
   ConversationDTO,
 } from '@repo/shared';
@@ -62,6 +63,7 @@ export function useCallActions() {
   const { mutateAsync: acceptCallSession } = useAcceptCall();
   const { mutateAsync: rejectCallSession } = useRejectCall();
   const { mutateAsync: endCallSession } = useEndCall();
+  const { mutateAsync: leaveCallSession } = useLeaveCall();
   const { mutateAsync: joinCallSession } = useJoinCall();
 
   const startCall = useCallback(
@@ -90,12 +92,13 @@ export function useCallActions() {
         const conversation = queryClient.getQueryData<ConversationDTO>(
           queryKeys.conversations.detail(conversationId),
         );
+        const isGroup = conversation?.isGroup === true;
         const members = (conversation?.participants ?? []).map((id) => ({
           user_id: id,
         }));
 
         await call.getOrCreate({
-          ring: true,
+          ring: !isGroup,
           data: {
             members,
             custom: { type },
@@ -155,13 +158,19 @@ export function useCallActions() {
 
     try {
       const call = client.call('default', incomingCall.id);
-      // Fire-and-forget both — don't let either block the UI reset
-      void rejectCallSession(incomingCall.id).catch((e) =>
-        console.warn('[Call] rejectCallSession error:', e),
-      );
-      void call.reject().catch((e) =>
-        console.warn('[Call] call.reject error:', e),
-      );
+      
+      // If it's a 1-to-1 call, we explicitly reject on backend and Stream
+      if (!incomingCall.isGroupCall) {
+        // Fire-and-forget both — don't let either block the UI reset
+        void rejectCallSession(incomingCall.id).catch((e) =>
+          console.warn('[Call] rejectCallSession error:', e),
+        );
+        void call.reject().catch((e) =>
+          console.warn('[Call] call.reject error:', e),
+        );
+      }
+      // For group calls, rejecting just means "Dismiss", so we do nothing on the backend
+      // to avoid ending the call for everyone.
     } finally {
       setIncomingCall(null);
     }
@@ -169,6 +178,7 @@ export function useCallActions() {
 
   const endCall = useCallback(async () => {
     const callId = activeCall?.id;
+    const isGroup = activeCall?.isGroupCall;
 
     // Reset store immediately so UI unblocks right away
     reset();
@@ -181,10 +191,17 @@ export function useCallActions() {
         console.warn('[Call] call.leave error:', e),
       );
     }
-    void endCallSession(callId).catch((e) =>
-      console.warn('[Call] endCallSession error:', e),
-    );
-  }, [activeCall, client, endCallSession, reset]);
+    
+    if (isGroup) {
+      void leaveCallSession(callId).catch((e) =>
+        console.warn('[Call] leaveCallSession error:', e),
+      );
+    } else {
+      void endCallSession(callId).catch((e) =>
+        console.warn('[Call] endCallSession error:', e),
+      );
+    }
+  }, [activeCall, client, endCallSession, leaveCallSession, reset]);
 
   const joinOngoingCall = useCallback(async (callId: string, type: CallType = CallType.VIDEO) => {
     if (!client) return;

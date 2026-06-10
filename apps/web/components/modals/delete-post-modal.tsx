@@ -12,27 +12,34 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Trash2 } from '@/lib/icons';
 
-import { useDeletePost } from '@/hooks/use-post-hook';
+import { useDeletePost, useDeleteShare } from '@repo/shared';
 import { LiveRegion } from '@/components/ui/live-region';
 import { useDeletePostModal } from '@/store/use-post-modal';
 import { toast } from 'sonner';
-import { useDeleteSharePost } from '@/hooks/use-share-hook';
 
 export const DeletePostModal = () => {
   const { isOpen, closeModal, postId, isShare, shareId } = useDeletePostModal();
-  const { mutateAsync: deletePost, isPending: postPending } = useDeletePost(postId ?? '');
-  const { mutateAsync: deleteShare, isPending: sharePending } = useDeleteSharePost(shareId ?? '', postId ?? '');
+  
+  const deletePostMutation = useDeletePost();
+  const deleteShareMutation = useDeleteShare();
 
+  const isPending = deletePostMutation.isPending || deleteShareMutation.isPending;
 
   const handleDelete = async () => {
-    if (!postId) {
+    if (!postId && !shareId) {
       toast.error('Không xác định được bài viết cần xóa');
       return;
     }
 
-    const promise = isShare
-      ? deleteShare().then(() => closeModal())
-      : deletePost().then(() => closeModal());
+    const promise = isShare && shareId
+      ? deleteShareMutation.mutateAsync({ shareId, postId: postId ?? '' }).then(() => {
+          closeModal();
+          toast.success('Xóa chia sẻ bài viết thành công!');
+        })
+      : deletePostMutation.mutateAsync(postId ?? '').then(() => {
+          closeModal();
+          toast.success('Xóa bài viết thành công!');
+        });
 
     toast.promise(promise, {
       loading: 'Đang xóa bài viết...',
@@ -47,7 +54,7 @@ export const DeletePostModal = () => {
       }}
     >
       <LiveRegion 
-        message={postPending || sharePending ? 'Đang xóa bài viết...' : ''} 
+        message={isPending ? 'Đang xóa bài viết...' : ''} 
         politeness="polite"
       />
       <AlertDialogContent className="sm:max-w-sm overflow-hidden rounded-2xl border-rose-200 p-0">
@@ -71,7 +78,7 @@ export const DeletePostModal = () => {
         <AlertDialogFooter className="border-t border-rose-100 bg-white/70 px-4 py-3">
           <AlertDialogCancel
             onClick={closeModal}
-            disabled={postPending || sharePending}
+            disabled={isPending}
             className="border-rose-200 text-slate-700 hover:bg-rose-50"
           >
             Hủy
@@ -82,7 +89,7 @@ export const DeletePostModal = () => {
               event.preventDefault();
               await handleDelete();
             }}
-            disabled={postPending || sharePending}
+            disabled={isPending}
             className="bg-rose-600 text-white hover:bg-rose-700"
           >
             Xóa

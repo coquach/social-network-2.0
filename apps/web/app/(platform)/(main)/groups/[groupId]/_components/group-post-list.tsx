@@ -6,9 +6,8 @@ import { useInView } from "react-intersection-observer";
 import { ErrorFallback } from "@/components/error-fallback";
 import { PostCardFull } from "@/components/post/post-card-full";
 import { useGroupPermissionContext } from "@/contexts/group-permission-context";
-import { useGetPostByGroup } from "@/hooks/use-post-hook";
-import { MembershipStatus } from "@/models/group/groupDTO";
-import { PostGroupStatus } from "@/models/social/enums/social.enum";
+import { useGroupPosts, PostGroupStatus, MembershipStatus } from "@repo/shared";
+import { mapPostToSnapshot } from "@/utils/map-post-to-snapshot";
 
 export const GroupPostList = ({ groupId }: { groupId: string }) => {
   const { group, role } = useGroupPermissionContext();
@@ -26,10 +25,9 @@ export const GroupPostList = ({ groupId }: { groupId: string }) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetPostByGroup(
+  } = useGroupPosts(
     groupId,
-    { limit: 10, status: PostGroupStatus.PUBLISHED },
-    { enabled: canViewPosts }
+    { limit: 10, status: PostGroupStatus.PUBLISHED }
   );
 
   const { ref, inView } = useInView();
@@ -42,7 +40,10 @@ export const GroupPostList = ({ groupId }: { groupId: string }) => {
   }, [inView, fetchNextPage, isFetchingNextPage, hasNextPage, canViewPosts]);
 
   const allPosts = useMemo(
-    () => data?.pages.flatMap((page) => page.data) ?? [],
+    () => {
+      const posts = data?.pages.flatMap((page) => page.data) ?? [];
+      return posts.map((post) => mapPostToSnapshot(post));
+    },
     [data]
   );
 

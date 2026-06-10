@@ -1,6 +1,5 @@
 'use client';
-import { GroupMemberDTO } from '@/models/group/groupMemberDTO';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
+import { GroupMemberDTO, GroupPermission } from '@repo/shared';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';

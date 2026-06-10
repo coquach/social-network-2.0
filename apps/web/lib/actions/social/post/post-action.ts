@@ -1,13 +1,15 @@
 import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { Emotion, PostGroupStatus } from '@/models/social/enums/social.enum';
 import {
-  CreatePostForm,
+  CursorPageResponse,
+  CursorPagination,
+  Emotion,
+  PostGroupStatus,
+  CreatePostInput,
   EditHistoryDTO,
   PostDTO,
   PostSnapshotDTO,
-  UpdatePostForm,
-} from '@/models/social/post/postDTO';
+  UpdatePostInput,
+} from '@repo/shared';
 
 export interface GetPostQuery extends CursorPagination {
   feeling?: Emotion;
@@ -104,7 +106,7 @@ export const getPostsByGroup = async (
 
 export const createPost = async (
   token: string,
-  data: CreatePostForm,
+  data: CreatePostInput,
 ): Promise<PostSnapshotDTO> => {
   try {
     const response = await api.post(`/posts`, data, {
@@ -121,7 +123,7 @@ export const createPost = async (
 
 export const createPostInGroup = async (
   token: string,
-  data: CreatePostForm,
+  data: CreatePostInput,
 ): Promise<{
   post: PostSnapshotDTO;
   status: PostGroupStatus;
@@ -144,7 +146,7 @@ export const createPostInGroup = async (
 export const updatePost = async (
   token: string,
   postId: string,
-  data: UpdatePostForm,
+  data: UpdatePostInput,
 ): Promise<PostSnapshotDTO> => {
   try {
     const response = await api.patch(`/posts/${postId}`, data, {

@@ -18,19 +18,107 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageDTO } from '@/models/message/messageDTO';
-import { useChatStore, type MessageDTO as SharedMessageDTO } from '@repo/shared';
+import { useChatStore, CallType, type MessageDTO } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import clsx from 'clsx';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { Copy, Info, MoreHorizontal, Pin, Reply, Trash2 } from 'lucide-react';
+import { Copy, Download, FileIcon, Info, MoreHorizontal, Music, Pin, Reply, Trash2 } from 'lucide-react';
+import { MdCall } from 'react-icons/md';
+import { IoMdVideocam } from 'react-icons/io';
 import Image from 'next/image';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { HiForward } from 'react-icons/hi2';
 import { toast } from 'sonner';
 import { MessageReply } from './message-reply';
 import { useImageViewerModal } from '@/store/use-image-viewer-modal';
+import { useCallActions } from '@/hooks/use-call-actions';
+
+const formatDuration = (seconds?: number) => {
+  if (!seconds) return null;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
+function CallMessageCard({
+  message,
+  isOwn,
+  onStartCall,
+}: {
+  message: MessageDTO;
+  isOwn: boolean;
+  onStartCall: (type: CallType) => void;
+}) {
+  const meta = (message as any).systemMeta;
+  const isVideo = meta?.callType === "video" || meta?.callType === "VIDEO";
+  const duration = meta?.durationSec;
+  const endedReason = meta?.endedReason;
+  const callStatus = meta?.callStatus;
+
+  let statusText = "Cuộc gọi thoại";
+  if (isVideo) {
+    statusText = "Cuộc gọi video";
+  }
+
+  const isMissed = 
+    callStatus === "MISSED" || 
+    endedReason === "MISSED" || 
+    endedReason === "REJECTED";
+    
+  const isCancelled = callStatus === "CANCELLED" || endedReason === "CANCELLED";
+
+  if (isMissed) {
+    statusText = isVideo ? "Cuộc gọi video nhỡ" : "Cuộc gọi nhỡ";
+  } else if (isCancelled) {
+    statusText = isVideo ? "Cuộc gọi video đã hủy" : "Cuộc gọi thoại đã hủy";
+  } else {
+    statusText = isVideo ? "Cuộc gọi video đã kết thúc" : "Cuộc gọi thoại đã kết thúc";
+  }
+
+  const durationStr = duration && duration > 0 ? formatDuration(duration) : null;
+
+  return (
+    <div className="flex items-center gap-3 py-1 px-1 min-w-[200px]">
+      <div className="flex-1 justify-center">
+        <div className={clsx("text-[14px] font-medium", isOwn ? "text-white" : "text-slate-800")}>
+          {statusText}
+        </div>
+        {durationStr ? (
+          <div className={clsx("text-[11px] mt-0.5", isOwn ? "text-white/80" : "text-slate-500")}>
+            Thời lượng: {durationStr}
+          </div>
+        ) : (
+          <div className={clsx("text-[11px] mt-0.5 opacity-80", isOwn ? "text-white/70" : "text-slate-500")}>
+            {isMissed ? "Nhấn để gọi lại" : "Nhấn để gọi"}
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={() => onStartCall(isVideo ? CallType.VIDEO : CallType.AUDIO)}
+        className={clsx(
+          "h-11 w-11 flex items-center justify-center rounded-2xl transition-colors",
+          isOwn ? "bg-white/20 hover:bg-white/30" : "bg-white hover:bg-slate-50"
+        )}
+      >
+        {isVideo ? (
+          <IoMdVideocam className={clsx("h-5 w-5", isOwn ? "text-white" : "text-sky-500")} />
+        ) : (
+          <MdCall className={clsx("h-5 w-5", isOwn ? "text-white" : "text-sky-500")} />
+        )}
+      </button>
+    </div>
+  );
+}
+
+const formatFileSize = (bytes?: number) => {
+  if (!bytes) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 const MAX_SEEN_AVATARS = 3;
 
@@ -55,8 +143,9 @@ export const MessageBox = memo(function MessageBox({
 
   const [openAlert, setOpenAlert] = useState(false);
   const { setReplyTo } = useChatStore();
+  const { startCall } = useCallActions();
 
-  const handleReply = useCallback(() => setReplyTo(data as unknown as SharedMessageDTO), [data, setReplyTo]);
+  const handleReply = useCallback(() => setReplyTo(data), [data, setReplyTo]);
   const handleDeleteClick = useCallback(() => setOpenAlert(true), []);
 
   const handleCopy = useCallback(async () => {
@@ -240,54 +329,139 @@ export const MessageBox = memo(function MessageBox({
                       : 'grid-cols-2'
                   )}
                 >
-                  {attachments.map((att, i) =>
-                    att.mimeType?.startsWith('image') ? (
+                  {attachments.map((att, i) => {
+                    const isImage = att.mimeType?.startsWith('image');
+                    const isVideo = att.mimeType?.startsWith('video');
+                    const isAudio = att.mimeType?.startsWith('audio');
+
+                    if (isImage) {
+                      return (
+                        <div
+                          key={`${att.url}-${i}`}
+                          className={clsx(
+                            'overflow-hidden rounded-lg border bg-black/5',
+                            attachments.length === 1
+                              ? 'max-w-[360px]'
+                              : 'max-w-[220px]'
+                          )}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => openImageViewer(att.url, att.fileName)}
+                            className="block w-full cursor-zoom-in"
+                            aria-label="Xem ảnh"
+                          >
+                            <Image
+                              src={att.url}
+                              alt={att.fileName || ''}
+                              width={360}
+                              height={360}
+                              loading="lazy"
+                              className={clsx(
+                                'w-full object-cover',
+                                attachments.length === 1 ? 'h-64' : 'h-36'
+                              )}
+                            />
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    if (isVideo) {
+                      return (
+                        <video
+                          key={`${att.url}-${i}`}
+                          src={att.url}
+                          controls
+                          className={clsx(
+                            'rounded-lg border bg-black/5 object-cover',
+                            attachments.length === 1
+                              ? 'h-64 max-w-[360px]'
+                              : 'h-36 max-w-[220px]'
+                          )}
+                        />
+                      );
+                    }
+
+                    if (isAudio) {
+                      return (
+                        <div
+                          key={`${att.url}-${i}`}
+                          className={clsx(
+                            'flex items-center gap-2 p-3 rounded-2xl min-w-[240px]',
+                            isOwn ? 'bg-sky-500' : 'bg-gray-100'
+                          )}
+                        >
+                          <div className={clsx("h-10 w-10 flex items-center justify-center rounded-full", isOwn ? "bg-white/20 text-white" : "bg-white text-sky-600")}>
+                            <Music className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <audio
+                              src={att.url}
+                              controls
+                              className="h-8 w-full accent-sky-500"
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Default to file
+                    return (
                       <div
                         key={`${att.url}-${i}`}
                         className={clsx(
-                          'overflow-hidden rounded-lg border bg-black/5',
-                          attachments.length === 1
-                            ? 'max-w-[360px]'
-                            : 'max-w-[220px]'
+                          'flex items-center gap-3 p-3 rounded-2xl min-w-[200px] group/file transition-all',
+                          isOwn ? 'bg-sky-500' : 'bg-gray-100'
                         )}
                       >
-                        <button
-                          type="button"
-                          onClick={() => openImageViewer(att.url, att.fileName)}
-                          className="block w-full cursor-zoom-in"
-                          aria-label="Xem ảnh"
+                        <div className={clsx("h-10 w-10 flex items-center justify-center rounded-full transition-colors", isOwn ? "bg-white/20 text-white" : "bg-white text-gray-500 group-hover/file:bg-sky-100 group-hover/file:text-sky-600")}>
+                          <FileIcon className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={clsx("text-sm font-medium truncate", isOwn ? "text-white" : "text-gray-900")}>
+                            {att.fileName}
+                          </div>
+                          <div className={clsx("text-[10px]", isOwn ? "text-white/70" : "text-gray-500")}>
+                            {formatFileSize(att.size)}
+                          </div>
+                        </div>
+                        <a
+                          href={att.url}
+                          download={att.fileName}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={clsx("h-8 w-8 flex items-center justify-center rounded-full transition-all", isOwn ? "text-white/70 hover:text-white hover:bg-white/20" : "text-gray-400 hover:text-sky-600 hover:bg-white")}
+                          title="Tải về"
                         >
-                          <Image
-                            src={att.url}
-                            alt={att.fileName || ''}
-                            width={360}
-                            height={360}
-                            loading="lazy"
-                            className={clsx(
-                              'w-full object-cover',
-                              attachments.length === 1 ? 'h-64' : 'h-36'
-                            )}
-                          />
-                        </button>
+                          <Download className="h-4 w-4" />
+                        </a>
                       </div>
-                    ) : (
-                      <video
-                        key={`${att.url}-${i}`}
-                        src={att.url}
-                        controls
-                        className={clsx(
-                          'rounded-lg border bg-black/5 object-cover',
-                          attachments.length === 1
-                            ? 'h-64 max-w-[360px]'
-                            : 'h-36 max-w-[220px]'
-                        )}
-                      />
-                    )
-                  )}
+                    );
+                  })}
                 </div>
               )}
 
-              {data.content && (
+              {(data as any).messageType === 'system_call' && (
+                <div
+                  className={clsx(
+                    'max-w-full rounded-2xl px-3 py-2',
+                    isOwn
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-gray-100 text-gray-900'
+                  )}
+                >
+                  <CallMessageCard
+                    message={data}
+                    isOwn={isOwn}
+                    onStartCall={(type) => {
+                      startCall(data.conversationId, type);
+                    }}
+                  />
+                </div>
+              )}
+
+              {data.content && (data as any).messageType !== 'system_call' && (
                 <div
                   className={clsx(
                     'text-sm inline-block overflow-hidden py-2 px-3 whitespace-pre-line break-all',

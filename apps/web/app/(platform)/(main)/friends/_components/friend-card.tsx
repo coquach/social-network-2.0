@@ -2,21 +2,15 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser, UserDTO } from '@repo/shared';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
-type FriendCardUser = {
+type FriendCardUser = Partial<UserDTO> & {
   id: string;
   firstName: string;
   lastName: string;
-  avatarUrl?: string;
-  coverImageUrl?: string;
-  coverImage?: {
-    url?: string;
-    publicId?: string;
-  };
 };
 
 interface FriendCardProps {
@@ -32,7 +26,7 @@ export const FriendCard = ({ userId, user, action }: FriendCardProps) => {
     isError,
     error,
     refetch,
-  } = useGetUser(userId, {
+  } = useUser(userId, {
     enabled: !user,
   });
   const router = useRouter();

@@ -1,33 +1,34 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useUpdatePost, PostSnapshotDTO, UpdatePostInput, Audience } from '@repo/shared';
+import { LiveRegion } from '@/components/ui/live-region';
+import {
+  UpdatePostInputSchema,
+} from '@repo/shared/schemas';
+import { useUpdatePostModal } from '@/store/use-post-modal';
 import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { AudienceSelect } from '@/components/audience-select';
 import { LargeAvatar } from '@/components/avatar';
-import { FormTextarea } from '@/components/form/form-textarea';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from '@/components/ui/input-group';
+import { cn } from '@/lib/utils';
+import { countChars } from '@/utils/count-chars';
 
-import { useUpdatePost } from '@/hooks/use-post-hook';
-import { Audience } from '@/models/social/enums/social.enum';
-import { LiveRegion } from '@/components/ui/live-region';
-import {
-  PostSnapshotDTO,
-  UpdatePostForm,
-  UpdatePostSchema,
-} from '@/models/social/post/postDTO';
-import { useUpdatePostModal } from '@/store/use-post-modal';
+const MAX_WORDS = 2000;
 
 // Hoisted helper to prevent re-creation of default values
-const getDefaultFormValues = (snapshot?: PostSnapshotDTO): UpdatePostForm => ({
+const getDefaultFormValues = (snapshot?: PostSnapshotDTO): UpdatePostInput => ({
   content: snapshot?.content ?? '',
   audience: snapshot?.audience ?? Audience.PUBLIC,
 });
@@ -37,7 +38,7 @@ export const UpdatePostModal = () => {
 
 
   const snapshot = data as PostSnapshotDTO;
-  const form = useForm<UpdatePostForm>({
+  const form = useForm<UpdatePostInput>({
     defaultValues: getDefaultFormValues(snapshot),
   });
 
@@ -47,16 +48,25 @@ export const UpdatePostModal = () => {
     form.reset(getDefaultFormValues(snapshot));
   }, [snapshot, form]);
 
-  const handleSubmit = (vals: UpdatePostForm) => {
+  const handleSubmit = (vals: UpdatePostInput) => {
     // Validate with Zod
-    const result = UpdatePostSchema.safeParse(vals);
+    const result = UpdatePostInputSchema.safeParse(vals);
     if (!result.success) {
-      toast.error('Dữ liệu không hợp lệ');
+      toast.error('Nội dung không hợp lệ');
       return;
     }
-    const promise = updatePost(result.data).then(() => closeModal());
-    toast.promise(promise, { loading: 'Đang cập nhật bài viết...' });
+
+    const p = updatePost(vals).then(() => {
+      toast.success('Đã cập nhật bài viết!');
+      closeModal();
+    });
+
+    toast.promise(p, {
+      loading: 'Đang cập nhật bài viết...',
+    });
   };
+
+  const currentContent = form.watch('content') ?? '';
 
   return (
     <Dialog open={isOpen} onOpenChange={closeModal}>
@@ -64,35 +74,54 @@ export const UpdatePostModal = () => {
         message={isPending ? 'Đang cập nhật bài viết...' : ''} 
         politeness="polite"
       />
-      <DialogContent className="sm:max-w-xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
         <DialogHeader className="shrink-0 border-b border-sky-100 bg-white/95 px-4 py-3">
-          <DialogTitle className="text-lg font-semibold text-center">
+          <DialogTitle className="text-base font-semibold text-center">
             Chỉnh sửa bài viết
           </DialogTitle>
+          <DialogDescription className="text-center text-xs text-gray-500 mt-1">
+             Cập nhật nội dung hoặc chế độ hiển thị cho bài viết của bạn.
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <div className="flex flex-row items-start gap-4 p-4">
-            <LargeAvatar userId={snapshot?.userId} hasBorder />
-
-            <div className="flex-1 space-y-2 p-2">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <LargeAvatar userId={snapshot?.userId ?? ''} />
+            <div>
               <AudienceSelect
-                value={form.watch('audience') as Audience}
-                onChange={(val) => form.setValue('audience', val as never)}
-              />
-
-              <FormTextarea
-                id="content"
-                placeholder="Cập nhật nội dung..."
-                defaultValue={form.getValues('content')}
-                className="w-full resize-none bg-transparent text-sm placeholder-gray-400 text-gray-700"
-                errors={form.formState.errors}
-                {...form.register('content')}
+                value={form.watch('audience') ?? Audience.PUBLIC}
+                onChange={(val) => form.setValue('audience', val as Audience)}
               />
             </div>
           </div>
 
-          <DialogFooter>
+          <InputGroup className="rounded-xl">
+            <InputGroupTextarea
+              {...form.register('content')}
+              placeholder="Bạn đang nghĩ gì?"
+              rows={5}
+              className={cn(
+                'max-h-40 resize-none overflow-y-auto min-h-10',
+                'whitespace-pre-wrap wrap-break-word'
+              )}
+              disabled={isPending}
+            />
+            <InputGroupAddon align="block-end">
+              <InputGroupText className="tabular-nums">
+                {countChars(currentContent)}/{MAX_WORDS}
+              </InputGroupText>
+            </InputGroupAddon>
+          </InputGroup>
+
+          <DialogFooter className="mt-4 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeModal}
+              disabled={isPending}
+            >
+              Hủy
+            </Button>
             <Button
               type="submit"
               disabled={isPending}

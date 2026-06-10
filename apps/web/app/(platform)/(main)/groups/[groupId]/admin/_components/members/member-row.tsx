@@ -2,21 +2,21 @@
 
 import { useState } from 'react';
 
-import { GroupMemberStatus } from '@/models/group/enums/group-member-status.enum';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
-import { GroupMemberDTO } from '@/models/group/groupMemberDTO';
-
-import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 import {
+  GroupMemberStatus,
+  GroupPermission,
+  GroupRole,
+  GroupMemberDTO,
   useBanMember,
   useChangeMemberPermission,
   useChangeMemberRole,
   useRemoveMember,
   useUnbanMember,
+  useUser,
+  UserDTO,
 } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
-import { UserDTO } from '@/models/user/userDTO';
+
+import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 
 import {
   AlertDialog,
@@ -58,7 +58,7 @@ export const GroupAdminMemberRow = ({
 }: AdminMemberRowProps) => {
   const { role: currentRole, can } = useGroupPermissionContext();
 
-  const { data: user, isLoading: userLoading } = useGetUser(member.userId);
+  const { data: user, isLoading: userLoading } = useUser(member.userId);
 
   const [removeOpen, setRemoveOpen] = useState(false);
   const [banOpen, setBanOpen] = useState(false);
@@ -306,7 +306,7 @@ export const GroupAdminMemberRow = ({
   );
 };
 
-const getDisplayName = (user?: UserDTO): string => {
+const getDisplayName = (user?: Partial<UserDTO> | null): string => {
   if (!user) return '';
   if (user.firstName || user.lastName) {
     return `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();

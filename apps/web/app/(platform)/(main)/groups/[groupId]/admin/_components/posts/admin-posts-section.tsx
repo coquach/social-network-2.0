@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { useGetPostByGroup } from '@/hooks/use-post-hook';
-
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { PostGroupStatus } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { GroupPermission, useGroupPosts, PostGroupStatus } from '@repo/shared';
+import { mapPostToSnapshot } from '@/utils/map-post-to-snapshot';
 
 import { PostCardFull } from '@/components/post/post-card-full';
 import { Badge } from '@/components/ui/badge';
@@ -39,15 +36,11 @@ export const GroupAdminPostsSection = ({ groupId }: Props) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetPostByGroup(groupId, {
-    limit: 10,
-    status: PostGroupStatus.PENDING,
-  });
+  } = useGroupPosts(groupId, { status: PostGroupStatus.PENDING, limit: 10 });
 
-  const allPosts: PostSnapshotDTO[] = useMemo(() => {
-    if (!data?.pages) return [];
-    return data.pages.flatMap((p) => p.data ?? []);
-  }, [data]);
+  const allPosts = (data?.pages ?? [])
+    .flatMap((p) => p.data ?? [])
+    .map((post) => mapPostToSnapshot(post));
 
   // Sentinel cho infinite scroll ngang (ở cuối carousel)
   const { ref, inView } = useInView({ threshold: 0 });

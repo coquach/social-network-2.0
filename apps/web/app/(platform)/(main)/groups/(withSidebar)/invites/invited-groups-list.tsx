@@ -11,8 +11,8 @@ import {
   useAcceptGroupInvite,
   useDeclineGroupInvite,
   useInvitedGroups,
+  type InvitedGroupDTO,
 } from '@repo/shared';
-import { InvitedGroupDTO } from '@/models/group/groupInviteDTO';
 
 type InvitedGroupCardProps = {
   group: InvitedGroupDTO;

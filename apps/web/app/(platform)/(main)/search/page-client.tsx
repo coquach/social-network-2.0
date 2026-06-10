@@ -11,14 +11,15 @@ import {
   useSearchGroups,
   useSearchPosts,
   useSearchUsers,
+  GroupDTO,
+  GroupSummaryDTO,
+  GroupPrivacy,
+  GroupStatus,
+  PostSnapshotDTO,
+  Emotion,
+  UserDTO,
 } from '@repo/shared';
 import { SearchGroupSortBy } from '@/lib/actions/search/search-actions';
-import { GroupDTO, GroupSummaryDTO } from '@/models/group/groupDTO';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { GroupStatus } from '@/models/group/enums/group-status.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { Emotion } from '@/models/social/enums/social.enum';
-import { UserDTO } from '@/models/user/userDTO';
 import { UserSearchCard } from './_components/user-search-card';
 
 type SearchType = 'posts' | 'groups' | 'users';
@@ -27,25 +28,25 @@ const SEARCH_TYPES: SearchType[] = ['posts', 'groups', 'users'];
 export default function SearchPageClient() {
   const params = useSearchParams();
 
-  const rawQ = params.get('q') ?? '';
+  const rawQ = params?.get('q') ?? '';
   const q = rawQ.trim();
-  const paramType = params.get('type') as SearchType | null;
+  const paramType = params?.get('type') as SearchType | null;
   const type: SearchType = SEARCH_TYPES.includes(paramType ?? 'posts')
     ? (paramType as SearchType)
     : 'posts';
 
   // post filters
-  const emotionParam = params.get('emotion');
+  const emotionParam = params?.get('emotion');
   const emotion = emotionParam ? (emotionParam as Emotion) : undefined;
 
   // group filters
-  const privacyParam = params.get('privacy') as GroupPrivacy | null;
-  const sortByParam = params.get('sortBy') as SearchGroupSortBy | null;
+  const privacyParam = params?.get('privacy') as GroupPrivacy | null;
+  const sortByParam = params?.get('sortBy') as SearchGroupSortBy | null;
   const privacy = privacyParam ?? undefined;
   const sortBy = sortByParam ?? undefined;
 
   // user filters
-  const isActiveStr = params.get('isActive') ?? undefined;
+  const isActiveStr = params?.get('isActive') ?? undefined;
   const isActive =
     isActiveStr === 'true' ? true : isActiveStr === 'false' ? false : undefined;
 
@@ -88,7 +89,9 @@ export default function SearchPageClient() {
       <div className="mb-5">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div className="text-xl font-bold text-sky-500">Kết quả tìm kiếm</div>
+            <div className="text-xl font-bold text-sky-500">
+              Kết quả tìm kiếm
+            </div>
             <div className="text-sm text-slate-500">
               {q ? (
                 <>

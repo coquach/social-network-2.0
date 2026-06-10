@@ -1,8 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetUser } from "@/hooks/use-user-hook";
-import { ConversationDTO } from "@/models/conversation/conversationDTO";
+import { useUser, ConversationDTO } from "@repo/shared";
 import { ensureLastSeenMap } from "@/utils/ensure-last-seen-map";
 import { useAuth } from "@clerk/nextjs";
 import clsx from "clsx";
@@ -37,10 +36,10 @@ export const ConversationBox = ({ data, selected }: ConversationBoxProps) => {
     return other || undefined;
   }, [isGroup, data.participants, currentUserId]);
 
-  const { data: otherUser } = useGetUser(otherUserId ?? "");
+  const { data: otherUser } = useUser(otherUserId ?? "");
 
   /** ----------- SENDER INFO ----------- */
-  const { data: senderUser } = useGetUser(lastMessage?.senderId ?? "");
+  const { data: senderUser } = useUser(lastMessage?.senderId ?? "");
 
   /** ----------- CLICK ----------- */
   const handleClick = useCallback(() => {

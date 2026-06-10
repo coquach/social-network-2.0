@@ -1,10 +1,7 @@
 'use client';
 import { Loader } from "@/components/loader-componnet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGroupMembers } from '@repo/shared';
-import { GroupMemberStatus } from "@/models/group/enums/group-member-status.enum";
-import { GroupRole } from "@/models/group/enums/group-role.enum";
-import { GroupMemberDTO } from "@/models/group/groupMemberDTO";
+import { useGroupMembers, GroupMemberStatus, GroupRole, GroupMemberDTO } from '@repo/shared';
 import { useEffect, useMemo } from "react";
 import { useInView } from "react-intersection-observer";
 import { MemberCard } from "./_components/member-card";

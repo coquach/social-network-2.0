@@ -21,13 +21,13 @@ export const EmotionDetailClient = ({
   targetId,
   targetType,
 }: EmotionDetailClientProps) => {
-  const detailQuery = useEmotionAnalysis(targetType, targetId);
+  const detailQuery = useEmotionAnalysis(targetType as TargetType, targetId);
   const summary = detailQuery.data;
 
   return (
     <div className="mx-auto max-w-280 space-y-6 bg-slate-50/50 px-4 py-8 sm:py-10">
       <div className="flex flex-wrap items-center gap-3">
-        <Button
+      <Button
           variant="outline"
           className="border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
           asChild

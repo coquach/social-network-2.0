@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 
-import { useGroupMembers } from '@repo/shared';
-import { GroupMemberStatus } from '@/models/group/enums/group-member-status.enum';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
-import { GroupMemberDTO } from '@/models/group/groupMemberDTO';
+import { useGroupMembers, GroupMemberStatus, GroupRole, GroupMemberDTO } from '@repo/shared';
 
 import { Skeleton } from '@/components/ui/skeleton';
 

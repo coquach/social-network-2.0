@@ -1,20 +1,22 @@
 'use client';
 
-import { useDisReact, useReact } from '@/hooks/use-reaction-hook';
-import { Reaction, reactionMap } from '@/lib/types/reaction';
-import { cn } from '@/lib/utils';
 import {
+  useDisReact,
+  useReact,
   ReactionType,
   RootType,
   TargetType,
-} from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
-import { useCommentModal, useCreateShareModal } from '@/store/use-post-modal';
+  PostSnapshotDTO,
+  SharePostSnapshotDTO,
+} from '@repo/shared';
+import { Reaction, reactionMap } from '@/lib/types/reaction';
+import { cn } from '@/lib/utils';
+import { useCreateShareModal } from '@/store/use-post-modal';
 import { MessageCircle, Share2, ThumbsUp } from '@/lib/icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ReactionHoverPopup } from '../reaction-hover-popup';
 import { Button } from '../ui/button';
+import { useRouter } from 'next/navigation';
 
 // Hoisted constants to prevent re-computation
 const LIKE_REACTION = reactionMap.get(ReactionType.LIKE) ?? null;
@@ -36,10 +38,10 @@ export default function PostActions({
   isShare,
   disableCommentModal = false,
 }: PostActionsProps) {
-  const { mutateAsync: react } = useReact(rootId);
-  const { mutateAsync: disReact } = useDisReact(rootId);
+  const { mutateAsync: react } = useReact();
+  const { mutateAsync: disReact } = useDisReact();
+  const router = useRouter();
 
-  const { openModal: openCommentModal } = useCommentModal();
   const { openModal: openCreateShareModal } = useCreateShareModal();
 
   const targetType: TargetType = useMemo(() => {
@@ -87,12 +89,12 @@ export default function PostActions({
     async (next: Reaction | null, prev: Reaction | null) => {
       try {
         if (!next) {
-          await disReact({ targetId: rootId, targetType });
+          await disReact({ targetId: rootId, targetType: targetType as any });
         } else {
           await react({
             targetId: rootId,
-            targetType,
-            reactionType: next.type,
+            targetType: targetType as any,
+            reactionType: next.type as any,
           });
         }
       } catch (e) {
@@ -139,9 +141,10 @@ export default function PostActions({
   );
 
   const handleOpenComment = useCallback(() => {
-      if (disableCommentModal) return;
-      openCommentModal(rootId, rootType, data.userId ,data);
-    }, [disableCommentModal, openCommentModal, rootId, rootType, data]);
+    if (disableCommentModal) return;
+    const path = rootType === RootType.POST ? `/posts/${rootId}` : `/shares/${rootId}`;
+    router.push(path, { scroll: false });
+  }, [disableCommentModal, rootId, rootType, router]);
 
   return (
     <div className="relative border-t border-gray-100 pt-2">

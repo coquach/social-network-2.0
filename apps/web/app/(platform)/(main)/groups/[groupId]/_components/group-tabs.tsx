@@ -3,7 +3,7 @@
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
+import { GroupRole } from '@repo/shared';
 
 type GroupTabId = 'discussion' | 'members' | 'admin';
 
@@ -36,7 +36,7 @@ const TABS: GroupTab[] = [
 ];
 
 export const GroupTabs = () => {
-  const { groupId } = useParams<{ groupId: string }>();
+  const { groupId } = useParams<{ groupId: string }>() as { groupId: string };
   const pathname = usePathname();
   const router = useRouter();
   const { role } = useGroupPermissionContext();
@@ -53,7 +53,7 @@ export const GroupTabs = () => {
       if (href === pathname) return;
       router.push(href);
     },
-    [basePath, pathname, router]
+    [basePath, pathname, router],
   );
 
   const getIsActive = (tab: GroupTab) => {
@@ -106,6 +106,3 @@ export const GroupTabs = () => {
     </div>
   );
 };
-
-
-

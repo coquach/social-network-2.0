@@ -53,7 +53,7 @@ export function AppSidebar({ role }: { role: Role }) {
             <SidebarMenu>
               {items.map((item) => {
                 const active =
-                  pathname === item.url || pathname.startsWith(item.url + '/');
+                  pathname === item.url || pathname?.startsWith(item.url + '/');
 
                 return (
                   <SidebarMenuItem key={item.url}>

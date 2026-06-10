@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from "@/lib/utils";
-import { MediaDTO, MediaType } from "@/models/social/enums/social.enum";
+import { MediaDTO, MediaType } from "@repo/shared";
 import { CldImage } from "next-cloudinary";
 import { useMemo } from "react";
 

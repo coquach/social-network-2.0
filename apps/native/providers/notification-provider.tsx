@@ -95,7 +95,7 @@ export const NotificationProvider = ({
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const registeredTokenRef = useRef<string | null>(null);
-  const { setIncomingCall } = useCallStore();
+  const { setIncomingCall, setAutoAcceptCallId } = useCallStore();
   const segmentsRef = useRef<string[]>([]);
   
   try {
@@ -187,6 +187,7 @@ export const NotificationProvider = ({
             status: CallSessionStatus.RINGING,
             participants: [],
           });
+          setAutoAcceptCallId(callId);
           router.push('/chat/call');
         }
         if (detail.notification?.id) {
@@ -246,6 +247,7 @@ export const NotificationProvider = ({
             status: CallSessionStatus.RINGING,
             participants: [],
           });
+          setAutoAcceptCallId(pendingCallAnswer.callId);
           router.push('/chat/call');
           return;
         }
@@ -310,6 +312,7 @@ export const NotificationProvider = ({
             status: CallSessionStatus.RINGING,
             participants: [],
           });
+          setAutoAcceptCallId(pendingCallAnswer.callId);
           router.push('/chat/call');
           return;
         }

@@ -1,6 +1,6 @@
 'use client';
 
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { PostSnapshotDTO } from '@repo/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import { TextCollapse } from '../text-collapse';
@@ -20,7 +20,7 @@ export const PostCardPreview = ({ data }: PostCardPreviewProps) => {
   const router = useRouter();
   const goToPost = useCallback(() => {
     if (!data?.postId) return;
-    router.push(`/posts/${data.postId}`);
+    router.push(`/posts/${data.postId}`, { scroll: false });
   }, [router, data?.postId]);
 
   return (

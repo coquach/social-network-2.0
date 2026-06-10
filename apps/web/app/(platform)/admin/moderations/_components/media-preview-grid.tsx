@@ -1,6 +1,6 @@
 'use client';
 
-import { MediaDTO } from '@repo/shared';
+import { MediaDTO, MediaType } from '@repo/shared';
 import { Film, ImageIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ type Props = {
 };
 
 const isVideoMedia = (item: MediaDTO) => {
-  if (item.type === 'VIDEO') {
+  if (item.type === 'video') {
     return true;
   }
 

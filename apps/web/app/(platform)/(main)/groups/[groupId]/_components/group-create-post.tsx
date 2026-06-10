@@ -3,7 +3,7 @@
 
 import { GroupComposer } from '@/components/create-post/group-composer';
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { MembershipStatus } from '@/models/group/groupDTO';
+import { MembershipStatus } from '@repo/shared';
 
 type GroupCreatePostProps = {
   groupId: string;

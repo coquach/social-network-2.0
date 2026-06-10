@@ -1,10 +1,10 @@
 'use client';
-import { useConversation } from '@/hooks/use-conversation';
+import { useConversationNav } from '@/hooks/use-conversation-nav';
 import { EmptyState } from './_components/empty-state';
 import clsx from 'clsx';
 
 export const Conversations = () => {
-  const { isOpen } = useConversation();
+  const { isOpen } = useConversationNav();
   return (
     <div
       className={clsx(

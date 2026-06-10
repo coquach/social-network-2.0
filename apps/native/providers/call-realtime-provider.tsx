@@ -21,15 +21,7 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
   const client = useCallClient();
   const { setIncomingCall, setActiveCall, reset } = useCallStore();
   const { mutateAsync: joinCallSession } = useJoinCall();
-  const segmentsRef = useRef<string[]>([]);
-  
-  try {
-    const { useSegments } = require('expo-router');
-    const segs = useSegments();
-    useEffect(() => {
-      segmentsRef.current = segs;
-    }, [segs]);
-  } catch (e) {}
+
 
   // Guard so caller only calls joinCallSession once per accepted call
   const joinedCallIds = useRef<Set<string>>(new Set());
@@ -55,8 +47,11 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
 
       if (payload.participants.includes(userId) && payload.initiatorId !== userId) {
         if (payload.status === CallSessionStatus.RINGING) {
-          // Normalize id so other components using store don't fail
-          setIncomingCall({ ...payload, id: callId });
+          // Only ring and force incoming screen for 1-to-1 calls. 
+          // Group calls are just passively shown in the conversation UI.
+          if (!payload.isGroupCall) {
+            setIncomingCall({ ...payload, id: callId });
+          }
 
           // Pre-fetch so the call registers in Stream useCalls()
           if (client) {
@@ -68,14 +63,7 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
             }
           }
 
-          // If the user is CURRENTLY in the chat screen for this conversation, auto-navigate to the call screen
-          try {
-            const isInsideTargetChat = segmentsRef.current.includes('chat') && segmentsRef.current.includes(payload.conversationId);
-            if (isInsideTargetChat) {
-              const { router } = require('expo-router');
-              router.push('/chat/call');
-            }
-          } catch (e) {}
+
         }
       }
     };

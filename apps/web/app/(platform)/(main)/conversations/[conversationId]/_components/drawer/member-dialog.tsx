@@ -10,12 +10,10 @@ import {
 import { Button } from '@/components/ui/button';
 import {
   ConversationDTO,
-  UpdateConversationForm,
-} from '@/models/conversation/conversationDTO';
+  useUpdateConversation,
+} from '@repo/shared';
 import { useState } from 'react';
 
-
-import { useUpdateConversation } from '@/hooks/use-conversation';
 import { MemberRow } from './member-row';
 import { AddMembersDialog } from './add-members-dialog';
 
@@ -37,14 +35,15 @@ export const MembersDialog = ({
 
   const onKick = (userId: string) => {
     if (!isAdmin) return;
-    const dto: UpdateConversationForm = { participantsToRemove: [userId] };
-    updateConversation({ dto });
+    updateConversation({ participantsToRemove: [userId] });
   };
 
   const onAdd = (userIds: string[]) => {
     if (!isAdmin) return;
-    const dto: UpdateConversationForm = { participantsToAdd: userIds };
-    updateConversation({ dto }, { onSuccess: () => setOpenAdd(false) });
+    updateConversation(
+      { participantsToAdd: userIds }, 
+      { onSuccess: () => setOpenAdd(false) }
+    );
   };
 
   return (

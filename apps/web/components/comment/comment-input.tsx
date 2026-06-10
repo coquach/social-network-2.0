@@ -1,13 +1,8 @@
 'use client';
 
-import { useCreateComment } from '@/hooks/user-comment-hook';
+import { useCreateComment, CreateCommentInput, CreateCommentInputSchema, MediaType, RootType } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import { cn } from '@/lib/utils';
-import {
-  CommentSchema,
-  CreateCommentForm,
-} from '@/models/social/comment/commentDTO';
-import { MediaType, RootType } from '@/models/social/enums/social.enum';
 import { useAuth } from '@clerk/nextjs';
 import { useForm } from '@tanstack/react-form';
 import {
@@ -76,7 +71,8 @@ export const CommentInput = ({
     };
   }, [preview]);
 
-  const { mutateAsync: createComment, isPending } = useCreateComment(rootId);
+  const createCommentMutation = useCreateComment();
+  const isPending = createCommentMutation.isPending;
 
   const form = useForm({
     defaultValues: {
@@ -84,45 +80,45 @@ export const CommentInput = ({
       rootType,
       parentId,
       content: '',
-    } satisfies CreateCommentForm,
+    } satisfies CreateCommentInput,
 
     validators: {
       onSubmit: ({ value }) => {
-        const result = CommentSchema.safeParse(value);
+        const result = CreateCommentInputSchema.safeParse(value);
         if (result.success) return undefined;
         return result.error.issues.map((i) => i.message);
       },
     },
 
     onSubmit: async ({ value }) => {
-      const promise = createComment(
-        {
-          data: {
-            rootId: value.rootId,
-            rootType: value.rootType,
-            parentId: value.parentId,
-            content: value.content.trim(),
-          },
-          media,
-        },
-        {
-          onSuccess: () => {
-            form.reset({
-              rootId,
-              rootType,
-              parentId,
-              content: '',
-            });
-            setMedia(undefined);
+      const input = {
+        rootId: value.rootId,
+        rootType: value.rootType as any,
+        parentId: value.parentId,
+        content: value.content.trim(),
+        uploadFile: media ? { file: media.file, type: media.type as any } : undefined,
+      };
 
-            if (imgInputRef.current) imgInputRef.current.value = '';
-            if (videoInputRef.current) videoInputRef.current.value = '';
-          },
-        }
-      );
+      const promise = createCommentMutation.mutateAsync(input).then(() => {
+        form.reset({
+          rootId,
+          rootType,
+          parentId,
+          content: '',
+        });
+        setMedia(undefined);
+
+        if (imgInputRef.current) imgInputRef.current.value = '';
+        if (videoInputRef.current) videoInputRef.current.value = '';
+        toast.success('Bình luận đã được tạo thành công!');
+      });
 
       toast.promise(promise, { loading: 'Đang đăng bình luận...' });
-      await promise;
+      try {
+        await promise;
+      } catch (error) {
+        // Error handled by toast/mutation
+      }
     },
   });
 

@@ -2,14 +2,14 @@
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
 import { ShareCard } from '@/components/post/share-post';
-import { useGetShareByUserId } from '@/hooks/use-share-hook';
+import { useUserShares } from '@repo/shared';
 
 import { useEffect, useMemo } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 export const UserSharePosts = ({ userId }: { userId: string }) => {
   const { data, isLoading, isError, error, fetchNextPage, isFetchingNextPage } =
-    useGetShareByUserId(userId, { limit: 10 });
+    useUserShares(userId, { limit: 10 });
 
   const { ref, inView } = useInView();
 
@@ -40,7 +40,9 @@ export const UserSharePosts = ({ userId }: { userId: string }) => {
       )}
 
       {allPosts.map((post) => (
-        <ShareCard key={post.shareId} data={post} />
+        <ShareCard key={post.shareId
+          
+        } data={post} />
       ))}
       {isFetchingNextPage && <PostCardFull.Skeleton />}
       <div ref={ref}></div>
