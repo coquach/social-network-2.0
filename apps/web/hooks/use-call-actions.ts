@@ -62,13 +62,13 @@ function parseCallError(error: unknown): {
   };
 }
 
-export const openCallWindow = (callId: string, type: CallType) => {
+export const openCallWindow = (callId: string, type: CallType, isGroup: boolean) => {
   const width = 1000;
   const height = 700;
   const left = window.screen.width / 2 - width / 2;
   const top = window.screen.height / 2 - height / 2;
 
-  const url = `/calls/${callId}?type=${type}`;
+  const url = `/calls/${callId}?type=${type}&isGroup=${isGroup}`;
   window.open(
     url,
     `call-${callId}`,
@@ -86,6 +86,7 @@ export function useCallActions() {
     reset,
     incomingCall,
     activeCall,
+    outgoingCall,
   } = useCallStore();
 
   // Guard ref to prevent double-call race condition
@@ -143,17 +144,10 @@ export function useCallActions() {
           },
         });
 
-        // Control camera AFTER room creation to avoid premature hardware spin-up
-        if (type === CallType.AUDIO) {
-          await call.camera.disable();
-        } else {
-          await call.camera.enable();
-        }
-
         // control camera after
         if (isGroup) {
           setOutgoingCall({ conversationId, type, status: 'accepted' });
-          openCallWindow(session.id, type);
+          openCallWindow(session.id, type, isGroup);
         } else {
           setOutgoingCall({ conversationId, type, status: 'ringing' });
         }
@@ -183,26 +177,16 @@ export function useCallActions() {
     try {
       await acceptCallSession(incomingCall.id);
 
-      const call = client.call('default', incomingCall.id);
-      await call.join();
-
       // Notify BE so Redis group-online-set stays accurate
       void joinCallSession(incomingCall.id).catch((e) =>
         console.warn('[Call] joinCallSession error:', e),
       );
 
-      // Control camera after joining
-      if (incomingCall.type === CallType.AUDIO) {
-        await call.camera.disable();
-      } else {
-        await call.camera.enable();
-      }
-
       setActiveCall(incomingCall);
       setIncomingCall(null);
 
       // Open call window
-      openCallWindow(incomingCall.id, incomingCall.type);
+      openCallWindow(incomingCall.id, incomingCall.type as CallType, incomingCall.isGroupCall || false);
     } catch (error) {
       console.error('[Call] Failed to answer call:', error);
     }
@@ -233,9 +217,9 @@ export function useCallActions() {
     }
   }, [incomingCall, client, rejectCallSession, setIncomingCall]);
 
-  const endCall = useCallback(async () => {
-    const callId = activeCall?.id;
-    const isGroup = activeCall?.isGroupCall;
+  const endCall = useCallback(async (explicitCallId?: string, explicitIsGroup?: boolean) => {
+    const callId = explicitCallId || activeCall?.id || activeCall?._id || outgoingCall?.conversationId;
+    const isGroup = explicitIsGroup !== undefined ? explicitIsGroup : activeCall?.isGroupCall;
 
     // Reset store immediately so UI unblocks right away
     reset();
@@ -244,9 +228,15 @@ export function useCallActions() {
 
     if (client) {
       const call = client.call('default', callId);
-      void call
-        .leave()
-        .catch((e) => console.warn('[Call] call.leave error:', e));
+      if (isGroup) {
+        void call
+          .leave()
+          .catch((e) => console.warn('[Call] call.leave error:', e));
+      } else {
+        void call
+          .endCall()
+          .catch((e) => console.warn('[Call] call.endCall error:', e));
+      }
     }
     
     if (isGroup) {
@@ -258,7 +248,7 @@ export function useCallActions() {
         console.warn('[Call] endCallSession error:', e),
       );
     }
-  }, [activeCall, client, endCallSession, leaveCallSession, reset]);
+  }, [activeCall, outgoingCall, client, endCallSession, leaveCallSession, reset]);
 
   const joinOngoingCall = useCallback(
     async (callId: string, defaultType: CallType = CallType.VIDEO) => {
@@ -290,18 +280,9 @@ export function useCallActions() {
           type = existingCall.type as CallType;
         }
 
-        const call = client.call('default', callId);
-        await call.join();
-
         void joinCallSession(callId).catch((e) =>
           console.warn('[Call] joinCallSession error:', e),
         );
-
-        if (type === CallType.AUDIO) {
-          await call.camera.disable();
-        } else {
-          await call.camera.enable();
-        }
 
         if (existingCall) {
           setActiveCall(existingCall);
@@ -317,7 +298,8 @@ export function useCallActions() {
           } as any);
         }
 
-        openCallWindow(callId, type);
+        const isGroup = existingCall ? existingCall.isGroupCall : true;
+        openCallWindow(callId, type, isGroup || false);
       } catch (error) {
         console.error('[Call] Failed to join ongoing call:', error);
       }

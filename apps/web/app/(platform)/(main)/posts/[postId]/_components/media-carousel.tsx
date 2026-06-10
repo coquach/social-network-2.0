@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CldImage } from 'next-cloudinary';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MediaDTO, MediaType } from '@/models/social/enums/social.enum';
@@ -30,7 +30,7 @@ export function MediaCarousel({ media }: { media: MediaDTO[] }) {
         {/* main */}
         <div className="absolute inset-0 flex items-center justify-center">
           {current.type === MediaType.IMAGE ? (
-            <CldImage
+            <Image
               src={current.url}
               alt="media"
               width={1200}
@@ -88,7 +88,7 @@ export function MediaCarousel({ media }: { media: MediaDTO[] }) {
               aria-label={`Media ${i + 1}`}
             >
               {m.type === MediaType.IMAGE ? (
-                <CldImage
+                <Image
                   src={m.url}
                   alt="thumb"
                   width={200}

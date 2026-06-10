@@ -47,18 +47,17 @@ export function CallProvider({ children }: CallProviderProps) {
 
     async function initClient() {
       if (!isLoaded || !user) {
-        if (client) {
-          await client.disconnectUser();
-          if (active) setClient(null);
-        }
+        setClient((prevClient) => {
+          if (prevClient) prevClient.disconnectUser();
+          return null;
+        });
         prevUserIdRef.current = null;
         return;
       }
 
-      // Force-disconnect if the identity changed (logout → different login)
-      if (prevUserIdRef.current && prevUserIdRef.current !== user.id && client) {
-        await client.disconnectUser();
-        if (active) setClient(null);
+      // If we already have a client initialized for this user, do nothing!
+      if (prevUserIdRef.current === user.id) {
+        return;
       }
 
       try {
@@ -79,7 +78,10 @@ export function CallProvider({ children }: CallProviderProps) {
         });
 
         prevUserIdRef.current = user.id ?? null;
-        setClient(streamClient);
+        setClient((prevClient) => {
+          if (prevClient) prevClient.disconnectUser();
+          return streamClient;
+        });
       } catch (error) {
         console.error('[CallProvider] Failed to initialize Stream client:', error);
       }
@@ -90,7 +92,7 @@ export function CallProvider({ children }: CallProviderProps) {
     return () => {
       active = false;
     };
-  }, [isLoaded, user, issueToken, client]);
+  }, [isLoaded, user, issueToken]);
 
   if (!client) {
     return (

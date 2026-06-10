@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { MediaDTO, MediaType } from "@repo/shared";
-import { CldImage } from "next-cloudinary";
+import Image from "next/image";
 import { useMemo } from "react";
 
 interface PostMediaProps {
@@ -64,7 +64,7 @@ export default function PostMedia({ media, mediaRemaining = 0, onClick}: PostMed
                   className="group absolute inset-0 w-full h-full cursor-pointer"
                   aria-label="Mở bài viết"
                 >
-                  <CldImage
+                  <Image
                     src={item.url}
                     fill
                     alt={`media-${i}`}

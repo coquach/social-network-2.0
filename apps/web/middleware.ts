@@ -17,7 +17,8 @@
     return NextResponse.redirect(url);
   }
   export default clerkMiddleware(async (auth, req) => {
-    const { isAuthenticated, sessionClaims } = await auth();
+    const { userId, sessionClaims } = await auth();
+    const isAuthenticated = !!userId;
     const role = getRoleFromClaims(sessionClaims);
     const pathname = new URL(req.url).pathname;
     if (isPublicRoute(req)) {

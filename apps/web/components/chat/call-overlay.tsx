@@ -99,7 +99,7 @@ function CallOverlayInner() {
         };
         
         setActiveCall(activeCallSession);
-        openCallWindow(callId, currentOutgoing.type);
+        openCallWindow(callId, currentOutgoing.type as CallType, false);
       }
     };
 
@@ -176,32 +176,8 @@ function CallOverlayInner() {
 
   if (!isCallActive) return null;
 
-  // 1. Connecting State Modal
-  if (
-    !currentCall &&
-    !storeIncomingCall &&
-    !storeOutgoingCall &&
-    storeActiveCall
-  ) {
-    return (
-      <Dialog open>
-        <DialogContent
-          showCloseButton={false}
-          className="max-w-xs p-8 bg-neutral-900 border-white/10 text-white flex flex-col items-center gap-4 rounded-3xl"
-        >
-          <div className="relative">
-            <Loader2 className="h-12 w-12 text-sky-500 animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-2 w-2 bg-sky-500 rounded-full animate-pulse" />
-            </div>
-          </div>
-          <p className="text-sm font-bold tracking-tight animate-pulse text-neutral-300">
-            Đang thiết lập cuộc gọi...
-          </p>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  // 1. Connecting State Modal (Removed, handled by popup)
+
 
   // 2. Dialing (Outgoing) State Modal
   if (

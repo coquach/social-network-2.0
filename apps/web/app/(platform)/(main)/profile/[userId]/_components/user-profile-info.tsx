@@ -40,7 +40,7 @@ import {
   UserX,
   X,
 } from 'lucide-react';
-import { CldImage } from 'next-cloudinary';
+
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
@@ -127,7 +127,7 @@ export const UserProfileInfo = () => {
       <div className="relative">
         <div className="relative h-70 w-full border-b border-slate-200 bg-slate-200">
           {coverUrl ? (
-            <CldImage
+            <Image
               src={coverUrl}
               alt="Ảnh bìa"
               fill

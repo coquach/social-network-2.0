@@ -14,6 +14,7 @@ import { useCallClient } from '@/providers/call-provider';
 import { useCallActions } from '@/hooks/use-call-actions';
 import { Loader2, Users, Minimize2, Maximize2, X, Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSocket } from '@/components/providers/socket-provider';
 
 export default function CallPage() {
   const { callId } = useParams() as { callId: string };
@@ -90,7 +91,7 @@ function CallViewContent() {
   const participants = useParticipants();
   const { endCall } = useCallActions();
 
-  // Close window when call ends
+  // Close window when call ends from Stream SDK state
   useEffect(() => {
     if (callingState === CallingState.LEFT) {
       const timer = setTimeout(() => {
@@ -99,6 +100,26 @@ function CallViewContent() {
       return () => clearTimeout(timer);
     }
   }, [callingState]);
+
+  // Close window when backend broadcasts call.ended (e.g. other person ended 1-to-1 call)
+  const { chatSocket } = useSocket();
+  useEffect(() => {
+    if (!chatSocket) return;
+
+    const handleCallEnded = (payload: any) => {
+      const callIdParam = window.location.pathname.split('/').pop() || '';
+      if (payload.callId === callIdParam) {
+        const timer = setTimeout(() => {
+          window.close();
+        }, 1000);
+      }
+    };
+
+    chatSocket.on('call.ended', handleCallEnded);
+    return () => {
+      chatSocket.off('call.ended', handleCallEnded);
+    };
+  }, [chatSocket]);
 
   return (
     <div className="h-full flex flex-col relative group bg-neutral-950 select-none">
@@ -148,7 +169,10 @@ function CallViewContent() {
         <div className="pointer-events-auto bg-neutral-900/90 backdrop-blur-3xl px-10 py-5 rounded-[2.5rem] border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.8)] flex items-center gap-8 ring-1 ring-white/5">
           <CustomCallControls 
             onLeave={() => {
-              void endCall();
+              const urlParams = new URLSearchParams(window.location.search);
+              const isGroup = urlParams.get('isGroup') === 'true';
+              const callIdParam = window.location.pathname.split('/').pop() || '';
+              void endCall(callIdParam, isGroup);
               window.close();
             }} 
           />

@@ -166,7 +166,7 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
         <div className="flex items-center gap-4 text-sky-500 cursor-pointer transition">
           <Search size={24} className="hover:text-sky-600" />
           
-          {conversation.activeCallId ? (
+          {conversation.activeCallId && conversation.isGroup ? (
             <button
               onClick={handleJoinCall}
               className="bg-green-600 hover:bg-green-700 text-white font-semibold text-sm px-4 py-1.5 rounded-full flex items-center gap-1.5 transition duration-200 shadow-sm"

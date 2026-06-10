@@ -13,7 +13,7 @@ import { formatCount } from '@/utils/format-count';
 import { getTopReactions } from '@/utils/get-top-reactions';
 import { formatDistanceToNow } from 'date-fns';
 import { Edit, Flag, MessageCircle, MoreHorizontal, Trash } from 'lucide-react';
-import { CldImage } from 'next-cloudinary';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { CommentAvatar } from '../avatar';
 import { ReactionHoverPopup } from '../reaction-hover-popup';
@@ -316,7 +316,7 @@ export const CommentItem = ({
           {comment.media && (
             <div className="mt-2">
               {comment.media.type === MediaType.IMAGE ? (
-                <CldImage
+                <Image
                   src={comment.media.url}
                   alt=""
                   width={200}
