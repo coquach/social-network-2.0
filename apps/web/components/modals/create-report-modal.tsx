@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable react/no-children-prop */
-
 import { useForm } from '@tanstack/react-form';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
@@ -135,9 +133,8 @@ export function CreateReportModal({
             >
               <FieldGroup>
                 {/* Reason */}
-                <form.Field
-                  name="reason"
-                  children={(field) => {
+                <form.Field name="reason">
+                  {(field) => {
                     // giống mẫu: touched + invalid mới show error
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
@@ -181,7 +178,7 @@ export function CreateReportModal({
                       </Field>
                     );
                   }}
-                />
+                </form.Field>
               </FieldGroup>
             </form>
           </div>
@@ -208,3 +205,4 @@ export function CreateReportModal({
     </Dialog>
   );
 }
+

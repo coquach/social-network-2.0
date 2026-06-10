@@ -16,7 +16,6 @@ import {
 import { chatbotService } from '../api/services/chatbot.service';
 import { queryKeys } from './query-keys';
 import type {
-  AssistantMessageInput,
   AssistantRespondDataDTO,
   ChatbotClearHistoryResultDTO,
   ChatbotHistoryPageDTO,

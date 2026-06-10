@@ -6,10 +6,12 @@ import { DetailView } from '@/components/post/detail-view';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { use } from 'react';
 
-export default function PostInterceptingModal({ params }: { params: { postId: string } }) {
+export default function PostInterceptingModal({ params }: { params: Promise<{ postId: string }> }) {
+  const { postId } = use(params);
   const router = useRouter();
-  const { data: post, isLoading, isError } = usePost(params.postId);
+  const { data: post, isLoading, isError } = usePost(postId);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {

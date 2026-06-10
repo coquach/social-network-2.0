@@ -230,7 +230,7 @@ export const CommentItem = ({
         success: 'Cập nhật bình luận thành công!',
     });
     await promise;
-  }, [draftContent, localContent, updateCommentMutation, comment.id]);
+  }, [draftContent, localContent, updateCommentMutation]);
 
   // =========================
   // UI (unchanged)

@@ -100,7 +100,7 @@ export function SettingsSidebar() {
             </h2>
             <div className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = pathname === item.href || (pathname === '/settings' && item.id === 'privacy');
                 const Icon = item.icon;
                 
                 return (

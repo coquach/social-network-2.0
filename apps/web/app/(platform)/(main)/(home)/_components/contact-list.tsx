@@ -39,7 +39,7 @@ export const ContactList = () => {
         </div>
       </div>
 
-      <div className="px-2 py-2">
+      <div className="px-2 py-2 max-h-[350px] overflow-y-auto overscroll-contain">
         {isPending &&
           Array.from({ length: CONTACT_LIMIT }).map((_, index) => (
             <div key={index} className="flex items-center gap-3 px-2 py-2">

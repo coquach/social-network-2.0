@@ -8,6 +8,37 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compa
 
 let messaging;
 
+// Re-implementation of getNotificationRoute for the Service Worker context
+const getWebNotificationRoute = (data) => {
+  if (!data) return '/notifications';
+  const type = data.type || '';
+  if (!type) return '/notifications';
+
+  const conversationId = data.conversationId;
+  const targetId = data.targetId;
+  const actorId = data.actorId;
+
+  if (type === 'call') return '/chat/call';
+  if (type === 'message' || (!targetId && conversationId)) {
+    return conversationId ? `/chat/${conversationId}` : '/notifications';
+  }
+
+  switch (type) {
+    case 'friendship_request': return '/friends/requests';
+    case 'friendship_accept':
+    case 'friend': return '/friends';
+    case 'follow': return actorId || targetId ? `/profile/${actorId || targetId}` : '/notifications';
+    case 'comment':
+    case 'reply_comment':
+    case 'reaction':
+    case 'share': return targetId ? `/posts/${targetId}` : '/notifications';
+    case 'group_noti':
+    case 'join_request_approved': return targetId ? `/groups/${targetId}` : '/groups';
+    case 'group_invite': return '/groups/invites';
+    default: return '/notifications';
+  }
+};
+
 // Initialize Firebase with dynamic config
 const initFirebase = async () => {
   try {
@@ -31,6 +62,7 @@ const initFirebase = async () => {
         body: payload.notification?.body || 'Bạn có thông báo mới',
         icon: '/logo.svg',
         badge: '/logo.svg',
+        sound: '/sounds/notification.mp3', // Note: Only some browsers/OS respect this property
         data: payload.data,
         tag: payload.data?.notificationId || 'general-notification',
         requireInteraction: true,
@@ -54,7 +86,7 @@ self.addEventListener('notificationclick', (event) => {
 
   // URL to navigate to
   const notificationData = event.notification.data;
-  const targetUrl = notificationData?.url || '/notifications';
+  const targetUrl = getWebNotificationRoute(notificationData);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
@@ -62,7 +94,7 @@ self.addEventListener('notificationclick', (event) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus().then((focusedClient) => {
-            if (notificationData?.url) {
+            if (targetUrl) {
               return focusedClient.navigate(targetUrl);
             }
             return focusedClient;

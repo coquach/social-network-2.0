@@ -94,20 +94,18 @@ export const CreateShareModal = () => {
         >
           <div className="flex items-center gap-3 mb-4">
             <CreatePostAvatar userId={userId as string} />
-            <form.Field
-              name="audience"
-              children={(field) => (
+            <form.Field name="audience">
+              {(field) => (
                 <AudienceSelect
                   value={field.state.value}
                   onChange={field.handleChange}
                 />
               )}
-            />
+            </form.Field>
           </div>
 
-          <form.Field
-            name="content"
-            children={(field) => (
+          <form.Field name="content">
+            {(field) => (
               <InputGroup className="rounded-xl">
                 <InputGroupTextarea
                   value={field.state.value}
@@ -125,7 +123,7 @@ export const CreateShareModal = () => {
                 </InputGroupAddon>
               </InputGroup>
             )}
-          />
+          </form.Field>
 
           <DialogFooter className="mt-4 gap-2">
             <Button

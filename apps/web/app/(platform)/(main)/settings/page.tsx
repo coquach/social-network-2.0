@@ -3,7 +3,14 @@
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import React from 'react';
-import { Shield, Lock, Eye, Activity, History, ChevronRight } from 'lucide-react';
+import {
+  Shield,
+  Lock,
+  Eye,
+  Activity,
+  History,
+  ChevronRight,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -38,7 +45,7 @@ export default function SettingsIndexPage() {
           description: 'Tìm hiểu cách chúng tôi bảo vệ dữ liệu của bạn',
           href: '/settings/privacy-policy',
         },
-      ]
+      ],
     },
     {
       title: 'Hoạt động & Thông báo',
@@ -64,7 +71,7 @@ export default function SettingsIndexPage() {
           description: 'Xem các báo cáo và nội dung bị gỡ',
           href: '/settings/moderation-history',
         },
-      ]
+      ],
     },
     {
       title: 'Tùy chỉnh & Hỗ trợ',
@@ -84,8 +91,8 @@ export default function SettingsIndexPage() {
           description: 'Câu hỏi thường gặp và liên hệ hỗ trợ',
           href: '/settings/support',
         },
-      ]
-    }
+      ],
+    },
   ];
 
   React.useEffect(() => {
@@ -95,49 +102,65 @@ export default function SettingsIndexPage() {
   }, [router]);
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-6 pb-20 md:hidden">
-      <h1 className="mb-8 text-3xl font-bold text-slate-800 px-1">Cài đặt</h1>
+    <>
+      <div className="mx-auto max-w-3xl p-4 sm:p-6 pb-20 md:hidden">
+        <h1 className="mb-8 text-3xl font-bold text-slate-800 px-1">Cài đặt</h1>
 
-      <div className="space-y-8">
-        {settingGroups.map((group) => (
-          <section key={group.title} className="space-y-3">
-            <h2 className="text-lg font-bold text-slate-700 px-1">{group.title}</h2>
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-              {group.items.map((item, index) => (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-4 p-4 transition hover:bg-slate-50",
-                    index !== group.items.length - 1 && "border-b border-slate-100",
-                    item.isComingSoon && "cursor-default opacity-60 hover:bg-white"
-                  )}
-                  onClick={(e) => {
-                    if (item.isComingSoon) {
-                      e.preventDefault();
-                      toast.info('Tính năng đang phát triển');
-                    }
-                  }}
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100">
-                    {item.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-slate-800 truncate">{item.label}</p>
-                      {item.isComingSoon && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded">Sắp có</span>
-                      )}
+        <div className="space-y-8">
+          {settingGroups.map((group) => (
+            <section key={group.title} className="space-y-3">
+              <h2 className="text-lg font-bold text-slate-700 px-1">
+                {group.title}
+              </h2>
+              <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                {group.items.map((item, index) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-4 p-4 transition hover:bg-slate-50',
+                      index !== group.items.length - 1 &&
+                        'border-b border-slate-100',
+                      item.isComingSoon &&
+                        'cursor-default opacity-60 hover:bg-white',
+                    )}
+                    onClick={(e) => {
+                      if (item.isComingSoon) {
+                        e.preventDefault();
+                        toast.info('Tính năng đang phát triển');
+                      }
+                    }}
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100">
+                      {item.icon}
                     </div>
-                    <p className="text-sm text-slate-500 truncate">{item.description}</p>
-                  </div>
-                  {!item.isComingSoon && <ChevronRight className="h-5 w-5 text-slate-300 shrink-0" />}
-                </Link>
-              ))}
-            </div>
-          </section>
-        ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-slate-800 truncate">
+                          {item.label}
+                        </p>
+                        {item.isComingSoon && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded">
+                            Sắp có
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500 truncate">
+                        {item.description}
+                      </p>
+                    </div>
+                    {!item.isComingSoon && (
+                      <ChevronRight className="h-5 w-5 text-slate-300 shrink-0" />
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
-    </div>
+      {/* Skeleton / Empty state for desktop while redirecting */}
+      <div className="hidden md:block w-full h-full bg-slate-50/30" />
+    </>
   );
 }

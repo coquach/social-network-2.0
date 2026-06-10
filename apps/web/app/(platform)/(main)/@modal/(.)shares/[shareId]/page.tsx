@@ -6,10 +6,12 @@ import { DetailView } from '@/components/post/detail-view';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { use } from 'react';
 
-export default function ShareInterceptingModal({ params }: { params: { shareId: string } }) {
+export default function ShareInterceptingModal({ params }: { params: Promise<{ shareId: string }> }) {
+  const { shareId } = use(params);
   const router = useRouter();
-  const { data: share, isLoading, isError } = useShare(params.shareId);
+  const { data: share, isLoading, isError } = useShare(shareId);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {

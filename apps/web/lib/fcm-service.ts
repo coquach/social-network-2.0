@@ -147,21 +147,10 @@ export const setupForegroundMessageListener = (
     return onMessage(messaging, (payload) => {
       console.log('📩 Foreground message received:', payload);
 
-      // Show in-app Toast instead of system notification if browser is active
-      if (payload.notification) {
-        const url = payload.data?.url;
-        toast(payload.notification.title || 'Thông báo mới', {
-          description: payload.notification.body,
-          action: url ? {
-            label: 'Xem',
-            onClick: () => {
-              if (typeof window !== 'undefined') {
-                window.location.href = url;
-              }
-            }
-          } : undefined,
-        });
-      }
+      console.log('📩 Foreground message received:', payload);
+
+      // We delegate the UI rendering to the callback (FCMProvider)
+      // so it can use custom React components and Next.js router.
 
       // Call custom callback for UI updates (e.g., updating notification store)
       if (callback) callback(payload);

@@ -1,4 +1,3 @@
-/* eslint-disable react/no-children-prop */
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
@@ -211,15 +210,14 @@ export const CreatePost = ({
           <CreatePostAvatar userId={userId as string} showName={!!groupId} />
 
           {isPrivacyChangeable && (
-            <form.Field
-              name="audience"
-              children={(field) => (
+            <form.Field name="audience">
+              {(field) => (
                 <AudienceSelect
                   value={field.state.value as Audience}
                   onChange={(value) => field.handleChange(value as Audience)}
                 />
               )}
-            />
+            </form.Field>
           )}
 
           {selectedFeeling && (
@@ -246,7 +244,8 @@ export const CreatePost = ({
                 return undefined;
               },
             }}
-            children={(field) => {
+          >
+            {(field) => {
               const value = (field.state.value ?? '') as string;
               const wordCount = countChars(value);
 
@@ -288,7 +287,7 @@ export const CreatePost = ({
                 </Field>
               );
             }}
-          />
+          </form.Field>
         </FieldGroup>
 
         {/* Media preview */}

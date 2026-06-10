@@ -18,18 +18,99 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useChatStore, type MessageDTO } from '@repo/shared';
+import { useChatStore, CallType, type MessageDTO } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import clsx from 'clsx';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Copy, Download, FileIcon, Info, MoreHorizontal, Music, Pin, Reply, Trash2 } from 'lucide-react';
+import { MdCall } from 'react-icons/md';
+import { IoMdVideocam } from 'react-icons/io';
 import Image from 'next/image';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { HiForward } from 'react-icons/hi2';
 import { toast } from 'sonner';
 import { MessageReply } from './message-reply';
 import { useImageViewerModal } from '@/store/use-image-viewer-modal';
+import { useCallActions } from '@/hooks/use-call-actions';
+
+const formatDuration = (seconds?: number) => {
+  if (!seconds) return null;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
+function CallMessageCard({
+  message,
+  isOwn,
+  onStartCall,
+}: {
+  message: MessageDTO;
+  isOwn: boolean;
+  onStartCall: (type: CallType) => void;
+}) {
+  const meta = (message as any).systemMeta;
+  const isVideo = meta?.callType === "video" || meta?.callType === "VIDEO";
+  const duration = meta?.durationSec;
+  const endedReason = meta?.endedReason;
+  const callStatus = meta?.callStatus;
+
+  let statusText = "Cuộc gọi thoại";
+  if (isVideo) {
+    statusText = "Cuộc gọi video";
+  }
+
+  const isMissed = 
+    callStatus === "MISSED" || 
+    endedReason === "MISSED" || 
+    endedReason === "REJECTED";
+    
+  const isCancelled = callStatus === "CANCELLED" || endedReason === "CANCELLED";
+
+  if (isMissed) {
+    statusText = isVideo ? "Cuộc gọi video nhỡ" : "Cuộc gọi nhỡ";
+  } else if (isCancelled) {
+    statusText = isVideo ? "Cuộc gọi video đã hủy" : "Cuộc gọi thoại đã hủy";
+  } else {
+    statusText = isVideo ? "Cuộc gọi video đã kết thúc" : "Cuộc gọi thoại đã kết thúc";
+  }
+
+  const durationStr = duration && duration > 0 ? formatDuration(duration) : null;
+
+  return (
+    <div className="flex items-center gap-3 py-1 px-1 min-w-[200px]">
+      <div className="flex-1 justify-center">
+        <div className={clsx("text-[14px] font-medium", isOwn ? "text-white" : "text-slate-800")}>
+          {statusText}
+        </div>
+        {durationStr ? (
+          <div className={clsx("text-[11px] mt-0.5", isOwn ? "text-white/80" : "text-slate-500")}>
+            Thời lượng: {durationStr}
+          </div>
+        ) : (
+          <div className={clsx("text-[11px] mt-0.5 opacity-80", isOwn ? "text-white/70" : "text-slate-500")}>
+            {isMissed ? "Nhấn để gọi lại" : "Nhấn để gọi"}
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={() => onStartCall(isVideo ? CallType.VIDEO : CallType.AUDIO)}
+        className={clsx(
+          "h-11 w-11 flex items-center justify-center rounded-2xl transition-colors",
+          isOwn ? "bg-white/20 hover:bg-white/30" : "bg-white hover:bg-slate-50"
+        )}
+      >
+        {isVideo ? (
+          <IoMdVideocam className={clsx("h-5 w-5", isOwn ? "text-white" : "text-sky-500")} />
+        ) : (
+          <MdCall className={clsx("h-5 w-5", isOwn ? "text-white" : "text-sky-500")} />
+        )}
+      </button>
+    </div>
+  );
+}
 
 const formatFileSize = (bytes?: number) => {
   if (!bytes) return '0 Bytes';
@@ -62,6 +143,7 @@ export const MessageBox = memo(function MessageBox({
 
   const [openAlert, setOpenAlert] = useState(false);
   const { setReplyTo } = useChatStore();
+  const { startCall } = useCallActions();
 
   const handleReply = useCallback(() => setReplyTo(data), [data, setReplyTo]);
   const handleDeleteClick = useCallback(() => setOpenAlert(true), []);
@@ -306,11 +388,11 @@ export const MessageBox = memo(function MessageBox({
                         <div
                           key={`${att.url}-${i}`}
                           className={clsx(
-                            'flex items-center gap-2 p-3 rounded-xl border bg-white/50 backdrop-blur shadow-sm min-w-[240px]',
-                            isOwn ? 'border-sky-200' : 'border-gray-200'
+                            'flex items-center gap-2 p-3 rounded-2xl min-w-[240px]',
+                            isOwn ? 'bg-sky-500' : 'bg-gray-100'
                           )}
                         >
-                          <div className="h-10 w-10 flex items-center justify-center rounded-full bg-sky-100 text-sky-600">
+                          <div className={clsx("h-10 w-10 flex items-center justify-center rounded-full", isOwn ? "bg-white/20 text-white" : "bg-white text-sky-600")}>
                             <Music className="h-5 w-5" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -329,18 +411,18 @@ export const MessageBox = memo(function MessageBox({
                       <div
                         key={`${att.url}-${i}`}
                         className={clsx(
-                          'flex items-center gap-3 p-3 rounded-xl border bg-white/50 backdrop-blur shadow-sm min-w-[200px] group/file transition-all hover:shadow-md',
-                          isOwn ? 'border-sky-200' : 'border-gray-200'
+                          'flex items-center gap-3 p-3 rounded-2xl min-w-[200px] group/file transition-all',
+                          isOwn ? 'bg-sky-500' : 'bg-gray-100'
                         )}
                       >
-                        <div className="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 group-hover/file:bg-sky-100 group-hover/file:text-sky-600 transition-colors">
+                        <div className={clsx("h-10 w-10 flex items-center justify-center rounded-full transition-colors", isOwn ? "bg-white/20 text-white" : "bg-white text-gray-500 group-hover/file:bg-sky-100 group-hover/file:text-sky-600")}>
                           <FileIcon className="h-5 w-5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
+                          <div className={clsx("text-sm font-medium truncate", isOwn ? "text-white" : "text-gray-900")}>
                             {att.fileName}
                           </div>
-                          <div className="text-[10px] text-gray-500">
+                          <div className={clsx("text-[10px]", isOwn ? "text-white/70" : "text-gray-500")}>
                             {formatFileSize(att.size)}
                           </div>
                         </div>
@@ -349,7 +431,7 @@ export const MessageBox = memo(function MessageBox({
                           download={att.fileName}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="h-8 w-8 flex items-center justify-center rounded-full text-gray-400 hover:text-sky-600 hover:bg-sky-50 transition-all"
+                          className={clsx("h-8 w-8 flex items-center justify-center rounded-full transition-all", isOwn ? "text-white/70 hover:text-white hover:bg-white/20" : "text-gray-400 hover:text-sky-600 hover:bg-white")}
                           title="Tải về"
                         >
                           <Download className="h-4 w-4" />
@@ -360,7 +442,26 @@ export const MessageBox = memo(function MessageBox({
                 </div>
               )}
 
-              {data.content && (
+              {(data as any).messageType === 'system_call' && (
+                <div
+                  className={clsx(
+                    'max-w-full rounded-2xl px-3 py-2',
+                    isOwn
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-gray-100 text-gray-900'
+                  )}
+                >
+                  <CallMessageCard
+                    message={data}
+                    isOwn={isOwn}
+                    onStartCall={(type) => {
+                      startCall(data.conversationId, type);
+                    }}
+                  />
+                </div>
+              )}
+
+              {data.content && (data as any).messageType !== 'system_call' && (
                 <div
                   className={clsx(
                     'text-sm inline-block overflow-hidden py-2 px-3 whitespace-pre-line break-all',
