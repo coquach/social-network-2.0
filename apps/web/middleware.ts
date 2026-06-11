@@ -28,8 +28,17 @@
       return NextResponse.next();
     }
 
-    if (!isAuthenticated)
+    if (!isAuthenticated) {
+      const isApi = pathname.startsWith('/api') || pathname.startsWith('/trpc');
+      const isPrefetch = req.headers.get('next-router-prefetch') === '1';
+      
+      // Không redirect các request API hoặc request prefetch của Next.js
+      // Tránh lỗi Next.js cache lại lệnh redirect làm hỏng điều hướng
+      if (isApi || isPrefetch) {
+        return new NextResponse('Unauthorized', { status: 401 });
+      }
       return NextResponse.redirect(new URL('/marketing', req.url));
+    }
 
   if (isAdminRoute(req) && !roleAtLeast(role ?? 'user', 'staff')) {
     return NextResponse.redirect(new URL('/', req.url));

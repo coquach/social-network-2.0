@@ -1,4 +1,4 @@
-import { Image } from 'expo-image';
+
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Svg, { Circle } from 'react-native-svg';
@@ -15,7 +15,7 @@ import {
 } from '@stream-io/video-react-native-sdk';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallActions } from '~/hooks/use-call-actions';
 import { useCallClient } from '~/providers/call-provider';
@@ -74,21 +74,26 @@ function CallViewInner() {
   // Real-time synchronization is handled purely by CallRealtimeProvider via socket events,
   // preventing race conditions where the calls array is momentarily empty during initialization.
 
-  if (
-    storeOutgoingCall &&
-    (storeOutgoingCall.status === 'dialing' ||
-      storeOutgoingCall.status === 'ringing') &&
-    !currentCall
-  ) {
-    return <DialingView onCancel={endCall} conversationId={storeOutgoingCall.conversationId} />;
-  }
-
   const isCallActiveInStore = !!storeActiveCall || !!storeIncomingCall || !!storeOutgoingCall;
+  const [callEndedState, setCallEndedState] = useState(false);
+  const wasActiveRef = React.useRef(isCallActiveInStore);
 
   useEffect(() => {
-    if (!isCallActiveInStore) {
-      // Small delay so the screen doesn't flash white while the navigator
-      // processes the back() command during the exit animation.
+    if (wasActiveRef.current && !isCallActiveInStore) {
+      // Call just ended
+      setCallEndedState(true);
+      const t = setTimeout(() => {
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/chat');
+        }
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+    
+    if (!wasActiveRef.current && !isCallActiveInStore && !callEndedState) {
+      // Screen opened but no call is active, back out immediately
       const t = setTimeout(() => {
         if (router.canGoBack()) {
           router.back();
@@ -98,7 +103,34 @@ function CallViewInner() {
       }, 150);
       return () => clearTimeout(t);
     }
-  }, [isCallActiveInStore, router]);
+    
+    wasActiveRef.current = isCallActiveInStore;
+  }, [isCallActiveInStore, router, callEndedState]);
+
+  if (
+    storeOutgoingCall &&
+    (storeOutgoingCall.status === 'dialing' ||
+      storeOutgoingCall.status === 'ringing') &&
+    !currentCall
+  ) {
+    return <DialingView onCancel={endCall} conversationId={storeOutgoingCall.conversationId} />;
+  }
+
+  if (callEndedState) {
+    return (
+      <View className="flex-1 items-center justify-center bg-[#0f0f0f]">
+        <View className="h-[140px] w-[140px] items-center justify-center rounded-full bg-[#2a2a2a] overflow-hidden mb-6">
+          <MaterialIcons name="call-end" size={60} color="#f43f5e" />
+        </View>
+        <AppTitle className="mb-2 text-2xl font-bold text-white">
+          Cuộc gọi đã kết thúc
+        </AppTitle>
+        <AppSubtitle className="text-white/50">
+          Đang đóng...
+        </AppSubtitle>
+      </View>
+    );
+  }
 
   if (!isCallActiveInStore) {
     return null; // Render nothing while waiting for navigation to pop
@@ -323,7 +355,7 @@ function DialingView({ onCancel, conversationId }: { onCancel: () => void; conve
           
           <View className="h-[140px] w-[140px] items-center justify-center rounded-full bg-[#2a2a2a] overflow-hidden">
             {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} className="w-full h-full" contentFit="cover" />
+              <Image source={{ uri: avatarUrl }} className="w-full h-full" resizeMode="cover" />
             ) : (
               <MaterialIcons name="account-circle" size={100} color="#888" />
             )}

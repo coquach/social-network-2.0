@@ -62,13 +62,16 @@ function parseCallError(error: unknown): {
   };
 }
 
-export const openCallWindow = (callId: string, type: CallType, isGroup: boolean) => {
+export const openCallWindow = (callId: string, type: CallType, isGroup: boolean, conversationId?: string, isCaller?: boolean) => {
   const width = 1000;
   const height = 700;
   const left = window.screen.width / 2 - width / 2;
   const top = window.screen.height / 2 - height / 2;
 
-  const url = `/calls/${callId}?type=${type}&isGroup=${isGroup}`;
+  let url = `/calls/${callId}?type=${type}&isGroup=${isGroup}`;
+  if (conversationId) url += `&conversationId=${conversationId}`;
+  if (isCaller) url += `&isCaller=${isCaller}`;
+
   window.open(
     url,
     `call-${callId}`,
@@ -145,12 +148,8 @@ export function useCallActions() {
         });
 
         // control camera after
-        if (isGroup) {
-          setOutgoingCall({ conversationId, type, status: 'accepted' });
-          openCallWindow(session.id, type, isGroup);
-        } else {
-          setOutgoingCall({ conversationId, type, status: 'ringing' });
-        }
+        setOutgoingCall({ conversationId, type, status: 'accepted' });
+        openCallWindow(session.id, type, isGroup || false, conversationId, true);
 
         return { ok: true };
       } catch (error) {
@@ -186,7 +185,7 @@ export function useCallActions() {
       setIncomingCall(null);
 
       // Open call window
-      openCallWindow(incomingCall.id, incomingCall.type as CallType, incomingCall.isGroupCall || false);
+      openCallWindow(incomingCall.id, incomingCall.type as CallType, incomingCall.isGroupCall || false, incomingCall.conversationId, false);
     } catch (error) {
       console.error('[Call] Failed to answer call:', error);
     }
@@ -299,7 +298,7 @@ export function useCallActions() {
         }
 
         const isGroup = existingCall ? existingCall.isGroupCall : true;
-        openCallWindow(callId, type, isGroup || false);
+        openCallWindow(callId, type, isGroup || false, existingCall?.conversationId, false);
       } catch (error) {
         console.error('[Call] Failed to join ongoing call:', error);
       }

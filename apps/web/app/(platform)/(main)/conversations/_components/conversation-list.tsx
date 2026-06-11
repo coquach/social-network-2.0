@@ -167,8 +167,14 @@ export const ConversationList = () => {
 
     const merged = Array.from(map.values());
     merged.sort((a, b) => {
-      const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-      const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      const taMsg = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
+      const taUpd = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const ta = Math.max(taMsg, taUpd);
+
+      const tbMsg = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
+      const tbUpd = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      const tb = Math.max(tbMsg, tbUpd);
+
       return tb - ta;
     });
 

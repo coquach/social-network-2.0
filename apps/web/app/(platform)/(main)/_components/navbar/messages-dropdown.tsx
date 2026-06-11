@@ -21,8 +21,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ConversationBox } from '../../conversations/_components/conversation-box';
 import { useAuth } from '@clerk/nextjs';
 
-const getUpdatedAt = (value?: Date | string) =>
-  value ? new Date(value).getTime() : 0;
+const getUpdatedAt = (conv: ConversationDTO) => {
+  const msgTime = conv.lastMessage?.createdAt ? new Date(conv.lastMessage.createdAt).getTime() : 0;
+  const updTime = conv.updatedAt ? new Date(conv.updatedAt).getTime() : 0;
+  return Math.max(msgTime, updTime);
+};
 
 export const MessageDropdown = () => {
   const { userId } = useAuth();
@@ -129,7 +132,7 @@ export const MessageDropdown = () => {
 
     const merged = Array.from(map.values());
     merged.sort(
-      (a, b) => getUpdatedAt(b.updatedAt) - getUpdatedAt(a.updatedAt)
+      (a, b) => getUpdatedAt(b) - getUpdatedAt(a)
     );
 
     return merged;

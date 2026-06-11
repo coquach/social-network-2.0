@@ -21,7 +21,7 @@ export default function PostInterceptingModal({ params }: { params: Promise<{ po
 
   return (
     <Dialog open={true} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-6xl w-[96vw] max-w-6xl p-0 overflow-hidden bg-slate-50 border-none">
+      <DialogContent showCloseButton={false} className="sm:max-w-6xl w-[96vw] max-w-6xl p-0 overflow-hidden bg-slate-50 border-none">
         <VisuallyHidden>
           <DialogTitle>Chi tiết bài viết</DialogTitle>
         </VisuallyHidden>
@@ -30,7 +30,8 @@ export default function PostInterceptingModal({ params }: { params: Promise<{ po
             type={RootType.POST} 
             post={post} 
             isLoading={isLoading} 
-            isError={isError} 
+            isError={isError}
+            isModal={true}
           />
         </div>
       </DialogContent>

@@ -28,7 +28,7 @@ const GeneralLayout = ({
       {modal}
 
       {/* Complementary landmark - chat feature */}
-      <aside aria-label="Tin nhắn">
+      <aside aria-label="Chat bot">
         <ChatBox />
       </aside>
 

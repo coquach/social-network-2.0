@@ -2,7 +2,16 @@
 
 import { SidebarCustom } from '@/components/side-bar-custom';
 import { useAuth } from '@clerk/nextjs';
-import { FcBusinessman, FcCollaboration, FcConferenceCall, FcAdvertising, FcLike } from 'react-icons/fc';
+import {
+  FcBusinessman,
+  FcCollaboration,
+  FcConferenceCall,
+  FcAdvertising,
+  FcLike,
+  FcFeedback,
+  FcSearch,
+  FcSettings,
+} from 'react-icons/fc';
 import { ContactList } from './_components/contact-list';
 import { QuickLinksCard } from './_components/quick-links-card';
 import { MusicRecommendations } from './_components/music-recommendations';
@@ -34,6 +43,16 @@ const NewsFeedLayout = ({
               icon: FcConferenceCall,
             },
             {
+              label: 'Tin nhắn',
+              href: '/conversations',
+              icon: FcFeedback,
+            },
+            {
+              label: 'Tìm kiếm',
+              href: '/search',
+              icon: FcSearch,
+            },
+            {
               label: 'Thông báo',
               href: '/notifications',
               icon: FcAdvertising,
@@ -42,6 +61,11 @@ const NewsFeedLayout = ({
               label: 'Nhật ký cảm xúc',
               href: '/emotions',
               icon: FcLike,
+            },
+            {
+              label: 'Cài đặt',
+              href: '/settings',
+              icon: FcSettings,
             },
           ]}
         />

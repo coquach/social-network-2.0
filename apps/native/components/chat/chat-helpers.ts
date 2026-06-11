@@ -171,11 +171,13 @@ export const getConversationName = (
 };
 
 export const getConversationLastActivity = (conversation: ConversationDTO) => {
-  const value = conversation.lastMessage?.createdAt ??
-    conversation.updatedAt ??
-    conversation.createdAt;
-  if (!value) return new Date(0);
-  return parseSafeDate(value as any);
+  const msgTime = conversation.lastMessage?.createdAt ? parseSafeDate(conversation.lastMessage.createdAt as any).getTime() : 0;
+  const updTime = conversation.updatedAt ? parseSafeDate(conversation.updatedAt as any).getTime() : 0;
+  const crtTime = conversation.createdAt ? parseSafeDate(conversation.createdAt as any).getTime() : 0;
+  
+  const maxTime = Math.max(msgTime, updTime, crtTime);
+  if (maxTime === 0) return new Date(0);
+  return new Date(maxTime);
 };
 
 export const formatConversationTime = (value?: ChatDateValue) => {

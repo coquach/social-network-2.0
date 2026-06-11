@@ -22,9 +22,10 @@ interface DetailViewProps {
   share?: SharePostDTO;
   isLoading?: boolean;
   isError?: boolean;
+  isModal?: boolean;
 }
 
-export function DetailView({ type, post, share, isLoading, isError }: DetailViewProps) {
+export function DetailView({ type, post, share, isLoading, isError, isModal }: DetailViewProps) {
   if (isLoading) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-6">
@@ -68,11 +69,12 @@ export function DetailView({ type, post, share, isLoading, isError }: DetailView
   const reactedType = isShare ? shareData.reactedType : postData.reactedType;
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-2 sm:px-4 py-4 sm:py-6 h-full">
+    <section className={cn("mx-auto w-full max-w-6xl h-full", isModal ? "p-0" : "px-2 sm:px-4 py-4 sm:py-6")}>
       <div
         className={cn(
           'grid gap-4 h-full',
-          hasLeftContent ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
+          hasLeftContent ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1',
+          isModal && !hasLeftContent && 'gap-0'
         )}
       >
         {/* LEFT SIDE: Media (for Post) OR Shared Post Preview (for Share) */}
@@ -100,8 +102,9 @@ export function DetailView({ type, post, share, isLoading, isError }: DetailView
         {/* RIGHT SIDE: Header + Text + Actions + Comments */}
         <div
           className={cn(
-            'rounded-2xl border bg-white overflow-hidden flex flex-col',
-            hasLeftContent ? 'min-h-[70vh]' : 'min-h-[70vh] lg:min-h-[75vh]'
+            'bg-white overflow-hidden flex flex-col',
+            hasLeftContent ? 'min-h-[70vh]' : 'min-h-[70vh] lg:min-h-[75vh]',
+            isModal ? 'rounded-none border-none' : 'rounded-2xl border'
           )}
         >
           <div className="px-4 pt-4">

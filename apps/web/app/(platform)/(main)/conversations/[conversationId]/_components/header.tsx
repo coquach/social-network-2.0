@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Ellipsis, Search } from 'lucide-react';
 import { MdCall } from 'react-icons/md';
@@ -8,16 +8,19 @@ import { IoMdVideocam } from 'react-icons/io';
 import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNow } from 'date-fns';
 import { vi as viVN } from 'date-fns/locale';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   ConversationDTO,
   useUser,
   usePresenceStore,
   CallType,
+  queryKeys,
 } from '@repo/shared';
 import { ProfileDrawer } from './drawer/profile-drawer';
 import { useCallActions } from '@/hooks/use-call-actions';
 import { toast } from 'sonner';
+import { useSocket } from '@/components/providers/socket-provider';
 
 import { GroupAvatar } from '../../_components/group-avatar';
 import { DirectAvatar } from '../../_components/direct-avatar';
@@ -25,8 +28,40 @@ import { DirectAvatar } from '../../_components/direct-avatar';
 export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
   const { userId: currentUserId } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { chatSocket } = useSocket();
+  const queryClient = useQueryClient();
 
   const { startCall, joinOngoingCall } = useCallActions();
+
+  useEffect(() => {
+    if (!chatSocket || !conversation._id) return;
+
+    const onCallInvite = (payload: any) => {
+      if (payload.conversationId === conversation._id) {
+        queryClient.setQueryData(
+          queryKeys.conversations.detail(conversation._id),
+          (old: any) => old ? { ...old, activeCallId: payload.id || payload._id } : old
+        );
+      }
+    };
+
+    const onCallEnded = (payload: any) => {
+      if (payload.conversationId === conversation._id) {
+        queryClient.setQueryData(
+          queryKeys.conversations.detail(conversation._id),
+          (old: any) => old ? { ...old, activeCallId: undefined } : old
+        );
+      }
+    };
+
+    chatSocket.on('call.invite', onCallInvite);
+    chatSocket.on('call.ended', onCallEnded);
+
+    return () => {
+      chatSocket.off('call.invite', onCallInvite);
+      chatSocket.off('call.ended', onCallEnded);
+    };
+  }, [chatSocket, conversation._id, queryClient]);
 
   const handleStartCall = async (type: CallType) => {
     if (!conversation._id) return;

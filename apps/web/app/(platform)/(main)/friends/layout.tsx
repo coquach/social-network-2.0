@@ -28,8 +28,8 @@ export default function FriendsLayout({
   }, [pathname]);
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-full w-full">
+    <SidebarProvider className="h-full min-h-0">
+      <div className="flex h-full w-full">
         <Sidebar className="sm:block pt-16">
           <SidebarHeader className="px-3 py-3">
             <div className="text-2xl font-bold text-sky-500">Bạn bè</div>

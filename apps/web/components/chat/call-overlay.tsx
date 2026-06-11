@@ -101,7 +101,7 @@ function CallOverlayInner() {
         };
         
         setActiveCall(activeCallSession);
-        openCallWindow(callId, currentOutgoing.type as CallType, false);
+        // The call window is already opened by startCall immediately to bypass popup blockers.
       }
 
       // Cleanup incoming call if it matches the accepted call (e.g., accepted on another device)
@@ -185,28 +185,6 @@ function CallOverlayInner() {
 
   // 1. Connecting State Modal (Removed, handled by popup)
 
-
-  // 2. Dialing (Outgoing) State Modal
-  if (
-    storeOutgoingCall &&
-    (storeOutgoingCall.status === 'dialing' ||
-      storeOutgoingCall.status === 'ringing') &&
-    !currentCall
-  ) {
-    return (
-      <Dialog open onOpenChange={() => endCall()}>
-        <DialogContent
-          showCloseButton={false}
-          className="max-w-md p-0 overflow-hidden border-none bg-neutral-950 rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.5)]"
-        >
-          <DialingView
-            onCancel={endCall}
-            conversationId={storeOutgoingCall.conversationId}
-          />
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   // 3. Incoming Call Modal
   if (storeIncomingCall && !storeActiveCall) {
@@ -311,119 +289,6 @@ function IncomingCallView({ onAccept, onReject, conversationId }: any) {
             Chấp nhận
           </span>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function DialingView({
-  onCancel,
-  conversationId,
-}: {
-  onCancel: () => void;
-  conversationId?: string;
-}) {
-  const { data: conversation } = useConversation(conversationId || '');
-  const { userId } = useAuth();
-  const [progress, setProgress] = useState(1);
-
-  useEffect(() => {
-    const totalMs = 30000;
-    const interval = 100;
-    let elapsed = 0;
-    const timer = setInterval(() => {
-      elapsed += interval;
-      const newProgress = Math.max(0, 1 - elapsed / totalMs);
-      setProgress(newProgress);
-      if (newProgress === 0) clearInterval(timer);
-    }, interval);
-    return () => clearInterval(timer);
-  }, []);
-
-  const isGroup = conversation?.isGroup;
-  const otherParticipantId = conversation?.participants?.find(
-    (p: string) => p !== userId,
-  );
-  const { data: otherUser } = useUser(otherParticipantId || '', {
-    enabled: !isGroup && !!otherParticipantId,
-  });
-
-  const avatarUrl = isGroup
-    ? conversation?.groupAvatar?.url
-    : otherUser?.avatarUrl;
-  const name =
-    (isGroup
-      ? conversation?.groupName
-      : otherUser
-        ? `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() ||
-          'Người dùng'
-        : 'Đang kết nối...') || 'Đang kết nối...';
-
-  const timeLeftSeconds = Math.ceil(progress * 30);
-
-  return (
-    <div className="flex flex-col items-center justify-center p-12 text-white min-h-[550px]">
-      <div className="relative mb-12">
-        <div className="w-44 h-44 rounded-full border-4 border-rose-500/10 flex items-center justify-center overflow-hidden bg-neutral-900 shadow-2xl ring-[12px] ring-neutral-900">
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt={name}
-              width={176}
-              height={176}
-              className="object-cover"
-            />
-          ) : (
-            <div className="text-5xl font-bold text-neutral-600">
-              {name.charAt(0)}
-            </div>
-          )}
-        </div>
-        <svg
-          className="absolute -inset-2 -rotate-90 pointer-events-none"
-          width="192"
-          height="192"
-        >
-          <circle
-            cx="96"
-            cy="96"
-            r="92"
-            stroke="currentColor"
-            strokeWidth="4"
-            fill="transparent"
-            className="text-rose-500 transition-all duration-100 ease-linear"
-            style={{
-              strokeDasharray: 578,
-              strokeDashoffset: 578 * (1 - progress),
-            }}
-          />
-        </svg>
-      </div>
-
-      <h2 className="text-4xl font-bold mb-2 text-center tracking-tight">
-        {name}
-      </h2>
-      <p className="text-neutral-500 text-xs mb-10 tracking-[0.3em] uppercase font-black opacity-70">
-        Đang đổ chuông...
-      </p>
-
-      <div className="font-mono text-2xl text-neutral-400 bg-white/5 px-6 py-2 rounded-full border border-white/5 mb-16 shadow-inner">
-        00:{timeLeftSeconds.toString().padStart(2, '0')}
-      </div>
-
-      <div className="flex flex-col items-center gap-4">
-        <button
-          onClick={onCancel}
-          className="w-20 h-20 rounded-full bg-rose-600 flex items-center justify-center hover:bg-rose-700 transition-all shadow-[0_15px_40px_rgba(225,29,72,0.4)] active:scale-90 group"
-        >
-          <PhoneOff
-            size={36}
-            className="group-hover:rotate-12 transition-transform duration-300"
-          />
-        </button>
-        <span className="text-[11px] font-black text-neutral-500 uppercase tracking-[0.2em] opacity-80">
-          Hủy cuộc gọi
-        </span>
       </div>
     </div>
   );
