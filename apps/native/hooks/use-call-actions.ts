@@ -187,9 +187,15 @@ export function useCallActions() {
 
     if (client) {
       const call = client.call('default', callId);
-      void call.leave().catch((e) =>
-        console.warn('[Call] call.leave error:', e),
-      );
+      if (isGroup) {
+        void call.leave().catch((e) =>
+          console.warn('[Call] call.leave error:', e),
+        );
+      } else {
+        void call.endCall().catch((e) =>
+          console.warn('[Call] call.endCall error:', e),
+        );
+      }
     }
     
     if (isGroup) {

@@ -85,7 +85,9 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
           description: 'Nhóm của bạn đã được tạo.',
           variant: 'success',
         });
-        onClose();
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       },
       onError: (error) => {
         setFormAlert({

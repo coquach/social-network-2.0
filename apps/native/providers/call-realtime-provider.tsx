@@ -87,6 +87,12 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
           console.warn('[CallRealtimeProvider] joinCallSession (caller) error:', e),
         );
       }
+
+      // Cleanup incoming call if it matches the accepted call (e.g., accepted on another device)
+      const currentState = useCallStore.getState();
+      if (currentState.incomingCall?.id === callId || currentState.incomingCall?._id === callId) {
+        setIncomingCall(null);
+      }
     };
 
     // ──────────────────────────────────────────────────────────────────────────

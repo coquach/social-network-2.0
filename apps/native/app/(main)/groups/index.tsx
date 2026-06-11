@@ -1,4 +1,4 @@
-﻿import { useInvitedGroups, useMyGroups, useRecommendedGroups } from '@repo/shared/hooks';
+import { useInvitedGroups, useMyGroups, useRecommendedGroups } from '@repo/shared/hooks';
 import { FlashList } from '@shopify/flash-list';
 import { InvitedGroupDTO } from '@repo/shared/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -139,8 +139,6 @@ export default function GroupsScreen() {
       <Modal
         visible={isCreateModalOpen}
         animationType="slide"
-        transparent={false}
-        presentationStyle="pageSheet"
         onRequestClose={() => setIsCreateModalOpen(false)}
       >
         <CreateGroupForm onClose={() => setIsCreateModalOpen(false)} />

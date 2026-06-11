@@ -5,7 +5,7 @@ import {
   TargetType 
 } from '@repo/shared';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, Image } from 'react-native';
 import { useAppTheme } from '~/providers/theme-provider';
 
 interface ModerationHistoryItemProps {
@@ -116,12 +116,25 @@ export function ModerationHistoryItem({ item, onPress }: ModerationHistoryItemPr
           </Text>
         </View>
 
-        {item.targetPreview?.content ? (
-          <View className="mt-2 flex-row items-center gap-1.5 px-1">
+        {item.targetPreview?.content || item.targetPreview?.imageUrl ? (
+          <View className="mt-2 flex-row items-center gap-2 px-1">
             <Ionicons name="link-outline" size={12} color="#94a3b8" />
-            <Text className="text-[11px] text-slate-400 dark:text-slate-500" numberOfLines={1}>
-              Preview: {item.targetPreview.content}
-            </Text>
+            {item.targetPreview.imageUrl && (
+              <Image 
+                source={{ uri: item.targetPreview.imageUrl }} 
+                style={{ width: 24, height: 24, borderRadius: 4, backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} 
+                resizeMode="cover" 
+              />
+            )}
+            {item.targetPreview.content ? (
+              <Text className="flex-1 text-[11px] text-slate-400 dark:text-slate-500" numberOfLines={1}>
+                Preview: {item.targetPreview.content}
+              </Text>
+            ) : (
+              <Text className="flex-1 text-[11px] italic text-slate-400 dark:text-slate-500">
+                [Hình ảnh]
+              </Text>
+            )}
           </View>
         ) : null}
 

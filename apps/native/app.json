@@ -65,6 +65,7 @@
       "bundler": "metro"
     },
     "plugins": [
+      "expo-asset",
       "expo-router",
       [
         "expo-splash-screen",

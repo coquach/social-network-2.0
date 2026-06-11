@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
 
 import {
   formatDateTime,
@@ -196,14 +197,71 @@ export function ModerationDetailSheet({
                     </p>
                   </div>
 
-                  {moderation.targetPreview?.content ? (
+                  {target ? (
+                    <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-950/70">
+                      <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        Nội dung gốc
+                      </p>
+                      
+                      {target.content ? (
+                        <p className="mt-2 mb-3 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-300">
+                          {target.content}
+                        </p>
+                      ) : (
+                        <p className="mt-2 mb-3 whitespace-pre-wrap text-sm leading-6 italic text-slate-400">
+                          Không có văn bản
+                        </p>
+                      )}
+                      
+                      {'images' in target && Array.isArray(target.images) && target.images.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {target.images.map((img: any, idx: number) => (
+                            <Image
+                              key={idx}
+                              src={typeof img === 'string' ? img : img.url || img.secure_url}
+                              alt="attachment"
+                              width={80}
+                              height={80}
+                              className="h-20 w-20 rounded-lg object-cover bg-slate-100 dark:bg-slate-800"
+                            />
+                          ))}
+                        </div>
+                      )}
+                      
+                      {'media' in target && Array.isArray(target.media) && target.media.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {target.media.map((img: any, idx: number) => (
+                            <Image
+                              key={idx}
+                              src={typeof img === 'string' ? img : img.url || img.secure_url}
+                              alt="attachment"
+                              width={80}
+                              height={80}
+                              className="h-20 w-20 rounded-lg object-cover bg-slate-100 dark:bg-slate-800"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : moderation.targetPreview?.content || moderation.targetPreview?.imageUrl ? (
                     <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-950/70">
                       <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
                         Preview mục tiêu
                       </p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-300">
-                        {moderation.targetPreview.content}
-                      </p>
+                      {moderation.targetPreview.content && (
+                        <p className="mt-2 mb-3 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-300">
+                          {moderation.targetPreview.content}
+                        </p>
+                      )}
+                      {moderation.targetPreview.imageUrl && (
+                        <Image
+                          src={moderation.targetPreview.imageUrl} 
+                          alt="preview" 
+                          width={80}
+                          height={80}
+                          className="h-20 w-20 rounded-lg object-cover bg-slate-100 dark:bg-slate-800"
+                        />
+                      )}
                     </div>
                   ) : null}
                 </section>

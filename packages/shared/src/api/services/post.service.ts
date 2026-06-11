@@ -104,14 +104,14 @@ export const postService = {
    * Update existing post
    */
   async updatePost(postId: string, data: UpdatePostInput): Promise<PostDTO> {
-    return getApiClient().patch(`/posts/update/${postId}`, data);
+    return getApiClient().patch(`/posts/${postId}`, data);
   },
 
   /**
    * Delete post
    */
   async deletePost(postId: string): Promise<void> {
-    return getApiClient().delete(`/posts/delete/${postId}`);
+    return getApiClient().delete(`/posts/${postId}`);
   },
 
   /**
@@ -178,7 +178,7 @@ export const postService = {
     groupId: string,
     action: 'approve' | 'reject',
   ): Promise<boolean> {
-    return getApiClient().post(`/groups/${groupId}/posts/${postId}/moderate`, {
+    return getApiClient().post(`/groups/${groupId}/posts/${postId}/moderation`, {
       action,
     });
   },

@@ -13,7 +13,7 @@ import {
   AppealStatus,
 } from '@repo/shared';
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import { ActivityIndicator, Text, View, TextInput, Pressable, Keyboard } from 'react-native';
+import { ActivityIndicator, Text, View, TextInput, Pressable, Keyboard, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '~/providers/theme-provider';
 
@@ -53,6 +53,7 @@ export const ModerationHistoryDetailSheet = React.forwardRef<
   );
 
   const moderation = data?.moderation;
+  const target = data?.target;
   const appeals = data?.appeals ?? [];
   const hasPendingAppeal = appeals.some(a => a.status === AppealStatus.PENDING);
 
@@ -156,16 +157,67 @@ export const ModerationHistoryDetailSheet = React.forwardRef<
               </Text>
             </View>
 
-            {moderation.targetPreview?.content && (
+            {target ? (
+              <View className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
+                <Text className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Nội dung gốc
+                </Text>
+                
+                {target.content ? (
+                  <Text className="text-[14px] leading-6 text-slate-700 dark:text-slate-300 mb-3">
+                    {target.content}
+                  </Text>
+                ) : (
+                  <Text className="text-[14px] italic leading-6 text-slate-400 mb-3">
+                    Không có văn bản
+                  </Text>
+                )}
+                
+                {'images' in target && Array.isArray(target.images) && target.images.length > 0 && (
+                  <View className="flex-row flex-wrap gap-2">
+                    {target.images.map((img: any, idx: number) => (
+                      <Image
+                        key={idx}
+                        source={{ uri: typeof img === 'string' ? img : img.url || img.secure_url }}
+                        style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}
+                        resizeMode="cover"
+                      />
+                    ))}
+                  </View>
+                )}
+                
+                {'media' in target && Array.isArray(target.media) && target.media.length > 0 && (
+                  <View className="flex-row flex-wrap gap-2">
+                    {target.media.map((img: any, idx: number) => (
+                      <Image
+                        key={idx}
+                        source={{ uri: typeof img === 'string' ? img : img.url || img.secure_url }}
+                        style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}
+                        resizeMode="cover"
+                      />
+                    ))}
+                  </View>
+                )}
+              </View>
+            ) : moderation.targetPreview ? (
               <View className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/40">
-                <Text className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <Text className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                   Preview nội dung gốc
                 </Text>
-                <Text className="text-[14px] leading-6 text-slate-600 dark:text-slate-400">
-                  {moderation.targetPreview.content}
-                </Text>
+                {moderation.targetPreview.content && (
+                  <Text className="text-[14px] leading-6 text-slate-600 dark:text-slate-400 mb-3">
+                    {moderation.targetPreview.content}
+                  </Text>
+                )}
+                {moderation.targetPreview.imageUrl && (
+                  <Image 
+                    source={{ uri: moderation.targetPreview.imageUrl }} 
+                    style={{ width: 80, height: 80, borderRadius: 8, backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }} 
+                    resizeMode="cover" 
+                  />
+                )}
               </View>
-            )}
+            ) : null}
 
             {moderation.violations && moderation.violations.length > 0 && (
               <View className="mb-8">

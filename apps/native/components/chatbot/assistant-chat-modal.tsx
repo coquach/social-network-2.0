@@ -3,7 +3,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { useAssistantChatSession } from '@repo/shared';
 import { Button } from 'heroui-native/button';
 import React from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View, TouchableOpacity } from 'react-native';
 
 import {
   AssistantMessageList,
@@ -208,16 +208,23 @@ export function AssistantChatModal({
                 }}
               />
             </View>
-            <Button
-              variant="primary"
-              className="h-11 w-11 rounded-full px-0"
-              isDisabled={!input.trim() || isChatBusy}
+            <TouchableOpacity
+              disabled={!input.trim() || isChatBusy}
               onPress={() => {
                 void handleSend();
               }}
+              className={`h-11 w-11 items-center justify-center rounded-full ${
+                !input.trim() || isChatBusy
+                  ? 'bg-slate-200 dark:bg-slate-800'
+                  : 'bg-app-primary dark:bg-app-primary-dark'
+              }`}
             >
-              <AntDesign name="send" size={16} color="#ffffff" />
-            </Button>
+              <AntDesign
+                name="send"
+                size={16}
+                color={!input.trim() || isChatBusy ? '#94a3b8' : '#ffffff'}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </View>

@@ -10,7 +10,12 @@ export function AuthShell({ children }: AuthShellProps) {
   return (
     <AppKeyboardScrollView
       className="flex-1 bg-app-bg dark:bg-app-bg-dark"
-      contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 28 }}
+      contentContainerStyle={{
+        flexGrow: 1,
+        justifyContent: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 28,
+      }}
       keyboardShouldPersistTaps="handled"
       contentInsetAdjustmentBehavior="automatic"
       bottomOffset={20}

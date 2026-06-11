@@ -78,7 +78,7 @@ export const MusicRecommendations = () => {
         </button>
       </div>
 
-      <div className="px-2 py-2">
+      <div className="px-2 py-2 max-h-[240px] overflow-y-auto app-scroll overscroll-contain">
         {isPending &&
           Array.from({ length: RECOMMENDATION_LIMIT }).map((_, index) => (
             <div key={index} className="flex items-center gap-3 px-2 py-2">

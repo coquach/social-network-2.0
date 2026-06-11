@@ -7,6 +7,7 @@ import type { ContentModerationDTO } from '@repo/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 import {
   formatDateTime,
@@ -52,7 +53,7 @@ export function ModerationHistoryItem({
   item: ContentModerationDTO;
   onOpenDetail: () => void;
 }) {
-  const targetPreview = item.targetPreview?.content;
+  const targetPreview = item.targetPreview;
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-200/70 hover:shadow-md dark:border-slate-800 dark:bg-slate-950/70 dark:hover:border-sky-900/70 sm:p-4">
@@ -95,14 +96,25 @@ export function ModerationHistoryItem({
             </p>
           </div>
 
-          {targetPreview ? (
-            <div className="rounded-xl border border-slate-200/70 bg-white/80 px-3.5 py-2.5 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                Preview mục tiêu
-              </p>
-              <p className="line-clamp-2 whitespace-pre-line wrap-break-word">
-                {targetPreview}
-              </p>
+          {targetPreview?.content || targetPreview?.imageUrl ? (
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-3.5 py-2.5 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+              {targetPreview.imageUrl && (
+                <Image
+                  src={targetPreview.imageUrl} 
+                  alt="preview" 
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 shrink-0 rounded-md object-cover bg-slate-100 dark:bg-slate-800" 
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  Preview mục tiêu
+                </p>
+                <p className="line-clamp-2 whitespace-pre-line wrap-break-word">
+                  {targetPreview.content || <span className="italic text-slate-400">[Hình ảnh]</span>}
+                </p>
+              </div>
             </div>
           ) : null}
 

@@ -80,7 +80,9 @@ function CallOverlayInner() {
       const { callId, conversationId, participants } = payload;
       queryClient.invalidateQueries({ queryKey: queryKeys.calls.detail(callId) });
 
-      const currentOutgoing = useCallStore.getState().outgoingCall;
+      const currentState = useCallStore.getState();
+      const currentOutgoing = currentState.outgoingCall;
+      
       if (currentOutgoing && currentOutgoing.conversationId === conversationId) {
         setOutgoingCall({
           conversationId,
@@ -100,6 +102,11 @@ function CallOverlayInner() {
         
         setActiveCall(activeCallSession);
         openCallWindow(callId, currentOutgoing.type as CallType, false);
+      }
+
+      // Cleanup incoming call if it matches the accepted call (e.g., accepted on another device)
+      if (currentState.incomingCall?.id === callId || currentState.incomingCall?._id === callId) {
+        setIncomingCall(null);
       }
     };
 

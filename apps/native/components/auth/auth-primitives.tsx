@@ -23,68 +23,79 @@ type AuthFieldProps = {
   autoFocus?: boolean;
 };
 
-export const AuthField = React.forwardRef<any, AuthFieldProps>(({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  keyboardType = 'default',
-  autoCapitalize = 'none',
-  secureTextEntry = false,
-  error,
-  returnKeyType,
-  onSubmitEditing,
-  blurOnSubmit,
-  autoFocus,
-}, ref) => {
-  const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
-  const isPasswordField = secureTextEntry;
-  const isInvalid = Boolean(error);
+export const AuthField = React.forwardRef<any, AuthFieldProps>(
+  (
+    {
+      label,
+      value,
+      onChangeText,
+      placeholder,
+      keyboardType = 'default',
+      autoCapitalize = 'none',
+      secureTextEntry = false,
+      error,
+      returnKeyType,
+      onSubmitEditing,
+      blurOnSubmit,
+      autoFocus,
+    },
+    ref,
+  ) => {
+    const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
+    const isPasswordField = secureTextEntry;
+    const isInvalid = Boolean(error);
 
-  return (
-    <TextField isInvalid={isInvalid} className="gap-2">
-      <Label>
-        <Label.Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">
-          {label}
-        </Label.Text>
-      </Label>
-      <View className="relative">
-        <Input
-          ref={ref}
-          variant="secondary"
-          className={cn('min-h-14 rounded-2xl px-4 py-3.5 text-base', isPasswordField && 'pr-14')}
-          value={value}
-          autoCapitalize={autoCapitalize}
-          placeholder={placeholder}
-          keyboardType={keyboardType}
-          onChangeText={onChangeText}
-          secureTextEntry={isPasswordField && !isPasswordVisible}
-          returnKeyType={returnKeyType}
-          onSubmitEditing={onSubmitEditing}
-          blurOnSubmit={blurOnSubmit}
-          autoFocus={autoFocus}
-        />
-        {isPasswordField ? (
-          <Pressable
-            className="absolute bottom-0 right-3 top-0 items-center justify-center rounded-full px-2 active:opacity-80"
-            accessibilityRole="button"
-            accessibilityLabel={isPasswordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-            onPress={() => setIsPasswordVisible((current) => !current)}
-          >
-            <Ionicons
-              name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
-              size={18}
-              color="#0ea5e9"
-            />
-          </Pressable>
-        ) : null}
-      </View>
-      <FieldError isInvalid={isInvalid} className="min-h-5">
-        {error}
-      </FieldError>
-    </TextField>
-  );
-});
+    return (
+      <TextField isInvalid={isInvalid} className="gap-1.5">
+        <Label>
+          <Label.Text className="text-sm font-semibold text-app-fg dark:text-app-fg-dark">
+            {label}
+          </Label.Text>
+        </Label>
+        <View className="relative">
+          <Input
+            ref={ref}
+            variant="primary"
+            className={cn(
+              'rounded-2xl border border-app-border bg-app-bg/70 px-4 py-3.5 text-base text-app-fg dark:border-app-border-dark dark:bg-app-bg-dark/60 dark:text-app-fg-dark',
+              isPasswordField && 'pr-14',
+            )}
+            value={value}
+            autoCapitalize={autoCapitalize}
+            placeholder={placeholder}
+            placeholderTextColor="#64748b"
+            keyboardType={keyboardType}
+            onChangeText={onChangeText}
+            secureTextEntry={isPasswordField && !isPasswordVisible}
+            returnKeyType={returnKeyType}
+            onSubmitEditing={onSubmitEditing}
+            blurOnSubmit={blurOnSubmit}
+            autoFocus={autoFocus}
+          />
+          {isPasswordField ? (
+            <Pressable
+              className="absolute bottom-0 right-3 top-0 items-center justify-center rounded-full px-2 active:opacity-80"
+              accessibilityRole="button"
+              accessibilityLabel={
+                isPasswordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
+              }
+              onPress={() => setIsPasswordVisible((current) => !current)}
+            >
+              <Ionicons
+                name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+                size={18}
+                color="#0ea5e9"
+              />
+            </Pressable>
+          ) : null}
+        </View>
+        <FieldError isInvalid={isInvalid} className="min-h-5">
+          {error}
+        </FieldError>
+      </TextField>
+    );
+  },
+);
 
 type AuthErrorTextProps = {
   message?: string | null;
@@ -96,7 +107,10 @@ export function AuthErrorText({ message }: AuthErrorTextProps) {
   }
 
   return (
-    <Text selectable className="text-xs leading-5 text-red-600 dark:text-red-400">
+    <Text
+      selectable
+      className="text-xs leading-5 text-red-600 dark:text-red-400"
+    >
       {message}
     </Text>
   );
@@ -112,8 +126,11 @@ export function AuthAlert({ message }: AuthAlertProps) {
   }
 
   return (
-    <View className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
-      <Text selectable className="text-sm leading-6 text-red-700 dark:text-red-200">
+    <View className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
+      <Text
+        selectable
+        className="text-sm leading-6 text-red-700 dark:text-red-200"
+      >
         {message}
       </Text>
     </View>
@@ -136,22 +153,21 @@ export function AuthPrimaryButton({
   className = '',
 }: AuthPrimaryButtonProps) {
   return (
-    <Button
-      variant="primary"
-      className={cn('min-h-12 rounded-2xl', className)}
+    <Pressable
+      className={`items-center rounded-2xl bg-app-primary px-6 py-3.5 active:opacity-80 disabled:opacity-50 dark:bg-app-primary-dark ${className}`}
       onPress={onPress}
-      isDisabled={disabled}
+      disabled={disabled}
     >
       {loading ? (
-        <View className="flex-row items-center gap-2">
-          <ActivityIndicator size="small" color="#ffffff" />
-          <Button.Label>{label}</Button.Label>
-        </View>
+        <ActivityIndicator size="small" color="#ffffff" />
       ) : (
-        label
+        <Text className="font-semibold text-app-primary-fg dark:text-app-primary-fg-dark">
+          {label}
+        </Text>
       )}
-    </Button>
+    </Pressable>
   );
+
 }
 
 type AuthSecondaryButtonProps = {
@@ -160,11 +176,21 @@ type AuthSecondaryButtonProps = {
   disabled?: boolean;
 };
 
-export function AuthSecondaryButton({ label, onPress, disabled = false }: AuthSecondaryButtonProps) {
+export function AuthSecondaryButton({
+  label,
+  onPress,
+  disabled = false,
+}: AuthSecondaryButtonProps) {
   return (
-    <Button variant="outline" className="min-h-12 rounded-2xl" onPress={onPress} isDisabled={disabled}>
-      {label}
-    </Button>
+    <Pressable
+      className="items-center rounded-2xl border border-app-border px-6 py-3.5 active:opacity-80 disabled:opacity-50 dark:border-app-border-dark"
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Text className="font-semibold text-app-primary dark:text-app-primary-dark">
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -174,40 +200,32 @@ type AuthGoogleButtonProps = {
   loading?: boolean;
 };
 
-export function AuthGoogleButton({ onPress, disabled = false, loading = false }: AuthGoogleButtonProps) {
+export function AuthGoogleButton({
+  onPress,
+  disabled = false,
+  loading = false,
+}: AuthGoogleButtonProps) {
   return (
-    <Button
-      variant="outline"
-      className="min-h-12 rounded-2xl"
+    <Pressable
+      className="flex-row items-center justify-center rounded-2xl border border-app-border bg-app-bg/70 px-4 py-3.5 active:opacity-80 disabled:opacity-50 dark:border-app-border-dark dark:bg-app-bg-dark/60"
       onPress={onPress}
-      isDisabled={disabled}
+      disabled={disabled}
     >
-      {loading ? (
-        <View className="flex-row items-center gap-3">
-          <ActivityIndicator size="small" color="#0ea5e9"  />
-          <Button.Label className="text-app-primary dark:text-app-primary-dark">
-            Đang kết nối Google...
-          </Button.Label>
-        </View>
-      ) : (
-        <View className="flex-row items-center gap-3">
-          <View className="h-7 w-7 items-center justify-center rounded-full bg-app-primary/15 dark:bg-app-primary-dark/15">
-            <Text className="font-bold text-app-primary dark:text-app-primary-dark">
-              G
-            </Text>
-          </View>
-          <Button.Label className="text-app-primary dark:text-app-primary-dark">
-            Tiếp tục với Google
-          </Button.Label>
-        </View>
-      )}
-    </Button>
+      <View className="mr-3 h-6 w-6 items-center justify-center rounded-full bg-app-primary/15 dark:bg-app-primary-dark/15">
+        <Text className="font-bold text-app-primary dark:text-app-primary-dark">
+          G
+        </Text>
+      </View>
+      <Text className="font-semibold text-app-primary dark:text-app-primary-dark">
+        {loading ? 'Đang kết nối Google...' : 'Tiếp tục với Google'}
+      </Text>
+    </Pressable>
   );
 }
 
 export function AuthDivider() {
   return (
-    <View className="my-1 flex-row items-center">
+    <View className="my-3 flex-row items-center">
       <View className="h-px flex-1 bg-app-border dark:bg-app-border-dark" />
       <Text className="mx-3 text-xs uppercase tracking-widest text-app-muted-fg dark:text-app-muted-fg-dark">
         hoặc
@@ -225,7 +243,9 @@ type AuthFooterLinkProps = {
 export function AuthFooterLink({ prompt, children }: AuthFooterLinkProps) {
   return (
     <View className="mt-2 flex-row items-center justify-center gap-1">
-      <Text className="text-md text-app-muted-fg dark:text-app-muted-fg-dark">{prompt}</Text>
+      <Text className="text-md text-app-muted-fg dark:text-app-muted-fg-dark">
+        {prompt}
+      </Text>
       {children}
     </View>
   );
