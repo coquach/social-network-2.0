@@ -28,7 +28,7 @@ export function CallMiniOverlay() {
   const { isMinimized, activeCall: storeActiveCall } = useCallStore();
   const pathname = usePathname();
 
-  const isCallScreen = pathname?.includes('/calls/');
+  const isCallScreen = pathname?.includes('/chat/call');
   const shouldShow = storeActiveCall && (isMinimized || !isCallScreen);
 
   if (!client || !shouldShow) return null;
@@ -71,8 +71,8 @@ function CallMiniOverlayInner({ isCallScreen, activeCallId }: { isCallScreen?: b
 
   const handleExpand = () => {
     setMinimized(false);
-    if (!isCallScreen && activeCallId) {
-      router.push(`/(main)/calls/${activeCallId}` as any);
+    if (!isCallScreen) {
+      router.push(`/chat/call`);
     }
   };
 

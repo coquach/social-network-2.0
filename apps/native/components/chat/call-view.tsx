@@ -328,29 +328,31 @@ function DialingView({ onCancel, conversationId }: { onCancel: () => void; conve
     >
       <View className="items-center">
         <View className="mb-10 relative items-center justify-center" style={{ width: size, height: size }}>
-          <Svg width={size} height={size} className="absolute top-0 left-0">
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke="rgba(255,255,255,0.05)"
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke="#f43f5e"
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              fill="none"
-              rotation="-90"
-              origin={`${size / 2}, ${size / 2}`}
-            />
-          </Svg>
+          <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
+            <Svg width={size} height={size}>
+              <Circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke="rgba(255,255,255,0.05)"
+                strokeWidth={strokeWidth}
+                fill="none"
+              />
+              <Circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke="#f43f5e"
+                strokeWidth={strokeWidth}
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                fill="none"
+                rotation="-90"
+                origin={`${size / 2}, ${size / 2}`}
+              />
+            </Svg>
+          </View>
           
           <View className="h-[140px] w-[140px] items-center justify-center rounded-full bg-[#2a2a2a] overflow-hidden">
             {avatarUrl ? (

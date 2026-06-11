@@ -1,16 +1,17 @@
 import {
-  MediaType,
-  useFriendUsers,
-  useCurrentUser,
-  useMyPosts,
-  useMyShares,
-  useUpdateProfile,
-  type NativeUploadFileDescriptor,
-  type PostDTO,
-  type PostSnapshotDTO,
-  type SharePostSnapshotDTO,
-  type UploadableFile,
-  toPostSnapshot,
+MediaType,
+useFriendUsers,
+useCurrentUser,
+useMyPosts,
+useMyShares,
+useUpdateProfile,
+type NativeUploadFileDescriptor,
+type PostDTO,
+type PostSnapshotDTO,
+type SharePostSnapshotDTO,
+type UploadableFile,
+toPostSnapshot,
+formatAbsoluteTime,
 } from '@repo/shared';
 import { useRouter } from 'expo-router';
 import { useToast } from 'heroui-native/toast';
@@ -23,8 +24,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PostCardFull } from '~/components/post/post-card-full';
 import { SharePost } from '~/components/post/share-post';
 import {
-  ProfileEditModal,
-  type ProfileEditFormValues,
+ProfileEditModal,
+type ProfileEditFormValues,
 } from '~/components/profile/profile-edit-modal';
 import { AppCard } from '~/components/ui/app-card';
 import { AppToast } from '~/components/ui/app-toast';
@@ -361,7 +362,7 @@ export default function ProfileScreen() {
                   <View className="flex-row items-center gap-3">
                     <Ionicons name="time-outline" size={22} color="#64748b" />
                     <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
-                      Tham gia vào <Text className="font-bold">{new Date(currentUser.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}</Text>
+                      Tham gia vào <Text className="font-bold">{formatAbsoluteTime(currentUser.createdAt, "'tháng' MM 'năm' yyyy")}</Text>
                     </Text>
                   </View>
                 ) : null}

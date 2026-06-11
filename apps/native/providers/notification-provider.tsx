@@ -117,8 +117,13 @@ export const NotificationProvider = ({
         if (isCallNotificationData(incomingData)) {
           if (incomingData) {
             const convId = incomingData.conversationId;
+            const callId = incomingData.callId;
             const isInsideTargetChat = Boolean(convId && segmentsRef.current.includes('chat') && segmentsRef.current.includes(convId));
-            if (!isInsideTargetChat) {
+            
+            const { incomingCall, activeCall } = useCallStore.getState();
+            const isCallAlreadyHandledInApp = (incomingCall?.id === callId) || (activeCall?.id === callId);
+
+            if (!isInsideTargetChat && !(AppState.currentState === 'active' && isCallAlreadyHandledInApp)) {
               void displayCallNotification(incomingData).catch((notificationError) => {
                 setError(normalizeError(notificationError));
               });

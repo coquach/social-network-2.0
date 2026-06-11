@@ -71,7 +71,7 @@ export const NotificationCardFull = ({
             {getNotificationTypeLabel(notif.type)}
           </span>
         </div>
-        <span className="text-sm text-gray-800 max-w-full whitespace-normal wrap-break-word">
+        <span className="text-sm text-gray-800 whitespace-pre-wrap break-words">
           {content || 'Thông báo mới'}
         </span>
         <span className="text-xs text-gray-400 text-right mt-1">

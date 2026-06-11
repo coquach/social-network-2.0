@@ -12,6 +12,7 @@ import {
 } from '@repo/shared';
 import { useCallClient } from '~/providers/call-provider';
 import { useCallback, useRef } from 'react';
+import { Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 
 export type CallErrorCode =
@@ -110,7 +111,12 @@ export function useCallActions() {
           await call.microphone.enable();
         } else {
           // 1-to-1 call: don't join or enable hardware yet.
-          setOutgoingCall({ id: session.id, conversationId, type, status: 'ringing' });
+          const currentState = useCallStore.getState();
+          if (currentState.activeCall?.conversationId === conversationId) {
+            // Call was accepted via WebSocket before HTTP finished! Do not revert to ringing.
+          } else {
+            setOutgoingCall({ id: session._id || session.id, conversationId, type, status: 'ringing' });
+          }
           await call.getOrCreate({
             ring: true,
             data: { members, custom: { type } },
@@ -156,8 +162,10 @@ export function useCallActions() {
       setIncomingCall(null);
     } catch (error) {
       console.error('[Call] Failed to answer call:', error);
+      Alert.alert('Không thể kết nối', 'Cuộc gọi đã kết thúc hoặc không còn đổ chuông.');
+      reset();
     }
-  }, [acceptCallSession, joinCallSession, client, setActiveCall, setIncomingCall, incomingCall]);
+  }, [acceptCallSession, joinCallSession, client, setActiveCall, setIncomingCall, incomingCall, reset]);
 
   const rejectCall = useCallback(async () => {
     if (!incomingCall || !client) return;

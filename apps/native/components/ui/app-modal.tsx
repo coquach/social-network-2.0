@@ -18,6 +18,7 @@ type AppModalProps = {
   titleClassName?: string;
   descriptionClassName?: string;
   footerClassName?: string;
+  fullScreenContent?: React.ReactNode;
 };
 
 const modalVariantStyles: Record<
@@ -63,6 +64,7 @@ export function AppModal({
   titleClassName,
   descriptionClassName,
   footerClassName,
+  fullScreenContent,
 }: AppModalProps) {
   const styles = modalVariantStyles[variant];
 
@@ -117,6 +119,7 @@ export function AppModal({
             {footer ? <View className={cn('mt-5 gap-3', footerClassName)}>{footer}</View> : null}
           </Dialog.Content>
         </KeyboardAvoidingView>
+        {fullScreenContent}
       </Dialog.Portal>
     </Dialog>
   );

@@ -139,7 +139,8 @@ export const formatRelativeTime = (
   // Quá 3 năm thì hiện ngày luôn
   const y = Math.floor(diffMs / year);
   if (y >= 3) {
-    return format(date, 'dd/MM/yyyy', { locale: vi });
+    const vnDate = toVietnamTime(date);
+    return format(vnDate, 'dd/MM/yyyy', { locale: vi });
   }
 
   return `${y} năm trước`;
@@ -151,6 +152,13 @@ export const formatRelativeTime = (
 export const getRelativeTime = formatRelativeTime;
 
 /**
+ * Force date to Vietnam timezone (UTC+7) for formatting regardless of device timezone.
+ */
+export const toVietnamTime = (date: Date): Date => {
+  return new Date(date.getTime() + 7 * 3600000 + date.getTimezoneOffset() * 60000);
+};
+
+/**
  * Format absolute time (VD: "24/05/2026 15:30").
  */
 export const formatAbsoluteTime = (
@@ -158,5 +166,6 @@ export const formatAbsoluteTime = (
   formatStr: string = 'dd/MM/yyyy HH:mm',
 ): string => {
   const date = parseSafeDate(dateInput);
-  return format(date, formatStr, { locale: vi });
+  const vnDate = toVietnamTime(date);
+  return format(vnDate, formatStr, { locale: vi });
 };
