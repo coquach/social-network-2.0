@@ -161,8 +161,70 @@ export default function OtherUserProfileScreen() {
               </AppCard>
             </View>
           ) : (
-            <View className="mt-5">
-              <AppCard className="gap-3 rounded-3xl p-4">
+            <>
+              {/* Intro Section */}
+              <View className="mt-5">
+                <AppCard className="gap-4 rounded-3xl p-5">
+                  <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
+                    Giới thiệu
+                  </Text>
+                  
+                  <View className="gap-3">
+                    {user?.jobTitle || user?.company ? (
+                      <View className="flex-row items-center gap-3">
+                        <Ionicons name="briefcase-outline" size={22} color="#64748b" />
+                        <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
+                          {user?.jobTitle ? `Làm ${user.jobTitle} tại ` : 'Làm việc tại '}
+                          <Text className="font-bold">{user?.company || 'Công ty'}</Text>
+                        </Text>
+                      </View>
+                    ) : null}
+
+                    {user?.school ? (
+                      <View className="flex-row items-center gap-3">
+                        <Ionicons name="school-outline" size={22} color="#64748b" />
+                        <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
+                          Từng học tại <Text className="font-bold">{user.school}</Text>
+                        </Text>
+                      </View>
+                    ) : null}
+
+                    {user?.location ? (
+                      <View className="flex-row items-center gap-3">
+                        <Ionicons name="location-outline" size={22} color="#64748b" />
+                        <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
+                          Sống tại <Text className="font-bold">{user.location}</Text>
+                        </Text>
+                      </View>
+                    ) : null}
+
+                    {user?.createdAt ? (
+                      <View className="flex-row items-center gap-3">
+                        <Ionicons name="time-outline" size={22} color="#64748b" />
+                        <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
+                          Tham gia vào <Text className="font-bold">{new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}</Text>
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  {user?.interests && user.interests.length > 0 ? (
+                    <View className="mt-1 flex-row flex-wrap gap-2">
+                      {user.interests.map((interest, idx) => (
+                        <View key={idx} className="rounded-full bg-app-surface-elevated px-3 py-1.5 dark:bg-app-surface-elevated-dark border border-app-border dark:border-app-border-dark">
+                          <Text className="text-[13px] font-medium text-app-fg dark:text-app-fg-dark">
+                            {interest}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : null}
+                </AppCard>
+              </View>
+
+              {/* Friends Section */}
+              <View className="mt-5">
+                <AppCard className="gap-3 rounded-3xl p-4">
                 <View className="flex-row items-center justify-between">
                   <View>
                     <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
@@ -217,6 +279,7 @@ export default function OtherUserProfileScreen() {
                 )}
               </AppCard>
             </View>
+            </>
           )}
 
           {/* Tabs */}

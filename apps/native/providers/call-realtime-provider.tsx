@@ -86,6 +86,37 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
         void joinCallSession(callId).catch((e) =>
           console.warn('[CallRealtimeProvider] joinCallSession (caller) error:', e),
         );
+
+        // Caller joins Stream and updates store to accepted
+        const store = useCallStore.getState();
+        if (store.outgoingCall && store.outgoingCall.id === callId) {
+          const { type, conversationId } = store.outgoingCall;
+          
+          setActiveCall({
+             id: callId,
+             _id: callId,
+             conversationId,
+             type,
+             status: 'accepted',
+             isGroupCall: false,
+             participants: [],
+             initiatorId: userId,
+          } as any);
+          useCallStore.setState({ outgoingCall: null });
+
+          if (client) {
+             const call = client.call('default', callId);
+             call.join().then(() => {
+                if (type === 'audio') {
+                   return call.camera.disable();
+                } else {
+                   return call.camera.enable();
+                }
+             }).then(() => {
+                return call.microphone.enable();
+             }).catch(e => console.error("[CallRealtimeProvider] Failed to join call upon acceptance:", e));
+          }
+        }
       }
 
       // Cleanup incoming call if it matches the accepted call (e.g., accepted on another device)

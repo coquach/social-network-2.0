@@ -1,4 +1,4 @@
-﻿import {
+import {
   MediaType,
   useFriendUsers,
   useCurrentUser,
@@ -321,7 +321,67 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
+          {/* Intro Section */}
           <View className="mt-5">
+            <AppCard className="gap-4 rounded-3xl p-5">
+              <Text className="text-[18px] font-bold text-app-fg dark:text-app-fg-dark">
+                Giới thiệu
+              </Text>
+              
+              <View className="gap-3">
+                {currentUser?.jobTitle || currentUser?.company ? (
+                  <View className="flex-row items-center gap-3">
+                    <Ionicons name="briefcase-outline" size={22} color="#64748b" />
+                    <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
+                      {currentUser?.jobTitle ? `Làm ${currentUser.jobTitle} tại ` : 'Làm việc tại '}
+                      <Text className="font-bold">{currentUser?.company || 'Công ty'}</Text>
+                    </Text>
+                  </View>
+                ) : null}
+
+                {currentUser?.school ? (
+                  <View className="flex-row items-center gap-3">
+                    <Ionicons name="school-outline" size={22} color="#64748b" />
+                    <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
+                      Từng học tại <Text className="font-bold">{currentUser.school}</Text>
+                    </Text>
+                  </View>
+                ) : null}
+
+                {currentUser?.location ? (
+                  <View className="flex-row items-center gap-3">
+                    <Ionicons name="location-outline" size={22} color="#64748b" />
+                    <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
+                      Sống tại <Text className="font-bold">{currentUser.location}</Text>
+                    </Text>
+                  </View>
+                ) : null}
+
+                {currentUser?.createdAt ? (
+                  <View className="flex-row items-center gap-3">
+                    <Ionicons name="time-outline" size={22} color="#64748b" />
+                    <Text className="flex-1 text-[15px] text-app-fg dark:text-app-fg-dark leading-5">
+                      Tham gia vào <Text className="font-bold">{new Date(currentUser.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })}</Text>
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {currentUser?.interests && currentUser.interests.length > 0 ? (
+                <View className="mt-1 flex-row flex-wrap gap-2">
+                  {currentUser.interests.map((interest, idx) => (
+                    <View key={idx} className="rounded-full bg-app-surface-elevated px-3 py-1.5 dark:bg-app-surface-elevated-dark border border-app-border dark:border-app-border-dark">
+                      <Text className="text-[13px] font-medium text-app-fg dark:text-app-fg-dark">
+                        {interest}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </AppCard>
+          </View>
+
+          <View className="mt-4">
             <AppCard className="gap-3 rounded-3xl p-4">
               <View className="flex-row items-center justify-between">
                 <View>
@@ -445,7 +505,7 @@ export default function ProfileScreen() {
       activePostTab,
       bioText,
       coverImage,
-      currentUser?.friendCount,
+      currentUser,
       displayName,
       friendItems,
       isFriendsError,

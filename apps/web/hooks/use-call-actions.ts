@@ -226,26 +226,26 @@ export function useCallActions() {
     if (!callId) return;
 
     if (client) {
-      const call = client.call('default', callId);
-      if (isGroup) {
-        void call
-          .leave()
-          .catch((e) => console.warn('[Call] call.leave error:', e));
-      } else {
-        void call
-          .endCall()
-          .catch((e) => console.warn('[Call] call.endCall error:', e));
+      try {
+        const call = client.call('default', callId);
+        if (isGroup) {
+          await call.leave();
+        } else {
+          await call.endCall();
+        }
+      } catch (e) {
+        console.warn('[Call] Stream call end/leave error:', e);
       }
     }
     
-    if (isGroup) {
-      void leaveCallSession(callId).catch((e) =>
-        console.warn('[Call] leaveCallSession error:', e),
-      );
-    } else {
-      void endCallSession(callId).catch((e) =>
-        console.warn('[Call] endCallSession error:', e),
-      );
+    try {
+      if (isGroup) {
+        await leaveCallSession(callId);
+      } else {
+        await endCallSession(callId);
+      }
+    } catch (e) {
+      console.warn('[Call] Backend call end/leave error:', e);
     }
   }, [activeCall, outgoingCall, client, endCallSession, leaveCallSession, reset]);
 

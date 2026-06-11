@@ -31,6 +31,7 @@ type ConversationHeaderProps = {
   onOpenDrawer: () => void;
   onStartCall?: (type: CallType) => void;
   onJoinCall?: (callId: string) => void;
+  onEndCall?: (callId: string, isGroup?: boolean) => void;
 };
 
 const getPresenceDotClassName = (status?: PresenceLike["status"]) => {
@@ -53,6 +54,7 @@ export function ConversationHeader({
   onOpenDrawer,
   onStartCall,
   onJoinCall,
+  onEndCall,
 }: ConversationHeaderProps) {
   const subtitle = conversation?.isGroup
     ? getGroupConversationSubtitle(conversation.participants.length)
@@ -65,12 +67,20 @@ export function ConversationHeader({
       trailing={
         <View className="flex-row items-center gap-1">
           {conversation?.activeCallId ? (
-            <AppHeaderIconButton
-              icon="call"
-              variant="secondary"
-              iconSize={20}
-              onPress={() => onJoinCall?.(conversation.activeCallId!)}
-            />
+            <>
+              <AppHeaderIconButton
+                icon="call"
+                variant="secondary"
+                iconSize={20}
+                onPress={() => onJoinCall?.(conversation.activeCallId!)}
+              />
+              <AppHeaderIconButton
+                icon="close-circle"
+                variant="secondary"
+                iconSize={20}
+                onPress={() => onEndCall?.(conversation.activeCallId!, conversation.isGroup)}
+              />
+            </>
           ) : (
             <>
               <AppHeaderIconButton

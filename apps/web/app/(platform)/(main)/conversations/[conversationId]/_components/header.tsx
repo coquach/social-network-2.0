@@ -31,7 +31,7 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
   const { chatSocket } = useSocket();
   const queryClient = useQueryClient();
 
-  const { startCall, joinOngoingCall } = useCallActions();
+  const { startCall, joinOngoingCall, endCall } = useCallActions();
 
   useEffect(() => {
     if (!chatSocket || !conversation._id) return;
@@ -201,14 +201,26 @@ export const Header = ({ conversation }: { conversation: ConversationDTO }) => {
         <div className="flex items-center gap-4 text-sky-500 cursor-pointer transition">
           <Search size={24} className="hover:text-sky-600" />
           
-          {conversation.activeCallId && conversation.isGroup ? (
-            <button
-              onClick={handleJoinCall}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold text-sm px-4 py-1.5 rounded-full flex items-center gap-1.5 transition duration-200 shadow-sm"
-            >
-              <IoMdVideocam size={16} />
-              <span>Tham gia</span>
-            </button>
+          {conversation.activeCallId ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleJoinCall}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-1.5 rounded-full flex items-center gap-1.5 transition duration-200 shadow-sm"
+              >
+                <IoMdVideocam size={16} />
+                <span>Tham gia</span>
+              </button>
+              <button
+                onClick={() => {
+                  endCall(conversation.activeCallId, conversation.isGroup);
+                }}
+                className="bg-rose-500 hover:bg-rose-600 text-white font-semibold text-sm px-4 py-1.5 rounded-full flex items-center gap-1.5 transition duration-200 shadow-sm"
+                title="Kết thúc phiên gọi hiện tại"
+              >
+                <MdCall size={16} />
+                <span>Kết thúc</span>
+              </button>
+            </div>
           ) : (
             <>
               <MdCall

@@ -110,8 +110,7 @@ function CallViewInner() {
   if (
     storeOutgoingCall &&
     (storeOutgoingCall.status === 'dialing' ||
-      storeOutgoingCall.status === 'ringing') &&
-    !currentCall
+      storeOutgoingCall.status === 'ringing')
   ) {
     return <DialingView onCancel={endCall} conversationId={storeOutgoingCall.conversationId} />;
   }
@@ -329,7 +328,7 @@ function DialingView({ onCancel, conversationId }: { onCancel: () => void; conve
     >
       <View className="items-center">
         <View className="mb-10 relative items-center justify-center" style={{ width: size, height: size }}>
-          <Svg width={size} height={size} className="absolute">
+          <Svg width={size} height={size} className="absolute top-0 left-0">
             <Circle
               cx={size / 2}
               cy={size / 2}

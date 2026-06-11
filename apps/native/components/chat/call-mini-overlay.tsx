@@ -17,20 +17,26 @@ import { AppEyebrow } from '../ui/app-text';
 const OVERLAY_WIDTH = 160;
 const OVERLAY_HEIGHT = 100;
 
+import { useRouter, usePathname } from 'expo-router';
+
 /**
- * Floating mini call overlay shown when user minimizes the call.
+ * Floating mini call overlay shown when user minimizes the call or navigates away.
  * Tap → restore full screen. Drag to reposition.
  */
 export function CallMiniOverlay() {
   const client = useCallClient();
   const { isMinimized, activeCall: storeActiveCall } = useCallStore();
+  const pathname = usePathname();
 
-  if (!client || !isMinimized || !storeActiveCall) return null;
+  const isCallScreen = pathname?.includes('/calls/');
+  const shouldShow = storeActiveCall && (isMinimized || !isCallScreen);
 
-  return <CallMiniOverlayInner />;
+  if (!client || !shouldShow) return null;
+
+  return <CallMiniOverlayInner isCallScreen={isCallScreen} activeCallId={storeActiveCall.id} />;
 }
 
-function CallMiniOverlayInner() {
+function CallMiniOverlayInner({ isCallScreen, activeCallId }: { isCallScreen?: boolean, activeCallId: string }) {
   const insets = useSafeAreaInsets();
   const calls = useCalls();
   const { endCall } = useCallActions();
@@ -61,8 +67,13 @@ function CallMiniOverlayInner() {
     }),
   ).current;
 
+  const router = useRouter();
+
   const handleExpand = () => {
     setMinimized(false);
+    if (!isCallScreen && activeCallId) {
+      router.push(`/(main)/calls/${activeCallId}` as any);
+    }
   };
 
   return (

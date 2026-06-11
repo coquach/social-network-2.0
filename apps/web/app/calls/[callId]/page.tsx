@@ -1,12 +1,13 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   CallControls,
   CallingState,
   SpeakerLayout,
   StreamCall,
+  StreamTheme,
   useCallStateHooks,
   useCall,
 } from '@stream-io/video-react-sdk';
@@ -27,32 +28,40 @@ export default function CallPage() {
   const client = useCallClient();
   const [call, setCall] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const hasJoined = useRef(false);
 
   useEffect(() => {
-    if (!client || !callId) return;
+    if (!client || !callId || hasJoined.current) return;
+    hasJoined.current = true;
 
     const currentCall = client.call('default', callId);
     
     const initCall = async () => {
       try {
-        // Automatically join the call
-        await currentCall.join();
-        
-        // Sync media state based on call type
-        if (type === 'audio') {
-          await currentCall.camera.disable();
+        const searchParams = new URLSearchParams(window.location.search);
+        const isCaller = searchParams.get('isCaller') === 'true';
+        const isGroup = searchParams.get('isGroup') === 'true';
+
+        // For 1-on-1 calls, the caller waits for the receiver to accept before joining.
+        // Everyone else (receivers answering, or group calls) joins immediately.
+        if (!isCaller || isGroup) {
+          await currentCall.join();
+          
+          if (type === 'audio') {
+            await currentCall.camera.disable();
+          } else {
+            await currentCall.camera.enable();
+          }
+          await currentCall.microphone.enable();
         } else {
-          await currentCall.camera.enable();
+          // 1-on-1 Caller: Just get the call state to monitor it, do not join yet.
+          await currentCall.get();
         }
-        
-        // Always enable microphone by default for a new call
-        await currentCall.microphone.enable();
         
         setCall(currentCall);
       } catch (err: any) {
-        console.error('Failed to join call:', err);
+        console.error('Failed to init call:', err);
         setError('Không thể tham gia cuộc gọi hoặc cuộc gọi đã kết thúc.');
-        // Auto close the window after 3 seconds if failed
         setTimeout(() => window.close(), 3000);
       }
     };
@@ -95,8 +104,10 @@ function CallViewContent() {
   const callingState = useCallCallingState();
   const participants = useParticipants();
   const { endCall } = useCallActions();
+  const call = useCall();
 
   const [callEnded, setCallEnded] = useState(false);
+  const [isAccepted, setIsAccepted] = useState(false);
 
   // Close window when call ends from Stream SDK state
   useEffect(() => {
@@ -116,100 +127,129 @@ function CallViewContent() {
         setCallEnded(true);
       }
     };
+    
+    const handleCallAccepted = async (payload: any) => {
+      const callIdParam = window.location.pathname.split('/').pop() || '';
+      if (payload.callId === callIdParam || payload.id === callIdParam || payload._id === callIdParam) {
+        setIsAccepted(true);
+        if (call) {
+          try {
+            await call.join();
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.get('type') === 'audio') {
+              await call.camera.disable();
+            } else {
+              await call.camera.enable();
+            }
+            await call.microphone.enable();
+          } catch (e) {
+            console.error('Failed to join after accepted:', e);
+          }
+        }
+      }
+    };
 
     chatSocket.on('call.ended', handleCallEnded);
     chatSocket.on('call.rejected', handleCallEnded);
+    chatSocket.on('call.accepted', handleCallAccepted);
     return () => {
       chatSocket.off('call.ended', handleCallEnded);
       chatSocket.off('call.rejected', handleCallEnded);
+      chatSocket.off('call.accepted', handleCallAccepted);
     };
-  }, [chatSocket]);
+  }, [chatSocket, call]);
 
   if (callEnded) {
     return <CallEndedView />;
   }
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const isCaller = searchParams.get('isCaller') === 'true';
+  const isGroup = searchParams.get('isGroup') === 'true';
+  const conversationId = searchParams.get('conversationId');
+  const isDialingView = isCaller && !isGroup && !isAccepted && conversationId;
+
   return (
-    <div className="h-full flex flex-col relative group bg-neutral-950 select-none">
+    <StreamTheme className="h-full flex flex-col relative group bg-neutral-950 select-none">
       {/* Messenger-style Immersive Header */}
-      <div className="absolute top-0 left-0 right-0 z-30 p-8 flex justify-between items-start pointer-events-none group-hover:opacity-100 opacity-0 transition-opacity duration-500">
-        <div className="flex items-center gap-4 pointer-events-auto">
-          <div className="bg-neutral-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl px-5 py-2.5 shadow-2xl flex items-center gap-4 animate-in slide-in-from-top-2 duration-700">
-             <div className="flex items-center gap-2.5 pr-4 border-r border-white/10">
-                <div className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                </div>
-                <span className="text-[10px] font-black tracking-[0.2em] text-rose-500 uppercase leading-none">Live</span>
-             </div>
-             
-             <div className="flex items-center gap-4">
-                <CallTimer />
-                <div className="h-3 w-[1px] bg-white/10" />
-                <div className="flex items-center gap-2 text-neutral-300">
-                   <Users className="h-3.5 w-3.5" />
-                   <span className="text-[11px] font-bold tabular-nums leading-none">{participants.length}</span>
-                </div>
-             </div>
+      {!isDialingView && (
+        <div className="absolute top-0 left-0 right-0 z-30 p-8 flex justify-between items-start pointer-events-none group-hover:opacity-100 opacity-0 transition-opacity duration-500">
+          <div className="flex items-center gap-4 pointer-events-auto">
+            <div className="bg-neutral-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl px-5 py-2.5 shadow-2xl flex items-center gap-4 animate-in slide-in-from-top-2 duration-700">
+               <div className="flex items-center gap-2.5 pr-4 border-r border-white/10">
+                  <div className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                  </div>
+                  <span className="text-[10px] font-black tracking-[0.2em] text-rose-500 uppercase leading-none">Live</span>
+               </div>
+               
+               <div className="flex items-center gap-4">
+                  <CallTimer />
+                  <div className="h-3 w-[1px] bg-white/10" />
+                  <div className="flex items-center gap-2 text-neutral-300">
+                     <Users className="h-3.5 w-3.5" />
+                     <span className="text-[11px] font-bold tabular-nums leading-none">{participants.length}</span>
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          {/* Window Controls (Fake) */}
+          <div className="flex gap-2 pointer-events-auto animate-in slide-in-from-top-2 duration-700 delay-100">
+             <button 
+               onClick={() => window.close()}
+               className="h-10 w-10 flex items-center justify-center rounded-2xl bg-neutral-900/60 backdrop-blur-2xl border border-white/10 hover:bg-white/10 transition-all shadow-xl"
+             >
+               <X size={18} className="text-white/70" />
+             </button>
           </div>
         </div>
-
-        {/* Window Controls (Fake) */}
-        <div className="flex gap-2 pointer-events-auto animate-in slide-in-from-top-2 duration-700 delay-100">
-           <button 
-             onClick={() => window.close()}
-             className="h-10 w-10 flex items-center justify-center rounded-2xl bg-neutral-900/60 backdrop-blur-2xl border border-white/10 hover:bg-white/10 transition-all shadow-xl"
-           >
-             <X size={18} className="text-white/70" />
-           </button>
-        </div>
-      </div>
+      )}
 
       {/* Main Content: Video Grid / Speaker / Dialing View */}
       <div className="flex-1 flex items-center justify-center relative overflow-hidden">
         <div className="w-full h-full max-w-7xl mx-auto">
-          {(() => {
-            const searchParams = new URLSearchParams(window.location.search);
-            const isCaller = searchParams.get('isCaller') === 'true';
-            const isGroup = searchParams.get('isGroup') === 'true';
-            const conversationId = searchParams.get('conversationId');
-
-            if (isCaller && !isGroup && participants.length === 1 && conversationId) {
-              return (
-                <PopupDialingView
-                  conversationId={conversationId}
-                  onCancel={() => {
-                    const callIdParam = window.location.pathname.split('/').pop() || '';
-                    void endCall(callIdParam, false);
-                    window.close();
-                  }}
-                />
-              );
-            }
-            return <SpeakerLayout />;
-          })()}
+          {isDialingView ? (
+            <PopupDialingView
+              conversationId={conversationId || undefined}
+              onCancel={async () => {
+                const callIdParam = window.location.pathname.split('/').pop() || '';
+                try {
+                  await endCall(callIdParam, false);
+                } catch(e) {}
+                window.close();
+              }}
+            />
+          ) : (
+            <SpeakerLayout />
+          )}
         </div>
       </div>
 
       {/* Floating Messenger Controls */}
-      <div className="absolute bottom-12 left-0 right-0 z-30 flex justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 pointer-events-none">
-        <div className="pointer-events-auto bg-neutral-900/90 backdrop-blur-3xl px-10 py-5 rounded-[2.5rem] border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.8)] flex items-center gap-8 ring-1 ring-white/5">
-          <CustomCallControls 
-            onLeave={() => {
-              const urlParams = new URLSearchParams(window.location.search);
-              const isGroup = urlParams.get('isGroup') === 'true';
-              const callIdParam = window.location.pathname.split('/').pop() || '';
-              void endCall(callIdParam, isGroup);
-              window.close();
-            }} 
-          />
+      {!isDialingView && (
+        <div className="absolute bottom-12 left-0 right-0 z-30 flex justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 pointer-events-none">
+          <div className="pointer-events-auto bg-neutral-900/90 backdrop-blur-3xl px-10 py-5 rounded-[2.5rem] border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.8)] flex items-center gap-8 ring-1 ring-white/5">
+            <CustomCallControls 
+              onLeave={async () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const isGroupParam = urlParams.get('isGroup') === 'true';
+                const callIdParam = window.location.pathname.split('/').pop() || '';
+                try {
+                  await endCall(callIdParam, isGroupParam);
+                } catch(e) {}
+                window.close();
+              }} 
+            />
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Corner Overlays for a cinematic feel */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 pointer-events-none opacity-40" />
       <div className="absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.5)] pointer-events-none" />
-    </div>
+    </StreamTheme>
   );
 }
 

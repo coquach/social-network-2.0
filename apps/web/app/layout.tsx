@@ -66,9 +66,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <SkipLink href="#main-content">
-          Chuyển đến nội dung chính
-        </SkipLink>
         <QueryClientProviders>
           <ClerkProvider
             appearance={{

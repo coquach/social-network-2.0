@@ -122,6 +122,98 @@ export const chatbotService = {
       url.searchParams.append('clientMessageId', data.clientMessageId);
     }
 
+    // React Native Fallback: Use XMLHttpRequest since fetch() doesn't support ReadableStream
+    if (
+      typeof ReadableStream === 'undefined' ||
+      (typeof navigator !== 'undefined' && (navigator as any).product === 'ReactNative')
+    ) {
+      const XHR = (globalThis as any).XMLHttpRequest;
+      const xhr = new XHR();
+      xhr.open('GET', url.toString(), true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Accept', 'text/event-stream');
+
+      let lastIndex = 0;
+      let buffer = '';
+      
+      const queue: string[] = [];
+      let resolveNext: (() => void) | null = null;
+      let isDone = false;
+      let streamError: any = null;
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === 3 || xhr.readyState === 4) {
+          const currentText = xhr.responseText || '';
+          const newText = currentText.substring(lastIndex);
+          lastIndex = currentText.length;
+          
+          if (newText) {
+            buffer += newText;
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const jsonStr = line.replace('data: ', '').trim();
+                if (jsonStr) {
+                  queue.push(jsonStr);
+                  if (resolveNext) {
+                    resolveNext();
+                    resolveNext = null;
+                  }
+                }
+              }
+            }
+          }
+          
+          if (xhr.readyState === 4) {
+            isDone = true;
+            if (xhr.status !== 200) {
+              streamError = new Error(`Chat stream failed: ${xhr.status}`);
+            }
+            if (resolveNext) {
+              resolveNext();
+              resolveNext = null;
+            }
+          }
+        }
+      };
+      
+      xhr.onerror = () => {
+        streamError = new Error('Network error during stream');
+        isDone = true;
+        if (resolveNext) {
+          resolveNext();
+          resolveNext = null;
+        }
+      };
+
+      xhr.send();
+
+      try {
+        while (true) {
+          if (queue.length > 0) {
+            const jsonStr = queue.shift()!;
+            try {
+              const chunk = JSON.parse(jsonStr);
+              yield chunk;
+            } catch (e) {
+              console.error('[chatbotService] Failed to parse SSE chunk:', e);
+            }
+          } else if (isDone) {
+            if (streamError) throw streamError;
+            break;
+          } else {
+            await new Promise<void>(resolve => { resolveNext = resolve; });
+          }
+        }
+      } finally {
+        xhr.abort();
+      }
+      return;
+    }
+
+    // Web Environment (Native fetch + ReadableStream)
     const response = await fetch(url.toString(), {
       headers: {
         'Authorization': `Bearer ${token}`,

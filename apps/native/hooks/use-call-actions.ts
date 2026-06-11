@@ -97,22 +97,25 @@ export function useCallActions() {
           user_id: id,
         }));
 
-        await call.getOrCreate({
-          ring: !isGroup,
-          data: {
-            members,
-            custom: { type },
-          },
-        });
-
-        // Control camera AFTER room creation to avoid premature hardware spin-up
-        if (type === CallType.AUDIO) {
-          await call.camera.disable();
+        if (isGroup) {
+          setActiveCall(session);
+          setOutgoingCall(null);
+          await call.join({ create: true, data: { members, custom: { type } } });
+          
+          if (type === CallType.AUDIO) {
+            await call.camera.disable();
+          } else {
+            await call.camera.enable();
+          }
+          await call.microphone.enable();
         } else {
-          await call.camera.enable();
+          // 1-to-1 call: don't join or enable hardware yet.
+          setOutgoingCall({ id: session.id, conversationId, type, status: 'ringing' });
+          await call.getOrCreate({
+            ring: true,
+            data: { members, custom: { type } },
+          });
         }
-
-        setOutgoingCall({ conversationId, type, status: 'accepted' });
         return { ok: true };
       } catch (error) {
         console.error('[Call] Failed to start call:', error);
@@ -145,6 +148,9 @@ export function useCallActions() {
       } else {
         await call.camera.enable();
       }
+      
+      // Ensure microphone is explicitly enabled for the callee
+      await call.microphone.enable();
 
       setActiveCall(incomingCall);
       setIncomingCall(null);
@@ -176,9 +182,10 @@ export function useCallActions() {
     }
   }, [incomingCall, client, rejectCallSession, setIncomingCall]);
 
-  const endCall = useCallback(async () => {
-    const callId = activeCall?.id;
-    const isGroup = activeCall?.isGroupCall;
+  const endCall = useCallback(async (explicitCallId?: string, explicitIsGroup?: boolean) => {
+    const store = useCallStore.getState();
+    const callId = explicitCallId || store.activeCall?.id || store.outgoingCall?.id;
+    const isGroup = explicitIsGroup !== undefined ? explicitIsGroup : store.activeCall?.isGroupCall;
 
     // Reset store immediately so UI unblocks right away
     reset();

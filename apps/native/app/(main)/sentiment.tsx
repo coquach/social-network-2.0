@@ -319,7 +319,7 @@ const getInsightTypeLabel = (type: string) => {
                     sectionAutoFocus
                     radius={70}
                     innerRadius={45}
-                    innerCircleColor="transparent"
+                    innerCircleColor="rgba(0, 0, 0, 0)"
                   />
                 ) : (
                   <View className="items-center justify-center py-4">
@@ -391,7 +391,7 @@ const getInsightTypeLabel = (type: string) => {
                     yAxisTextStyle={{ color: '#94a3b8', fontSize: 10 }}
                     xAxisLabelTextStyle={{ color: '#94a3b8', fontSize: 10 }}
                     hideRules
-                    yAxisColor="transparent"
+                    yAxisColor="rgba(0, 0, 0, 0)"
                     xAxisColor="#e2e8f0"
                     formatYLabel={(label: string) => Number(label).toFixed(2)}
                     curved

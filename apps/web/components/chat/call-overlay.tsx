@@ -204,9 +204,37 @@ function CallOverlayInner() {
     );
   }
 
-  // 4. Active Call Bar (Removed as per user request)
+  // 4. Active Call Bar
   if (storeActiveCall) {
-    return null;
+    return (
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-emerald-600/95 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-[0_10px_40px_rgba(16,185,129,0.3)] flex items-center gap-6 animate-in slide-in-from-bottom-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+            <div className="h-3 w-3 rounded-full bg-white animate-pulse" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold tracking-wide">Cuộc gọi đang diễn ra</span>
+            <span className="text-xs opacity-80 font-medium">Bạn có 1 phiên gọi chưa kết thúc</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 border-l border-white/20 pl-6">
+          <button 
+            onClick={() => openCallWindow(storeActiveCall.id, (storeActiveCall as any).type || CallType.VIDEO, (storeActiveCall as any).isGroupCall || false, storeActiveCall.conversationId, false)}
+            className="h-10 px-4 bg-white/20 rounded-full hover:bg-white/30 transition flex items-center justify-center gap-2 text-sm font-semibold"
+          >
+            <ExternalLink size={16} />
+            Mở lại
+          </button>
+          <button 
+            onClick={() => endCall()}
+            className="h-10 w-10 bg-rose-500 rounded-full hover:bg-rose-600 transition flex items-center justify-center shadow-lg"
+            title="Kết thúc cuộc gọi"
+          >
+            <PhoneOff size={18} />
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return null;
