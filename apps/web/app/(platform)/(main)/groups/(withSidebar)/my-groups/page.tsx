@@ -21,9 +21,11 @@ export default async function MyGroupsPage() {
     redirect('/sign-in');
   }
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
+  await queryClient.prefetchInfiniteQuery({
     queryKey: queryKeys.groups.myGroups(),
-    queryFn: () => getMyGroups(token, { limit: 10 }),
+    queryFn: ({ pageParam }) =>
+      getMyGroups(token, { limit: 10, cursor: pageParam as string | undefined }),
+    initialPageParam: undefined as string | undefined,
   });
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

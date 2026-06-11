@@ -48,6 +48,16 @@ const MutualFriendAvatar = ({
   );
 };
 
+const reasonTranslations: Record<string, string> = {
+  'Semantic retrieval match': 'Điểm chung sở thích',
+  'AI rerank boosted': 'Đề xuất từ AI',
+  'Mutual friends': 'Nhiều bạn chung',
+  'Social graph boosted': 'Cùng mạng lưới bạn bè',
+  'Recent graph update': 'Tương tác gần đây',
+  'Global fallback recommendation': 'Gợi ý cho bạn',
+  'Suggested for you': 'Gợi ý cho bạn',
+};
+
 export const FriendSuggestions = () => {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
@@ -160,7 +170,7 @@ export const FriendSuggestions = () => {
             const mutualCount = item.mutualFriends ?? mutualFriendIds.length;
             const mutualPreview = item.mutualFriendPreview ?? [];
             const commonGroups = item.commonGroups ?? 0;
-            const reasons = item.reasons?.filter(Boolean) ?? [];
+            const reasons = item.reasons?.filter(Boolean).map(r => reasonTranslations[r] || r) ?? [];
 
             return (
               <FriendCard
@@ -169,20 +179,22 @@ export const FriendSuggestions = () => {
                 user={item.user ?? undefined}
                 action={
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      {mutualPreview.length > 0 && (
-                        <div className="flex -space-x-2">
-                          {mutualPreview.map((friend, index) => (
-                            <MutualFriendAvatar
-                              key={`${friend.id}-${index}`}
-                              userId={friend.id}
-                              user={friend}
-                            />
-                          ))}
-                        </div>
-                      )}
-                      <span>Bạn chung: {mutualCount}</span>
-                    </div>
+                    {mutualCount > 0 && (
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        {mutualPreview.length > 0 && (
+                          <div className="flex -space-x-2">
+                            {mutualPreview.map((friend, index) => (
+                              <MutualFriendAvatar
+                                key={`${friend.id}-${index}`}
+                                userId={friend.id}
+                                user={friend}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <span>Bạn chung: {mutualCount}</span>
+                      </div>
+                    )}
                     {(commonGroups > 0 || reasons.length > 0) && (
                       <div className="space-y-1 text-xs text-slate-500">
                         {commonGroups > 0 && <p>Nhóm chung: {commonGroups}</p>}

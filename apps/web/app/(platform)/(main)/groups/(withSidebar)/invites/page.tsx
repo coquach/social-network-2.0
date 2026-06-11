@@ -20,9 +20,10 @@ export default async function InvitedGroupsPage() {
     redirect('/sign-in');
   }
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: queryKeys.groups.invited({ limit: 10 }),
-    queryFn: () => getInvitedGroups(token, { limit: 10 }),
+  await queryClient.prefetchInfiniteQuery({
+    queryKey: queryKeys.groups.invited(),
+    queryFn: ({ pageParam }) => getInvitedGroups(token, { limit: 10, cursor: pageParam as string | undefined }),
+    initialPageParam: undefined as string | undefined,
   });
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
