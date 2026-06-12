@@ -42,6 +42,7 @@ export function CallView() {
 
 function CallViewInner() {
   const router = useRouter();
+  const client = useCallClient();
   const calls = useCalls();
   const { endCall, answerCall, rejectCall } = useCallActions();
   const {
@@ -66,9 +67,11 @@ function CallViewInner() {
   // We strictly bind the Stream call to our Zustand store to ensure immediate UI updates
   // when the call is ended by the backend (which clears the store).
   const targetCallId = storeActiveCall?.id || storeIncomingCall?.id;
-  const currentCall = targetCallId
-    ? calls.find((c) => c.id === targetCallId)
-    : undefined;
+  const streamCall = targetCallId ? calls.find((c) => c.id === targetCallId) : undefined;
+
+  // Use Stream's tracked call if available (needed for RINGING state on incoming calls).
+  // If not available but we have an ACTIVE call (accepted), force synchronous creation to skip the delay.
+  const currentCall = streamCall || (storeActiveCall && client ? client.call('default', storeActiveCall.id) : undefined);
 
   // We no longer use a manual calls.length cleanup effect.
   // Real-time synchronization is handled purely by CallRealtimeProvider via socket events,
@@ -112,7 +115,7 @@ function CallViewInner() {
     (storeOutgoingCall.status === 'dialing' ||
       storeOutgoingCall.status === 'ringing')
   ) {
-    return <DialingView onCancel={endCall} conversationId={storeOutgoingCall.conversationId} />;
+    return <DialingView onCancel={() => endCall()} conversationId={storeOutgoingCall.conversationId} />;
   }
 
   if (callEndedState) {
@@ -147,7 +150,7 @@ function CallViewInner() {
 
   return (
     <StreamCall call={currentCall}>
-      {currentCall.state.callingState === CallingState.RINGING ? (
+      {currentCall.state.callingState === CallingState.RINGING && storeIncomingCall ? (
         <RingingCallContent
           IncomingCall={(props) => (
             <IncomingCall
@@ -159,7 +162,7 @@ function CallViewInner() {
         />
       ) : (
         <ActiveCallView
-          onHangup={endCall}
+          onHangup={() => endCall()}
           isGroupCall={
             storeActiveCall?.isGroupCall ??
             storeIncomingCall?.isGroupCall ??

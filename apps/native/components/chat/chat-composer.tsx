@@ -422,10 +422,9 @@ export function ChatComposer({
         
         <View className="pb-1 items-center justify-end">
           <Button
-            variant={isSendDisabled ? 'secondary' : 'primary'}
             className={cn(
               'h-10 w-10 min-w-10 min-h-10 rounded-full px-0',
-              isSendDisabled ? 'opacity-70' : '',
+              isSendDisabled ? 'bg-app-border dark:bg-app-border-dark opacity-70' : 'bg-sky-500',
             )}
             isDisabled={isSendDisabled}
             onPress={() => {

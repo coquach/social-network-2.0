@@ -17,6 +17,7 @@ import type {
   QueryParams,
 } from '../types/common.types';
 import type { NotificationDTO } from '../types/notification.types';
+import { NotificationStatus } from '../types/enums';
 import {
   cancelQueries,
   invalidateQueries,
@@ -101,8 +102,12 @@ export const useMarkNotificationAsRead = () => {
     mutationFn: async (notificationId) => {
       return notificationService.markAsRead(notificationId);
     },
-    onSuccess: (_, notificationId) => {
-      // Update notification in cache
+    onMutate: async (notificationId) => {
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: queryKeys.notifications.list() });
+      await queryClient.cancelQueries({ queryKey: queryKeys.notifications.unreadCount() });
+
+      // Optimistically update notification in cache
       queryClient.setQueriesData<{
         pages: CursorPageResponse<NotificationDTO>[];
       }>({ queryKey: queryKeys.notifications.list() }, (old) => {
@@ -113,17 +118,26 @@ export const useMarkNotificationAsRead = () => {
           pages: old.pages.map((page) => ({
             ...page,
             data: page.data.map((notif) =>
-              notif._id === notificationId ? { ...notif, isRead: true } : notif,
+              notif._id === notificationId ? { ...notif, isRead: true, status: NotificationStatus.READ } : notif,
             ),
           })),
         };
       });
 
-      // Decrement unread count
+      // Optimistically decrement unread count
       queryClient.setQueryData<number>(
         queryKeys.notifications.unreadCount(),
         (old) => (old ? Math.max(0, old - 1) : 0),
       );
+    },
+    onError: () => {
+      // Invalidate on error to refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+    },
+    onSettled: () => {
+      // Background refetch to ensure sync
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
     },
   });
 };
@@ -138,8 +152,11 @@ export const useMarkAllNotificationsAsRead = () => {
     mutationFn: async () => {
       return notificationService.markAllAsRead();
     },
-    onSuccess: () => {
-      // Update all notifications in cache
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.notifications.list() });
+      await queryClient.cancelQueries({ queryKey: queryKeys.notifications.unreadCount() });
+
+      // Optimistically update all notifications in cache
       queryClient.setQueriesData<{
         pages: CursorPageResponse<NotificationDTO>[];
       }>({ queryKey: queryKeys.notifications.list() }, (old) => {
@@ -152,16 +169,24 @@ export const useMarkAllNotificationsAsRead = () => {
             data: page.data.map((notif) => ({
               ...notif,
               isRead: true,
+              status: NotificationStatus.READ
             })),
           })),
         };
       });
 
-      // Reset unread count to 0
+      // Optimistically reset unread count to 0
       queryClient.setQueryData<number>(
         queryKeys.notifications.unreadCount(),
         0,
       );
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
     },
   });
 };

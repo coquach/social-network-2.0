@@ -349,13 +349,13 @@ export default function ChatInboxScreen() {
         <View className="px-5 pb-4">
           <SearchField value={searchText} onChange={setSearchText}>
             <SearchField.Group className="rounded-[28px] border border-white/70 bg-white/92 dark:border-app-border-dark dark:bg-app-surface-dark/92">
-              <SearchField.SearchIcon
-                iconProps={{ color: '#0ea5e9', size: 18 }}
+              <SearchField.SearchIcon className='ml-2'
+                iconProps={{ color: '#0ea5e9', size: 18, }}
               />
               <SearchField.Input
                 variant="secondary"
                 placeholder="Tìm kiếm các cuộc trò chuyện"
-                className="min-h-12 rounded-[28px] bg-transparent"
+                className="ml-2min-h-12 rounded-[28px] bg-transparent flex-1 px-10"
               />
               <SearchField.ClearButton />
             </SearchField.Group>

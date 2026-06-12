@@ -9,12 +9,12 @@ import {
   formatRelativeTime,
 } from "@repo/shared";
 import {
-  format,
-  isSameYear,
-  isToday,
-  isYesterday,
-} from "date-fns";
-import { vi } from "date-fns/locale";
+  formatMessageDateLabel,
+  getChatDayKey,
+  formatConversationTime,
+  formatMessageTimestamp,
+  getChatDateMs,
+} from "~/lib/chat-date-utils";
 
 type ConversationParticipantLike = {
   id?: string;
@@ -45,19 +45,6 @@ const hasParticipantDetails = (
     "participantDetails" in conversation &&
     Array.isArray(conversation.participantDetails)
   );
-};
-
-
-export const getChatDateMs = (value: ChatDateValue) => {
-  if (!value) return 0;
-  const parsed = parseSafeDate(value as any);
-  return parsed.getTime();
-};
-
-export const getChatDayKey = (value: ChatDateValue) => {
-  if (!value) return "";
-  const date = parseSafeDate(value as any);
-  return format(date, "yyyy-MM-dd");
 };
 
 export const compareMessagesAscending = (a: MessageDTO, b: MessageDTO) => {
@@ -157,10 +144,7 @@ export const getConversationOtherParticipant = (
 
 export const getConversationName = (
   conversation: ConversationDTO,
-  otherUser?:
-    | Pick<UserProfile, "firstName" | "lastName">
-    | ConversationParticipantLike
-    | null,
+  otherUser?: Pick<UserProfile, "firstName" | "lastName"> | ConversationParticipantLike | null,
 ) => {
   if (conversation.isGroup) {
     return conversation.groupName?.trim() || "Nhóm chat";
@@ -178,17 +162,6 @@ export const getConversationLastActivity = (conversation: ConversationDTO) => {
   const maxTime = Math.max(msgTime, updTime, crtTime);
   if (maxTime === 0) return new Date(0);
   return new Date(maxTime);
-};
-
-export const formatConversationTime = (value?: ChatDateValue) => {
-  if (!value) return "";
-  const date = parseSafeDate(value as any);
-  const now = new Date();
-
-  if (isToday(date)) return "Hôm nay";
-  if (isYesterday(date)) return "Hôm qua";
-
-  return format(date, isSameYear(date, now) ? "dd/MM" : "dd/MM/yy");
 };
 
 export const formatTimeAgo = (value?: ChatDateValue) => {
@@ -213,21 +186,6 @@ export const getConversationPresenceSubtitle = (presence?: PresenceLike) => {
 
 export const getGroupConversationSubtitle = (participantCount: number) => {
   return `${participantCount} thành viên`;
-};
-
-export const formatMessageTimestamp = (value?: ChatDateValue) => {
-  if (!value) return "";
-  return format(parseSafeDate(value as any), "HH:mm");
-};
-
-export const formatMessageDateLabel = (value?: ChatDateValue) => {
-  if (!value) return "";
-  const date = parseSafeDate(value as any);
-
-  if (isToday(date)) return "Hôm nay";
-  if (isYesterday(date)) return "Hôm qua";
-
-  return format(date, "EEEE, dd 'tháng' MM, yyyy", { locale: vi });
 };
 
 export const getConversationUnreadState = (
@@ -265,31 +223,41 @@ export const getMessagePreview = (
   options?: MessagePreviewOptions,
 ) => {
   if (!message) {
-    return isGroup ? "Nhóm mới được tạo." : "Bắt đầu cuộc trò chuyện.";
+    return isGroup
+      ? 'Tạo nhóm để bắt đầu trò chuyện'
+      : 'Bắt đầu cuộc trò chuyện';
   }
 
-  const isOwnMessage = options?.currentUserId
+  const isMe = options?.currentUserId
     ? message.senderId === options.currentUserId
     : false;
-  const senderPrefix = isOwnMessage
-    ? "Bạn: "
-    : isGroup && options?.senderName
-      ? `${options.senderName}: `
-      : "";
+    
+  const senderName = isMe
+    ? 'Tôi'
+    : options?.senderName
+      ? options.senderName
+      : otherUserName || 'Người khác';
+
+  const prefix = `${senderName}: `;
 
   if (message.isDeleted) {
-    return `${senderPrefix}Tin nhắn đã bị xóa.`;
+    return `${prefix}Đã xóa tin nhắn`;
   }
 
-  if (message.content?.trim()) {
-    return `${senderPrefix}${message.content.trim()}`;
+  if (message.attachments?.length && !message.content?.trim()) {
+    return `${prefix}Đã gửi tệp đính kèm`;
   }
 
-  if (message.attachments?.length) {
-    return `${senderPrefix}Đã gửi tệp đính kèm.`;
-  }
+  const raw = message.content?.trim() || '';
+  const truncated = raw.length > 80 ? `${raw.slice(0, 80)}…` : raw;
 
-  return otherUserName
-    ? `${otherUserName} đã gửi tin nhắn.`
-    : `${senderPrefix}Đã gửi tin nhắn.`;
+  return `${prefix}${truncated || 'Đã gửi tin nhắn'}`;
+};
+
+export {
+  formatMessageDateLabel,
+  getChatDayKey,
+  formatConversationTime,
+  formatMessageTimestamp,
+  getChatDateMs,
 };

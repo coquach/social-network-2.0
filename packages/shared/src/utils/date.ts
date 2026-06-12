@@ -45,10 +45,6 @@ export const parseSafeDate = (
       // PostgreSQL/Python thường trả về 6 số lẻ (microseconds), date-fns và Hermes chỉ hỗ trợ tối đa 3 số lẻ (milliseconds)
       normalized = normalized.replace(/(\.\d{3})\d+/, '$1');
 
-      // Nếu backend trả string không kèm timezone, mặc định là UTC
-      if (!normalized.endsWith('Z') && !normalized.includes('+') && !normalized.match(/-\d\d:\d\d$/)) {
-        normalized += 'Z';
-      }
       parsed = parseISO(normalized);
       
       // Nếu parseISO vẫn trả về invalid date, thử new Date fallback với chuỗi gốc
@@ -139,8 +135,7 @@ export const formatRelativeTime = (
   // Quá 3 năm thì hiện ngày luôn
   const y = Math.floor(diffMs / year);
   if (y >= 3) {
-    const vnDate = toVietnamTime(date);
-    return format(vnDate, 'dd/MM/yyyy', { locale: vi });
+    return format(date, 'dd/MM/yyyy', { locale: vi });
   }
 
   return `${y} năm trước`;
@@ -152,13 +147,6 @@ export const formatRelativeTime = (
 export const getRelativeTime = formatRelativeTime;
 
 /**
- * Force date to Vietnam timezone (UTC+7) for formatting regardless of device timezone.
- */
-export const toVietnamTime = (date: Date): Date => {
-  return new Date(date.getTime() + 7 * 3600000 + date.getTimezoneOffset() * 60000);
-};
-
-/**
  * Format absolute time (VD: "24/05/2026 15:30").
  */
 export const formatAbsoluteTime = (
@@ -166,6 +154,5 @@ export const formatAbsoluteTime = (
   formatStr: string = 'dd/MM/yyyy HH:mm',
 ): string => {
   const date = parseSafeDate(dateInput);
-  const vnDate = toVietnamTime(date);
-  return format(vnDate, formatStr, { locale: vi });
+  return format(date, formatStr, { locale: vi });
 };

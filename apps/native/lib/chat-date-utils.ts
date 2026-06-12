@@ -1,93 +1,55 @@
-import { format, isToday, isYesterday } from "date-fns";
+import { parseSafeDate } from "@repo/shared";
+import { format, isSameYear } from "date-fns";
 import { vi } from "date-fns/locale";
 
 export type ChatDateValue = Date | string | number | null | undefined;
 
-export const coerceChatDate = (value: ChatDateValue): Date | null => {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  if (typeof value === "number") {
-    return new Date(value < 10000000000 ? value * 1000 : value);
-  }
-
-  if (typeof value === "string") {
-    if (/^\d+$/.test(value)) {
-      const num = parseInt(value, 10);
-      return new Date(num < 10000000000 ? num * 1000 : num);
-    }
-  }
-
-  if (typeof value === "object") {
-    const candidate = value as {
-      $date?: Date | string | number;
-      date?: Date | string | number;
-      toDate?: () => Date;
-      seconds?: number;
-      _seconds?: number;
-    };
-
-    if (typeof candidate.toDate === "function") {
-      return coerceChatDate(candidate.toDate());
-    }
-
-    if (candidate.$date !== undefined) {
-      return coerceChatDate(candidate.$date);
-    }
-
-    if (candidate.date !== undefined) {
-      return coerceChatDate(candidate.date);
-    }
-
-    if (typeof candidate.seconds === "number") {
-      return new Date(candidate.seconds * 1000);
-    }
-
-    if (typeof candidate._seconds === "number") {
-      return new Date(candidate._seconds * 1000);
-    }
-  }
-
-  const date = value instanceof Date ? value : new Date(value);
-
-  if (Number.isNaN(date.getTime()) || date.getTime() === 0) {
-    return null;
-  }
-
-  return date;
+export const coerceChatDate = (value: ChatDateValue): Date => {
+  return parseSafeDate(value as any);
 };
 
 export const getChatDateMs = (value: ChatDateValue) => {
-  return coerceChatDate(value)?.getTime() ?? 0;
+  return coerceChatDate(value).getTime();
 };
 
 export const getChatDayKey = (value: ChatDateValue) => {
   const date = coerceChatDate(value);
-
-  if (!date) {
-    return "";
-  }
-
   return format(date, "yyyy-MM-dd");
 };
 
-export const formatMessageDateLabel = (value?: ChatDateValue) => {
+export const formatMessageTimestamp = (value?: ChatDateValue) => {
+  if (!value) return "";
+  return format(coerceChatDate(value), "HH:mm");
+};
+
+export const formatConversationTime = (value?: ChatDateValue) => {
+  if (!value) return "";
   const date = coerceChatDate(value);
+  const now = new Date();
 
-  if (!date) {
-    return "";
-  }
+  const dateStr = format(date, "yyyy-MM-dd");
+  const nowStr = format(now, "yyyy-MM-dd");
+  if (dateStr === nowStr) return "Hôm nay";
 
-  if (isToday(date)) {
-    return "Hôm nay";
-  }
+  const yesterday = new Date(now.getTime() - 24 * 3600 * 1000);
+  const yesterdayStr = format(yesterday, "yyyy-MM-dd");
+  if (dateStr === yesterdayStr) return "Hôm qua";
 
-  if (isYesterday(date)) {
-    return "Hôm qua";
-  }
+  return format(date, isSameYear(date, now) ? "dd/MM" : "dd/MM/yy");
+};
 
-  return format(date, "EEEE, dd 'tháng' MM, yyyy", {
-    locale: vi,
-  });
+export const formatMessageDateLabel = (value?: ChatDateValue) => {
+  if (!value) return "";
+  const date = coerceChatDate(value);
+  const now = new Date();
+
+  const dateStr = format(date, "yyyy-MM-dd");
+  const nowStr = format(now, "yyyy-MM-dd");
+  if (dateStr === nowStr) return "Hôm nay";
+
+  const yesterday = new Date(now.getTime() - 24 * 3600 * 1000);
+  const yesterdayStr = format(yesterday, "yyyy-MM-dd");
+  if (dateStr === yesterdayStr) return "Hôm qua";
+
+  return format(date, "EEEE, dd 'tháng' MM, yyyy", { locale: vi });
 };

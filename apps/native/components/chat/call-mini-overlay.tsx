@@ -33,10 +33,10 @@ export function CallMiniOverlay() {
 
   if (!client || !shouldShow) return null;
 
-  return <CallMiniOverlayInner isCallScreen={isCallScreen} activeCallId={storeActiveCall.id} />;
+  return <CallMiniOverlayInner isCallScreen={isCallScreen} />;
 }
 
-function CallMiniOverlayInner({ isCallScreen, activeCallId }: { isCallScreen?: boolean, activeCallId: string }) {
+function CallMiniOverlayInner({ isCallScreen }: { isCallScreen?: boolean }) {
   const insets = useSafeAreaInsets();
   const calls = useCalls();
   const { endCall } = useCallActions();

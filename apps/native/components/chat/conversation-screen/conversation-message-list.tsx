@@ -2,22 +2,22 @@ import {
   FlashList,
   type FlashListRef,
   type ListRenderItemInfo,
-} from "@shopify/flash-list";
-import { Ionicons } from "@expo/vector-icons";
-import type { MessageDTO } from "@repo/shared";
-import { Button } from "heroui-native/button";
-import { Spinner } from "heroui-native/spinner";
-import React from "react";
+} from '@shopify/flash-list';
+import { Ionicons } from '@expo/vector-icons';
+import type { MessageDTO } from '@repo/shared';
+import { Button } from 'heroui-native/button';
+import { Spinner } from 'heroui-native/spinner';
+import React from 'react';
 import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Text,
   View,
-} from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+} from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { ChatMessageBubble } from "~/components/chat/chat-message-bubble";
-import { formatMessageDateLabel, getChatDayKey } from "~/lib/chat-date-utils";
+import { ChatMessageBubble } from '~/components/chat/chat-message-bubble';
+import { formatMessageDateLabel, getChatDayKey } from '~/lib/chat-date-utils';
 
 type ParticipantVisual = {
   name: string;
@@ -40,12 +40,12 @@ type ConversationMessageListProps = {
 type MessageListRow =
   | {
       id: string;
-      type: "date";
+      type: 'date';
       label: string;
     }
   | {
       id: string;
-      type: "message";
+      type: 'message';
       message: MessageDTO;
       senderName: string;
       senderAvatarUrl?: string;
@@ -57,7 +57,10 @@ type MessageListRow =
 
 function DateDivider({ label }: { label: string }) {
   return (
-    <Animated.View entering={FadeIn.duration(160)} className="items-center py-4">
+    <Animated.View
+      entering={FadeIn.duration(160)}
+      className="items-center py-4"
+    >
       <View className="rounded-full bg-app-surface-elevated px-3 py-1.5 dark:bg-app-surface-elevated-dark">
         <Text className="text-[11px] font-semibold text-app-muted-fg dark:text-app-muted-fg-dark">
           {label}
@@ -105,21 +108,11 @@ const buildRows = (
     seenByMessageId.set(lastSeenMessageId, current);
   });
 
-  messages.forEach((message, index) => {
-    const previousMessage = index > 0 ? messages[index - 1] : null;
-    const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
-    const previousDateKey = previousMessage
-      ? getChatDayKey(previousMessage.createdAt)
-      : null;
-    const currentDateKey = getChatDayKey(message.createdAt);
-
-    if (previousDateKey !== currentDateKey) {
-      rows.push({
-        id: `date:${currentDateKey}`,
-        type: "date",
-        label: formatMessageDateLabel(message.createdAt),
-      });
-    }
+  // Build rows from NEWEST to OLDEST for inverted list
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    const prevMessage = i > 0 ? messages[i - 1] : null; // Older message
+    const nextMessage = i < messages.length - 1 ? messages[i + 1] : null; // Newer message
 
     const sender = participantMap.get(message.senderId);
     const seenUserIds = (seenByMessageId.get(message._id) ?? []).filter(
@@ -128,19 +121,31 @@ const buildRows = (
 
     rows.push({
       id: message._id,
-      type: "message",
+      type: 'message',
       message,
-      senderName: sender?.name ?? "Người dùng",
+      senderName: sender?.name ?? 'Người dùng',
       senderAvatarUrl: sender?.avatarUrl,
-      showAvatar: nextMessage?.senderId !== message.senderId,
+      // Show avatar for the LATEST message in a group from same sender
+      showAvatar: !nextMessage || nextMessage.senderId !== message.senderId,
       seenUsers: seenUserIds
         .map((userId) => participantMap.get(userId))
         .filter((user): user is ParticipantVisual => Boolean(user))
         .slice(0, 3),
       seenOverflow: Math.max(0, seenUserIds.length - 3),
-      isLastMessage: index === messages.length - 1,
+      isLastMessage: i === messages.length - 1,
     });
-  });
+
+    const currentDateKey = getChatDayKey(message.createdAt);
+    const prevDateKey = prevMessage ? getChatDayKey(prevMessage.createdAt) : null;
+
+    if (currentDateKey !== prevDateKey) {
+      rows.push({
+        id: `date:${currentDateKey}`,
+        type: 'date',
+        label: formatMessageDateLabel(message.createdAt),
+      });
+    }
+  }
 
   return rows;
 };
@@ -163,23 +168,22 @@ export function ConversationMessageList({
   const prevAtBottomRef = React.useRef(true);
   const hasInitialScrollRef = React.useRef(false);
   const previousLastMessageIdRef = React.useRef<string | null>(null);
-  const [animatedMessageId, setAnimatedMessageId] = React.useState<string | null>(
-    null,
-  );
-  const [highlightedMessageId, setHighlightedMessageId] = React.useState<string | null>(
-    null,
-  );
+  const [animatedMessageId, setAnimatedMessageId] = React.useState<
+    string | null
+  >(null);
+  const [highlightedMessageId, setHighlightedMessageId] = React.useState<
+    string | null
+  >(null);
 
-  const rows = React.useMemo(
-    () => buildRows(messages, participantMap, lastSeenMap),
-    [lastSeenMap, messages, participantMap],
-  );
+  const rows = React.useMemo(() => {
+    return buildRows(messages, participantMap, lastSeenMap);
+  }, [lastSeenMap, messages, participantMap]);
   const lastMessage = messages.at(-1) ?? null;
   const rowIndexByMessageId = React.useMemo(() => {
     const map = new Map<string, number>();
 
     rows.forEach((row, index) => {
-      if (row.type === "message") {
+      if (row.type === 'message') {
         map.set(row.message._id, index);
       }
     });
@@ -187,11 +191,10 @@ export function ConversationMessageList({
     return map;
   }, [rows]);
 
-  const scrollToBottom = React.useCallback((animated: boolean) => {
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToEnd({ animated });
-    });
-  }, []);
+  const scrollToBottom = React.useCallback((animated = true) => {
+    if (rows.length === 0) return;
+    listRef.current?.scrollToIndex({ index: 0, animated });
+  }, [rows.length]);
 
   React.useEffect(() => {
     if (messages.length === 0) {
@@ -207,10 +210,9 @@ export function ConversationMessageList({
     if (!hasInitialScrollRef.current) {
       hasInitialScrollRef.current = true;
       previousLastMessageIdRef.current = lastMessage?._id ?? null;
-      scrollToBottom(false);
       onReachedBottom?.();
     }
-  }, [lastMessage?._id, messages.length, onReachedBottom, scrollToBottom]);
+  }, [lastMessage?._id, messages.length, onReachedBottom]);
 
   React.useEffect(() => {
     if (!lastMessage?._id) {
@@ -294,10 +296,9 @@ export function ConversationMessageList({
 
   const handleScroll = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-      const distanceToBottom =
-        contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      const isAtBottom = distanceToBottom < 72;
+      const { contentOffset } = event.nativeEvent;
+      // In inverted list, y offset near 0 is bottom
+      const isAtBottom = contentOffset.y < 72;
 
       isAtBottomRef.current = isAtBottom;
 
@@ -316,7 +317,7 @@ export function ConversationMessageList({
 
   const renderItem = React.useCallback(
     ({ item }: ListRenderItemInfo<MessageListRow>) => {
-      if (item.type === "date") {
+      if (item.type === 'date') {
         return <DateDivider label={item.label} />;
       }
 
@@ -336,7 +337,12 @@ export function ConversationMessageList({
         />
       );
     },
-    [animatedMessageId, handlePressReplyTo, highlightedMessageId, onLongPressMessage],
+    [
+      animatedMessageId,
+      handlePressReplyTo,
+      highlightedMessageId,
+      onLongPressMessage,
+    ],
   );
 
   if (isLoading && messages.length === 0) {
@@ -353,36 +359,29 @@ export function ConversationMessageList({
         ref={listRef}
         data={rows}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        getItemType={(item) => item.type}
-        maintainVisibleContentPosition={{
-          startRenderingFromBottom: true,
-          autoscrollToBottomThreshold: 0.2,
-          animateAutoScrollToBottom: true,
-        }}
+        keyExtractor={(item: MessageListRow) => item.id}
+        getItemType={(item: MessageListRow) => item.type}
+        inverted
+        {...({ estimatedItemSize: 84 } as any)}
         contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: rows.length === 0 ? "center" : "flex-end",
           paddingTop: 14,
           paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        onStartReached={() => {
+        onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) {
             onLoadEarlier?.();
           }
         }}
-        onStartReachedThreshold={0.08}
+        onEndReachedThreshold={0.2}
         ListEmptyComponent={
-          <View className="px-4">
-        
-              <EmptyState />
-            
+          <View className="px-4" style={{ transform: [{ scaleY: -1 }] }}>
+            <EmptyState />
           </View>
         }
-        ListHeaderComponent={
+        ListFooterComponent={
           isFetchingNextPage ? (
             <View className="pb-4 pt-2">
               <Spinner size="sm" color="default" />

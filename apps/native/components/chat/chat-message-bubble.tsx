@@ -1,13 +1,9 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
-import { MediaType, CallType, type AttachmentDTO, type MessageDTO } from "@repo/shared";
+import { Ionicons } from "@expo/vector-icons";
+import { CallType, MediaType, type AttachmentDTO, type MessageDTO } from "@repo/shared";
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React from "react";
 import { Image, Linking, Pressable, Text, View } from "react-native";
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import Animated, {
-  FadeInDown,
-  LinearTransition,
-} from "react-native-reanimated";
 
 import {
   buildAttachmentMeta,
@@ -139,75 +135,86 @@ function AttachmentCard({
   if (type === MediaType.AUDIO) {
     return <AudioAttachmentCard attachment={attachment} isOwn={isOwn} />;
   }
-  const iconName =
-    type === MediaType.VIDEO
-      ? "film-outline"
-      : "document-attach-outline";
-  const previewUri =
-    type === MediaType.VIDEO ? attachment.thumbnailUrl : undefined;
 
-
+  const isVideo = type === MediaType.VIDEO;
+  const iconName = isVideo ? "film-outline" : "document-attach-outline";
+  const previewUri = isVideo ? attachment.thumbnailUrl : undefined;
 
   return (
     <Pressable
       onPress={onPress}
       className={cn(
-        "rounded-[22px] border px-3 py-3",
+        "flex-row items-center gap-3 rounded-[22px] p-3 min-w-[200px] border",
         isOwn
-          ? "border-white/25 bg-white/15"
-          : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800",
+          ? "border-white/20 bg-sky-500/80 active:bg-sky-600"
+          : "border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700",
       )}
     >
-      <View className="flex-row items-center gap-3">
-        {previewUri ? (
-          <View className="overflow-hidden rounded-2xl border border-white/10">
-            <Image source={{ uri: previewUri }} className="h-14 w-14" />
-          </View>
-        ) : (
-          <View
-            className={cn(
-              "h-11 w-11 items-center justify-center rounded-full",
-              type === MediaType.VIDEO
-                ? "bg-amber-100 dark:bg-amber-500/15"
-                : "bg-sky-100 dark:bg-sky-500/15",
-            )}
-          >
-            <Ionicons
-              name={iconName}
-              size={19}
-              color={
-                type === MediaType.VIDEO
-                  ? "#d97706"
-                  : "#2563eb"
-              }
-            />
-          </View>
-        )}
-
-        <View className="flex-1">
-          <Text
-            numberOfLines={2}
-            className={cn(
-              "text-sm font-semibold",
-              isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark",
-            )}
-          >
-            {fileName}
-          </Text>
-          {meta ? (
-            <Text
-              numberOfLines={1}
-              className={cn(
-                "mt-1 text-[11px]",
-                isOwn
-                  ? "text-white/80"
-                  : "text-app-muted-fg dark:text-app-muted-fg-dark",
-              )}
-            >
-              {meta}
-            </Text>
-          ) : null}
+      {previewUri ? (
+        <View className="overflow-hidden rounded-2xl border border-white/10">
+          <Image source={{ uri: previewUri }} className="h-10 w-10" />
         </View>
+      ) : (
+        <View
+          className={cn(
+            "h-10 w-10 items-center justify-center rounded-full",
+            isOwn
+              ? "bg-white/20"
+              : isVideo
+                ? "bg-amber-100 dark:bg-amber-500/15"
+                : "bg-white dark:bg-slate-700"
+          )}
+        >
+          <Ionicons
+            name={iconName}
+            size={18}
+            color={
+              isOwn
+                ? "#ffffff"
+                : isVideo
+                  ? "#d97706"
+                  : "#64748b"
+            }
+          />
+        </View>
+      )}
+
+      <View className="flex-1">
+        <Text
+          numberOfLines={1}
+          className={cn(
+            "text-sm font-medium",
+            isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark",
+          )}
+        >
+          {fileName}
+        </Text>
+        {meta ? (
+          <Text
+            numberOfLines={1}
+            className={cn(
+              "mt-0.5 text-[10px]",
+              isOwn
+                ? "text-white/70"
+                : "text-app-muted-fg dark:text-app-muted-fg-dark",
+            )}
+          >
+            {meta}
+          </Text>
+        ) : null}
+      </View>
+
+      <View
+        className={cn(
+          "h-8 w-8 items-center justify-center rounded-full",
+          isOwn ? "bg-white/10" : "bg-white dark:bg-slate-700 border border-slate-200/50 dark:border-slate-600/50"
+        )}
+      >
+        <Ionicons
+          name="download-outline"
+          size={16}
+          color={isOwn ? "#ffffff" : "#64748b"}
+        />
       </View>
     </Pressable>
   );
@@ -301,7 +308,6 @@ export function ChatMessageBubble({
   seenUsers = [],
   seenOverflow = 0,
   isLastMessage = false,
-  animateEntry = false,
   highlighted = false,
   onLongPress,
   onPressReplyTo,
@@ -334,10 +340,7 @@ export function ChatMessageBubble({
   }, []);
 
   return (
-    <Animated.View
-      entering={animateEntry ? FadeInDown.duration(180) : undefined}
-      layout={animateEntry ? LinearTransition.duration(140) : undefined}
-    >
+    <View>
       <View
         className={cn(
           "flex-row items-end gap-2 px-4",
@@ -367,26 +370,9 @@ export function ChatMessageBubble({
             disabled={!onLongPress}
             onLongPress={() => onLongPress?.(message)}
           >
-            <View
-              className={cn(
-                "rounded-3xl border px-4 py-3 shadow-none",
-                isOwn
-                  ? "border-sky-500 bg-sky-500 dark:border-sky-500 dark:bg-sky-500"
-                  : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800",
-                highlighted
-                  ? isOwn
-                    ? "border-white bg-sky-400 dark:border-white dark:bg-sky-400"
-                    : "border-sky-300 bg-sky-50 dark:border-sky-400 dark:bg-sky-500/10"
-                  : "",
-              )}
-            >
+            <View className="flex-col gap-1.5">
               {message.replyTo ? (
-                <View
-                  className={cn(
-                    "max-w-full",
-                    content || attachments.length > 0 ? "mb-3" : "",
-                  )}
-                >
+                <View className="mb-0.5 max-w-full">
                   <MessageReplyPreview
                     replyTo={message.replyTo}
                     tone={isOwn ? "own" : "other"}
@@ -401,7 +387,10 @@ export function ChatMessageBubble({
               ) : null}
 
               {attachments.length > 0 && !message.isDeleted ? (
-                <View className={cn(content ? "mb-3 gap-2" : "gap-2")}>
+                <View className={cn(
+                  "gap-1.5",
+                  attachments.length === 1 ? "" : "flex-row flex-wrap"
+                )}>
                   {attachments.map((attachment, index) => {
                     const type = getAttachmentTypeFromMessage(attachment);
                     const key = `${attachment.url}-${index}`;
@@ -413,13 +402,13 @@ export function ChatMessageBubble({
                           onPress={() => {
                             void openAttachment(attachment.url);
                           }}
-                          className="overflow-hidden rounded-[22px] border border-white/10"
+                          className="overflow-hidden rounded-[22px] border border-white/10 bg-black/5"
                         >
                           <Image
                             source={{ uri: attachment.url }}
                             className={cn(
                               attachments.length === 1
-                                ? "h-56 w-60"
+                                ? "h-64 w-[280px]"
                                 : "h-36 w-40",
                             )}
                           />
@@ -442,25 +431,68 @@ export function ChatMessageBubble({
               ) : null}
 
               {(message as any).messageType === "system_call" ? (
-                <CallMessageCard 
-                  message={message}
-                  isOwn={isOwn}
-                  onStartCall={(type) => {
-                    void startCall(message.conversationId, type);
-                  }}
-                />
+                <View
+                  className={cn(
+                    "rounded-2xl px-3 py-2 max-w-full",
+                    isOwn
+                      ? "bg-sky-500 text-white"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100",
+                  )}
+                >
+                  <CallMessageCard 
+                    message={message}
+                    isOwn={isOwn}
+                    onStartCall={(type) => {
+                      void startCall(message.conversationId, type);
+                    }}
+                  />
+                </View>
               ) : null}
 
               {content && (message as any).messageType !== "system_call" ? (
-                <Text
+                <View
                   className={cn(
-                    "text-[15px] leading-5",
-                    isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark",
-                    message.isDeleted ? "italic opacity-70" : "",
+                    "rounded-[22px] border px-4 py-3 shadow-none max-w-full",
+                    isOwn
+                      ? "border-sky-500 bg-sky-500 dark:border-sky-500 dark:bg-sky-500"
+                      : "border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800",
+                    highlighted
+                      ? isOwn
+                        ? "border-white bg-sky-400 dark:border-white dark:bg-sky-400"
+                        : "border-sky-300 bg-sky-50 dark:border-sky-400 dark:bg-sky-500/10"
+                      : "",
                   )}
                 >
-                  {content}
-                </Text>
+                  <Text
+                    className={cn(
+                      "text-[15px] leading-5",
+                      isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark",
+                      message.isDeleted ? "italic opacity-70" : "",
+                    )}
+                  >
+                    {content}
+                  </Text>
+                </View>
+              ) : null}
+              
+              {message.isDeleted && !content && attachments.length === 0 && (message as any).messageType !== "system_call" ? (
+                <View
+                  className={cn(
+                    "rounded-[22px] border px-4 py-3 shadow-none max-w-full",
+                    isOwn
+                      ? "border-sky-500 bg-sky-500 dark:border-sky-500 dark:bg-sky-500"
+                      : "border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800",
+                  )}
+                >
+                  <Text
+                    className={cn(
+                      "text-[15px] leading-5 italic opacity-70",
+                      isOwn ? "text-white" : "text-app-fg dark:text-app-fg-dark",
+                    )}
+                  >
+                    Tin nhắn đã bị xoá.
+                  </Text>
+                </View>
               ) : null}
             </View>
           </Pressable>
@@ -496,6 +528,6 @@ export function ChatMessageBubble({
           ) : null}
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }

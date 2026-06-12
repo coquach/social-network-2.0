@@ -79,6 +79,7 @@ export function CallRealtimeProvider({
     // call.accepted — callee accepted, both sides need to join the call room.
     // ──────────────────────────────────────────────────────────────────────────
     const handleCallAccepted = async (payload: CallAcceptedPayload) => {
+    
       const { callId } = payload;
 
       queryClient.invalidateQueries({
@@ -87,24 +88,22 @@ export function CallRealtimeProvider({
 
       // Only the caller should automatically transition to ActiveCall and join the session
       const store = useCallStore.getState();
-      const isCaller =
+      const isCaller = !!(
         store.outgoingCall &&
         (store.outgoingCall.id === callId ||
           (store.outgoingCall as any)._id === callId ||
-          store.outgoingCall.conversationId === payload.conversationId);
+          store.outgoingCall.conversationId === payload.conversationId)
+      );
+
+   
 
       if (
-        payload.userId !== userId &&
         isCaller &&
         !joinedCallIds.current.has(callId)
       ) {
+       
         joinedCallIds.current.add(callId);
-        void joinCallSession(callId).catch((e) =>
-          console.warn(
-            '[CallRealtimeProvider] joinCallSession (caller) error:',
-            e,
-          ),
-        );
+
 
         const { type, conversationId } = store.outgoingCall!;
 

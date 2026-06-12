@@ -4,6 +4,7 @@ import type {
   CursorPageResponse,
   MessageDTO,
 } from '../types';
+import { parseSafeDate } from './date';
 
 type DateLike = Date | string | number | null | undefined;
 
@@ -31,15 +32,17 @@ type RawConversationDTO = Omit<
 const DEFAULT_DATE = new Date(0);
 
 const normalizeDate = (value: DateLike): Date => {
+  if (value === null || value === undefined) {
+    return DEFAULT_DATE;
+  }
+
   if (value instanceof Date) {
     return value;
   }
 
-  if (typeof value === 'string' || typeof value === 'number') {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed;
-    }
+  const parsed = parseSafeDate(value as any);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed;
   }
 
   return DEFAULT_DATE;

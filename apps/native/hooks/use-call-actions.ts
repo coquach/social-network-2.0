@@ -137,19 +137,24 @@ export function useCallActions() {
   const answerCall = useCallback(async () => {
     if (!incomingCall || !client) return;
 
-    try {
-      await acceptCallSession(incomingCall.id);
+    // Snapshot the call so we can use it, and immediately transition the UI
+    const callToAnswer = incomingCall;
+    setActiveCall(callToAnswer);
+    setIncomingCall(null);
 
-      const call = client.call('default', incomingCall.id);
+    try {
+      await acceptCallSession(callToAnswer.id);
+
+      const call = client.call('default', callToAnswer.id);
       await call.join();
 
       // Notify BE so Redis group-online-set stays accurate
-      void joinCallSession(incomingCall.id).catch((e) =>
+      void joinCallSession(callToAnswer.id).catch((e) =>
         console.warn('[Call] joinCallSession error:', e),
       );
 
       // Control camera after joining
-      if (incomingCall.type === CallType.AUDIO) {
+      if (callToAnswer.type === CallType.AUDIO) {
         await call.camera.disable();
       } else {
         await call.camera.enable();
@@ -157,9 +162,6 @@ export function useCallActions() {
       
       // Ensure microphone is explicitly enabled for the callee
       await call.microphone.enable();
-
-      setActiveCall(incomingCall);
-      setIncomingCall(null);
     } catch (error) {
       console.error('[Call] Failed to answer call:', error);
       Alert.alert('Không thể kết nối', 'Cuộc gọi đã kết thúc hoặc không còn đổ chuông.');

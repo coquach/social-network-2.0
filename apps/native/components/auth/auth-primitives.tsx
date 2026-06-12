@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Button } from 'heroui-native/button';
 import { FieldError } from 'heroui-native/field-error';
 import { Input } from 'heroui-native/input';
 import { Label } from 'heroui-native/label';
