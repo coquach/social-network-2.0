@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNotificationPreferences, useUpdateNotificationPreferences } from '@repo/shared';
-import { Button } from 'heroui-native/button';
 import { Switch } from 'heroui-native/switch';
 import React from 'react';
 import { Text, View, ActivityIndicator } from 'react-native';
 
 import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
+import { SecondaryButton } from '~/components/ui/app-button';
 
 type ChatSettingsSheetProps = {
   visible: boolean;
@@ -35,13 +35,11 @@ export function ChatSettingsSheet({ visible, onClose }: ChatSettingsSheetProps) 
       bodyClassName="mt-4"
       footer={
         <View className="flex-row gap-3">
-          <Button
-            variant="secondary"
-            className="min-h-12 flex-1 rounded-[22px]"
+          <SecondaryButton
+            label="Đóng"
+            className="flex-1"
             onPress={onClose}
-          >
-            Đóng
-          </Button>
+          />
         </View>
       }
     >

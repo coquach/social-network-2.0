@@ -12,7 +12,6 @@ import {
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { router } from 'expo-router';
-import { Button } from 'heroui-native/button';
 import { Input } from 'heroui-native/input';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
@@ -31,7 +30,7 @@ import {
   SheetSection
 } from '~/components/chat/conversation-screen/conversation-info-sheet-sections';
 import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
-import { PrimaryButton, SecondaryButton } from '~/components/ui/app-button';
+import { PrimaryButton, SecondaryButton, GhostButton } from '~/components/ui/app-button';
 import { AppModal } from '~/components/ui/app-modal';
 import { AppToast, type AppToastData } from '~/components/ui/app-toast';
 import { ImageSourceActions } from '~/components/ui/image-source-actions';
@@ -345,8 +344,7 @@ export function ConversationInfoSheet({
             {!isGroup ? (
               <>
                 <View className="items-center gap-1.5">
-                  <Button
-                    variant="secondary"
+                  <SecondaryButton
                     className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
                     onPress={() => {
                       onClose();
@@ -357,50 +355,48 @@ export function ConversationInfoSheet({
                     }}
                   >
                     <Ionicons name="person" size={20} className="text-app-fg dark:text-app-fg-dark" />
-                  </Button>
+                  </SecondaryButton>
                   <Text className="text-[11px] font-semibold text-app-fg dark:text-app-fg-dark">Trang cá nhân</Text>
                 </View>
                 <View className="items-center gap-1.5">
-                  <Button
-                    variant="secondary"
+                  <SecondaryButton
                     className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
+                    onPress={() => {}}
                   >
                     <Ionicons name="search" size={20} className="text-app-fg dark:text-app-fg-dark" />
-                  </Button>
+                  </SecondaryButton>
                   <Text className="text-[11px] font-semibold text-app-fg dark:text-app-fg-dark">Tìm kiếm</Text>
                 </View>
                 <View className="items-center gap-1.5">
-                  <Button
-                    variant="secondary"
+                  <SecondaryButton
                     className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
-                    isDisabled={actionPending}
+                    disabled={actionPending}
                     onPress={() => void handleToggleHide()}
                   >
                     <Ionicons name={isHidden ? 'eye' : 'eye-off'} size={20} className="text-app-fg dark:text-app-fg-dark" />
-                  </Button>
+                  </SecondaryButton>
                   <Text className="text-[11px] font-semibold text-app-fg dark:text-app-fg-dark">{isHidden ? 'Hiện chat' : 'Ẩn chat'}</Text>
                 </View>
               </>
             ) : (
               <>
                 <View className="items-center gap-1.5">
-                  <Button
-                    variant="secondary"
+                  <SecondaryButton
                     className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
+                    onPress={() => {}}
                   >
                     <Ionicons name="search" size={20} className="text-app-fg dark:text-app-fg-dark" />
-                  </Button>
+                  </SecondaryButton>
                   <Text className="text-[11px] font-semibold text-app-fg dark:text-app-fg-dark">Tìm kiếm</Text>
                 </View>
                 <View className="items-center gap-1.5">
-                  <Button
-                    variant="secondary"
+                  <SecondaryButton
                     className="h-12 w-12 rounded-full px-0 shadow-none border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
-                    isDisabled={actionPending}
+                    disabled={actionPending}
                     onPress={() => setPendingAction('leave')}
                   >
                     <Ionicons name="exit" size={20} color="#e11d48" />
-                  </Button>
+                  </SecondaryButton>
                   <Text className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">Rời nhóm</Text>
                 </View>
               </>
@@ -425,47 +421,39 @@ export function ConversationInfoSheet({
                   }}
                 />
                 <View className="mt-2 items-center gap-2">
-                  <Button
-                    variant="secondary"
+                  <SecondaryButton
+                    label="Đổi ảnh nhóm"
                     className="rounded-full shadow-none"
                     onPress={() => setIsAvatarSheetOpen(true)}
-                  >
-                    Đổi ảnh nhóm
-                  </Button>
+                  />
                   {selectedImage ? (
-                    <Button
-                      variant="ghost"
+                    <GhostButton
+                      label="Bỏ ảnh đã chọn"
                       className="rounded-full shadow-none text-rose-500"
                       onPress={clearImage}
-                    >
-                      Bỏ ảnh đã chọn
-                    </Button>
+                    />
                   ) : null}
                 </View>
                 
                 {isDirty ? (
                   <View className="flex-row gap-2 mt-1">
-                    <Button
-                      variant="secondary"
+                    <SecondaryButton
+                      label="Hủy"
                       className="flex-1 rounded-full shadow-none"
-                      isDisabled={isUpdating}
+                      disabled={isUpdating}
                       onPress={() => {
                         setDraftGroupName(conversation?.groupName?.trim() || '');
                         clearImage();
                       }}
-                    >
-                      Hủy
-                    </Button>
-                    <Button
-                      variant="primary"
+                    />
+                    <PrimaryButton
+                      label={isUpdating ? 'Đang cập nhật...' : 'Lưu thay đổi'}
                       className="flex-1 rounded-full shadow-none"
-                      isDisabled={isUpdating}
+                      disabled={isUpdating}
                       onPress={() => {
                         void handleSaveGroup();
                       }}
-                    >
-                      {isUpdating ? 'Đang cập nhật...' : 'Lưu thay đổi'}
-                    </Button>
+                    />
                   </View>
                 ) : null}
               </View>

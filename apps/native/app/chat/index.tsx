@@ -10,7 +10,6 @@ import {
 } from '@repo/shared';
 import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button } from 'heroui-native/button';
 import { SearchField } from 'heroui-native/search-field';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
@@ -43,6 +42,7 @@ import { AppScreen } from '~/components/ui/app-screen';
 import { AppToast, type AppToastData } from '~/components/ui/app-toast';
 import { FloatingActionButton } from '~/components/ui/floating-action-button';
 import { cn } from '~/lib/cn';
+import { GhostButton, SecondaryButton } from '~/components/ui/app-button';
 
 const sortConversations = (conversations: ConversationDTO[]) => {
   return [...conversations].sort(
@@ -71,28 +71,32 @@ function ConversationSheetAction({
   destructive?: boolean;
 }) {
   return (
-    <Button
-      variant={destructive ? 'danger-soft' : 'ghost'}
-      className="min-h-14 justify-start rounded-[22px] px-4"
-      isDisabled={disabled}
+    <GhostButton
+      className={cn(
+        "min-h-14 justify-start rounded-[22px] px-4",
+        destructive && "bg-rose-500/10 dark:bg-rose-500/20"
+      )}
+      disabled={disabled}
       onPress={onPress}
     >
-      <Ionicons
-        name={icon}
-        size={18}
-        color={destructive ? '#e11d48' : '#0ea5e9'}
-      />
-      <Text
-        className={cn(
-          'ml-3 text-left text-[15px] font-semibold',
-          destructive
-            ? 'text-rose-600 dark:text-rose-300'
-            : 'text-app-fg dark:text-app-fg-dark',
-        )}
-      >
-        {label}
-      </Text>
-    </Button>
+      <View className="flex-row items-center">
+        <Ionicons
+          name={icon}
+          size={18}
+          color={destructive ? '#e11d48' : '#0ea5e9'}
+        />
+        <Text
+          className={cn(
+            'ml-3 text-left text-[15px] font-semibold',
+            destructive
+              ? 'text-rose-600 dark:text-rose-300'
+              : 'text-app-fg dark:text-app-fg-dark',
+          )}
+        >
+          {label}
+        </Text>
+      </View>
+    </GhostButton>
   );
 }
 
@@ -527,13 +531,11 @@ export default function ChatInboxScreen() {
               ) : null}
             </View>
 
-            <Button
-              variant="secondary"
+            <SecondaryButton
+              label="Hủy"
               className="rounded-[22px]"
               onPress={closeActionSheet}
-            >
-              Hủy
-            </Button>
+            />
           </View>
         ) : null}
       </AppBottomSheet>

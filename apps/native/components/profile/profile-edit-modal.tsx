@@ -1,4 +1,3 @@
-import { Button } from 'heroui-native/button';
 import React from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View, Pressable } from 'react-native';
 
@@ -7,6 +6,7 @@ import { NativeUploadFileDescriptor, INTEREST_OPTIONS } from '@repo/shared';
 import { AppModal } from '~/components/ui/app-modal';
 import { ImageSourceActions } from '~/components/ui/image-source-actions';
 import { useSingleImageSourcePicker } from '~/lib/use-single-image-source-picker';
+import { PrimaryButton, OutlineButton, GhostButton } from '~/components/ui/app-button';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
@@ -207,22 +207,18 @@ export function ProfileEditModal({
       contentClassName="max-h-[92%]"
       footer={
         <View className="gap-2">
-          <Button
-            variant="primary"
+          <PrimaryButton
+            label="Lưu thay đổi"
             className="min-h-11 rounded-xl"
             onPress={handleSave}
-            isDisabled={isSaving}
-          >
-            Lưu thay đổi
-          </Button>
-          <Button
-            variant="outline"
+            loading={isSaving}
+          />
+          <OutlineButton
+            label="Hủy"
             className="min-h-11 rounded-xl"
             onPress={onClose}
-            isDisabled={isSaving}
-          >
-            Hủy
-          </Button>
+            disabled={isSaving}
+          />
         </View>
       }
       fullScreenContent={
@@ -310,13 +306,11 @@ export function ProfileEditModal({
             </TouchableOpacity>
             <View className="mt-2">
               {coverPicker.selectedImage ? (
-                <Button
-                  variant="ghost"
-                  className="min-h-10 rounded-full px-4"
+                <GhostButton
+                  label="Xóa ảnh"
+                  className="rounded-full"
                   onPress={coverPicker.clearImage}
-                >
-                  Xóa ảnh
-                </Button>
+                />
               ) : null}
             </View>
           </View>
@@ -330,7 +324,7 @@ export function ProfileEditModal({
               onChangeText={setFirstName}
               placeholder="Nhập tên"
               autoCapitalize="words"
-              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
               returnKeyType="next"
               onSubmitEditing={() => lastNameRef.current?.focus()}
               blurOnSubmit={false}
@@ -347,7 +341,7 @@ export function ProfileEditModal({
               onChangeText={setLastName}
               placeholder="Nhập họ"
               autoCapitalize="words"
-              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
               returnKeyType="next"
               onSubmitEditing={() => bioRef.current?.focus()}
               blurOnSubmit={false}
@@ -367,7 +361,7 @@ export function ProfileEditModal({
               numberOfLines={4}
               textAlignVertical="top"
               maxLength={240}
-              className="min-h-24 rounded-xl border border-app-border bg-app-surface px-3 py-2 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+              className="min-h-24 rounded-xl border border-app-border bg-app-surface px-3 py-2 text-[15px] text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
               returnKeyType="done"
               onSubmitEditing={handleSave}
             />
@@ -384,7 +378,7 @@ export function ProfileEditModal({
               value={location}
               onChangeText={setLocation}
               placeholder="Nơi bạn đang sống"
-              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
             />
           </View>
 
@@ -396,7 +390,7 @@ export function ProfileEditModal({
               value={jobTitle}
               onChangeText={setJobTitle}
               placeholder="Chức danh, ví dụ: Software Engineer"
-              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
             />
           </View>
 
@@ -408,7 +402,7 @@ export function ProfileEditModal({
               value={company}
               onChangeText={setCompany}
               placeholder="Công ty của bạn"
-              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
             />
           </View>
 
@@ -420,7 +414,7 @@ export function ProfileEditModal({
               value={school}
               onChangeText={setSchool}
               placeholder="Trường bạn đã / đang học"
-              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+              className="min-h-11 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
             />
           </View>
 
@@ -474,19 +468,17 @@ export function ProfileEditModal({
                 value={customInterest}
                 onChangeText={setCustomInterest}
                 placeholder="Thêm sở thích khác..."
-                className="min-h-11 flex-1 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark"
+                className="min-h-11 flex-1 rounded-xl border border-app-border bg-app-surface px-3 text-[15px] text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
                 onSubmitEditing={addCustomInterest}
                 blurOnSubmit={false}
                 returnKeyType="done"
               />
-              <Button
-                variant="outline"
+              <OutlineButton
+                label="Thêm"
                 className="h-11 rounded-xl px-4"
                 onPress={addCustomInterest}
-                isDisabled={!customInterest.trim() || interests.length >= 10}
-              >
-                Thêm
-              </Button>
+                disabled={!customInterest.trim() || interests.length >= 10}
+              />
             </View>
           </View>
 

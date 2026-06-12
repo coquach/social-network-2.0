@@ -9,6 +9,7 @@ import { AppKeyboardScrollView } from '~/components/ui/app-keyboard-scroll-view'
 import { useCreateGroup } from '@repo/shared/hooks';
 import { CreateGroupInput, GroupPrivacy, MediaType } from '@repo/shared/types';
 import { AppAlert, type AppAlertVariant } from '~/components/ui/app-alert';
+import { PrimaryButton, SecondaryButton } from '~/components/ui/app-button';
 
 interface CreateGroupFormProps {
   onClose: () => void;
@@ -100,19 +101,19 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
   };
 
   return (
-    <View className="flex-1 bg-white dark:bg-slate-950">
+    <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
       <View
-        className="flex-row items-center justify-between border-b border-slate-100 px-5 pb-4 dark:border-slate-800"
+        className="flex-row items-center justify-between border-b border-app-border px-5 pb-4 dark:border-app-border-dark"
         style={{ paddingTop: Math.max(insets.top, 16) }}
       >
         <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="close" size={26} color="#64748b" />
         </TouchableOpacity>
 
-        <Text className="text-lg font-bold text-slate-900 dark:text-white">Tạo nhóm mới</Text>
+        <Text className="text-lg font-bold text-app-fg dark:text-app-fg-dark">Tạo nhóm mới</Text>
 
         <TouchableOpacity onPress={handleSubmit(onSubmit)} disabled={isPending}>
-          <Text className={`font-bold ${isPending ? 'text-slate-300' : 'text-sky-500'}`}>Tạo</Text>
+          <Text className={`font-bold ${isPending ? 'text-app-muted-fg' : 'text-app-primary'}`}>Tạo</Text>
         </TouchableOpacity>
       </View>
 
@@ -128,17 +129,17 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
           ) : null}
 
           <View className="mb-2">
-            <Text className="text-sm leading-5 text-slate-500 dark:text-slate-400">
-              Tạo một cộng đồng mới để kết nối mọi người, chia sẻ nội dung và tương tác trong hệ thống SE-CV.
+            <Text className="text-sm leading-5 text-app-muted-fg dark:text-app-muted-fg-dark">
+              Tạo một cộng đồng mới để kết nối mọi người, chia sẻ nội dung và tương tác trong hệ thống Sentimeta.
             </Text>
           </View>
 
           <View className="flex-row items-end gap-4">
             <View className="gap-2">
-              <Text className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">Ảnh đại diện</Text>
+              <Text className="text-[11px] font-bold uppercase tracking-tighter text-app-muted-fg dark:text-app-muted-fg-dark">Ảnh đại diện</Text>
               <TouchableOpacity
                 onPress={() => handlePickImage('avatar')}
-                className="h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
+                className="h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark"
               >
                 {avatarPreview ? (
                   <Image source={{ uri: avatarPreview }} className="h-full w-full" />
@@ -149,10 +150,10 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
             </View>
 
             <View className="flex-1 gap-2">
-              <Text className="text-[11px] font-bold uppercase tracking-tighter text-slate-400">Ảnh bìa nhóm</Text>
+              <Text className="text-[11px] font-bold uppercase tracking-tighter text-app-muted-fg dark:text-app-muted-fg-dark">Ảnh bìa nhóm</Text>
               <TouchableOpacity
                 onPress={() => handlePickImage('coverImage')}
-                className="h-24 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
+                className="h-24 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark"
               >
                 {coverPreview ? (
                   <Image source={{ uri: coverPreview }} className="h-full w-full" />
@@ -165,7 +166,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
 
           <View className="gap-2">
             <View className="flex-row">
-              <Text className="text-sm font-bold text-slate-700 dark:text-slate-300">Tên nhóm</Text>
+              <Text className="text-sm font-bold text-app-fg dark:text-app-fg-dark">Tên nhóm</Text>
               <Text className="ml-1 text-red-500">*</Text>
             </View>
             <Controller
@@ -173,9 +174,9 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
               name="name"
               render={({ field: { onChange, value } }) => (
                 <TextInput
-                  placeholder="Ví dụ: Lập trình .NET & NestJS UIT"
+                  placeholder="Ví dụ: Lập trình .NET & NestJS Sentimeta"
                   placeholderTextColor="#94a3b8"
-                  className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                  className="rounded-2xl border border-app-border bg-app-surface p-4 text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
                   value={value}
                   onChangeText={onChange}
                   returnKeyType="next"
@@ -187,7 +188,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
           </View>
 
           <View className="gap-2">
-            <Text className="text-sm font-bold text-slate-700 dark:text-slate-300">Mô tả nhóm</Text>
+            <Text className="text-sm font-bold text-app-fg dark:text-app-fg-dark">Mô tả nhóm</Text>
             <Controller
               control={control}
               name="description"
@@ -199,7 +200,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
-                  className="h-28 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                  className="h-28 rounded-2xl border border-app-border bg-app-surface p-4 text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
                   value={value}
                   onChangeText={onChange}
                   returnKeyType="next"
@@ -211,7 +212,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
           </View>
 
           <View className="gap-2">
-            <Text className="text-sm font-bold text-slate-700 dark:text-slate-300">Chế độ riêng tư</Text>
+            <Text className="text-sm font-bold text-app-fg dark:text-app-fg-dark">Chế độ riêng tư</Text>
             <Controller
               control={control}
               name="privacy"
@@ -226,8 +227,8 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
                       onPress={() => onChange(item.val)}
                       className={`flex-1 flex-row items-center justify-center gap-2 rounded-2xl border p-4 ${
                         value === item.val
-                          ? 'border-sky-500 bg-sky-50 dark:bg-sky-500/10'
-                          : 'border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-900'
+                          ? 'border-app-primary bg-app-primary/10'
+                          : 'border-app-border bg-app-surface dark:border-app-border-dark dark:bg-app-surface-dark'
                       }`}
                     >
                       <Ionicons
@@ -235,7 +236,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
                         size={18}
                         color={value === item.val ? '#0ea5e9' : '#94a3b8'}
                       />
-                      <Text className={`font-bold ${value === item.val ? 'text-sky-600' : 'text-slate-500'}`}>
+                      <Text className={`font-bold ${value === item.val ? 'text-app-primary' : 'text-app-muted-fg'}`}>
                         {item.label}
                       </Text>
                     </TouchableOpacity>
@@ -246,7 +247,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
           </View>
 
           <View className="gap-2">
-            <Text className="text-sm font-bold text-slate-700 dark:text-slate-300">Nội quy (Tùy chọn)</Text>
+            <Text className="text-sm font-bold text-app-fg dark:text-app-fg-dark">Nội quy (Tùy chọn)</Text>
             <Controller
               control={control}
               name="rules"
@@ -256,7 +257,7 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
                   placeholder="Ví dụ: Không spam, tôn trọng các thành viên..."
                   placeholderTextColor="#94a3b8"
                   multiline
-                  className="h-24 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                  className="h-24 rounded-2xl border border-app-border bg-app-surface p-4 text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-fg-dark dark:focus:border-app-primary-dark"
                   value={value}
                   onChangeText={onChange}
                   returnKeyType="done"
@@ -267,22 +268,19 @@ export const CreateGroupForm = ({ onClose }: CreateGroupFormProps) => {
           </View>
 
           <View className="mb-12 mt-4 flex-row gap-3">
-            <TouchableOpacity
+            <SecondaryButton
+              label="Hủy bỏ"
               onPress={onClose}
-              className="h-14 flex-1 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800"
-            >
-              <Text className="font-bold text-slate-600 dark:text-slate-400">Hủy bỏ</Text>
-            </TouchableOpacity>
+              className="h-14 flex-1"
+            />
 
-            <TouchableOpacity
+            <PrimaryButton
+              label={isPending ? 'Đang tạo nhóm...' : 'Xác nhận tạo'}
               onPress={handleSubmit(onSubmit)}
               disabled={isPending}
-              className={`h-14 flex-[2] items-center justify-center rounded-2xl ${
-                isPending ? 'bg-sky-300' : 'bg-sky-500 shadow-md shadow-sky-200'
-              }`}
-            >
-              <Text className="text-lg font-bold text-white">{isPending ? 'Đang tạo nhóm...' : 'Xác nhận tạo'}</Text>
-            </TouchableOpacity>
+              loading={isPending}
+              className="h-14 flex-[2]"
+            />
           </View>
         </View>
       </AppKeyboardScrollView>

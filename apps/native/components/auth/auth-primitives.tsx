@@ -54,9 +54,9 @@ export const AuthField = React.forwardRef<any, AuthFieldProps>(
         <View className="relative">
           <Input
             ref={ref}
-            variant="primary"
+            variant="secondary"
             className={cn(
-              'rounded-2xl border border-app-border bg-app-bg/70 px-4 py-3.5 text-base text-app-fg dark:border-app-border-dark dark:bg-app-bg-dark/60 dark:text-app-fg-dark',
+              'rounded-2xl border border-app-border bg-app-bg/70 px-4 py-3.5 text-base text-app-fg focus:border-app-primary dark:border-app-border-dark dark:bg-app-bg-dark/60 dark:text-app-fg-dark dark:focus:border-app-primary-dark',
               isPasswordField && 'pr-14',
             )}
             value={value}

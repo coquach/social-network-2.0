@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useDeletePost, useDeletePostModal, useDeleteShare } from '@repo/shared';
 import { useToast } from 'heroui-native/toast';
-import { Button } from 'heroui-native/button';
 import React from 'react';
-import { Text, View, ActivityIndicator } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { AppModal } from '~/components/ui/app-modal';
 import { AppToast } from '~/components/ui/app-toast';
+import { PrimaryButton, OutlineButton } from '~/components/ui/app-button';
 
 export function DeletePostModal() {
   const { isOpen, postId, isShare, shareId, closeModal } = useDeletePostModal();
@@ -83,25 +83,18 @@ export function DeletePostModal() {
       dismissible={!isPending}
       footer={
         <View className="mt-2 flex-row gap-3">
-          <Button
-            variant="outline"
-            className="flex-1 min-h-12 rounded-xl"
+          <OutlineButton
+            label="Hủy"
+            className="flex-1"
             onPress={closeModal}
-            isDisabled={isPending}
-          >
-            <Text className="font-semibold text-app-fg dark:text-app-fg-dark">Hủy</Text>
-          </Button>
-          <Button
-            className="flex-1 min-h-12 bg-rose-600 rounded-xl"
+            disabled={isPending}
+          />
+          <PrimaryButton
+            label="Xóa"
+            className="flex-1 bg-rose-600 border-rose-600"
             onPress={handleDelete}
-            isDisabled={isPending}
-          >
-            {isPending ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text className="font-semibold text-white">Xóa</Text>
-            )}
-          </Button>
+            loading={isPending}
+          />
         </View>
       }
     >

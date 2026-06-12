@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Button } from 'heroui-native/button';
 import React from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cn } from '~/lib/cn';
+import { SecondaryButton, GhostButton } from '~/components/ui/app-button';
 
 type AppHeaderIconButtonProps = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -41,14 +41,15 @@ export function AppHeaderIconButton({
   iconColor = '#0ea5e9',
   className,
 }: AppHeaderIconButtonProps) {
+  const ButtonComp = variant === 'ghost' ? GhostButton : SecondaryButton;
+
   return (
-    <Button
-      variant={variant}
-      className={cn('h-11 w-11 min-h-11 rounded-full px-0', className)}
-      onPress={onPress}
+    <ButtonComp
+      className={cn('h-11 w-11 min-h-11 rounded-full px-0 items-center justify-center', className)}
+      onPress={onPress ?? (() => {})}
     >
       <Ionicons name={icon} size={iconSize} color={iconColor} />
-    </Button>
+    </ButtonComp>
   );
 }
 

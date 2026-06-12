@@ -100,15 +100,15 @@ export const useUserFriends = (userId: string, params?: QueryParams) => {
         cursor: pageParam as string | undefined,
       });
 
-      const users = await Promise.all(
-        (friendIdsPage.data ?? []).map(async (friendId) => {
-          try {
-            return await userService.getUser(friendId);
-          } catch {
-            return null;
-          }
-        }),
-      );
+      const users: (UserDTO | null)[] = [];
+      for (const friendId of (friendIdsPage.data ?? [])) {
+        try {
+          const user = await userService.getUser(friendId);
+          users.push(user);
+        } catch {
+          users.push(null);
+        }
+      }
 
       return {
         ...friendIdsPage,

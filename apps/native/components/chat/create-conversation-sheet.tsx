@@ -6,7 +6,6 @@ import {
   useFriendUsers,
 } from '@repo/shared';
 import { router } from 'expo-router';
-import { Button } from 'heroui-native/button';
 import { Tabs } from 'heroui-native/tabs';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
@@ -14,6 +13,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 
 import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
+import { PrimaryButton, SecondaryButton } from '~/components/ui/app-button';
 import { AppToast, type AppToastData } from '~/components/ui/app-toast';
 import { useSingleImageSourcePicker } from '~/lib/use-single-image-source-picker';
 
@@ -268,10 +268,9 @@ export function CreateConversationSheet({
       androidKeyboardInputMode="adjustResize"
       footer={
         <View className="flex-row gap-3">
-          <Button
-            variant="primary"
-            className="min-h-12 flex-1 rounded-[22px]"
-            isDisabled={isPending}
+          <PrimaryButton
+            className="flex-1"
+            loading={isPending}
             onPress={() => {
               if (activeTab === 'direct') {
                 void submitDirectConversation();
@@ -280,20 +279,14 @@ export function CreateConversationSheet({
 
               void submitGroupConversation();
             }}
-          >
-            {isPending
-              ? 'Đang xử lý...'
-              : activeTab === 'direct'
-                ? 'Bắt đầu chat'
-                : 'Tạo nhóm chat'}
-          </Button>
-          <Button
-            variant="secondary"
-            className="min-h-12 flex-1 rounded-[22px]"
+            label={activeTab === 'direct' ? 'Bắt đầu chat' : 'Tạo nhóm chat'}
+          />
+          <SecondaryButton
+            label="Đóng"
+            className="flex-1"
             onPress={handleDismiss}
-          >
-            Đóng
-          </Button>
+            disabled={isPending}
+          />
         </View>
       }
     >

@@ -31,6 +31,7 @@ export function QuickLinksCard() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={item.href === '/friends/suggestions' ? false : undefined}
             className="group flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 transition hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md"
           >
             <div

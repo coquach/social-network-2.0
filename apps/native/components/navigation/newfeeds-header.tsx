@@ -2,7 +2,6 @@ import { useAuth } from '@clerk/expo';
 import { Ionicons } from '@expo/vector-icons';
 import { type ConversationDTO, useConversations } from '@repo/shared';
 import { router } from 'expo-router';
-import { Button } from 'heroui-native/button';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
 import { Text, View, Image } from 'react-native';
@@ -15,6 +14,7 @@ import {
 import { AppToast } from '~/components/ui/app-toast';
 import { appThemeColors } from '~/constants/theme';
 import { useAppTheme } from '~/providers/theme-provider';
+import { GhostButton } from '~/components/ui/app-button';
 
 export const NEWFEEDS_HEADER_BAR_HEIGHT = 52;
 const MESSAGE_BADGE_MAX = 99;
@@ -49,13 +49,12 @@ function HeaderActionButton({
 
   return (
     <View className="relative">
-      <Button
-        variant="ghost"
-        className="h-10 w-10 min-h-10 rounded-full px-0"
+      <GhostButton
+        className="h-10 w-10 min-h-10 min-w-10 rounded-full px-0 items-center justify-center"
         onPress={onPress}
       >
         <Ionicons name={action.icon} size={20} color={iconColor} />
-      </Button>
+      </GhostButton>
 
       {showBadge ? (
         <View className="absolute -right-1 -top-1 min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5">

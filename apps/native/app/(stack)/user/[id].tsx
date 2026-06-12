@@ -59,10 +59,11 @@ export default function OtherUserProfileScreen() {
     user?.coverImage?.url || user?.coverImageUrl || DEFAULT_COVER;
   const bioText = user?.bio?.trim() || DEFAULT_BIO;
 
-  // Quyền riêng tư: Khoá trang cá nhân nếu PRIVATE và chưa phải bạn bè
+  // Quyền riêng tư & Block: Khoá trang cá nhân
   const isPrivate =
     user?.privacySettings?.profileVisibility === PrivacyLevel.PRIVATE;
   const isFriend = user?.relation?.status === RelationStatus.FRIEND;
+  const isBlocked = user?.relation?.status === RelationStatus.BLOCKED;
   const isLocked = isPrivate && !isFriend;
 
   const friendItems = React.useMemo(() => {
@@ -138,10 +139,28 @@ export default function OtherUserProfileScreen() {
           )}
 
           {/* Render Action Buttons Component */}
-          {user && <ProfileActionButtons user={user} />}
+          {user && !isBlocked && <ProfileActionButtons user={user} />}
 
-          {/* Privacy Enforcement: Lock Screen UI */}
-          {isLocked ? (
+          {/* Privacy Enforcement: Lock / Block Screen UI */}
+          {isBlocked ? (
+            <View className="mt-6">
+              <AppCard className="items-center justify-center rounded-3xl p-8 py-12 gap-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50">
+                <View className="h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900">
+                  <Ionicons
+                    name="ban-outline"
+                    size={32}
+                    color="#b45309"
+                  />
+                </View>
+                <Text className="text-[18px] font-bold text-amber-900 dark:text-amber-500 text-center">
+                  Đã chặn người dùng
+                </Text>
+                <Text className="text-[14px] text-amber-700 dark:text-amber-600/80 text-center max-w-[250px]">
+                  Bạn đã chặn người này nên không xem được thông tin của họ.
+                </Text>
+              </AppCard>
+            </View>
+          ) : isLocked ? (
             <View className="mt-6">
               <AppCard className="items-center justify-center rounded-3xl p-8 py-12 gap-4">
                 <View className="h-16 w-16 items-center justify-center rounded-full bg-app-surface-elevated dark:bg-app-surface-elevated-dark">
@@ -283,7 +302,7 @@ export default function OtherUserProfileScreen() {
           )}
 
           {/* Tabs */}
-          {!isLocked && (
+          {!isLocked && !isBlocked && (
             <View className="mt-4">
               <View className="mb-1 flex-row rounded-2xl bg-app-surface-elevated p-1 dark:bg-app-surface-elevated-dark">
                 <Pressable
@@ -421,7 +440,7 @@ export default function OtherUserProfileScreen() {
     );
   }
 
-  if (isLocked) {
+  if (isLocked || isBlocked) {
     return (
       <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
         <FeedList

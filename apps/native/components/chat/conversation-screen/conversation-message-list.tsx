@@ -5,7 +5,6 @@ import {
 } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import type { MessageDTO } from '@repo/shared';
-import { Button } from 'heroui-native/button';
 import { Spinner } from 'heroui-native/spinner';
 import React from 'react';
 import {
@@ -18,6 +17,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ChatMessageBubble } from '~/components/chat/chat-message-bubble';
 import { formatMessageDateLabel, getChatDayKey } from '~/lib/chat-date-utils';
+import { PrimaryButton } from '~/components/ui/app-button';
 
 type ParticipantVisual = {
   name: string;
@@ -394,8 +394,7 @@ export function ConversationMessageList({
 
       {showScrollToBottom ? (
         <View className="absolute bottom-5 left-0 right-0 items-center">
-          <Button
-            variant="primary"
+          <PrimaryButton
             className="rounded-full px-4 shadow-none"
             onPress={() => {
               setShowScrollToBottom(false);
@@ -407,7 +406,7 @@ export function ConversationMessageList({
             <Text className="ml-2 text-sm font-semibold text-white">
               Tin nhắn mới
             </Text>
-          </Button>
+          </PrimaryButton>
         </View>
       ) : null}
     </View>

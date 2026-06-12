@@ -1,9 +1,9 @@
 import React from 'react';
 import { Image, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button } from 'heroui-native/button';
 import type { MusicFeatureDTO } from '@repo/shared';
 import type { AudioStatus } from 'expo-audio';
+import { PrimaryButton, GhostButton } from '~/components/ui/app-button';
 
 type MusicRecommendationPlayerProps = {
   track: MusicFeatureDTO | null;
@@ -58,18 +58,18 @@ export function MusicRecommendationPlayer({
         </View>
 
         <View className="flex-row items-center gap-1">
-          <Button isIconOnly size="sm" variant="ghost" feedbackVariant="scale" onPress={onPrevious} className="h-8 w-8 min-h-0 min-w-0">
+          <GhostButton onPress={onPrevious} className="h-8 w-8 min-h-0 min-w-0 p-0 items-center justify-center">
             <Ionicons name="play-skip-back" size={14} color={palette.subtle} />
-          </Button>
-          <Button isIconOnly size="sm" variant="primary" feedbackVariant="scale-ripple" onPress={onTogglePlay} className="h-8 w-8 min-h-0 min-w-0">
+          </GhostButton>
+          <PrimaryButton onPress={onTogglePlay} className="h-8 w-8 min-h-0 min-w-0 p-0 items-center justify-center">
             <Ionicons name={status.playing ? 'pause' : 'play'} size={14} color={palette.accentFg} />
-          </Button>
-          <Button isIconOnly size="sm" variant="ghost" feedbackVariant="scale" onPress={onNext} className="h-8 w-8 min-h-0 min-w-0">
+          </PrimaryButton>
+          <GhostButton onPress={onNext} className="h-8 w-8 min-h-0 min-w-0 p-0 items-center justify-center">
             <Ionicons name="play-skip-forward" size={14} color={palette.subtle} />
-          </Button>
-          <Button isIconOnly size="sm" variant="ghost" feedbackVariant="scale" onPress={onOpenList} className="h-8 w-8 min-h-0 min-w-0 ml-1">
+          </GhostButton>
+          <GhostButton onPress={onOpenList} className="h-8 w-8 min-h-0 min-w-0 p-0 items-center justify-center ml-1">
             <Ionicons name="list" size={16} color={palette.subtle} />
-          </Button>
+          </GhostButton>
         </View>
       </View>
 

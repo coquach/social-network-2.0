@@ -20,6 +20,7 @@ export const AvatarImage = ({
     useAvatarContext();
   const { userId: currentUserId } = useAuth();
   const { data: fetchedUser, isLoading } = useUser(userId);
+  
   const isOnline = usePresenceStore((state) => state.isOnline(userId));
 
   const sizeClasses = useMemo(() => {
