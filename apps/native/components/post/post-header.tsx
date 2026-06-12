@@ -3,7 +3,7 @@ import { useAuth } from '@clerk/expo';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import { formatRelativeTime } from '~/utils/format-relative-time';
+import { formatFriendlyTime } from '~/utils/format-relative-time';
 import { useUser } from '@repo/shared';
 import type {
   Audience,
@@ -48,8 +48,7 @@ function PostHeaderComponent({
   const isOwner = currentUserId === data.userId;
 
   const createdText = React.useMemo(() => {
-    const rel = formatRelativeTime(createdAt);
-    return rel.replace(' ago', '');
+    return formatFriendlyTime(createdAt);
   }, [createdAt]);
 
   const audienceInfo = React.useMemo(() => {

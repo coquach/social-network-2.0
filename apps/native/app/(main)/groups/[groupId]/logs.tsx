@@ -1,9 +1,9 @@
-﻿import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { GroupPermission, useGroupPermission } from '@repo/shared';
-import { useGroup } from '@repo/shared/hooks';
+import { useGroupPermission, useGroup } from '@repo/shared/hooks';
+import { GroupPermission } from '@repo/shared/types';
 
 import { GroupAdminLogsSection } from '~/components/group-admin/logs/admin-logs-section';
 import { AppHeader } from '~/components/ui/app-header';

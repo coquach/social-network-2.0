@@ -2,8 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
 
-import { useGroupPermission } from '@repo/shared';
-import { useGroup } from '@repo/shared/hooks';
+import { useGroupPermission, useGroup } from '@repo/shared/hooks';
 
 import { MemberSection } from './members/member-section';
 import { AppHeader } from '~/components/ui/app-header';

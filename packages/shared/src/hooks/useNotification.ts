@@ -57,7 +57,7 @@ export const useUnreadCount = () => {
       return result.count;
     },
     ...queryConfigs.realtime,
-    refetchInterval: 60 * 1000, // Refetch every minute
+    refetchInterval: 15 * 1000, // Refetch every 15 seconds
   });
 };
 

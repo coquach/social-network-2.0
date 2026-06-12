@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import clsx from 'clsx';
-import { MessageCirclePlus } from 'lucide-react';
+import { MessageCirclePlus, Settings } from 'lucide-react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { ErrorFallback } from '@/components/error-fallback';
@@ -26,12 +26,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ConversationBox } from './conversation-box';
 import { ConversationSearchOverlay } from './conversation-search-overlay';
 import { CreateGroupConversationDialog } from './create-group-chat';
+import { ChatSettingsDialog } from './chat-settings-dialog';
 
 export const ConversationList = () => {
   const { chatSocket } = useSocket();
   const { conversationId, isOpen } = useConversationNav();
   const queryClient = useQueryClient();
   const [createGroupChatOpen, setCreateGroupChatOpen] = useState(false);
+  const [chatSettingsOpen, setChatSettingsOpen] = useState(false);
 
   const {
     data,
@@ -221,6 +223,10 @@ export const ConversationList = () => {
         open={createGroupChatOpen}
         onOpenChange={setCreateGroupChatOpen}
       />
+      <ChatSettingsDialog
+        open={chatSettingsOpen}
+        onOpenChange={setChatSettingsOpen}
+      />
 
       <aside
         className={clsx(
@@ -232,14 +238,24 @@ export const ConversationList = () => {
           <div className="flex items-center justify-between mb-4 pt-4">
             <p className="text-2xl font-bold text-sky-500">Trò chuyện</p>
 
-            <button
-              type="button"
-              onClick={() => setCreateGroupChatOpen(true)}
-              className="rounded-full p-2 bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
-              aria-label="Tạo trò chuyện nhóm"
-            >
-              <MessageCirclePlus size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setChatSettingsOpen(true)}
+                className="rounded-full p-2 bg-gray-100 text-gray-600 hover:bg-gray-200 transition dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                aria-label="Cài đặt thông báo"
+              >
+                <Settings size={20} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setCreateGroupChatOpen(true)}
+                className="rounded-full p-2 bg-gray-100 text-gray-600 hover:bg-gray-200 transition dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                aria-label="Tạo trò chuyện nhóm"
+              >
+                <MessageCirclePlus size={20} />
+              </button>
+            </div>
           </div>
 
           {showOverlay ? (

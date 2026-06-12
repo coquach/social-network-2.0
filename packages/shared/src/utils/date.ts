@@ -1,4 +1,4 @@
-import { format, isValid, parseISO } from 'date-fns';
+import { format, isValid, parseISO, isSameDay, isSameYear, isYesterday } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 /**
@@ -139,6 +139,30 @@ export const formatRelativeTime = (
   }
 
   return `${y} năm trước`;
+};
+
+/**
+ * Format friendly time for feeds (Today -> relative, Yesterday -> "Hôm qua", Else -> date).
+ */
+export const formatFriendlyTime = (
+  dateInput?: string | Date | number | number[] | null,
+): string => {
+  const date = parseSafeDate(dateInput);
+  const now = new Date();
+
+  if (isSameDay(date, now)) {
+    return formatRelativeTime(date);
+  }
+
+  if (isYesterday(date)) {
+    return 'Hôm qua';
+  }
+
+  if (isSameYear(date, now)) {
+    return format(date, 'dd/MM', { locale: vi });
+  }
+
+  return format(date, 'dd/MM/yy', { locale: vi });
 };
 
 /**

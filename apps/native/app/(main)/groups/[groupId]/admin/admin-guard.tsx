@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useGroupPermission } from '@repo/shared';
+import { useGroupPermission } from '@repo/shared/hooks';
 import { GroupRole, GroupDTO } from '@repo/shared/types';
 import { Ionicons } from '@expo/vector-icons';
 

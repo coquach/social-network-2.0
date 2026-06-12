@@ -1,1 +1,1 @@
-export { formatRelativeTime } from '@repo/shared';
+export { formatRelativeTime, formatFriendlyTime } from '@repo/shared';

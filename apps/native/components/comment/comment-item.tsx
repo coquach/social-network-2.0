@@ -20,7 +20,7 @@ import {
 } from '@repo/shared';
 
 import { CommentInput } from './comment-input';
-import { formatRelativeTime } from '~/utils/format-relative-time';
+import { formatFriendlyTime } from '~/utils/format-relative-time';
 import { Avatar } from '~/components/avatar';
 import {
   ReactionPicker,
@@ -259,7 +259,7 @@ function CommentItemComponent({ comment, rootId, rootType }: CommentItemProps) {
           <View className="flex-row items-center justify-between gap-3 pl-1">
             <View className="min-w-0 flex-1 flex-row items-center gap-4">
               <Text className="text-[11px] text-app-muted-fg dark:text-app-muted-fg-dark">
-                {formatRelativeTime(comment.createdAt)}
+                {formatFriendlyTime(comment.createdAt)}
               </Text>
 
               <View ref={reactionRowRef}>

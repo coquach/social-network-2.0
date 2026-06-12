@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/expo';
 import { Ionicons } from '@expo/vector-icons';
-import { type ConversationDTO, useConversations } from '@repo/shared';
+import { type ConversationDTO, useConversations, useUnreadCount } from '@repo/shared';
 import { router } from 'expo-router';
 import { useToast } from 'heroui-native/toast';
 import React from 'react';
@@ -77,6 +77,8 @@ export function NewfeedsHeader() {
     { limit: 10 },
     { enabled: isLoaded && !!userId },
   );
+  const { data: unreadNotificationCountData } = useUnreadCount();
+  const unreadNotificationCount = unreadNotificationCountData ?? 0;
 
   const unreadChatCount = React.useMemo(() => {
     if (!userId) {
@@ -161,7 +163,13 @@ export function NewfeedsHeader() {
             <HeaderActionButton
               key={action.label}
               action={action}
-              badgeCount={action.href === '/chat' ? unreadChatCount : 0}
+              badgeCount={
+                action.href === '/chat' 
+                  ? unreadChatCount 
+                  : action.href === '/notifications' 
+                    ? unreadNotificationCount 
+                    : 0
+              }
               iconColor={colors.primary}
               onPress={() => handleActionPress(action)}
             />

@@ -7,20 +7,10 @@ import {
   SharePostDTO,
   ShareSnapshotDTO,
 } from '../../types';
+import { parseSafeDate } from '../../utils/date';
 
 const postSnapshotCache = new WeakMap<object, PostSnapshotDTO>();
 const shareSnapshotCache = new WeakMap<object, ShareSnapshotDTO>();
-
-const toDate = (value: unknown): Date => {
-  if (value instanceof Date) return value;
-
-  if (typeof value === 'string' || typeof value === 'number') {
-    const date = new Date(value);
-    if (!Number.isNaN(date.getTime())) return date;
-  }
-
-  return new Date();
-};
 
 export const toPostSnapshot = (
   post: PostDTO | PostSnapshotDTO,
@@ -29,7 +19,7 @@ export const toPostSnapshot = (
   if (cached) return cached;
 
   if ('postId' in post) {
-    const createdAt = toDate(post.createdAt);
+    const createdAt = parseSafeDate(post.createdAt);
 
     const normalized =
       post.createdAt instanceof Date &&
@@ -52,7 +42,7 @@ export const toPostSnapshot = (
     mainEmotion: post.feeling,
     postStat: post.postStat,
     reactedType: post.reactedType,
-    createdAt: toDate(post.createdAt),
+    createdAt: parseSafeDate(post.createdAt),
   };
 
   postSnapshotCache.set(post as object, normalized);
@@ -66,7 +56,7 @@ export const toShareSnapshot = (
   if (cached) return cached;
 
   if ('shareId' in share) {
-    const createdAt = toDate(share.createdAt);
+    const createdAt = parseSafeDate(share.createdAt);
     const normalizedPost = toPostSnapshot(share.post);
 
     const normalized =
@@ -86,7 +76,7 @@ export const toShareSnapshot = (
     audience: share.audience,
     content: share.content,
     post: toPostSnapshot(share.post),
-    createdAt: toDate(share.createdAt),
+    createdAt: parseSafeDate(share.createdAt),
     reactedType: share.reactedType,
     shareStat: share.shareStat,
   };

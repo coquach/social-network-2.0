@@ -354,7 +354,7 @@ export default function ChatInboxScreen() {
           <SearchField value={searchText} onChange={setSearchText}>
             <SearchField.Group className="rounded-[28px] border border-white/70 bg-white/92 dark:border-app-border-dark dark:bg-app-surface-dark/92">
               <SearchField.SearchIcon className='ml-2'
-                iconProps={{ color: '#0ea5e9', size: 18, }}
+                iconProps={{ color: '#0ea5e9', size: 18 }}
               />
               <SearchField.Input
                 variant="secondary"
@@ -572,3 +572,4 @@ export default function ChatInboxScreen() {
     </AppScreen>
   );
 }
+
