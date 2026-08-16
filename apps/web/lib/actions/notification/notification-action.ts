@@ -22,3 +22,42 @@ export const getNotifications = async (
     throw error;
   }
 };
+
+export const markNotificationAsRead = async (
+  token: string,
+  id: string
+): Promise<void> => {
+  try {
+    await api.patch(
+      `/notifications/${id}/read`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const markAllNotificationsAsRead = async (
+  token: string
+): Promise<void> => {
+  try {
+    await api.patch(
+      '/notifications/read-all',
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};

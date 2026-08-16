@@ -1,6 +1,6 @@
 'use client';
 
-import { getNotifications } from '@/lib/actions/notification/notification-action';
+import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/lib/actions/notification/notification-action';
 import { CursorPageResponse, CursorPagination, getStandardNextPageParam } from '@repo/shared';
 import { queryKeys } from '@/lib/query-keys';
 import { NotificationDTO } from '@/models/notification/notificationDTO';
@@ -48,15 +48,28 @@ export function useNotifications(userId: string) {
   }, [data, setNotifications]);
 
   // ==================== Action gửi về server ====================
-  // These actions will sync via API calls
   const handleMarkRead = async (id: string) => {
-    markRead(id);
-    // API call handled by React Query mutation in the component
+    markRead(id); // optimistic update in zustand
+    try {
+      const token = await getToken();
+      if (token) {
+        await markNotificationAsRead(token, id);
+      }
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
   };
 
   const handleMarkReadAll = async () => {
-    markReadAll();
-    // API call handled by React Query mutation in the component
+    markReadAll(); // optimistic update in zustand
+    try {
+      const token = await getToken();
+      if (token) {
+        await markAllNotificationsAsRead(token);
+      }
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
   };
 
   return {
