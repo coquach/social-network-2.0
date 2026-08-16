@@ -6,6 +6,7 @@
 import type { Audience, ReactionType } from './enums';
 import type { PostDTO, PostSnapshotDTO } from './post.types';
 import type { CursorPagination } from './common.types';
+import type { UserSnapshotDTO } from './user.types';
 
 export interface SharePostStatDTO {
   reactions: number;
@@ -21,6 +22,7 @@ export interface SharePostStatDTO {
 export interface SharePostDTO {
   id: string;
   userId: string;
+  user?: UserSnapshotDTO;
   audience: Audience;
   content: string;
   post: PostDTO;
@@ -33,6 +35,7 @@ export interface SharePostDTO {
 export interface SharePostSnapshotDTO {
   shareId: string;
   userId: string;
+  user?: UserSnapshotDTO;
   audience: Audience;
   content?: string;
   post: PostSnapshotDTO;

@@ -2,8 +2,11 @@
 
 import { createContext, useContext } from 'react';
 
+import { UserSnapshotDTO } from '@repo/shared';
+
 interface AvatarContextValue {
   userId: string;
+  user?: UserSnapshotDTO;
   size: 'small' | 'medium' | 'large';
   hasBorder: boolean;
   isClickable: boolean;

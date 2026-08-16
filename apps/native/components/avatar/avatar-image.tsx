@@ -34,7 +34,7 @@ const AvatarImageComponent = ({
     displayName: injectedDisplayName,
   } = useAvatarContext();
 
-  const { data: user, isLoading } = useUser(userId);
+  const { data: user, isLoading } = useUser(userId, { enabled: !injectedAvatarUrl || !injectedDisplayName });
 
   const resolvedAvatarUrl = injectedAvatarUrl ?? user?.avatarUrl;
   const resolvedDisplayName = useMemo(() => {

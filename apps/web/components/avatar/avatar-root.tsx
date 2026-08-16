@@ -3,9 +3,11 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AvatarProvider } from './avatar-context';
+import { UserSnapshotDTO } from '@repo/shared';
 
 interface AvatarRootProps {
   userId: string;
+  user?: UserSnapshotDTO;
   size?: 'small' | 'medium' | 'large';
   hasBorder?: boolean;
   isClickable?: boolean;
@@ -17,6 +19,7 @@ interface AvatarRootProps {
 
 export const AvatarRoot = ({
   userId,
+  user,
   size = 'medium',
   hasBorder = false,
   isClickable = true,
@@ -44,6 +47,7 @@ export const AvatarRoot = ({
     <AvatarProvider
       value={{
         userId,
+        user,
         size,
         hasBorder,
         isClickable,

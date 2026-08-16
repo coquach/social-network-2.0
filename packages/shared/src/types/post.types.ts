@@ -4,6 +4,7 @@
  */
 
 import type { Audience, Emotion, MediaType, ReactionType } from './enums';
+import type { UserSnapshotDTO } from './user.types';
 
 /**
  * Media item in posts
@@ -58,6 +59,7 @@ export interface GroupInfoDTO {
 export interface PostDTO {
   id: string;
   userId: string;
+  user?: UserSnapshotDTO;
   group?: GroupInfoDTO;
   content: string;
   media: MediaDTO[];
@@ -75,6 +77,7 @@ export interface PostDTO {
 export interface PostSnapshotDTO {
   postId: string;
   userId: string;
+  user?: UserSnapshotDTO;
   group?: GroupInfoDTO;
   content?: string;
   audience: Audience;
@@ -89,6 +92,7 @@ export interface PostSnapshotDTO {
 export interface ShareSnapshotDTO {
   shareId: string;
   userId: string;
+  user?: UserSnapshotDTO;
   audience: Audience;
   content?: string;
   createdAt: Date;

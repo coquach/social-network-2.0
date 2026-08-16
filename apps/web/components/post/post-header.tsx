@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useGetUser } from '@/hooks/use-user-hook';
+
 import {
   Audience,
   Emotion,
@@ -70,7 +70,6 @@ export default function PostHeader({
 }: PostHeaderProps) {
   const { userId: currentUserId } = useAuth();
   const router = useRouter();
-  const { data: fetchedUser } = useGetUser(userId);
 
   const { openModal: deletePostModalOpen } = useDeletePostModal();
   const { openModal: updatePostModalOpen } = useUpdatePostModal();
@@ -96,10 +95,11 @@ export default function PostHeader({
   }, [createdAt]);
 
   const displayName = useMemo(() => {
-    const first = fetchedUser?.firstName?.trim();
-    const last = fetchedUser?.lastName?.trim();
+    const user = data.user;
+    const first = user?.firstName?.trim();
+    const last = user?.lastName?.trim();
     return [first, last].filter(Boolean).join(' ') || 'Người dùng';
-  }, [fetchedUser?.firstName, fetchedUser?.lastName]);
+  }, [data.user]);
 
   const group = useMemo(() => {
     if (isShared) return undefined;
@@ -136,7 +136,7 @@ export default function PostHeader({
     <>
       <header className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
-          <PostHeaderAvatar userId={userId} />
+          <PostHeaderAvatar userId={userId} user={data.user} />
 
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">

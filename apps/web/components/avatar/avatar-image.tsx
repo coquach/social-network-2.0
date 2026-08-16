@@ -17,10 +17,10 @@ export const AvatarImage = ({
   showOnlineStatus = false,
   className = '',
 }: AvatarImageProps) => {
-  const { userId, size, hasBorder, reactionEmoji, isClickable, onImageClick } =
+  const { userId, user, size, hasBorder, reactionEmoji, isClickable, onImageClick } =
     useAvatarContext();
   const { userId: currentUserId } = useAuth();
-  const { data: fetchedUser, isLoading } = useGetUser(userId);
+  const { data: fetchedUser, isLoading } = useGetUser(userId, { enabled: !user });
   const isOnline = usePresenceStore((state) => state.isOnline(userId));
 
   const sizeClasses = useMemo(() => {
@@ -36,7 +36,7 @@ export const AvatarImage = ({
 
   const showOnline = showOnlineStatus && isOnline && userId !== currentUserId && size !== 'small';
 
-  if (isLoading) {
+  if (!user && isLoading) {
     return (
       <div
         className={`
@@ -73,7 +73,7 @@ export const AvatarImage = ({
           borderRadius: '100%',
         }}
         alt="Avatar"
-        src={fetchedUser?.avatarUrl || '/images/placeholder.png'}
+        src={user?.avatarUrl || fetchedUser?.avatarUrl || '/images/placeholder.png'}
       />
 
       {reactionEmoji && (

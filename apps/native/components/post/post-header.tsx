@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { formatRelativeTime } from '~/utils/format-relative-time';
-import { useUser } from '@repo/shared';
 import type {
   Audience,
   PostSnapshotDTO,
@@ -43,7 +42,7 @@ function PostHeaderComponent({
   const openPostOptions = usePostOptionsStore((s) => s.openPostOptions);
 
   // User
-  const { data: author } = useUser(data.userId);
+  const author = data.user;
 
   const isOwner = currentUserId === data.userId;
 
