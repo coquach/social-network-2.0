@@ -14,14 +14,14 @@ import { EmotionHeroCard } from '../_components/emotion-hero';
 
 type EmotionDetailClientProps = {
   targetId: string;
-  targetType: keyof typeof TargetType;
+  targetType: TargetType | string;
 };
 
 export const EmotionDetailClient = ({
   targetId,
   targetType,
 }: EmotionDetailClientProps) => {
-  const detailQuery = useEmotionAnalysis(targetType, targetId);
+  const detailQuery = useEmotionAnalysis(targetType as TargetType, targetId);
   const summary = detailQuery.data;
 
   return (

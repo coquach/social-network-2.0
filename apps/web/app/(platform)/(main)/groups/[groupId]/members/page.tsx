@@ -29,7 +29,7 @@ export default async function GroupMembersPage({ params }: MembersPageProps) {
     await queryClient.prefetchInfiniteQuery({
       queryKey: ['group-members', groupId, filter],
       queryFn: ({ pageParam }) =>
-        getCachedGroupMembers(token, groupId, {
+        getCachedGroupMembers(groupId, {
           ...filter,
           cursor: pageParam,
         } as GroupMemberFilter),

@@ -33,7 +33,7 @@ export default async function PostDetailPage({
 
   qc.prefetchQuery({
     queryKey: ['post', postId],
-    queryFn: async () => getCachedPost(token, postId),
+    queryFn: async () => getCachedPost(postId),
   });
 
   return (
