@@ -572,9 +572,14 @@ export const ProfileModal = () => {
             </ScrollArea>
 
             <DialogFooter className="p-5 border-t mt-auto bg-white">
-              <Button type="submit" disabled={!form.state.isDirty || isPending}>
-                Lưu thay đổi
-              </Button>
+              <form.Subscribe
+                selector={(state) => [state.isDirty]}
+                children={([isDirty]) => (
+                  <Button type="submit" disabled={!isDirty || isPending}>
+                    Lưu thay đổi
+                  </Button>
+                )}
+              />
             </DialogFooter>
           </form>
         )}

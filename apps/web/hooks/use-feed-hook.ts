@@ -48,10 +48,18 @@ export const useGetTrendingFeed = (query: TrendingQuery) => {
       if (!token) {
         throw new Error('Token is required');
       }
-      return await getTrendingFeed(token, {
+      const res = await getTrendingFeed(token, {
         ...query,
         cursor: pageParam,
       } as TrendingQuery);
+
+      if (res && res.data) {
+        res.data = res.data.map((post: any) => ({
+          ...post,
+          postId: post.postId || post.id,
+        }));
+      }
+      return res;
     },
     getNextPageParam: getStandardNextPageParam,
     initialPageParam: undefined,
