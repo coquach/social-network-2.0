@@ -128,8 +128,8 @@ export const createPostInGroup = async (
   message: string;
 }> => {
   try {
-    const groupId = data.groupId;
-    const response = await api.post(`/groups/${groupId}/posts`, data, {
+    const { groupId, ...payload } = data;
+    const response = await api.post(`/groups/${groupId}/posts`, payload, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
