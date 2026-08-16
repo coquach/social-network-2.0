@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/input-group';
 import { LiveRegion } from '@/components/ui/live-region';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useGetUser, useUpdateUser } from '@/hooks/use-user-hook';
 import { ImageIcon, Pencil } from '@/lib/icons';
 import {
@@ -150,37 +151,43 @@ export const ProfileModal = () => {
         message={isPending ? 'Đang cập nhật hồ sơ...' : ''}
         politeness="polite"
       />
-      <DialogContent className="max-w-lg overflow-hidden p-0">
-        <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-semibold">
+      <DialogContent className="max-w-lg flex flex-col max-h-[90vh] overflow-hidden p-0">
+        <DialogHeader className="p-5 pb-0 border-b">
+          <DialogTitle className="text-center text-2xl font-semibold mb-5">
             Chỉnh sửa hồ sơ
           </DialogTitle>
         </DialogHeader>
 
         {isLoading && (
-          <div className="space-y-4 p-5">
-            <Skeleton className="h-28 w-full rounded-xl" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-20 w-full rounded-lg" />
-          </div>
+          <ScrollArea className="flex-1">
+            <div className="space-y-4 p-5">
+              <Skeleton className="h-28 w-full rounded-xl" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-20 w-full rounded-lg" />
+            </div>
+          </ScrollArea>
         )}
 
         {isError && (
-          <div className="p-5">
-            <ErrorFallback message={error.message} />
-          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-5">
+              <ErrorFallback message={error.message} />
+            </div>
+          </ScrollArea>
         )}
 
         {!isLoading && !isError && (
           <form
+            className="flex flex-col overflow-hidden min-h-0 flex-1"
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
               form.handleSubmit();
             }}
           >
-            <div className="space-y-5 p-5">
+            <ScrollArea className="flex-1">
+              <div className="space-y-5 p-5">
               <FieldGroup className="pr-2">
                 <form.Field name="avatarUrl">
                   {(field) => (
@@ -562,11 +569,17 @@ export const ProfileModal = () => {
                 </form.Field>
               </FieldGroup>
             </div>
+            </ScrollArea>
 
-            <DialogFooter>
-              <Button type="submit" disabled={!form.state.isDirty || isPending}>
-                Lưu thay đổi
-              </Button>
+            <DialogFooter className="p-5 border-t mt-auto bg-white">
+              <form.Subscribe
+                selector={(state) => [state.isDirty]}
+                children={([isDirty]) => (
+                  <Button type="submit" disabled={!isDirty || isPending}>
+                    Lưu thay đổi
+                  </Button>
+                )}
+              />
             </DialogFooter>
           </form>
         )}

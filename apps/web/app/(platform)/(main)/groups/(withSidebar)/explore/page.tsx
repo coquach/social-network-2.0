@@ -23,7 +23,7 @@ export default async function GroupExplorePage() {
   queryClient.prefetchQuery({
     queryKey: ['my-groups'],
     queryFn: async () => {
-      return await getCachedRecommendedGroups(token, { limit: 10 });
+      return await getCachedRecommendedGroups({ limit: 10 });
     },
   });
   return (

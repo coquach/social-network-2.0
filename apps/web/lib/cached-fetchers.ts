@@ -1,14 +1,6 @@
 import { cache } from 'react';
-import { getConversationById } from './actions/chat/chat-actions';
-import {
-  getGroupMembers,
-  getRecommendedGroups,
-  type GroupMemberFilter,
-} from './actions/group/group-action';
-import {
-  getPost,
-  getPostsByGroup,
-} from './actions/social/post/post-action';
+import { conversationService, groupService, postService, type GroupMemberFilter } from '@repo/shared';
+import { initServerApi } from './server-api-init';
 import type { PostGroupStatus } from '@/models/social/enums/social.enum';
 
 /**
@@ -28,8 +20,9 @@ import type { PostGroupStatus } from '@/models/social/enums/social.enum';
  * Fetch a single post by ID with automatic deduplication
  */
 export const getCachedPost = cache(
-  async (token: string, postId: string) => {
-    return getPost(token, postId);
+  async (postId: string) => {
+    await initServerApi();
+    return postService.getPost(postId);
   }
 );
 
@@ -38,7 +31,6 @@ export const getCachedPost = cache(
  */
 export const getCachedPostsByGroup = cache(
   async (
-    token: string,
     groupId: string,
     query: {
       limit?: number;
@@ -46,7 +38,8 @@ export const getCachedPostsByGroup = cache(
       status?: PostGroupStatus;
     }
   ) => {
-    return getPostsByGroup(token, groupId, query);
+    await initServerApi();
+    return postService.getGroupPosts(groupId, query as any);
   }
 );
 
@@ -56,8 +49,9 @@ export const getCachedPostsByGroup = cache(
  * Fetch group members with automatic deduplication
  */
 export const getCachedGroupMembers = cache(
-  async (token: string, groupId: string, filter: GroupMemberFilter) => {
-    return getGroupMembers(token, groupId, filter);
+  async (groupId: string, filter: GroupMemberFilter) => {
+    await initServerApi();
+    return groupService.getGroupMembers(groupId, filter);
   }
 );
 
@@ -65,8 +59,9 @@ export const getCachedGroupMembers = cache(
  * Fetch recommended groups with automatic deduplication
  */
 export const getCachedRecommendedGroups = cache(
-  async (token: string, query: { limit?: number; cursor?: string }) => {
-    return getRecommendedGroups(token, query);
+  async (query: { limit?: number; cursor?: string }) => {
+    await initServerApi();
+    return groupService.getRecommendedGroups(query);
   }
 );
 
@@ -76,7 +71,8 @@ export const getCachedRecommendedGroups = cache(
  * Fetch a conversation by ID with automatic deduplication
  */
 export const getCachedConversationById = cache(
-  async (token: string, conversationId: string) => {
-    return getConversationById(token, conversationId);
+  async (conversationId: string) => {
+    await initServerApi();
+    return conversationService.getConversation(conversationId);
   }
 );

@@ -25,7 +25,7 @@ export default async function GroupIdPage({
   await queryClient.prefetchQuery({
     queryKey: ['posts', 'group', groupId],
     queryFn: async () => {
-      return await getCachedPostsByGroup(token, groupId, {
+      return await getCachedPostsByGroup(groupId, {
         limit: 10,
         status: PostGroupStatus.PUBLISHED,
       });

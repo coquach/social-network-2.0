@@ -33,7 +33,7 @@ export default async function ConversationIdPage({
     queryKey: ['conversation', conversationId],
     queryFn: async () => {
       if (!token) throw new Error('Token is required');
-      return await getCachedConversationById(token, conversationId);
+      return await getCachedConversationById(conversationId);
     },
   });
 

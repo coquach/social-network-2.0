@@ -96,8 +96,8 @@ export const postService = {
   async createPostInGroup(
     data: CreatePostInput,
   ): Promise<CreatePostInGroupResponse> {
-    const groupId = data.groupId;
-    return getApiClient().post(`/groups/${groupId}/posts`, data);
+    const { groupId, ...payload } = data;
+    return getApiClient().post(`/groups/${groupId}/posts`, payload);
   },
 
   /**

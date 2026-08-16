@@ -15,7 +15,7 @@ const AvatarNameComponent = ({
 }: AvatarNameProps) => {
   const { userId, displayName: injectedDisplayName } = useAvatarContext();
 
-  const { data: user, isLoading } = useUser(userId);
+  const { data: user, isLoading } = useUser(userId, { enabled: !injectedDisplayName });
 
   const resolvedDisplayName = useMemo(() => {
     if (injectedDisplayName) return injectedDisplayName;

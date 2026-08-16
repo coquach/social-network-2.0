@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar } from './index';
+import { UserSnapshotDTO } from '@repo/shared';
 
 /**
  * Convenience variants for common Avatar use cases
@@ -103,8 +104,8 @@ export const CommentAvatar = ({ userId }: { userId: string }) => (
 );
 
 // Post header avatar - large with name
-export const PostHeaderAvatar = ({ userId }: { userId: string }) => (
-  <Avatar userId={userId} size="large" hasBorder>
+export const PostHeaderAvatar = ({ userId, user }: { userId: string, user?: UserSnapshotDTO }) => (
+  <Avatar userId={userId} user={user} size="large" hasBorder>
     <Avatar.Image showOnlineStatus />
   </Avatar>
 );

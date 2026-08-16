@@ -74,17 +74,27 @@ export const useProfilePosts = (userId: string, query: GetPostQuery) => {
       const token = await getToken();
       if (!token) throw new Error('Token is required');
 
+      let res;
       if (userId === currentUser) {
-        return getMyPosts(token, {
+        res = await getMyPosts(token, {
           ...query,
           cursor: pageParam,
         } as GetPostQuery);
       } else {
-        return getPostsByUser(token, userId, {
+        res = await getPostsByUser(token, userId, {
           ...query,
           cursor: pageParam,
         } as GetPostQuery);
       }
+
+      // Map 'id' to 'postId' if the backend returns PostDTO instead of PostSnapshotDTO
+      if (res && res.data) {
+        res.data = res.data.map((post: any) => ({
+          ...post,
+          postId: post.postId || post.id,
+        }));
+      }
+      return res;
     },
     getNextPageParam: getStandardNextPageParam,
     initialPageParam: undefined,
@@ -384,10 +394,18 @@ export const useGetPostByGroup = (
     queryFn: async ({ pageParam }) => {
       const token = await getToken();
       if (!token) throw new Error('Token is required');
-      return getPostsByGroup(token, groupId, {
+      const res = await getPostsByGroup(token, groupId, {
         ...query,
         cursor: pageParam,
       } as GetPostQuery);
+
+      if (res && res.data) {
+        res.data = res.data.map((post: any) => ({
+          ...post,
+          postId: post.postId || post.id,
+        }));
+      }
+      return res;
     },
     getNextPageParam: getStandardNextPageParam,
     initialPageParam: undefined,

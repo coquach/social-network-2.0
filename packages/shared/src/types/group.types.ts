@@ -92,6 +92,11 @@ export interface GroupMemberDTO {
 export interface GroupSettingDTO {
   id: string;
   groupId: string;
+  isPrivate: boolean;
+  requireAdminApprovalToJoin: boolean;
+  allowMemberToInvite: boolean;
+  allowMemberToPost: boolean;
+  requireAdminApprovalForPost: boolean;
   requiredPostApproval: boolean;
   allowMemberInvite: boolean;
   maxMembers: number;
