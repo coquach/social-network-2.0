@@ -1,6 +1,6 @@
 'use client';
 
-import { useDisReact, useReact } from '@/hooks/use-reaction-hook';
+import { useDisReact, useReact } from '@repo/shared/hooks';
 import { Reaction, reactionMap } from '@/lib/types/reaction';
 import { cn } from '@/lib/utils';
 import {
@@ -36,8 +36,8 @@ export default function PostActions({
   isShare,
   disableCommentModal = false,
 }: PostActionsProps) {
-  const { mutateAsync: react } = useReact(rootId);
-  const { mutateAsync: disReact } = useDisReact(rootId);
+  const { mutateAsync: react } = useReact();
+  const { mutateAsync: disReact } = useDisReact();
 
   const { openModal: openCommentModal } = useCommentModal();
   const { openModal: openCreateShareModal } = useCreateShareModal();

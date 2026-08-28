@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useDisReact, useReact } from '@/hooks/use-reaction-hook';
-import { useGetComments, useUpdateComment } from '@/hooks/user-comment-hook';
+import { useDisReact, useReact } from '@repo/shared/hooks';
+import { useComments, useUpdateComment } from '@repo/shared/hooks';
 import { Reaction, reactionMap } from '@/lib/types/reaction';
 import { cn } from '@/lib/utils';
 import { CommentDTO, CommentStatDTO } from '@/models/social/comment/commentDTO';
@@ -63,7 +63,7 @@ export const CommentItem = ({
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
 
-  const { data: replyData, isLoading: loadingReplies } = useGetComments({
+  const { data: replyData, isLoading: loadingReplies } = useComments({
     rootId,
     rootType,
     parentId: comment.id,
@@ -82,8 +82,8 @@ export const CommentItem = ({
   // =========================
   // Reactions (optimized)
   // =========================
-  const { mutateAsync: react } = useReact(comment.id);
-  const { mutateAsync: disReact } = useDisReact(comment.id);
+  const { mutateAsync: react } = useReact();
+  const { mutateAsync: disReact } = useDisReact();
 
   const [showReactions, setShowReactions] = useState(false);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -225,7 +225,7 @@ export const CommentItem = ({
     setEditing(false);
 
     const promise = updateComment(
-      { commentId: comment.id, data: { content: next } },
+      { content: next },
       {
         onError: () => {
           // rollback

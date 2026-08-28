@@ -14,24 +14,7 @@ export interface MutationErrorOptions {
   onError?: (error: unknown) => void;
 }
 
-/**
- * Extracts error message from various error types
- */
-export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  
-  if (typeof error === 'string') {
-    return error;
-  }
-  
-  if (error && typeof error === 'object' && 'message' in error) {
-    return String(error.message);
-  }
-  
-  return 'Đã có lỗi xảy ra. Vui lòng thử lại.';
-}
+import { getErrorMessage, isNetworkError, isAuthError } from '@repo/shared/utils';
 
 /**
  * Standard mutation error handler
@@ -125,32 +108,4 @@ export function handleQueryError(options: QueryErrorOptions = {}) {
   };
 }
 
-/**
- * Checks if error is a network/fetch error
- */
-export function isNetworkError(error: unknown): boolean {
-  if (error instanceof Error) {
-    return (
-      error.message.includes('fetch') ||
-      error.message.includes('network') ||
-      error.message.includes('NetworkError') ||
-      error.name === 'NetworkError'
-    );
-  }
-  return false;
-}
 
-/**
- * Checks if error is an authentication error
- */
-export function isAuthError(error: unknown): boolean {
-  if (error instanceof Error) {
-    return (
-      error.message.includes('Token') ||
-      error.message.includes('auth') ||
-      error.message.includes('Unauthorized') ||
-      error.message.includes('401')
-    );
-  }
-  return false;
-}

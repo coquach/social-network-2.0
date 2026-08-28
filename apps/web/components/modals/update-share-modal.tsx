@@ -18,17 +18,17 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { useUpdateSharePost } from '@/hooks/use-share-hook';
+import { useUpdateShare } from '@repo/shared/hooks';
 import { Audience } from '@/models/social/enums/social.enum';
 import {
   SharePostSnapshotDTO,
   UpdateSharePostForm,
   UpdateSharePostSchema,
 } from '@/models/social/post/sharePostDTO';
-import { useUpdateSharePostModal } from '@/store/use-post-modal';
+import { useUpdateShareModal } from '@/store/use-post-modal';
 
 export const UpdateSharePostModal = () => {
-  const { isOpen, closeModal, data, } = useUpdateSharePostModal();
+  const { isOpen, closeModal, data, } = useUpdateShareModal();
 
 
   const snapshot = data as SharePostSnapshotDTO;
@@ -41,10 +41,7 @@ export const UpdateSharePostModal = () => {
     },
   });
 
-  const { mutateAsync: updateShare, isPending } = useUpdateSharePost(
-    snapshot?.shareId ?? '',
-    snapshot?.userId ?? ''
-  );
+  const { mutateAsync: updateShare, isPending } = useUpdateShare(snapshot?.shareId ?? '');
 
   useEffect(() => {
     form.reset({

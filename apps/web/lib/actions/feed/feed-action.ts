@@ -1,8 +1,8 @@
-import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { FeedDTO } from '@/models/feed/feedDTO';
-import { Emotion } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { getApiClient } from "@repo/shared";
+import { CursorPageResponse, CursorPagination } from "@repo/shared";
+import { FeedDTO } from "@/models/feed/feedDTO";
+import { Emotion } from "@/models/social/enums/social.enum";
+import { PostSnapshotDTO } from "@/models/social/post/postDTO";
 
 export interface PersonalFeedQuery extends CursorPagination {
   mainEmotion?: Emotion;
@@ -13,16 +13,13 @@ export const getMyFeed = async (
   query: PersonalFeedQuery,
 ): Promise<CursorPageResponse<FeedDTO>> => {
   try {
-    const response = await api.get<CursorPageResponse<FeedDTO>>(
+    const response = await getApiClient().get<CursorPageResponse<FeedDTO>>(
       `/feeds/my-feed`,
       {
         params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       },
     );
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -38,16 +35,12 @@ export const getTrendingFeed = async (
   query: TrendingQuery,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
-    const response = await api.get<CursorPageResponse<PostSnapshotDTO>>(
-      `/feeds/trending`,
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    return response.data;
+    const response = await getApiClient().get<
+      CursorPageResponse<PostSnapshotDTO>
+    >(`/feeds/trending`, {
+      params: query,
+    });
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -56,16 +49,12 @@ export const getTrendingFeed = async (
 
 export const views = async (token: string, feedItemIds: string[]) => {
   try {
-    await api.post(
+    await getApiClient().post(
       `/feeds/views`,
       {
         feedItemIds,
       },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
   } catch (error) {
     console.error(error);

@@ -1,4 +1,4 @@
-import api from '@/lib/api-client';
+import { getApiClient } from "@repo/shared";
 import {
   EmotionAnalysisDTO,
   EmotionByHourDTO,
@@ -6,11 +6,11 @@ import {
   EmotionHistoryResponse,
   EmotionPreset,
   EmotionSummaryDTO,
-} from '@/models/emotion/emotionDTO';
+} from "@/models/emotion/emotionDTO";
 
 const normalizeDate = (value?: string | Date) => {
   if (!value) return undefined;
-  if (typeof value === 'string') return value;
+  if (typeof value === "string") return value;
   return value.toISOString().slice(0, 10);
 };
 
@@ -30,17 +30,14 @@ export const getEmotionSummary = async (
   query?: EmotionQuery,
 ): Promise<EmotionSummaryDTO> => {
   try {
-    const response = await api.get('/emotions/summary', {
+    const response = await getApiClient().get("/emotions/summary", {
       params: {
         ...query,
         fromDate: normalizeDate(query?.fromDate),
         toDate: normalizeDate(query?.toDate),
       },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -52,17 +49,14 @@ export const getEmotionDailyTrend = async (
   query?: EmotionQuery,
 ): Promise<EmotionDailyTrendDTO[]> => {
   try {
-    const response = await api.get('/emotions/summary/daily-trend', {
+    const response = await getApiClient().get("/emotions/summary/daily-trend", {
       params: {
         ...query,
         fromDate: normalizeDate(query?.fromDate),
         toDate: normalizeDate(query?.toDate),
       },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -73,12 +67,8 @@ export const getEmotionByHour = async (
   token: string,
 ): Promise<EmotionByHourDTO[]> => {
   try {
-    const response = await api.get('/emotions/summary/by-hour', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().get("/emotions/summary/by-hour", {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -90,17 +80,14 @@ export const getEmotionHistory = async (
   filter: EmotionHistoryFilter,
 ): Promise<EmotionHistoryResponse> => {
   try {
-    const response = await api.get('/emotions/history', {
+    const response = await getApiClient().get("/emotions/history", {
       params: {
         ...filter,
         fromDate: normalizeDate(filter?.fromDate),
         toDate: normalizeDate(filter?.toDate),
       },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -112,12 +99,8 @@ export const getEmotionDetail = async (
   id: string,
 ): Promise<EmotionAnalysisDTO> => {
   try {
-    const response = await api.get(`/emotions/detail/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().get(`/emotions/detail/${id}`, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

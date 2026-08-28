@@ -34,7 +34,7 @@ import {
 
 import { cn } from '@/lib/utils';
 
-import { useCreateReport } from '@/hooks/use-report-hook';
+import { useCreateReport } from '@repo/shared/hooks';
 import { CreateReportForm, ReportSchema } from '@/models/report/reportDTO';
 import { TargetType } from '@/models/social/enums/social.enum'; // chỉnh path
 import { LiveRegion } from '@/components/ui/live-region';

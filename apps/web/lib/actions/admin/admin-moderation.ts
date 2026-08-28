@@ -1,15 +1,15 @@
-import api from '@/lib/api-client';
+import { getApiClient } from "@repo/shared";
 import {
   AppealStatus,
   FinalDecision,
   Severity,
-} from '@/models/moderation/enums/moderationEnum';
+} from "@/models/moderation/enums/moderationEnum";
 import {
   ContentModerationDTO,
   ModerationAppealResponseDTO,
   ModerationRecordDetailDTO,
-} from '@/models/moderation/moderationDTO';
-import { PageResponse, Pagination, TargetType } from '@repo/shared';
+} from "@/models/moderation/moderationDTO";
+import { PageResponse, Pagination, TargetType } from "@repo/shared";
 
 export interface AdminModerationQuery extends Pagination {
   targetType?: TargetType;
@@ -33,17 +33,13 @@ export const getAdminModerationRecords = async (
   query: AdminModerationQuery,
 ): Promise<PageResponse<ContentModerationDTO>> => {
   try {
-    const response = await api.get<PageResponse<ContentModerationDTO>>(
-      '/moderations/admin/records',
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+    const response = await getApiClient().get<
+      PageResponse<ContentModerationDTO>
+    >("/moderations/admin/records", {
+      params: query,
+    });
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -55,17 +51,13 @@ export const getAdminAppeals = async (
   query: AdminAppealQuery,
 ): Promise<PageResponse<ModerationAppealResponseDTO>> => {
   try {
-    const response = await api.get<PageResponse<ModerationAppealResponseDTO>>(
-      '/moderations/admin/appeals',
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+    const response = await getApiClient().get<
+      PageResponse<ModerationAppealResponseDTO>
+    >("/moderations/admin/appeals", {
+      params: query,
+    });
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -78,17 +70,13 @@ export const reviewAppeal = async (
   body: CreateAdminReviewAppealDTO,
 ): Promise<ModerationAppealResponseDTO> => {
   try {
-    const response = await api.patch<ModerationAppealResponseDTO>(
+    const response = await getApiClient().patch<ModerationAppealResponseDTO>(
       `/moderations/admin/appeals/${appealId}`,
       body,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -101,17 +89,13 @@ export const restoreModeratedContent = async (
   status: AppealStatus,
 ): Promise<ContentModerationDTO> => {
   try {
-    const response = await api.post<ContentModerationDTO>(
+    const response = await getApiClient().post<ContentModerationDTO>(
       `/moderations/${moderationId}/restore`,
       { status },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -123,16 +107,12 @@ export const getAdminModerationRecordDetail = async (
   moderationId: string,
 ): Promise<ModerationRecordDetailDTO> => {
   try {
-    const response = await api.get<ModerationRecordDetailDTO>(
+    const response = await getApiClient().get<ModerationRecordDetailDTO>(
       `/moderations/admin/records/${moderationId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

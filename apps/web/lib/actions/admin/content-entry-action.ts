@@ -1,10 +1,10 @@
-import api from '@/lib/api-client';
-import { PageResponse, Pagination } from '@repo/shared';
-import { TargetType } from '@/models/social/enums/social.enum';
+import { getApiClient } from "@repo/shared";
+import { PageResponse, Pagination } from "@repo/shared";
+import { TargetType } from "@/models/social/enums/social.enum";
 import {
   ContentEntryDTO,
   ContentStatus,
-} from '@/models/social/post/contentEntryDTO';
+} from "@/models/social/post/contentEntryDTO";
 
 export interface ContentEntryFilter extends Pagination {
   query?: string;
@@ -18,16 +18,13 @@ export const getContentEntry = async (
   filter: ContentEntryFilter,
 ): Promise<PageResponse<ContentEntryDTO>> => {
   try {
-    const response = await api.get<PageResponse<ContentEntryDTO>>(
-      '/admin/contents',
+    const response = await getApiClient().get<PageResponse<ContentEntryDTO>>(
+      "/admin/contents",
       {
         params: filter,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       },
     );
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

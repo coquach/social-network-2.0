@@ -1,10 +1,10 @@
-import api from '@/lib/api-client';
+import { getApiClient } from "@repo/shared";
 import {
   ContentModerationDTO,
   ModerationAppealResponseDTO,
   ModerationRecordDetailDTO,
-} from '@/models/moderation/moderationDTO';
-import { PageResponse, Pagination, TargetType } from '@repo/shared';
+} from "@/models/moderation/moderationDTO";
+import { PageResponse, Pagination, TargetType } from "@repo/shared";
 
 export interface GetMyModerationQuery extends Pagination {
   targetType?: TargetType;
@@ -20,17 +20,13 @@ export const getMyModerationRecords = async (
   query: GetMyModerationQuery,
 ): Promise<PageResponse<ContentModerationDTO>> => {
   try {
-    const response = await api.get<PageResponse<ContentModerationDTO>>(
-      '/moderations/me',
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+    const response = await getApiClient().get<
+      PageResponse<ContentModerationDTO>
+    >("/moderations/me", {
+      params: query,
+    });
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -42,16 +38,12 @@ export const getModerationRecordDetail = async (
   moderationId: string,
 ): Promise<ModerationRecordDetailDTO> => {
   try {
-    const response = await api.get<ModerationRecordDetailDTO>(
+    const response = await getApiClient().get<ModerationRecordDetailDTO>(
       `/moderations/records/${moderationId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -63,17 +55,13 @@ export const createAppeal = async (
   body: CreateAppealRequestDTO,
 ): Promise<ModerationAppealResponseDTO> => {
   try {
-    const response = await api.post<ModerationAppealResponseDTO>(
-      '/moderations/appeals',
+    const response = await getApiClient().post<ModerationAppealResponseDTO>(
+      "/moderations/appeals",
       body,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

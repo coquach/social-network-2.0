@@ -5,7 +5,7 @@ import { useForm } from '@tanstack/react-form';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useCreatePost } from '@/hooks/use-post-hook';
+import { useCreatePost } from '@repo/shared/hooks';
 import { feelingMap } from '@/lib/types/feeling';
 import { MediaItem } from '@/lib/types/media';
 import { LiveRegion } from '@/components/ui/live-region';
@@ -73,13 +73,11 @@ export const CreatePostProvider = ({
     onSubmit: async ({ value }) => {
       const promise = createPost(
         {
-          form: {
-            content: value.content.trim(),
-            audience: value.audience,
-            feeling: value.feeling,
-            groupId: value.groupId,
-          },
-          media,
+          content: value.content.trim(),
+          audience: value.audience,
+          feeling: value.feeling,
+          groupId: value.groupId,
+          media: media as any,
         },
         {
           onSuccess: () => {

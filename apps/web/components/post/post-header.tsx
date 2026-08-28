@@ -16,7 +16,7 @@ import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
 import {
   useDeletePostModal,
   useUpdatePostModal,
-  useUpdateSharePostModal,
+  useUpdateShareModal,
 } from '@/store/use-post-modal';
 import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -73,7 +73,7 @@ export default function PostHeader({
 
   const { openModal: deletePostModalOpen } = useDeletePostModal();
   const { openModal: updatePostModalOpen } = useUpdatePostModal();
-  const { openModal: updateSharePostModalOpen } = useUpdateSharePostModal();
+  const { openModal: updateSharePostModalOpen } = useUpdateShareModal();
 
   const isOwner = currentUserId === userId;
 

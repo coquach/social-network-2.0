@@ -3,20 +3,17 @@
 import { NotificationCardFull } from '@/components/notification-card-full';
 import { QueryErrorBoundary } from '@/components/query-error-boundary';
 import { Button } from '@/components/ui/button';
-import { useNotifications } from '@/hooks/use-notification-hooks';
+import { useNotifications, useUnreadCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from '@repo/shared/hooks';
 import { useAuth } from '@clerk/nextjs';
 
 export default function NotificationsPage() {
   const { userId } = useAuth();
-  const {
-    notifications,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    markRead,
-    markReadAll,
-    unreadCount,
-  } = useNotifications(userId as string);
+  const { data, isLoading, fetchNextPage, hasNextPage } = useNotifications({});
+  const notifications = data?.pages.flatMap(p => p.data) ?? [];
+  const { data: unreadCount } = useUnreadCount();
+  const { mutate: markRead } = useMarkNotificationAsRead();
+  const { mutate: markReadAll } = useMarkAllNotificationsAsRead();
+
 
   return (
     <QueryErrorBoundary>
@@ -26,7 +23,7 @@ export default function NotificationsPage() {
         <Button
           size="sm"
           variant="outline"
-          onClick={markReadAll}
+          onClick={() => markReadAll()}
           disabled={unreadCount === 0}
         >
           Đánh dấu đã đọc tất cả

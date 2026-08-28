@@ -1,13 +1,13 @@
-import api from '@/lib/api-client';
+import { getApiClient } from "@repo/shared";
 import {
   DashboardOverviewResponseDTO,
   FeedbackAccuracySummaryDTO,
   FeedbackListItemDTO,
   RiskLevel,
   RiskUserDTO,
-} from '@/models/emotion/adminEmotionDTO';
+} from "@/models/emotion/adminEmotionDTO";
 
-import { PageResponse, Pagination } from '@repo/shared';
+import { PageResponse, Pagination } from "@repo/shared";
 
 export interface AdminRiskUserQuery extends Pagination {
   riskLevel?: RiskLevel;
@@ -25,16 +25,12 @@ export const getEmotionDashboardOverview = async (
   token: string,
 ): Promise<DashboardOverviewResponseDTO> => {
   try {
-    const response = await api.get<DashboardOverviewResponseDTO>(
-      '/admin/emotion/dashboard',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+    const response = await getApiClient().get<DashboardOverviewResponseDTO>(
+      "/admin/emotion/dashboard",
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -46,17 +42,14 @@ export const getRiskUsers = async (
   query: AdminRiskUserQuery,
 ): Promise<PageResponse<RiskUserDTO>> => {
   try {
-    const response = await api.get<PageResponse<RiskUserDTO>>(
-      '/admin/emotion/risk-users',
+    const response = await getApiClient().get<PageResponse<RiskUserDTO>>(
+      "/admin/emotion/risk-users",
       {
         params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       },
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -68,17 +61,13 @@ export const getFeedbacks = async (
   query: AdminFeedbackQuery,
 ): Promise<PageResponse<FeedbackListItemDTO>> => {
   try {
-    const response = await api.get<PageResponse<FeedbackListItemDTO>>(
-      '/admin/emotion/feedbacks',
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+    const response = await getApiClient().get<
+      PageResponse<FeedbackListItemDTO>
+    >("/admin/emotion/feedbacks", {
+      params: query,
+    });
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -89,16 +78,12 @@ export const getFeedbackAccuracySummary = async (
   token: string,
 ): Promise<FeedbackAccuracySummaryDTO> => {
   try {
-    const response = await api.get<FeedbackAccuracySummaryDTO>(
-      '/admin/emotion/feedbacks/accuracy',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+    const response = await getApiClient().get<FeedbackAccuracySummaryDTO>(
+      "/admin/emotion/feedbacks/accuracy",
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

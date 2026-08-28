@@ -1,6 +1,6 @@
 'use client';
 
-import { useSharePost } from '@/hooks/use-share-hook';
+import { useSharePost } from '@repo/shared/hooks';
 import { Audience } from '@/models/social/enums/social.enum';
 import {
   SharePostSchema
@@ -37,7 +37,7 @@ export const CreateShareModal = () => {
   const { isOpen, closeModal, data } = useCreateShareModal();
 
   const postId = data?.postId || '';
-  const { mutateAsync, isPending } = useSharePost(postId);
+  const { mutateAsync, isPending } = useSharePost();
 
   const form = useForm({
     defaultValues: {

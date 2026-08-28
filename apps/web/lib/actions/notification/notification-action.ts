@@ -1,22 +1,18 @@
-import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { NotificationDTO } from '@/models/notification/notificationDTO';
+import { getApiClient } from "@repo/shared";
+import { CursorPageResponse, CursorPagination } from "@repo/shared";
+import { NotificationDTO } from "@/models/notification/notificationDTO";
 
 export const getNotifications = async (
   token: string,
-  query: CursorPagination
+  query: CursorPagination,
 ): Promise<CursorPageResponse<NotificationDTO>> => {
   try {
-    const response = await api.get<CursorPageResponse<NotificationDTO>>(
-      '/notifications',
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
+    const response = await getApiClient().get<
+      CursorPageResponse<NotificationDTO>
+    >("/notifications", {
+      params: query,
+    });
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -25,18 +21,10 @@ export const getNotifications = async (
 
 export const markNotificationAsRead = async (
   token: string,
-  id: string
+  id: string,
 ): Promise<void> => {
   try {
-    await api.patch(
-      `/notifications/${id}/read`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    await getApiClient().patch(`/notifications/${id}/read`, {}, {});
   } catch (error) {
     console.error(error);
     throw error;
@@ -44,18 +32,10 @@ export const markNotificationAsRead = async (
 };
 
 export const markAllNotificationsAsRead = async (
-  token: string
+  token: string,
 ): Promise<void> => {
   try {
-    await api.patch(
-      '/notifications/read-all',
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    await getApiClient().patch("/notifications/read-all", {}, {});
   } catch (error) {
     console.error(error);
     throw error;

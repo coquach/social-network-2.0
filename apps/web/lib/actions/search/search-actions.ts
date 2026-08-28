@@ -1,12 +1,9 @@
-import api from '@/lib/api-client';
-import {
-  CursorPageResponse,
-  CursorPagination,
-} from '@repo/shared';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { GroupSummaryDTO } from '@/models/group/groupDTO';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { UserDTO } from '@/models/user/userDTO';
+import { getApiClient } from "@repo/shared";
+import { CursorPageResponse, CursorPagination } from "@repo/shared";
+import { GroupPrivacy } from "@/models/group/enums/group-privacy.enum";
+import { GroupSummaryDTO } from "@/models/group/groupDTO";
+import { PostSnapshotDTO } from "@/models/social/post/postDTO";
+import { UserDTO } from "@/models/user/userDTO";
 
 export interface SearchPostDto extends CursorPagination {
   query: string;
@@ -16,16 +13,13 @@ export interface SearchPostDto extends CursorPagination {
 }
 export const searchPost = async (
   token: string,
-  filter: SearchPostDto
+  filter: SearchPostDto,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
-    const response = await api.get('/search/posts', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await getApiClient().get("/search/posts", {
       params: filter,
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -33,8 +27,8 @@ export const searchPost = async (
 };
 
 export enum SearchGroupSortBy {
-  MEMBERS = 'members',
-  CREATED_AT = 'createdAt',
+  MEMBERS = "members",
+  CREATED_AT = "createdAt",
 }
 
 export interface SearchGroupDto extends CursorPagination {
@@ -46,18 +40,14 @@ export interface SearchGroupDto extends CursorPagination {
 
 export const searchGroup = async (
   token: string,
-  filter: SearchGroupDto
+  filter: SearchGroupDto,
 ): Promise<CursorPageResponse<GroupSummaryDTO>> => {
   try {
-    const response = await api.get('/search/groups', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await getApiClient().get("/search/groups", {
       params: filter,
     });
-    return response.data;
-  }
-  catch (error) {
+    return response as any;
+  } catch (error) {
     console.error(error);
     throw error;
   }
@@ -73,16 +63,13 @@ export interface SearchUserDto extends CursorPagination {
 
 export const searchUser = async (
   token: string,
-  filter: SearchUserDto
+  filter: SearchUserDto,
 ): Promise<CursorPageResponse<UserDTO>> => {
   try {
-    const response = await api.get('/search/users', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await getApiClient().get("/search/users", {
       params: filter,
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

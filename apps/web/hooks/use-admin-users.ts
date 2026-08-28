@@ -74,7 +74,7 @@ export const useCreateSystemUser = () => {
   });
 };
 
-export const useUpdateUserRole = () => {
+export const useUpdateProfileRole = () => {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const invalidateLogs = () =>

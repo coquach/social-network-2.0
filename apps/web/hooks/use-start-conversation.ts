@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCreateConversation } from '@/hooks/use-conversation';
+import { useCreateConversation } from '@repo/shared/hooks';
 import type { ConversationDTO } from '@/models/conversation/conversationDTO';
 
 export const useStartConversation = () => {
@@ -14,13 +14,10 @@ export const useStartConversation = () => {
   ) => {
     createConversation(
       {
-        dto: {
-          isGroup: false,
-          participants: [targetId],
-        },
+        isGroup: false, participants: [targetId],
       },
       {
-        onSuccess: (conversation) => {
+        onSuccess: (conversation: any) => {
           if (conversation?._id) {
             router.push(`/conversations/${conversation._id}`);
           }

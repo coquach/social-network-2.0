@@ -1,10 +1,10 @@
-import api from '@/lib/api-client';
-import { CursorPagination } from '@repo/shared';
-import { ReactionType, TargetType } from '@/models/social/enums/social.enum';
+import { getApiClient } from "@repo/shared";
+import { CursorPagination } from "@repo/shared";
+import { ReactionType, TargetType } from "@/models/social/enums/social.enum";
 import {
   CreateReactionForm,
   DisReactionForm,
-} from '@/models/social/reaction/reactionDTO';
+} from "@/models/social/reaction/reactionDTO";
 
 export interface GetReactionsDto extends CursorPagination {
   targetId: string;
@@ -14,12 +14,8 @@ export interface GetReactionsDto extends CursorPagination {
 
 export const react = async (token: string, dto: CreateReactionForm) => {
   try {
-    const response = await api.post(`/reactions`, dto, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().post(`/reactions`, dto, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -28,13 +24,10 @@ export const react = async (token: string, dto: CreateReactionForm) => {
 
 export const disReact = async (token: string, dto: DisReactionForm) => {
   try {
-    const response = await api.delete(`/reactions`, {
+    const response = await getApiClient().delete(`/reactions`, {
       data: dto,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -43,13 +36,10 @@ export const disReact = async (token: string, dto: DisReactionForm) => {
 
 export const getReactions = async (token: string, query: GetReactionsDto) => {
   try {
-    const response = await api.get(`/reactions`, {
+    const response = await getApiClient().get(`/reactions`, {
       params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

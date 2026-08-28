@@ -1,6 +1,6 @@
 'use client';
 
-import { useCreateComment } from '@/hooks/user-comment-hook';
+import { useCreateComment } from '@repo/shared/hooks';
 import { MediaItem } from '@/lib/types/media';
 import { cn } from '@/lib/utils';
 import {
@@ -76,7 +76,7 @@ export const CommentInput = ({
     };
   }, [preview]);
 
-  const { mutateAsync: createComment, isPending } = useCreateComment(rootId);
+  const { mutateAsync: createComment, isPending } = useCreateComment();
 
   const form = useForm({
     defaultValues: {
@@ -97,13 +97,11 @@ export const CommentInput = ({
     onSubmit: async ({ value }) => {
       const promise = createComment(
         {
-          data: {
             rootId: value.rootId,
             rootType: value.rootType,
             parentId: value.parentId,
             content: value.content.trim(),
-          },
-          media,
+          media: media as any,
         },
         {
           onSuccess: () => {

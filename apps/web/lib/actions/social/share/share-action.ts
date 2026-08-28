@@ -1,12 +1,12 @@
-import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { Audience } from '@/models/social/enums/social.enum';
+import { getApiClient } from "@repo/shared";
+import { CursorPageResponse, CursorPagination } from "@repo/shared";
+import { Audience } from "@/models/social/enums/social.enum";
 import {
   CreateSharePostForm,
   SharePostDTO,
   SharePostSnapshotDTO,
   UpdateSharePostForm,
-} from '@/models/social/post/sharePostDTO';
+} from "@/models/social/post/sharePostDTO";
 
 export interface GetShareQuery extends CursorPagination {
   userId?: string;
@@ -19,12 +19,8 @@ export const sharePost = async (
   dto: CreateSharePostForm,
 ): Promise<SharePostDTO> => {
   try {
-    const response = await api.post(`/shares`, dto, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().post(`/shares`, dto, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -37,12 +33,8 @@ export const updateSharePost = async (
   dto: UpdateSharePostForm,
 ): Promise<SharePostDTO> => {
   try {
-    const response = await api.patch(`/shares/${shareId}`, dto, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().patch(`/shares/${shareId}`, dto, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -51,12 +43,8 @@ export const updateSharePost = async (
 
 export const deleteSharePost = async (token: string, shareId: string) => {
   try {
-    const response = await api.delete(`/shares/${shareId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().delete(`/shares/${shareId}`, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -68,12 +56,8 @@ export const getShareById = async (
   shareId: string,
 ): Promise<SharePostDTO> => {
   try {
-    const response = await api.get(`/shares/${shareId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().get(`/shares/${shareId}`, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -85,13 +69,10 @@ export const getMyShares = async (
   query: GetShareQuery,
 ): Promise<CursorPageResponse<SharePostSnapshotDTO>> => {
   try {
-    const response = await api.get(`/shares/me`, {
+    const response = await getApiClient().get(`/shares/me`, {
       params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -104,13 +85,10 @@ export const getUserShares = async (
   query: GetShareQuery,
 ): Promise<CursorPageResponse<SharePostSnapshotDTO>> => {
   try {
-    const response = await api.get(`/shares/user/${userId}`, {
+    const response = await getApiClient().get(`/shares/user/${userId}`, {
       params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -123,13 +101,10 @@ export const getPostShares = async (
   query: GetShareQuery,
 ): Promise<CursorPageResponse<SharePostSnapshotDTO>> => {
   try {
-    const response = await api.get(`/shares/post/${postId}`, {
+    const response = await getApiClient().get(`/shares/post/${postId}`, {
       params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

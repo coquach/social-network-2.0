@@ -10,7 +10,7 @@ import {
 import { ErrorFallback } from '@/components/error-fallback';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser } from '@repo/shared/hooks';
 import { useStartConversation } from '@/hooks/use-start-conversation';
 import { useImageViewerModal } from '@/store/use-image-viewer-modal';
 import { useProfileModal } from '@/store/use-profile-modal';
@@ -53,7 +53,7 @@ export const UserProfileInfo = () => {
     isLoading,
     isError,
     error,
-  } = useGetUser(userId as string);
+  } = useUser(userId as string);
 
   const { mutate: requestFriend, isPending: isRequesting } =
     useSendFriendRequest();

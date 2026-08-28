@@ -29,7 +29,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 
-import { useCreatePost } from '@/hooks/use-post-hook';
+import { useCreatePost } from '@repo/shared/hooks';
 import { feelingMap } from '@/lib/types/feeling';
 import { MediaItem } from '@/lib/types/media';
 import { cn } from '@/lib/utils';
@@ -101,12 +101,13 @@ export const CreatePost = ({
 
     onSubmit: async ({ value }) => {
       const promise = createPost(
-        { form: {
+        { 
           content: value.content.trim(),
           audience: value.audience,
           feeling: value.feeling,
           groupId: value.groupId,
-        }, media },
+          media: media as any 
+        },
         {
           onSuccess: () => {
             form.reset(getDefaultFormValues(groupId));

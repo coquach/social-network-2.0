@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@clerk/nextjs';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser } from '@repo/shared/hooks';
 import { usePresenceStore } from '@repo/shared';
 import { useAvatarContext } from './avatar-context';
 import { BLUR_PLACEHOLDERS } from '@/lib/blur-placeholder';
@@ -20,7 +20,7 @@ export const AvatarImage = ({
   const { userId, user, size, hasBorder, reactionEmoji, isClickable, onImageClick } =
     useAvatarContext();
   const { userId: currentUserId } = useAuth();
-  const { data: fetchedUser, isLoading } = useGetUser(userId, { enabled: !user });
+  const { data: fetchedUser, isLoading } = useUser(userId, { enabled: !user });
   const isOnline = usePresenceStore((state) => state.isOnline(userId));
 
   const sizeClasses = useMemo(() => {

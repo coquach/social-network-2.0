@@ -1,14 +1,14 @@
-import api from '@/lib/api-client';
+import { getApiClient } from "@repo/shared";
 import {
   CursorPageResponse,
   CursorPagination,
   PageResponse,
   Pagination,
-} from '@repo/shared';
-import { AdminGroupDTO } from '@/models/group/adminGroupDTO';
-import { GroupStatus } from '@/models/group/enums/group-status.enum';
-import { GroupReportDTO } from '@/models/group/groupReportDTO';
-import { ReportStatus } from '@/models/report/reportDTO';
+} from "@repo/shared";
+import { AdminGroupDTO } from "@/models/group/adminGroupDTO";
+import { GroupStatus } from "@/models/group/enums/group-status.enum";
+import { GroupReportDTO } from "@/models/group/groupReportDTO";
+import { ReportStatus } from "@/models/report/reportDTO";
 
 export interface GroupReportQuery extends CursorPagination {
   groupId?: string;
@@ -20,16 +20,12 @@ export const getGroupReports = async (
   query: GroupReportQuery,
 ): Promise<CursorPageResponse<GroupReportDTO>> => {
   try {
-    const response = await api.get<CursorPageResponse<GroupReportDTO>>(
-      `/group-reports`,
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    return response.data;
+    const response = await getApiClient().get<
+      CursorPageResponse<GroupReportDTO>
+    >(`/group-reports`, {
+      params: query,
+    });
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -37,9 +33,9 @@ export const getGroupReports = async (
 };
 
 export enum GroupMemberRange {
-  LT_100 = 'LT_100', // < 100
-  BETWEEN_100_1000 = 'BETWEEN_100_1000',
-  GT_1000 = 'GT_1000', // > 1000
+  LT_100 = "LT_100", // < 100
+  BETWEEN_100_1000 = "BETWEEN_100_1000",
+  GT_1000 = "GT_1000", // > 1000
 }
 export interface AdminGroupQuery extends Pagination {
   name?: string;
@@ -52,16 +48,13 @@ export const getAdminGroups = async (
   filter: AdminGroupQuery,
 ): Promise<PageResponse<AdminGroupDTO>> => {
   try {
-    const response = await api.get<PageResponse<AdminGroupDTO>>(
+    const response = await getApiClient().get<PageResponse<AdminGroupDTO>>(
       `/groups/admin`,
       {
         params: filter,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       },
     );
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -73,16 +66,12 @@ export const banGroup = async (
   groupId: string,
 ): Promise<boolean> => {
   try {
-    const response = await api.post<boolean>(
+    const response = await getApiClient().post<boolean>(
       `/group-reports/${groupId}/ban`,
       {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -94,16 +83,12 @@ export const unbanGroup = async (
   groupId: string,
 ): Promise<boolean> => {
   try {
-    const response = await api.post<boolean>(
+    const response = await getApiClient().post<boolean>(
       `/group-reports/${groupId}/unban`,
       {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -115,16 +100,12 @@ export const ignoreReportGroup = async (
   targetId: string,
 ): Promise<boolean> => {
   try {
-    const response = await api.post(
+    const response = await getApiClient().post(
       `/group-reports/${targetId}/ignore`,
       {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

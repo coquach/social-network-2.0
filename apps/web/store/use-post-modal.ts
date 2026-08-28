@@ -110,7 +110,7 @@ interface UpdateSharePostModalStore {
   openModal: (data: SharePostSnapshotDTO) => void;
   closeModal: () => void;
 }
-export const useUpdateSharePostModal = create<UpdateSharePostModalStore>(
+export const useUpdateShareModal = create<UpdateSharePostModalStore>(
   (set) => ({
     data: null,
     isOpen: false,

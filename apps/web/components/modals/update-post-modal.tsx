@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { useUpdatePost } from '@/hooks/use-post-hook';
+import { useUpdatePost } from '@repo/shared/hooks';
 import { Audience } from '@/models/social/enums/social.enum';
 import { LiveRegion } from '@/components/ui/live-region';
 import {

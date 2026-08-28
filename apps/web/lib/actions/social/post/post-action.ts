@@ -1,31 +1,27 @@
-import api from '@/lib/api-client';
-import { CursorPageResponse, CursorPagination } from '@repo/shared';
-import { Emotion, PostGroupStatus } from '@/models/social/enums/social.enum';
+import { getApiClient } from "@repo/shared";
+import { CursorPageResponse, CursorPagination } from "@repo/shared";
+import { Emotion, PostGroupStatus } from "@/models/social/enums/social.enum";
 import {
   CreatePostForm,
   EditHistoryDTO,
   PostDTO,
   PostSnapshotDTO,
   UpdatePostForm,
-} from '@/models/social/post/postDTO';
+} from "@/models/social/post/postDTO";
 
 export interface GetPostQuery extends CursorPagination {
   feeling?: Emotion;
 }
 
-export type GroupPostModerationAction = 'approve' | 'reject';
+export type GroupPostModerationAction = "approve" | "reject";
 
 export const getPost = async (
   token: string,
   postId: string,
 ): Promise<PostDTO> => {
   try {
-    const response = await api.get<PostDTO>(`/posts/${postId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().get<PostDTO>(`/posts/${postId}`, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -37,16 +33,12 @@ export const getMyPosts = async (
   query: GetPostQuery,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
-    const response = await api.get<CursorPageResponse<PostSnapshotDTO>>(
-      `/posts/me`,
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    return response.data;
+    const response = await getApiClient().get<
+      CursorPageResponse<PostSnapshotDTO>
+    >(`/posts/me`, {
+      params: query,
+    });
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -59,16 +51,12 @@ export const getPostsByUser = async (
   query: GetPostQuery,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
-    const response = await api.get<CursorPageResponse<PostSnapshotDTO>>(
-      `/posts/user/${userId}`,
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    return response.data;
+    const response = await getApiClient().get<
+      CursorPageResponse<PostSnapshotDTO>
+    >(`/posts/user/${userId}`, {
+      params: query,
+    });
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -86,16 +74,12 @@ export const getPostsByGroup = async (
   query: GetGroupPostQueryDTO,
 ): Promise<CursorPageResponse<PostSnapshotDTO>> => {
   try {
-    const response = await api.get<CursorPageResponse<PostSnapshotDTO>>(
-      `/groups/${groupId}/posts`,
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    return response.data;
+    const response = await getApiClient().get<
+      CursorPageResponse<PostSnapshotDTO>
+    >(`/groups/${groupId}/posts`, {
+      params: query,
+    });
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -107,12 +91,8 @@ export const createPost = async (
   data: CreatePostForm,
 ): Promise<PostSnapshotDTO> => {
   try {
-    const response = await api.post(`/posts`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().post(`/posts`, data, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -129,12 +109,12 @@ export const createPostInGroup = async (
 }> => {
   try {
     const { groupId, ...payload } = data;
-    const response = await api.post(`/groups/${groupId}/posts`, payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().post(
+      `/groups/${groupId}/posts`,
+      payload,
+      {},
+    );
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -147,12 +127,8 @@ export const updatePost = async (
   data: UpdatePostForm,
 ): Promise<PostSnapshotDTO> => {
   try {
-    const response = await api.patch(`/posts/${postId}`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().patch(`/posts/${postId}`, data, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -164,7 +140,7 @@ export const approvePostInGroup = (
   groupId: string,
   postId: string,
 ) => {
-  return moderatePostInGroup(token, groupId, postId, 'approve');
+  return moderatePostInGroup(token, groupId, postId, "approve");
 };
 
 export const rejectPostInGroup = (
@@ -172,7 +148,7 @@ export const rejectPostInGroup = (
   groupId: string,
   postId: string,
 ) => {
-  return moderatePostInGroup(token, groupId, postId, 'reject');
+  return moderatePostInGroup(token, groupId, postId, "reject");
 };
 
 export const removePost = async (
@@ -180,12 +156,8 @@ export const removePost = async (
   postId: string,
 ): Promise<boolean> => {
   try {
-    const response = await api.delete(`/posts/${postId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await getApiClient().delete(`/posts/${postId}`, {});
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -197,15 +169,11 @@ export const getPostEditHistory = async (
   postId: string,
 ): Promise<EditHistoryDTO[]> => {
   try {
-    const response = await api.get<EditHistoryDTO[]>(
+    const response = await getApiClient().get<EditHistoryDTO[]>(
       `/posts/${postId}/edit-histories`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -219,19 +187,15 @@ const moderatePostInGroup = async (
   action: GroupPostModerationAction,
 ): Promise<boolean> => {
   try {
-    const response = await api.post(
+    const response = await getApiClient().post(
       `/groups/${groupId}/posts/${postId}/moderation`,
       {
         action,
       },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
