@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SystemUserFilter } from "@/lib/actions/admin/admin-users-action";
-import { SystemRole, UserStatus } from "@/models/user/systemUserDTO";
+import { SystemRole, UserStatus } from '@repo/shared';
 
 type UsersToolbarProps = {
   filter: SystemUserFilter;

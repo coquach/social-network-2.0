@@ -4,7 +4,7 @@ import { ProfileContentGuard } from "./_components/profile-content-guard";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getQueryClient } from "@/lib/query-client";
-import { getUser } from "@/lib/actions/user/user-actions";
+import { getUser } from '@repo/shared/hooks';
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 const ProfileLayout = async ({

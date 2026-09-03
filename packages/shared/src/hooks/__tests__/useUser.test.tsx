@@ -1,78 +1,121 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
-import { useUser, useUpdateProfile } from '../useUser';
-import { userService } from '../../api/services/user.service';
+import React, { ReactNode } from 'react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  useCurrentUser,
+  useUser,
+  useUpdateProfile,
+} from '../useUser';
 
-vi.mock('../../api/services/user.service', () => ({
-  userService: {
-    getUser: vi.fn(),
-    updateProfile: vi.fn(),
-  },
+// Mock contexts
+vi.mock('../../contexts/auth-context', () => ({
+  useAuth: vi.fn(() => ({ userId: 'user-1' })),
+}));
+vi.mock('../../contexts/upload-context', () => ({
+  useUploadOptional: vi.fn(() => undefined),
 }));
 
-const createWrapper = () => {
-  const queryClient = new QueryClient({
+// Mock services directly
+vi.mock('../../api/services/user.service', () => {
+  return {
+    userService: {
+      getUser: vi.fn(),
+      updateProfile: vi.fn(),
+      searchUsers: vi.fn(),
+    },
+  };
+});
+vi.mock('../../api/services/friend.service', () => {
+  return {
+    friendService: {
+      getFriends: vi.fn(),
+    },
+  };
+});
+
+import { userService } from '../../api/services/user.service';
+
+const createTestQueryClient = () =>
+  new QueryClient({
     defaultOptions: {
       queries: {
         retry: false,
       },
     },
   });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
+
+export function createWrapper() {
+  const testQueryClient = createTestQueryClient();
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={testQueryClient}>
       {children}
     </QueryClientProvider>
   );
-};
+}
 
 describe('useUser hooks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('useUser', () => {
-    it('fetches a user by id', async () => {
-      const mockUser = { id: 'user_1', firstName: 'John', lastName: 'Doe' };
-      vi.mocked(userService.getUser).mockResolvedValueOnce(mockUser as any);
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-      const { result } = renderHook(() => useUser('user_1'), {
+  describe('useCurrentUser', () => {
+    it('should fetch current user profile', async () => {
+      const mockProfile = { id: 'user-1', firstName: 'John' };
+      vi.mocked(userService.getUser).mockResolvedValue(mockProfile as any);
+
+      const { result } = renderHook(() => useCurrentUser(), {
         wrapper: createWrapper(),
       });
 
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toEqual(mockProfile);
+      expect(userService.getUser).toHaveBeenCalledWith('user-1');
+    });
+  });
+
+  describe('useUser', () => {
+    it('should fetch specific user profile', async () => {
+      const mockProfile = { id: 'user-2', firstName: 'Jane' };
+      vi.mocked(userService.getUser).mockResolvedValue(mockProfile as any);
+
+      const { result } = renderHook(() => useUser('user-2'), {
+        wrapper: createWrapper(),
       });
 
-      expect(result.current.data).toEqual(mockUser);
-      expect(userService.getUser).toHaveBeenCalledWith('user_1');
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toEqual(mockProfile);
+      expect(userService.getUser).toHaveBeenCalledWith('user-2');
     });
   });
 
   describe('useUpdateProfile', () => {
-    it('updates user profile', async () => {
-      const mockUser = { id: 'user_1', firstName: 'Jane' };
-      vi.mocked(userService.updateProfile).mockResolvedValueOnce(mockUser as any);
+    it('should call updateProfile API', async () => {
+      const updatedProfile = { id: 'user-1', firstName: 'Jane' };
+      vi.mocked(userService.updateProfile).mockResolvedValue(updatedProfile as any);
 
       const { result } = renderHook(() => useUpdateProfile(), {
         wrapper: createWrapper(),
       });
 
-      result.current.mutate({
-        firstName: 'Jane',
-      });
+      result.current.mutate({ firstName: 'Jane' });
 
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(userService.updateProfile).toHaveBeenCalledWith({
         firstName: 'Jane',
       });
+      expect(result.current.data).toEqual(updatedProfile);
     });
   });
 });

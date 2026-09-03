@@ -1,6 +1,6 @@
 import { getApiClient } from "@repo/shared";
 import { CursorPageResponse, CursorPagination } from "@repo/shared";
-import { NotificationDTO } from "@/models/notification/notificationDTO";
+import { NotificationDTO } from '@repo/shared';
 
 export const getNotifications = async (
   token: string,
