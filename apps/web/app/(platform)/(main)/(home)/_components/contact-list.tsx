@@ -2,19 +2,19 @@
 
 import { AvatarWithStatus } from '@/components/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useActiveChannel } from '@/hooks/use-active-channel';
-import { useFriends } from '@repo/shared';
-import { useStartConversation } from '@/hooks/use-start-conversation';
+import { useFriends, useActiveChannel, useCreateConversation } from '@repo/shared';
 import { ChevronRight, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 
 const CONTACT_LIMIT = 8;
 
 export const ContactList = () => {
   const { data, isPending, isError } = useFriends(undefined, { limit: CONTACT_LIMIT });
-  const { startConversation, isPending: isStartingConversation } =
-    useStartConversation();
+  const router = useRouter();
+  const { mutate: createConversation, isPending: isStartingConversation } =
+    useCreateConversation();
 
   const friends = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
@@ -69,7 +69,16 @@ export const ContactList = () => {
             <button
               key={userId}
               type="button"
-              onClick={() => startConversation(userId)}
+              onClick={() =>
+                createConversation(
+                  { isGroup: false, participants: [userId] },
+                  {
+                    onSuccess: (conv) => {
+                      if (conv?._id) router.push(`/conversations/${conv._id}`);
+                    },
+                  }
+                )
+              }
               disabled={isStartingConversation}
               className="cursor-pointer flex w-full items-center justify-between rounded-xl px-2 py-2 text-left transition hover:bg-neutral-50/10 disabled:opacity-60"
             >

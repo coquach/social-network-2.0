@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { useFriends, useRemoveFriend } from '@repo/shared';
-import { useStartConversation } from '@/hooks/use-start-conversation';
+import { useFriends, useRemoveFriend, useCreateConversation } from '@repo/shared';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { FriendCard } from './_components/friend-card';
 import { Loader } from '@/components/loader-componnet';
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export const FriendList = () => {
+  const router = useRouter();
   const { ref, inView } = useInView({
     threshold: 0.3, // chỉ cần cuộn gần cuối là fetch
   });
@@ -37,15 +38,22 @@ export const FriendList = () => {
 
   const { mutateAsync: removeFriend, isPending: isRemovingFriend } =
     useRemoveFriend();
-  const { startConversation, isPending: isCreatingConversation } =
-    useStartConversation();
+  const { mutate: createConversation, isPending: isCreatingConversation } =
+    useCreateConversation();
 
   const handleRemoveFriend = async (id: string) => {
     await removeFriend(id);
   };
 
   const handleMessage = (id: string) => {
-    startConversation(id);
+    createConversation(
+      { isGroup: false, participants: [id] },
+      {
+        onSuccess: (conv) => {
+          if (conv?._id) router.push(`/conversations/${conv._id}`);
+        },
+      }
+    );
   };
 
   const friends = useMemo(

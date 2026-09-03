@@ -73,3 +73,5 @@ export * from './useCall';
 // UI utility hooks (web-only, requires DOM)
 // Note: Import these directly from './useUI' in web apps only
 // export * from './useUI';
+
+export * from './useActiveChannel';
