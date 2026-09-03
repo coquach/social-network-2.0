@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { ContentToolbar } from './_components/content-toolbar';
 import { ContentTable } from './_components/content-table';
-import { useContentEntries } from '@/hooks/use-content-entries';
+import { useContentEntries } from '@/hooks/admin/use-admin-content-entries';
 import { ContentEntryFilter } from '@/lib/actions/admin/content-entry-action';
 import { AdminActivityLog } from '../_components/admin-activity-log';
 import { LogType } from '@/models/log/logDTO';

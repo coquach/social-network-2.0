@@ -52,7 +52,7 @@ import { formatDateVN, getFullName } from '@/utils/user.utils';
 import { AdminPagination } from '../../_components/pagination';
 import { ConfirmActionDialog } from '../../_components/confirm-action-dialog';
 import { UserDetailDialog } from './user-detail-dialog';
-import { useBanUser, useUnbanUser } from '@/hooks/use-admin-users';
+import { useBanUser, useUnbanUser } from '@/hooks/admin/use-admin-users';
 import { Loader } from '@/components/loader-componnet';
 import { DataTableToolbar } from '../../_components/data-table-toolbar';
 

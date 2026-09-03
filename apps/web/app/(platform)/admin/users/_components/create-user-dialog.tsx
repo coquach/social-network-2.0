@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCreateSystemUser } from '@/hooks/use-admin-users';
+import { useCreateSystemUser } from '@/hooks/admin/use-admin-users';
 import {
   CreateSystemUserSchema,
   SystemRole,

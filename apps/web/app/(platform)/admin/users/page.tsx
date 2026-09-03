@@ -5,7 +5,7 @@ import { UserPlus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { useSystemUsers } from "@/hooks/use-admin-users";
+import { useSystemUsers } from "@/hooks/admin/use-admin-users";
 import { SystemUserFilter } from "@/lib/actions/admin/admin-users-action";
 import { LogType } from "@/models/log/logDTO";
 import { AdminActivityLog } from "../_components/admin-activity-log";

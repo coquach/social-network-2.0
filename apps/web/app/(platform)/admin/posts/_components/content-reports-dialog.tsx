@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 
-import { useReportsByTarget } from '@/hooks/use-report-hook';
+import { useReportsByTarget } from '@/hooks/admin/use-admin-reports';
 import { ReportStatus } from '@/models/report/reportDTO';
 import { TargetType } from '@repo/shared';
 import { AdminReportCard } from '../../_components/admin-report-card';

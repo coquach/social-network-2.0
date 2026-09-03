@@ -25,7 +25,7 @@ import {
   useGroupReports,
   useGroupModeration,
   useIgnoreGroupReports,
-  } from "@/hooks/use-admin-group";
+  } from "@/hooks/admin/use-admin-group";
 import { GroupStatus } from "@repo/shared";
 import { ReportStatus } from '@/models/report/reportDTO';
 import { AdminReportCard } from '../../_components/admin-report-card';

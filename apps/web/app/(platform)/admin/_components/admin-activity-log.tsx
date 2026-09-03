@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAdminAuditLogs } from "@/hooks/use-admin-logs";
+import { useAdminAuditLogs } from "@/hooks/admin/use-admin-logs";
 import { AuditLogQuery } from "@/lib/actions/admin/admin-log-action";
 import { LogType } from "@/models/log/logDTO";
 

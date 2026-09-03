@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
-import {  useAdminGroups, useGroupModeration  } from "@/hooks/use-admin-group";
+import {  useAdminGroups, useGroupModeration  } from "@/hooks/admin/use-admin-group";
 import { AdminGroupQuery } from '@/lib/actions/admin/admin-group-action';
 import { AdminGroupDTO } from "@repo/shared";
 import { GroupStatus } from "@repo/shared";

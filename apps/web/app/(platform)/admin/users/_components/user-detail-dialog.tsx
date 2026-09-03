@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useUpdateProfileRole } from '@/hooks/use-admin-users';
+import { useUpdateProfileRole } from '@/hooks/admin/use-admin-users';
 import { getRoleFromClaims } from '@/lib/role';
 import {
   SystemRole,

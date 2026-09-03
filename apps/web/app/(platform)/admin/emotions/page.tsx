@@ -17,7 +17,7 @@ import {
   useAdminRiskUsers,
   useEmotionDashboardOverview,
   useFeedbackAccuracySummary,
-} from '@/hooks/use-admin-emotion';
+} from '@/hooks/admin/use-admin-emotion';
 import {
   AdminFeedbackQuery,
   AdminRiskUserQuery,

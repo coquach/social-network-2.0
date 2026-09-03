@@ -13,7 +13,7 @@ import {
   useAdminModerationRecords,
   useRestoreModeratedContent,
   useReviewAppeal,
-} from '@/hooks/use-admin-moderation';
+} from '@/hooks/admin/use-admin-moderation';
 import {
   AdminAppealQuery,
   AdminModerationQuery,
