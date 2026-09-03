@@ -29,7 +29,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { useCreateConversation } from '@/hooks/use-conversation';
+import { useCreateConversation } from '@repo/shared';
 import { useSearchUsers } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import {
@@ -96,8 +96,8 @@ export const CreateGroupConversationDialog = ({
 
       const promise = createConversation(
         {
-          dto: payload,
-          media: avatarMedia ?? undefined,
+          ...payload,
+          uploadGroupAvatar: avatarMedia ?? undefined,
         },
         {
           onSuccess: () => {

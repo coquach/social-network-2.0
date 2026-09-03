@@ -10,11 +10,9 @@ import { ErrorFallback } from '@/components/error-fallback';
 import { useSocket } from '@/components/providers/socket-provider';
 import { SearchInputBasic } from '@/components/search/search-input-basic';
 import { SearchInputWithBack } from '@/components/search/search-input-with-back';
-import {
-  useConversation,
-  useGetConversationList,
-} from '@/hooks/use-conversation';
-import { useStartConversation } from '@/hooks/use-start-conversation';
+import { useConversationId } from '@/hooks/use-conversation-id';
+import { useConversations, queryKeys, useCreateConversation } from '@repo/shared';
+import { useRouter } from 'next/navigation';
 import { UserDTO } from '@repo/shared';
 import { ConversationDTO } from '@/models/conversation/conversationDTO';
 import { MessageDTO } from '@/models/message/messageDTO';
@@ -26,7 +24,7 @@ import { CreateGroupConversationDialog } from './create-group-chat';
 
 export const ConversationList = () => {
   const { chatSocket } = useSocket();
-  const { conversationId, isOpen } = useConversation();
+  const { conversationId, isOpen } = useConversationId();
   const queryClient = useQueryClient();
   const [createGroupChatOpen, setCreateGroupChatOpen] = useState(false);
 
@@ -38,7 +36,7 @@ export const ConversationList = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetConversationList({ limit: 20 });
+  } = useConversations({ limit: 20 });
 
   const { ref, inView } = useInView();
 
@@ -85,7 +83,7 @@ export const ConversationList = () => {
       if (!id) return;
 
       queryClient.setQueriesData(
-        { queryKey: ['conversations'] },
+        { queryKey: queryKeys.conversations.list() },
         (old: any) => {
           if (!old?.pages) return old;
           return {
@@ -112,7 +110,7 @@ export const ConversationList = () => {
       const updatedAt = message.createdAt ?? new Date().toISOString();
 
       queryClient.setQueriesData(
-        { queryKey: ['conversations'] },
+        { queryKey: queryKeys.conversations.list() },
         (old: any) => {
           if (!old?.pages) return old;
           return {
@@ -172,10 +170,11 @@ export const ConversationList = () => {
     return merged;
   }, [data, liveConversations]);
 
+  const router = useRouter();
   const {
-    startConversation,
+    mutate: createConversation,
     isPending: startConversationPending,
-  } = useStartConversation();
+  } = useCreateConversation();
   const [searchText, setSearchText] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -197,13 +196,17 @@ export const ConversationList = () => {
 
   const onPickUser = useCallback(
     (user: UserDTO) => {
-      startConversation(user.id, {
-        onSuccess: () => {
-          clearSearch();
-        },
-      });
+      createConversation(
+        { isGroup: false, participants: [user.id] },
+        {
+          onSuccess: (conv) => {
+            if (conv?._id) router.push(`/conversations/${conv._id}`);
+            clearSearch();
+          },
+        }
+      );
     },
-    [startConversation, clearSearch]
+    [createConversation, clearSearch, router]
   );
 
   return (

@@ -15,7 +15,7 @@ import {
 import { useState } from 'react';
 
 
-import { useUpdateConversation } from '@/hooks/use-conversation';
+import { useUpdateConversation } from '@repo/shared';
 import { MemberRow } from './member-row';
 import { AddMembersDialog } from './add-members-dialog';
 
@@ -38,13 +38,13 @@ export const MembersDialog = ({
   const onKick = (userId: string) => {
     if (!isAdmin) return;
     const dto: UpdateConversationForm = { participantsToRemove: [userId] };
-    updateConversation({ dto });
+    updateConversation(dto);
   };
 
   const onAdd = (userIds: string[]) => {
     if (!isAdmin) return;
     const dto: UpdateConversationForm = { participantsToAdd: userIds };
-    updateConversation({ dto }, { onSuccess: () => setOpenAdd(false) });
+    updateConversation(dto, { onSuccess: () => setOpenAdd(false) });
   };
 
   return (
