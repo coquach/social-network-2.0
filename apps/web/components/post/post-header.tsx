@@ -10,9 +10,9 @@ import {
   Audience,
   Emotion,
   TargetType,
-} from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+} from '@repo/shared';
+import { PostSnapshotDTO } from '@repo/shared';
+import { SharePostSnapshotDTO } from '@repo/shared';
 import {
   useDeletePostModal,
   useUpdatePostModal,

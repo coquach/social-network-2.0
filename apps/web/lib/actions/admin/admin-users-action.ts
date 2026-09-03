@@ -1,11 +1,11 @@
 import { getApiClient } from "@repo/shared";
 import { PageResponse, Pagination } from "@repo/shared";
 import {
-  CreateSystemUserDTO,
+  
   SystemRole,
   SystemUserDTO,
   UserStatus,
-} from "@/models/user/systemUserDTO";
+} from '@repo/shared';
 
 export interface SystemUserFilter extends Pagination {
   query?: string;
@@ -32,7 +32,7 @@ export const getSystemUsers = async (
 
 export const createSystemUser = async (
   token: string,
-  data: CreateSystemUserDTO,
+  data: any
 ): Promise<SystemUserDTO> => {
   try {
     const response = await getApiClient().post<SystemUserDTO>(

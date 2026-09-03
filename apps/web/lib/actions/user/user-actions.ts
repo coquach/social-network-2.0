@@ -1,9 +1,6 @@
 import { getApiClient } from "@repo/shared";
-import {
-  ProfileUpdateForm,
-  UserCreateForm,
-  UserDTO,
-} from "@/models/user/userDTO";
+import { CreateUserInput as UserCreateForm, UserDTO } from '@repo/shared';
+import { ProfileUpdateForm } from '@/lib/schemas/profile.schema';
 
 export const getUser = async (
   token: string,

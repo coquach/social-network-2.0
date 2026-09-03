@@ -1,30 +1,25 @@
-import { GroupEventLog } from "@/models/group/enums/group-envent-log.enum";
-import {
-  JoinRequestSortBy,
-  JoinRequestStatus,
-} from "@/models/group/enums/group-invite-status.enum";
-import { GroupMemberStatus } from "@/models/group/enums/group-member-status.enum";
-import { GroupPermission } from "@/models/group/enums/group-permission.enum";
-import { GroupRole } from "@/models/group/enums/group-role.enum";
-import {
-  CreateGroupForm,
+import { 
+  GroupEventLog, 
+  JoinRequestSortBy, 
+  JoinRequestStatus, 
+  GroupMemberStatus,
+  GroupPermission,
+  GroupRole,
+  CreateGroupInput,
   GroupDTO,
-  UpdateGroupForm,
-} from "@/models/group/groupDTO";
-import { InvitedGroupDTO } from "@/models/group/groupInviteDTO";
-import { GroupLogDTO } from "@/models/group/groupLogDTO";
-import { GroupMemberDTO } from "@/models/group/groupMemberDTO";
-import {
-  CreateGroupReportForm,
+  UpdateGroupInput,
+  InvitedGroupDTO,
+  GroupLogDTO,
+  GroupMemberDTO,
+  CreateGroupReportInput,
   GroupReportDTO,
-} from "@/models/group/groupReportDTO";
-import { JoinRequestResponseDTO } from "@/models/group/groupRequestDTO";
-import {
+  JoinRequestResponseDTO,
   GroupSettingDTO,
-  UpdateGroupSettingForm,
-} from "@/models/group/groupSettingDTO";
-import { getApiClient } from '@repo/shared';
-import { CursorPageResponse, CursorPagination } from "@repo/shared";
+  UpdateGroupSettingInput,
+  CursorPageResponse, 
+  CursorPagination,
+  getApiClient
+} from '@repo/shared';
 
 export const getMyGroups = async (
   token: string,
@@ -96,7 +91,7 @@ export const getGroupById = async (
 
 export const createGroup = async (
   token: string,
-  createGroupDto: CreateGroupForm,
+  createGroupDto: CreateGroupInput,
 ): Promise<GroupDTO> => {
   try {
     const response = await getApiClient().post<GroupDTO>(`/groups`, createGroupDto, {
@@ -111,7 +106,7 @@ export const createGroup = async (
 export const updateGroup = async (
   token: string,
   groupId: string,
-  updateGroupDto: UpdateGroupForm,
+  updateGroupDto: UpdateGroupInput,
 ): Promise<GroupDTO> => {
   try {
     const response = await getApiClient().patch<GroupDTO>(
@@ -160,7 +155,7 @@ export const getGroupSettings = async (
 export const updateGroupSettings = async (
   token: string,
   groupId: string,
-  settings: UpdateGroupSettingForm,
+  settings: UpdateGroupSettingInput,
 ): Promise<GroupSettingDTO> => {
   try {
     const response = await getApiClient().patch<GroupSettingDTO>(
@@ -180,7 +175,7 @@ export const updateGroupSettings = async (
 export const createGroupReport = async (
   token: string,
   groupId: string,
-  createGroupReportDto: CreateGroupReportForm,
+  createGroupReportDto: CreateGroupReportInput,
 ): Promise<GroupReportDTO> => {
   try {
     const response = await getApiClient().post<GroupReportDTO>(

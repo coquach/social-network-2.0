@@ -29,9 +29,11 @@ import { useUser, useUpdateProfile } from '@repo/shared/hooks';
 import { ImageIcon, Pencil } from '@/lib/icons';
 import {
   INTEREST_OPTIONS,
+} from '@repo/shared/schemas';
+import {
   ProfileUpdateForm,
   ProfileUpdateSchema,
-} from '@/models/user/userDTO';
+} from '@/lib/schemas/profile.schema';
 import { useProfileModal } from '@/store/use-profile-modal';
 import { useUser as useClerkUser } from '@clerk/nextjs';
 import { useForm } from '@tanstack/react-form';

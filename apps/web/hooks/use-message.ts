@@ -18,7 +18,7 @@ import {
   MessageDTO
 } from '@/models/message/messageDTO';
 import { ConversationDTO } from '@/models/conversation/conversationDTO';
-import { MediaType } from '@/models/social/enums/social.enum';
+import { MediaType } from '@repo/shared';
 import { withAbortOnUnload } from '@/utils/with-abort-unload';
 import { useAuth } from '@clerk/nextjs';
 import {

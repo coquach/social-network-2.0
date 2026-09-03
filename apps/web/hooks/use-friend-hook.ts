@@ -21,7 +21,7 @@ import {
 } from '@repo/shared';
 import { getQueryClient } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
-import { UserDTO } from '@/models/user/userDTO';
+import { UserDTO } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';

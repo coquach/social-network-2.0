@@ -1,6 +1,6 @@
 import { createCloudinaryUploadService } from "@/lib/services/cloudinary-upload.service";
 import { MediaItem } from "@/lib/types/media";
-import { MediaDTO, MediaType } from "@/models/social/enums/social.enum";
+import { MediaDTO, MediaType } from '@repo/shared';
 import { getRecommendedUploadBatchOptions } from "@repo/shared";
 
 let uploadServiceInstance: ReturnType<

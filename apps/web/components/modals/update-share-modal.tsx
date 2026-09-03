@@ -19,12 +19,12 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { useUpdateShare } from '@repo/shared/hooks';
-import { Audience } from '@/models/social/enums/social.enum';
+import { Audience } from '@repo/shared';
 import {
   SharePostSnapshotDTO,
-  UpdateSharePostForm,
-  UpdateSharePostSchema,
-} from '@/models/social/post/sharePostDTO';
+  UpdateShareInput,
+  UpdateShareInputSchema,
+} from '@repo/shared';
 import { useUpdateShareModal } from '@/store/use-post-modal';
 
 export const UpdateSharePostModal = () => {
@@ -34,7 +34,7 @@ export const UpdateSharePostModal = () => {
   const snapshot = data as SharePostSnapshotDTO;
   console.log('snapshot', snapshot);
 
-  const form = useForm<UpdateSharePostForm>({
+  const form = useForm<UpdateShareInput>({
     defaultValues: {
       content: snapshot?.content ?? '',
       audience: snapshot?.audience ?? Audience.PUBLIC,
@@ -51,9 +51,9 @@ export const UpdateSharePostModal = () => {
     });
   }, [snapshot, form]);
 
-  const handleSubmit = (vals: UpdateSharePostForm) => {
+  const handleSubmit = (vals: UpdateShareInput) => {
     // Validate with Zod
-    const result = UpdateSharePostSchema.safeParse(vals);
+    const result = UpdateShareInputSchema.safeParse(vals);
     if (!result.success) {
       toast.error('Dữ liệu không hợp lệ');
       return;

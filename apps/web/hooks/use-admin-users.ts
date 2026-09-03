@@ -10,10 +10,10 @@ import {
 } from '@/lib/actions/admin/admin-users-action';
 import { LogType } from '@/models/log/logDTO';
 import {
-  CreateSystemUserDTO,
+  
   SystemRole,
   SystemUserDTO,
-} from '@/models/user/systemUserDTO';
+} from '@repo/shared';
 import { withAbortOnUnload } from '@/utils/with-abort-unload';
 import { PageResponse } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
@@ -52,7 +52,7 @@ export const useCreateSystemUser = () => {
 
   return useMutation({
     mutationKey: ['admin-system-users', 'create'],
-    mutationFn: async ({ form }: { form: CreateSystemUserDTO }) => {
+    mutationFn: async ({ form }: { form: any }) => {
       return await withAbortOnUnload(async () => {
         const token = await getToken();
         if (!token) throw new Error('Token is required');

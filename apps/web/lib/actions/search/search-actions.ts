@@ -1,9 +1,9 @@
 import { getApiClient } from "@repo/shared";
 import { CursorPageResponse, CursorPagination } from "@repo/shared";
-import { GroupPrivacy } from "@/models/group/enums/group-privacy.enum";
-import { GroupSummaryDTO } from "@/models/group/groupDTO";
-import { PostSnapshotDTO } from "@/models/social/post/postDTO";
-import { UserDTO } from "@/models/user/userDTO";
+import { GroupPrivacy } from '@repo/shared/types/enums';
+import { GroupSummaryDTO } from '@repo/shared';
+import { PostSnapshotDTO } from '@repo/shared';
+import { UserDTO } from '@repo/shared';
 
 export interface SearchPostDto extends CursorPagination {
   query: string;

@@ -5,7 +5,7 @@ import { useConversation } from '@/hooks/use-conversation';
 import { useSendMessage } from '@/hooks/use-message';
 import { MediaItem } from '@/lib/types/media';
 import { CreateMessageForm, MessageDTO as LocalMessageDTO } from '@/models/message/messageDTO';
-import { MediaType } from '@/models/social/enums/social.enum';
+import { MediaType } from '@repo/shared';
 import { useChatStore } from '@repo/shared';
 import { SendHorizonal, X } from 'lucide-react';
 import Image from 'next/image';

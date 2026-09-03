@@ -5,7 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import { PageResponse } from '@repo/shared';
 
 import { ContentEntryFilter, getContentEntry } from '@/lib/actions/admin/content-entry-action';
-import { ContentEntryDTO } from '@/models/social/post/contentEntryDTO';
+import { ContentEntryDTO } from '@/models/admin/contentEntryDTO';
 
 export const useContentEntries = (filter: ContentEntryFilter) => {
   const { getToken } = useAuth();

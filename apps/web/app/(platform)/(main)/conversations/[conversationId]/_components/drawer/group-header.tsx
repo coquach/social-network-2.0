@@ -9,7 +9,7 @@ import {
   UpdateConversationForm,
 } from '@/models/conversation/conversationDTO';
 import { MediaItem } from '@/lib/types/media';
-import { MediaType } from '@/models/social/enums/social.enum';
+import { MediaType } from '@repo/shared';
 import { GroupAvatar } from '../../../_components/group-avatar';
 import Image from 'next/image';
 

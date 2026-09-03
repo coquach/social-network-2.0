@@ -20,9 +20,9 @@ import {
   unbanGroup,
 } from '@/lib/actions/admin/admin-group-action';
 import { CursorPageResponse, getStandardNextPageParam, PageResponse } from '@repo/shared';
-import { AdminGroupDTO } from '@/models/group/adminGroupDTO';
-import { GroupReportDTO } from '@/models/group/groupReportDTO';
-import { GroupStatus } from '@/models/group/enums/group-status.enum';
+import {  AdminGroupDTO  } from "@repo/shared";
+import {  GroupReportDTO  } from "@repo/shared";
+import {  GroupStatus  } from "@repo/shared";
 import { LogType } from '@/models/log/logDTO';
 
 export const useAdminGroups = (filter: AdminGroupQuery) => {

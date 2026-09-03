@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser as useGetUser } from '@repo/shared/hooks';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';

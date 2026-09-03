@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator';
 
 import { useReportsByTarget } from '@/hooks/use-report-hook';
 import { ReportStatus } from '@/models/report/reportDTO';
-import { TargetType } from '@/models/social/enums/social.enum';
+import { TargetType } from '@repo/shared';
 import { AdminReportCard } from '../../_components/admin-report-card';
 
 type ContentReportsDialogProps = {

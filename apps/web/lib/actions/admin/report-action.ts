@@ -5,7 +5,7 @@ import {
   ReportDTO,
   ReportStatus,
 } from "@/models/report/reportDTO";
-import { TargetType } from "@/models/social/enums/social.enum";
+import { TargetType } from '@repo/shared';
 
 export const createReport = async (
   token: string,

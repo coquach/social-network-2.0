@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetUser } from "@/hooks/use-user-hook";
+import { useUser as useGetUser } from '@repo/shared/hooks';
 import { ConversationDTO } from "@/models/conversation/conversationDTO";
 import { ensureLastSeenMap } from "@/utils/ensure-last-seen-map";
 import { useAuth } from "@clerk/nextjs";

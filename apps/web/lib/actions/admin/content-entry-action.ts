@@ -1,10 +1,10 @@
 import { getApiClient } from "@repo/shared";
 import { PageResponse, Pagination } from "@repo/shared";
-import { TargetType } from "@/models/social/enums/social.enum";
+import { TargetType } from "@repo/shared";
 import {
   ContentEntryDTO,
   ContentStatus,
-} from "@/models/social/post/contentEntryDTO";
+} from "@/models/admin/contentEntryDTO";
 
 export interface ContentEntryFilter extends Pagination {
   query?: string;

@@ -4,15 +4,15 @@ import {
   ReactionType,
   RootType,
   TargetType,
-} from '@/models/social/enums/social.enum';
+} from '@repo/shared';
 import { MessageCircle, Repeat2 } from '@/lib/icons';
 import { useCallback, useMemo } from 'react';
 
-import { PostSnapshotDTO, PostStatDTO } from '@/models/social/post/postDTO';
+import { PostSnapshotDTO, PostStatDTO } from '@repo/shared';
 import {
   SharePostSnapshotDTO,
   SharePostStatDTO,
-} from '@/models/social/post/sharePostDTO';
+} from '@repo/shared';
 import {
   useCommentModal,
   useReactionModal,

@@ -1,7 +1,7 @@
 import { hasGroupPermission } from "@/lib/auth/group-permission";
-import { GroupPermission } from "@/models/group/enums/group-permission.enum";
-import { GroupRole } from "@/models/group/enums/group-role.enum";
-import { GroupDTO } from "@/models/group/groupDTO";
+import {  GroupPermission  } from "@repo/shared";
+import {  GroupRole  } from "@repo/shared";
+import {  GroupDTO  } from "@repo/shared";
 import { useMemo } from "react";
 
 type UseGroupPermissionResult = {

@@ -2,7 +2,7 @@
 
 import { CreatePostAvatar } from '@/components/avatar';
 import { AudienceSelect } from '@/components/audience-select';
-import { Audience } from '@/models/social/enums/social.enum';
+import { Audience } from '@repo/shared';
 import { useCreatePostContext } from './context';
 import { CreatePostComponentProps } from './types';
 import { cn } from '@/lib/utils';

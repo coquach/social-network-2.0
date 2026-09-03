@@ -1,5 +1,5 @@
 import { MediaItem } from '@/lib/types/media';
-import { Emotion, MediaType } from '@/models/social/enums/social.enum';
+import { Emotion, MediaType } from '@repo/shared';
 
 /**
  * Shared state for CreatePost compound components

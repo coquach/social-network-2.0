@@ -7,9 +7,9 @@ import {
   ReactionType,
   RootType,
   TargetType,
-} from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+} from '@repo/shared';
+import { PostSnapshotDTO } from '@repo/shared';
+import { SharePostSnapshotDTO } from '@repo/shared';
 import { useCommentModal, useCreateShareModal } from '@/store/use-post-modal';
 import { MessageCircle, Share2, ThumbsUp } from '@/lib/icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

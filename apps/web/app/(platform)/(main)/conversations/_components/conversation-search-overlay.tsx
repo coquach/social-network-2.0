@@ -5,7 +5,7 @@ import { useInView } from 'react-intersection-observer';
 import { Loader2 } from 'lucide-react';
 
 import { useSearchUsers } from '@repo/shared';
-import type { UserDTO } from '@/models/user/userDTO';
+import type { UserDTO } from '@repo/shared';
 
 import { ConversationUserResult } from './conversation-user-result';
 

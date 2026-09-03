@@ -12,7 +12,7 @@ import {
   useDeclineGroupInvite,
   useInvitedGroups,
 } from '@repo/shared';
-import { InvitedGroupDTO } from '@/models/group/groupInviteDTO';
+import { InvitedGroupDTO } from '@repo/shared';
 
 type InvitedGroupCardProps = {
   group: InvitedGroupDTO;

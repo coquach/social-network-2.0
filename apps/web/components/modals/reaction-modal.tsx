@@ -2,7 +2,7 @@
 
 import { useReactions } from '@repo/shared/hooks';
 import { reactionsUI, reactionMap } from '@/lib/types/reaction';
-import { ReactionType, TargetType } from '@/models/social/enums/social.enum';
+import { ReactionType, TargetType } from '@repo/shared';
 import { useReactionModal } from '@/store/use-post-modal';
 import { Loader2 } from '@/lib/icons';
 import { useEffect, useMemo, useState } from 'react';

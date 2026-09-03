@@ -1,7 +1,7 @@
 'use client';
 
 import { useComments } from '@repo/shared/hooks';
-import { RootType } from '@/models/social/enums/social.enum';
+import { RootType } from '@repo/shared';
 import { useMemo } from 'react';
 import { ErrorFallback } from '../error-fallback';
 import { CommentItem } from './comment-item';

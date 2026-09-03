@@ -3,7 +3,7 @@
 import { Loader } from '@/components/loader-componnet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser as useGetUser } from '@repo/shared/hooks';
 import {
   useDismissFriendRecommendation,
   useFriendSuggestions,

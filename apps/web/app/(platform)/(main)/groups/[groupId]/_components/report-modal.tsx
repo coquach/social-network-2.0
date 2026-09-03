@@ -4,10 +4,10 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import {
-  GroupReportSchema,
-  CreateGroupReportForm,
-} from '@/models/group/groupReportDTO';
+import { 
+  CreateGroupReportInputSchema,
+  CreateGroupReportInput,
+ } from "@repo/shared";
 
 import {
   Dialog,
@@ -32,7 +32,7 @@ export const GroupReportDialog = ({
 }: GroupReportDialogProps) => {
   const { group } = useGroupPermissionContext();
 
-  const form = useForm<CreateGroupReportForm>({
+  const form = useForm<CreateGroupReportInput>({
     defaultValues: {
       reason: '',
     },
@@ -41,9 +41,9 @@ export const GroupReportDialog = ({
 
   const { mutate: createReport, isPending } = useCreateGroupReport();
   if (!group) return null;
-  const onSubmit = (values: CreateGroupReportForm) => {
+  const onSubmit = (values: CreateGroupReportInput) => {
     // Validate with Zod
-    const result = GroupReportSchema.safeParse(values);
+    const result = CreateGroupReportInputSchema.safeParse(values);
     if (!result.success) {
       toast.error('Lý do không hợp lệ');
       return;

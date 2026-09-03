@@ -14,8 +14,8 @@ import {
   Audience,
   Emotion,
   MediaType,
-} from '@/models/social/enums/social.enum';
-import { CreatePostForm, PostSchema } from '@/models/social/post/postDTO';
+} from '@repo/shared';
+import { CreatePostInput, CreatePostInputSchema } from '@repo/shared';
 
 import { CreatePostContext } from './context';
 import { CreatePostProps } from './types';
@@ -26,7 +26,7 @@ const MAX_WORDS = 2000;
 const EMPTY_MEDIA: MediaItem[] = [];
 
 // Hoisted constants to prevent re-renders
-const getDefaultFormValues = (groupId?: string): CreatePostForm => ({
+const getDefaultFormValues = (groupId?: string): CreatePostInput => ({
   content: '',
   audience: Audience.PUBLIC as Audience,
   feeling: undefined as Emotion | undefined,
@@ -64,7 +64,7 @@ export const CreatePostProvider = ({
 
     validators: {
       onSubmit: ({ value }) => {
-        const r = PostSchema.safeParse(value);
+        const r = CreatePostInputSchema.safeParse(value);
         if (r.success) return undefined;
         return r.error.issues.map((i) => i.message);
       },

@@ -21,7 +21,7 @@ import {
   ReportDTO,
   ReportStatus,
 } from '@/models/report/reportDTO';
-import { TargetType } from '@/models/social/enums/social.enum';
+import { TargetType } from '@repo/shared';
 import { CursorPageResponse, getStandardNextPageParam } from '@repo/shared';
 import { LogType } from '@/models/log/logDTO';
 

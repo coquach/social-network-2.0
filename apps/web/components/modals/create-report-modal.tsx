@@ -36,7 +36,7 @@ import { cn } from '@/lib/utils';
 
 import { useCreateReport } from '@repo/shared/hooks';
 import { CreateReportForm, ReportSchema } from '@/models/report/reportDTO';
-import { TargetType } from '@/models/social/enums/social.enum'; // chỉnh path
+import { TargetType } from '@repo/shared'; // chỉnh path
 import { LiveRegion } from '@/components/ui/live-region';
 
 const MAX_REASON = 1000;

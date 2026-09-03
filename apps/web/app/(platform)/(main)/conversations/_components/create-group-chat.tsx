@@ -36,8 +36,8 @@ import {
   ConversarionSchema,
   CreateConversationForm,
 } from '@/models/conversation/conversationDTO';
-import { MediaType } from '@/models/social/enums/social.enum';
-import { UserDTO } from '@/models/user/userDTO';
+import { MediaType } from '@repo/shared';
+import { UserDTO } from '@repo/shared';
 
 type CreateGroupConversationDialogProps = {
   open: boolean;

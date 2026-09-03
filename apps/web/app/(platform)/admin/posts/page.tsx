@@ -9,8 +9,8 @@ import { useContentEntries } from '@/hooks/use-content-entries';
 import { ContentEntryFilter } from '@/lib/actions/admin/content-entry-action';
 import { AdminActivityLog } from '../_components/admin-activity-log';
 import { LogType } from '@/models/log/logDTO';
-import { TargetType } from '@/models/social/enums/social.enum';
-import { ContentStatus } from '@/models/social/post/contentEntryDTO';
+import { TargetType } from '@repo/shared';
+import { ContentStatus } from '@/models/admin/contentEntryDTO';
 
 export default function AdminPostsPage() {
   const searchParams = useSearchParams();

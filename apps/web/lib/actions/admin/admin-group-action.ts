@@ -5,9 +5,7 @@ import {
   PageResponse,
   Pagination,
 } from "@repo/shared";
-import { AdminGroupDTO } from "@/models/group/adminGroupDTO";
-import { GroupStatus } from "@/models/group/enums/group-status.enum";
-import { GroupReportDTO } from "@/models/group/groupReportDTO";
+import { AdminGroupDTO, GroupStatus, GroupReportDTO } from '@repo/shared';
 import { ReportStatus } from "@/models/report/reportDTO";
 
 export interface GroupReportQuery extends CursorPagination {

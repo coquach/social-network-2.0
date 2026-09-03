@@ -126,3 +126,27 @@ export interface UpdateUserInput {
 export interface UpdateProfileInput extends UpdateUserInput {
   phoneNumber?: string;
 }
+
+// ==================== System User (Admin) ====================
+
+export enum SystemRole {
+  ADMIN = 'admin',
+  MODERATOR = 'moderator',
+  USER = 'user',
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  BANNED = 'BANNED',
+  DELETED = 'DELETED',
+}
+
+export interface SystemUserDTO {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: SystemRole;
+  status: UserStatus;
+  createdAt: Date;
+}

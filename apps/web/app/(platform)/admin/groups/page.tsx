@@ -3,10 +3,10 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
-import { useAdminGroups, useGroupModeration } from '@/hooks/use-admin-group';
+import {  useAdminGroups, useGroupModeration  } from "@/hooks/use-admin-group";
 import { AdminGroupQuery } from '@/lib/actions/admin/admin-group-action';
-import { AdminGroupDTO } from '@/models/group/adminGroupDTO';
-import { GroupStatus } from '@/models/group/enums/group-status.enum';
+import { AdminGroupDTO } from "@repo/shared";
+import { GroupStatus } from "@repo/shared";
 import { LogType } from '@/models/log/logDTO';
 import { AdminActivityLog } from '../_components/admin-activity-log';
 import { GroupDetailDialog } from './_components/group-detail-dialog';

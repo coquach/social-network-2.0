@@ -4,11 +4,11 @@ import { useEffect, useMemo } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { useGetPostByGroup } from '@/hooks/use-post-hook';
+import { useGroupPosts as useGetPostByGroup } from '@repo/shared/hooks';
 
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { PostGroupStatus } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { GroupPermission } from '@repo/shared/types/enums';
+import { PostGroupStatus } from '@repo/shared';
+import { PostSnapshotDTO } from '@repo/shared';
 
 import { PostCardFull } from '@/components/post/post-card-full';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +46,7 @@ export const GroupAdminPostsSection = ({ groupId }: Props) => {
 
   const allPosts: PostSnapshotDTO[] = useMemo(() => {
     if (!data?.pages) return [];
-    return data.pages.flatMap((p) => p.data ?? []);
+    return data.pages.flatMap((p) => (p.data ?? []).map((post) => ({ ...post, postId: post.id } as unknown as PostSnapshotDTO)));
   }, [data]);
 
   // Sentinel cho infinite scroll ngang (ở cuối carousel)

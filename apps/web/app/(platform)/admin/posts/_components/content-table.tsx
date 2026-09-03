@@ -38,8 +38,8 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 
-import { ContentEntryDTO, ContentStatus } from '@/models/social/post/contentEntryDTO';
-import { TargetType } from '@/models/social/enums/social.enum';
+import { ContentEntryDTO, ContentStatus } from '@/models/admin/contentEntryDTO';
+import { TargetType } from '@repo/shared';
 import { formatDateVN } from '@/utils/user.utils';
 import { AdminPagination } from '../../_components/pagination';
 import { ContentDetailDialog } from './content-detail-dialog';

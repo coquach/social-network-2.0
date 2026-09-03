@@ -29,9 +29,9 @@ import { useSearchGroups, useSearchPosts, useSearchUsers } from '@repo/shared';
 import { SuggestionGroupItem } from '@/components/search-suggestions/suggest-group-items';
 import { SuggestionPostItem } from '@/components/search-suggestions/suggest-post-items';
 import { SuggestionUserItem } from '@/components/search-suggestions/suggest-user-item';
-import { GroupSummaryDTO } from '@/models/group/groupDTO';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { UserDTO } from '@/models/user/userDTO';
+import { GroupSummaryDTO } from '@repo/shared';
+import { PostSnapshotDTO } from '@repo/shared';
+import { UserDTO } from '@repo/shared';
 
 type SearchType = 'posts' | 'groups' | 'users';
 

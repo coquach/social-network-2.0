@@ -1,5 +1,5 @@
-import { GroupPermission } from "@/models/group/enums/group-permission.enum";
-import { GroupRole } from "@/models/group/enums/group-role.enum";
+import { GroupPermission } from '@repo/shared/types/enums';
+import { GroupRole } from '@repo/shared/types/enums';
 
 
 

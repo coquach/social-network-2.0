@@ -1,6 +1,6 @@
 'use client';
 import { PostCardPreview } from '@/components/post/post-card-preview';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { PostSnapshotDTO } from '@repo/shared';
 import { useState } from 'react';
 import {
   AlertDialog,
@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { useApprovePostInGroup, useRejectPostInGroup } from '@/hooks/use-post-hook';
+import { useApproveGroupPost as useApprovePostInGroup, useRejectGroupPost as useRejectPostInGroup } from '@repo/shared/hooks';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 type ModerationPostSlideProps = {
@@ -28,15 +28,15 @@ export const ModerationPostSlide = ({ groupId, post }: ModerationPostSlideProps)
 
   // chú ý: DTO của bạn dùng post.postId (như PostCard)
   const { mutateAsync: approveMutation, isPending: approveMutationPending } =
-    useApprovePostInGroup(post.postId, groupId);
+    useApprovePostInGroup();
   const { mutateAsync: rejectMutation, isPending: rejectMutationPending } =
-    useRejectPostInGroup(post.postId, groupId);
+    useRejectPostInGroup();
 
   const isProcessing = approveMutationPending || rejectMutationPending;
 
   const handleApprove = async () => {
     try {
-      return await approveMutation();
+      return await approveMutation({ postId: post.postId, groupId });
     } finally {
       return setConfirmType(null);
     }
@@ -44,7 +44,7 @@ export const ModerationPostSlide = ({ groupId, post }: ModerationPostSlideProps)
 
   const handleReject = async () => {
     try {
-      return await rejectMutation();
+      return await rejectMutation({ postId: post.postId, groupId });
     } finally {
       return setConfirmType(null);
     }

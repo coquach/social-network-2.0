@@ -13,7 +13,7 @@ import { ConversationDTO } from '@/models/conversation/conversationDTO';
 import { ProfileDrawer } from './drawer/profile-drawer';
 
 import { usePresenceStore } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser as useGetUser } from '@repo/shared/hooks';
 import { GroupAvatar } from '../../_components/group-avatar';
 import { DirectAvatar } from '../../_components/direct-avatar';
 

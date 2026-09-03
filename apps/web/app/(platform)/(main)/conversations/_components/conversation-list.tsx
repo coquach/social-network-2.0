@@ -15,7 +15,7 @@ import {
   useGetConversationList,
 } from '@/hooks/use-conversation';
 import { useStartConversation } from '@/hooks/use-start-conversation';
-import { UserDTO } from '@/models/user/userDTO';
+import { UserDTO } from '@repo/shared';
 import { ConversationDTO } from '@/models/conversation/conversationDTO';
 import { MessageDTO } from '@/models/message/messageDTO';
 import { useQueryClient } from '@tanstack/react-query';

@@ -13,12 +13,12 @@ import {
   useSearchUsers,
 } from '@repo/shared';
 import { SearchGroupSortBy } from '@/lib/actions/search/search-actions';
-import { GroupDTO, GroupSummaryDTO } from '@/models/group/groupDTO';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { GroupStatus } from '@/models/group/enums/group-status.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { Emotion } from '@/models/social/enums/social.enum';
-import { UserDTO } from '@/models/user/userDTO';
+import { GroupDTO, GroupSummaryDTO } from '@repo/shared';
+import { GroupPrivacy } from '@repo/shared/types/enums';
+import { GroupStatus } from "@repo/shared";
+import { PostSnapshotDTO } from '@repo/shared';
+import { Emotion } from '@repo/shared';
+import { UserDTO } from '@repo/shared';
 import { UserSearchCard } from './_components/user-search-card';
 
 type SearchType = 'posts' | 'groups' | 'users';

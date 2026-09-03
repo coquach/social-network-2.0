@@ -21,12 +21,12 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 
-import {
+import {  
   useGroupReports,
   useGroupModeration,
   useIgnoreGroupReports,
-} from '@/hooks/use-admin-group';
-import { GroupStatus } from '@/models/group/enums/group-status.enum';
+  } from "@/hooks/use-admin-group";
+import { GroupStatus } from "@repo/shared";
 import { ReportStatus } from '@/models/report/reportDTO';
 import { AdminReportCard } from '../../_components/admin-report-card';
 
@@ -60,10 +60,10 @@ export function GroupReportsDrawer({
   });
 
   const reports = React.useMemo(
-    () => data?.pages.flatMap((page) => page.data) ?? [],
+    () => data?.pages.flatMap((page: any) => page.data) ?? [],
     [data]
   );
-  const hasPendingReports = reports.some((report) => report.status === ReportStatus.PENDING);
+  const hasPendingReports = reports.some((report: any) => report.status === ReportStatus.PENDING);
 
   const handleBanGroup = async () => {
     if (!groupId) return;
@@ -115,7 +115,7 @@ export function GroupReportsDrawer({
             </div>
           ) : null}
 
-          {reports.map((report) => (
+          {reports.map((report: any) => (
             <AdminReportCard key={report.id} report={report} />
           ))}
         </div>

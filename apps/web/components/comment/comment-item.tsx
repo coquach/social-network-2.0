@@ -6,13 +6,13 @@ import { useDisReact, useReact } from '@repo/shared/hooks';
 import { useComments, useUpdateComment } from '@repo/shared/hooks';
 import { Reaction, reactionMap } from '@/lib/types/reaction';
 import { cn } from '@/lib/utils';
-import { CommentDTO, CommentStatDTO } from '@/models/social/comment/commentDTO';
+import { CommentDTO, CommentStatDTO } from '@repo/shared';
 import {
   MediaType,
   ReactionType,
   RootType,
   TargetType,
-} from '@/models/social/enums/social.enum';
+} from '@repo/shared';
 import {
   useDeleteCommentModal,
   useReactionModal,

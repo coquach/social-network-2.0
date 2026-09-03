@@ -1,6 +1,6 @@
-import { RootType, TargetType } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+import { RootType, TargetType } from '@repo/shared';
+import { PostSnapshotDTO } from '@repo/shared';
+import { SharePostSnapshotDTO } from '@repo/shared';
 import { create } from 'zustand';
 
 interface ReactionModalStore {
