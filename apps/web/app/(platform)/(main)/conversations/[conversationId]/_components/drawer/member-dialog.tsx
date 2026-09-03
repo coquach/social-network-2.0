@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import {
   ConversationDTO,
-  UpdateConversationForm,
+  UpdateConversationInput,
 } from '@repo/shared';
 import { useState } from 'react';
 
@@ -37,13 +37,13 @@ export const MembersDialog = ({
 
   const onKick = (userId: string) => {
     if (!isAdmin) return;
-    const dto: UpdateConversationForm = { participantsToRemove: [userId] };
+    const dto: UpdateConversationInput = { participantsToRemove: [userId] };
     updateConversation(dto);
   };
 
   const onAdd = (userIds: string[]) => {
     if (!isAdmin) return;
-    const dto: UpdateConversationForm = { participantsToAdd: userIds };
+    const dto: UpdateConversationInput = { participantsToAdd: userIds };
     updateConversation(dto, { onSuccess: () => setOpenAdd(false) });
   };
 

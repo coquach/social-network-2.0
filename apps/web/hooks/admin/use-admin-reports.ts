@@ -17,7 +17,7 @@ import {
   resolveReportTarget,
 } from '@/lib/actions/admin/report-action';
 import {
-  CreateReportForm,
+  CreateReportInput,
   ReportDTO,
   ReportStatus,
 } from '@repo/shared';
@@ -29,7 +29,7 @@ export const useCreateReport = () => {
   const { getToken } = useAuth();
   return useMutation({
     mutationKey: ['create-report'],
-    mutationFn: async (data: CreateReportForm) => {
+    mutationFn: async (data: CreateReportInput) => {
       const token = await getToken();
       if (!token) throw new Error('Unauthorized');
       return await createReport(token, data);

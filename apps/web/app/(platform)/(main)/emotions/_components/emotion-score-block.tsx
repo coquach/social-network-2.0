@@ -1,18 +1,19 @@
-import { EmotionKey, EmotionScoresDTO } from '@/models/emotion/emotionDTO';
+import { EmotionLabel } from '@repo/shared';
 import {
   getEmotionColor,
   getEmotionEmoji,
   getEmotionLabel,
+  getDistributionCount,
 } from '../lib/emotion-mappers';
 
-const EMOTION_KEYS: EmotionKey[] = [
-  'joy',
-  'sadness',
-  'anger',
-  'fear',
-  'disgust',
-  'surprise',
-  'neutral',
+const EMOTION_KEYS: EmotionLabel[] = [
+  'JOY',
+  'SADNESS',
+  'ANGER',
+  'FEAR',
+  'DISGUST',
+  'SURPRISE',
+  'NEUTRAL',
 ];
 
 const formatPercent = (value: number) => {
@@ -24,7 +25,7 @@ const ScoreRow = ({
   emotion,
   value,
 }: {
-  emotion: EmotionKey;
+  emotion: EmotionLabel;
   value: number;
 }) => {
   const emotionLabel = getEmotionLabel(emotion);
@@ -61,11 +62,11 @@ const ScoreRow = ({
 export const EmotionScoreBlock = ({
   scores,
 }: {
-  scores: EmotionScoresDTO | Record<string, number>;
+  scores: Record<string, number>;
 }) => (
   <div className="grid gap-4">
     {EMOTION_KEYS.map((emotion) => (
-      <ScoreRow key={emotion} emotion={emotion} value={scores[emotion] ?? 0} />
+      <ScoreRow key={emotion} emotion={emotion} value={getDistributionCount(scores, emotion)} />
     ))}
   </div>
 );

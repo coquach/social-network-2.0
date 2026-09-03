@@ -1,7 +1,7 @@
 import { getApiClient } from "@repo/shared";
 import { CursorPageResponse, CursorPagination } from "@repo/shared";
 import {
-  CreateReportForm,
+  CreateReportInput,
   ReportDTO,
   ReportStatus,
 } from "@repo/shared";
@@ -9,7 +9,7 @@ import { TargetType } from '@repo/shared';
 
 export const createReport = async (
   token: string,
-  reportData: CreateReportForm,
+  reportData: CreateReportInput,
 ): Promise<ReportDTO> => {
   try {
     const response = await getApiClient().post(

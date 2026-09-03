@@ -35,7 +35,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { useCreateReport } from '@repo/shared/hooks';
-import { CreateReportForm, ReportSchema } from '@repo/shared';
+import { CreateReportInput, CreateReportInputSchema } from '@repo/shared';
 import { TargetType } from '@repo/shared'; // chỉnh path
 import { LiveRegion } from '@/components/ui/live-region';
 
@@ -62,11 +62,11 @@ export function CreateReportModal({
       targetId,
       targetType,
       reason: '',
-    } satisfies CreateReportForm,
+    } satisfies CreateReportInput,
 
     onSubmit: async ({ value }) => {
       // Validate with Zod
-      const result = ReportSchema.safeParse(value);
+      const result = CreateReportInputSchema.safeParse(value);
       if (!result.success) {
         toast.error('Invalid form data');
         return;

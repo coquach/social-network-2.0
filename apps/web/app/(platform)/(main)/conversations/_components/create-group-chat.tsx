@@ -33,8 +33,8 @@ import { useCreateConversation } from '@repo/shared';
 import { useSearchUsers } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import {
-  ConversarionSchema,
-  CreateConversationForm,
+  CreateConversationInputSchema,
+  CreateConversationInput,
 } from '@repo/shared';
 import { MediaType } from '@repo/shared';
 import { UserDTO } from '@repo/shared';
@@ -44,7 +44,7 @@ type CreateGroupConversationDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-const GroupConversationSchema = ConversarionSchema.extend({
+const GroupConversationSchema = CreateConversationInputSchema.extend({
   groupName: z.string().trim().min(1, 'Vui lòng nhập tên nhóm.'),
   participants: z
     .array(z.string())
@@ -72,7 +72,7 @@ export const CreateGroupConversationDialog = ({
       isGroup: true,
       participants: [],
       groupName: '',
-    } as CreateConversationForm,
+    } as CreateConversationInput,
     validators: {
       onSubmit: ({ value }) => {
         const parsed = GroupConversationSchema.safeParse({
@@ -86,7 +86,7 @@ export const CreateGroupConversationDialog = ({
     onSubmit: async ({ value, formApi }) => {
       if (!currentUserId) return;
 
-      const payload: CreateConversationForm = {
+      const payload: CreateConversationInput = {
         isGroup: true,
         participants: Array.from(
           new Set([currentUserId, ...(value.participants ?? [])])

@@ -30,7 +30,7 @@ import {
 import { MediaItem } from '@/lib/types/media';
 import {
   ConversationDTO,
-  UpdateConversationForm,
+  UpdateConversationInput,
 } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import { EyeOff, Eye, LogOut, Trash2 } from 'lucide-react';
@@ -77,7 +77,7 @@ export const ProfileDrawer = ({
     useUnhideConversation();
 
   const handleUpdateGroup = (
-    dto: UpdateConversationForm,
+    dto: UpdateConversationInput,
     media?: MediaItem,
     publicId?: string
   ) => {
