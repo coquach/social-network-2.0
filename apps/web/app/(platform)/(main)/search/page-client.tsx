@@ -12,7 +12,7 @@ import {
   useSearchPosts,
   useSearchUsers,
 } from '@repo/shared';
-import { SearchGroupSortBy } from '@/lib/actions/search/search-actions';
+import { SearchGroupSortBy } from '@repo/shared';
 import { GroupDTO, GroupSummaryDTO } from '@repo/shared';
 import { GroupPrivacy } from '@repo/shared/types/enums';
 import { GroupStatus } from "@repo/shared";

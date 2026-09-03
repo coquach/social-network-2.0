@@ -1,4 +1,4 @@
-﻿import {
+import {
   MediaType,
   useFriendUsers,
   useCurrentUser,
@@ -20,7 +20,7 @@ import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
-import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide';
+
 import { PostCardFull } from '~/components/post/post-card-full';
 import { SharePost } from '~/components/post/share-post';
 import {

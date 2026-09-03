@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/collapsible';
 import { GroupPrivacy } from '@repo/shared/types/enums';
 import { ReactionType } from '@repo/shared';
-import { SearchGroupSortBy } from '@/lib/actions/search/search-actions';
+import { SearchGroupSortBy } from '@repo/shared';
 import { reactionsUI } from '@/lib/types/reaction';
 
 type SearchType = 'posts' | 'groups' | 'users';

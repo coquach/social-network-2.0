@@ -5,7 +5,7 @@ import { FileText, Users, UserRound } from 'lucide-react';
 
 import { GroupPrivacy } from '@repo/shared/types/enums';
 import { ReactionType } from '@repo/shared';
-import { SearchGroupSortBy } from '@/lib/actions/search/search-actions';
+import { SearchGroupSortBy } from '@repo/shared';
 import { SearchSidebarNavItem } from './sidebar-item';
 import { SearchSidebarFilters } from './sidebar-filter';
 

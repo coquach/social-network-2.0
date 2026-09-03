@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getQueryClient } from "@/lib/query-client";
 import { ReactNode } from "react";
-import { getGroupById } from "@/lib/actions/group/group-action";
+import { groupService } from "@repo/shared";
 import { GroupPermissionProvider } from "@/contexts/group-permission-context";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
@@ -27,7 +27,7 @@ const GroupDetailsLayout = async ({ children, params }: Props) => {
   // SSR prefetch cho query 'get-group-by-id'
   await queryClient.prefetchQuery({
     queryKey: ["get-group-by-id", groupId],
-    queryFn: async () => getGroupById(token, groupId),
+    queryFn: async () => groupService.getGroupById(groupId),
   });
 
   return (
