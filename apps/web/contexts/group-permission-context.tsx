@@ -5,8 +5,7 @@ import { createContext, useContext, useMemo, ReactNode } from 'react';
 import { GroupRole } from '@repo/shared/types/enums';
 import { GroupPermission } from '@repo/shared/types/enums';
 import { GroupDTO } from '@repo/shared';
-import { useGroup } from '@repo/shared';
-import { hasGroupPermission } from '@/lib/auth/group-permission';
+import { useGroup, hasGroupPermission } from '@repo/shared';
 
 type Ctx = {
   group: GroupDTO | undefined;
