@@ -27,7 +27,7 @@ import {
   useIgnoreGroupReports,
   } from "@/hooks/admin/use-admin-group";
 import { GroupStatus } from "@repo/shared";
-import { ReportStatus } from '@/models/report/reportDTO';
+import { ReportStatus } from '@repo/shared';
 import { AdminReportCard } from '../../_components/admin-report-card';
 
 type GroupReportsDrawerProps = {

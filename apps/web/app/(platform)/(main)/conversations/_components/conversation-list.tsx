@@ -14,8 +14,8 @@ import { useConversationId } from '@/hooks/use-conversation-id';
 import { useConversations, queryKeys, useCreateConversation } from '@repo/shared';
 import { useRouter } from 'next/navigation';
 import { UserDTO } from '@repo/shared';
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
-import { MessageDTO } from '@/models/message/messageDTO';
+import { ConversationDTO } from '@repo/shared';
+import { MessageDTO } from '@repo/shared';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { ConversationBox } from './conversation-box';

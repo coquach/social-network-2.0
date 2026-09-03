@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useSocket } from '@/components/providers/socket-provider';
 import { useActiveChannel } from '@repo/shared';
 import { useConversation, queryKeys } from '@repo/shared';
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO } from '@repo/shared';
 import { ensureLastSeenMap } from '@/utils/ensure-last-seen-map';
 import { EmptyState } from '../_components/empty-state';
 import { Body } from './_components/body';

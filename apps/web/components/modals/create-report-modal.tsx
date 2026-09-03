@@ -35,7 +35,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { useCreateReport } from '@repo/shared/hooks';
-import { CreateReportForm, ReportSchema } from '@/models/report/reportDTO';
+import { CreateReportForm, ReportSchema } from '@repo/shared';
 import { TargetType } from '@repo/shared'; // chỉnh path
 import { LiveRegion } from '@/components/ui/live-region';
 

@@ -6,7 +6,7 @@ import {
   Pagination,
 } from "@repo/shared";
 import { AdminGroupDTO, GroupStatus, GroupReportDTO } from '@repo/shared';
-import { ReportStatus } from "@/models/report/reportDTO";
+import { ReportStatus } from "@repo/shared";
 
 export interface GroupReportQuery extends CursorPagination {
   groupId?: string;

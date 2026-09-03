@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useConversations, queryKeys } from '@repo/shared';
 import { useSocket } from '@/components/providers/socket-provider';
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO } from '@repo/shared';
 import { ensureLastSeenMap } from '@/utils/ensure-last-seen-map';
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import {
 import { MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
-import { MessageDTO } from '@/models/message/messageDTO';
+import { MessageDTO } from '@repo/shared';
 import { ConversationBox } from '../../conversations/_components/conversation-box';
 import { useAuth } from '@clerk/nextjs';
 

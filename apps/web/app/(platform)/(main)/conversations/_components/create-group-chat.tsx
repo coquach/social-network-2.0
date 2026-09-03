@@ -35,7 +35,7 @@ import { MediaItem } from '@/lib/types/media';
 import {
   ConversarionSchema,
   CreateConversationForm,
-} from '@/models/conversation/conversationDTO';
+} from '@repo/shared';
 import { MediaType } from '@repo/shared';
 import { UserDTO } from '@repo/shared';
 

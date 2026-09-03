@@ -1,6 +1,6 @@
 'use client';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import { useMemo } from 'react';
 import { useUser as useGetUser } from '@repo/shared/hooks';

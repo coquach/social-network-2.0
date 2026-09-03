@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   ConversationDTO,
   UpdateConversationForm,
-} from '@/models/conversation/conversationDTO';
+} from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import { MediaType } from '@repo/shared';
 import { GroupAvatar } from '../../../_components/group-avatar';

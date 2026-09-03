@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   ConversationDTO,
   UpdateConversationForm,
-} from '@/models/conversation/conversationDTO';
+} from '@repo/shared';
 import { useState } from 'react';
 
 

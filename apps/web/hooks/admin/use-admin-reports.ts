@@ -20,7 +20,7 @@ import {
   CreateReportForm,
   ReportDTO,
   ReportStatus,
-} from '@/models/report/reportDTO';
+} from '@repo/shared';
 import { TargetType } from '@repo/shared';
 import { CursorPageResponse, getStandardNextPageParam } from '@repo/shared';
 import { LogType } from '@/models/log/logDTO';

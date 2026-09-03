@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useConversationId } from '@/hooks/use-conversation-id';
 import { useSendMessage } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
-import { CreateMessageForm, MessageDTO as LocalMessageDTO } from '@/models/message/messageDTO';
+import { CreateMessageForm, MessageDTO as LocalMessageDTO } from '@repo/shared';
 import { MediaType } from '@repo/shared';
 import { useChatStore } from '@repo/shared';
 import { SendHorizonal, X } from 'lucide-react';

@@ -2,7 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser as useGetUser } from '@repo/shared/hooks';
-import { ConversationDTO } from "@/models/conversation/conversationDTO";
+import { ConversationDTO } from "@repo/shared";
 import { ensureLastSeenMap } from "@/utils/ensure-last-seen-map";
 import { useAuth } from "@clerk/nextjs";
 import clsx from "clsx";

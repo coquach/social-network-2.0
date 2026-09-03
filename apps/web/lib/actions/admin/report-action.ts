@@ -4,7 +4,7 @@ import {
   CreateReportForm,
   ReportDTO,
   ReportStatus,
-} from "@/models/report/reportDTO";
+} from "@repo/shared";
 import { TargetType } from '@repo/shared';
 
 export const createReport = async (

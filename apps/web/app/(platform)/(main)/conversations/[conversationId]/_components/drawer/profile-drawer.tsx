@@ -31,7 +31,7 @@ import { MediaItem } from '@/lib/types/media';
 import {
   ConversationDTO,
   UpdateConversationForm,
-} from '@/models/conversation/conversationDTO';
+} from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import { EyeOff, Eye, LogOut, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';

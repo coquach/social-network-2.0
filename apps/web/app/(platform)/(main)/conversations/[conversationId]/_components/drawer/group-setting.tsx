@@ -1,6 +1,6 @@
 'use client';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO } from '@repo/shared';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { format } from 'date-fns';
