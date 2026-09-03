@@ -29,7 +29,7 @@ import { useCreateSystemUser } from '@/hooks/use-admin-users';
 import {
   CreateSystemUserSchema,
   SystemRole,
-} from '@/models/user/systemUserDTO';
+} from '@repo/shared';
 import { toast } from 'sonner';
 
 const roleLabels: Record<SystemRole, string> = {
@@ -61,7 +61,7 @@ export function CreateUserDialog({
       onSubmit: ({ value }) => {
         const r = CreateSystemUserSchema.safeParse(value);
         if (r.success) return undefined;
-        return r.error.issues.map((i) => i.message);
+        return r.error.issues.map((i: any) => i.message);
       },
     },
     onSubmit: async ({ value, formApi }) => {

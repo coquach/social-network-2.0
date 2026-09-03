@@ -47,7 +47,7 @@ import {
   SystemRole,
   SystemUserDTO,
   UserStatus,
-} from '@/models/user/systemUserDTO';
+} from '@repo/shared';
 import { formatDateVN, getFullName } from '@/utils/user.utils';
 import { AdminPagination } from '../../_components/pagination';
 import { ConfirmActionDialog } from '../../_components/confirm-action-dialog';

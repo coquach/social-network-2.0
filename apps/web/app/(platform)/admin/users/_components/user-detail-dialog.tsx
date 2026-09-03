@@ -27,7 +27,7 @@ import {
   SystemRole,
   SystemUserDTO,
   UserStatus,
-} from '@/models/user/systemUserDTO';
+} from '@repo/shared';
 import { formatDateVN, getFullName } from '@/utils/user.utils';
 import { useAuth } from '@clerk/nextjs';
 import { toast } from 'sonner';
