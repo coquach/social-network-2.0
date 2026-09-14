@@ -235,3 +235,23 @@ export interface JoinRequestFilter {
   sortBy?: JoinRequestSortBy;
   status?: JoinRequestStatus;
 }
+
+// ==================== Admin Group ====================
+
+export interface GroupOwnerSnapshot {
+  id: string;
+  fullName: string;
+  avatarUrl?: string;
+}
+
+export interface AdminGroupDTO {
+  id: string;
+  name: string;
+  owner: GroupOwnerSnapshot;
+  avatarUrl?: string;
+  privacy: GroupPrivacy;
+  members: number;
+  reports: number;
+  createdAt: Date;
+  status?: GroupStatus;
+}

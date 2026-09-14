@@ -11,10 +11,10 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 import { useImageViewerModal } from '@/store/use-image-viewer-modal';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
+import { GroupPermission } from '@repo/shared/types/enums';
+import { GroupRole } from '@repo/shared/types/enums';
 import { format as formatDate } from 'date-fns';
-import { MembershipStatus } from '@/models/group/groupDTO';
+import { MembershipStatus } from '@repo/shared';
 
 // shadcn ui
 import {

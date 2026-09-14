@@ -1,4 +1,4 @@
-import { MediaType } from "@/models/social/enums/social.enum";
+import { MediaType } from '@repo/shared';
 
 export interface MediaItem {
   file: File;

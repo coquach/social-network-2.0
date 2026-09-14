@@ -1,6 +1,6 @@
-import api from '@/lib/api-client';
+import { getApiClient } from "@repo/shared";
 
-import { PageResponse, Pagination } from '@repo/shared';
+import { PageResponse, Pagination } from "@repo/shared";
 
 import {
   AnalyzeMusicDTO,
@@ -9,7 +9,7 @@ import {
   MusicFeatureResponseDTO,
   MusicGenre,
   UpdateMusicFeatureDTO,
-} from '@/models/music/musicDTO';
+} from "@/models/music/musicDTO";
 
 export interface MusicQuery extends Pagination {
   search?: string;
@@ -21,17 +21,13 @@ export const getMusicFeatures = async (
   query: MusicQuery,
 ): Promise<PageResponse<MusicFeatureResponseDTO>> => {
   try {
-    const response = await api.get<PageResponse<MusicFeatureResponseDTO>>(
-      '/musics',
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+    const response = await getApiClient().get<
+      PageResponse<MusicFeatureResponseDTO>
+    >("/musics", {
+      params: query,
+    });
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -43,17 +39,13 @@ export const getMusicRecommendations = async (
   query: Pagination,
 ): Promise<PageResponse<MusicFeatureResponseDTO>> => {
   try {
-    const response = await api.get<PageResponse<MusicFeatureResponseDTO>>(
-      '/musics/recommendations',
-      {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+    const response = await getApiClient().get<
+      PageResponse<MusicFeatureResponseDTO>
+    >("/musics/recommendations", {
+      params: query,
+    });
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -65,13 +57,12 @@ export const getMusicFeatureById = async (
   id: string,
 ): Promise<MusicFeatureResponseDTO> => {
   try {
-    const response = await api.get<MusicFeatureResponseDTO>(`/musics/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await getApiClient().get<MusicFeatureResponseDTO>(
+      `/musics/${id}`,
+      {},
+    );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -83,17 +74,13 @@ export const createMusicFeature = async (
   payload: CreateMusicFeatureDTO,
 ): Promise<MusicFeatureResponseDTO> => {
   try {
-    const response = await api.post<MusicFeatureResponseDTO>(
-      '/musics',
+    const response = await getApiClient().post<MusicFeatureResponseDTO>(
+      "/musics",
       payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -106,17 +93,13 @@ export const updateMusicFeature = async (
   payload: UpdateMusicFeatureDTO,
 ): Promise<MusicFeatureResponseDTO> => {
   try {
-    const response = await api.patch<MusicFeatureResponseDTO>(
+    const response = await getApiClient().patch<MusicFeatureResponseDTO>(
       `/musics/${id}`,
       payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -128,13 +111,9 @@ export const deleteMusicFeature = async (
   id: string,
 ): Promise<boolean> => {
   try {
-    const response = await api.delete<boolean>(`/musics/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await getApiClient().delete<boolean>(`/musics/${id}`, {});
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -146,17 +125,13 @@ export const analyzeMusic = async (
   payload: AnalyzeMusicDTO,
 ): Promise<AnalyzeMusicResponseDTO> => {
   try {
-    const response = await api.post<AnalyzeMusicResponseDTO>(
-      '/musics/analyze',
+    const response = await getApiClient().post<AnalyzeMusicResponseDTO>(
+      "/musics/analyze",
       payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+      {},
     );
 
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

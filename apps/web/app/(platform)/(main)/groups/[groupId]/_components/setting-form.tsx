@@ -5,8 +5,8 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupSettingSchema } from '@/models/group/groupSettingDTO';
+import { GroupPermission } from '@repo/shared/types/enums';
+import { GroupSettingSchema } from '@repo/shared';
 
 import { Loader } from '@/components/loader-componnet';
 import { Button } from '@/components/ui/button';

@@ -1,7 +1,7 @@
 import { getCachedPostsByGroup } from '@/lib/cached-fetchers';
 import { QueryErrorBoundary } from '@/components/query-error-boundary';
 import { getQueryClient } from '@/lib/query-client';
-import { PostGroupStatus } from '@/models/social/enums/social.enum';
+import { PostGroupStatus } from '@repo/shared';
 import { auth } from '@clerk/nextjs/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';

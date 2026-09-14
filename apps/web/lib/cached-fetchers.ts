@@ -1,7 +1,7 @@
 import { cache } from 'react';
 import { conversationService, groupService, postService, type GroupMemberFilter } from '@repo/shared';
 import { initServerApi } from './server-api-init';
-import type { PostGroupStatus } from '@/models/social/enums/social.enum';
+import type { PostGroupStatus } from '@repo/shared';
 
 /**
  * Cached server-side data fetchers using React.cache() for automatic

@@ -1,4 +1,4 @@
-import { ReactionType } from '@/models/social/enums/social.enum';
+import { ReactionType } from '@repo/shared';
 
 export interface Reaction {
   type: ReactionType;

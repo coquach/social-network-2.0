@@ -1,8 +1,8 @@
 'use client';
 
-import { useGetReactions } from '@/hooks/use-reaction-hook';
+import { useReactions } from '@repo/shared/hooks';
 import { reactionsUI, reactionMap } from '@/lib/types/reaction';
-import { ReactionType, TargetType } from '@/models/social/enums/social.enum';
+import { ReactionType, TargetType } from '@repo/shared';
 import { useReactionModal } from '@/store/use-post-modal';
 import { Loader2 } from '@/lib/icons';
 import { useEffect, useMemo, useState } from 'react';
@@ -39,11 +39,7 @@ export const PostReactionsModal = () => {
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useGetReactions({
-    targetId: targetId ?? '',
-    targetType: targetType ?? TargetType.POST,
-    reactionType: filter,
-  });
+  } = useReactions(targetId ?? '', targetType ?? TargetType.POST, filter);
 
   const { ref } = useInView({
     threshold: 0.5,

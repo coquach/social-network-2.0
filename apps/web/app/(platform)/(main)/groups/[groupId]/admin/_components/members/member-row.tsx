@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 
-import { GroupMemberStatus } from '@/models/group/enums/group-member-status.enum';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
-import { GroupMemberDTO } from '@/models/group/groupMemberDTO';
+import { GroupMemberStatus } from "@repo/shared";
+import { GroupPermission } from '@repo/shared/types/enums';
+import { GroupRole } from '@repo/shared/types/enums';
+import { GroupMemberDTO } from '@repo/shared';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
 import {
@@ -15,8 +15,8 @@ import {
   useRemoveMember,
   useUnbanMember,
 } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
-import { UserDTO } from '@/models/user/userDTO';
+import { useUser as useGetUser } from '@repo/shared/hooks';
+import { UserDTO } from '@repo/shared';
 
 import {
   AlertDialog,

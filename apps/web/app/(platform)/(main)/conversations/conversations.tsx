@@ -1,10 +1,10 @@
 'use client';
-import { useConversation } from '@/hooks/use-conversation';
+import { useConversationId } from '@/hooks/use-conversation-id';
 import { EmptyState } from './_components/empty-state';
 import clsx from 'clsx';
 
 export const Conversations = () => {
-  const { isOpen } = useConversation();
+  const { isOpen } = useConversationId();
   return (
     <div
       className={clsx(

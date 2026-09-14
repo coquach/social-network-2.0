@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { CldImage } from 'next-cloudinary';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MediaDTO, MediaType } from '@/models/social/enums/social.enum';
+import { MediaDTO, MediaType } from '@repo/shared';
 
 export function MediaCarousel({ media }: { media: MediaDTO[] }) {
   const items = useMemo(() => media ?? [], [media]);

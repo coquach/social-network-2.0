@@ -1,10 +1,10 @@
 'use client';
 
-import { useSharePost } from '@/hooks/use-share-hook';
-import { Audience } from '@/models/social/enums/social.enum';
+import { useSharePost } from '@repo/shared/hooks';
+import { Audience } from '@repo/shared';
 import {
-  SharePostSchema
-} from '@/models/social/post/sharePostDTO';
+  CreateShareInputSchema
+} from '@repo/shared';
 import { useCreateShareModal } from '@/store/use-post-modal';
 import { useAuth } from '@clerk/nextjs';
 import { useEffect } from 'react';
@@ -37,7 +37,7 @@ export const CreateShareModal = () => {
   const { isOpen, closeModal, data } = useCreateShareModal();
 
   const postId = data?.postId || '';
-  const { mutateAsync, isPending } = useSharePost(postId);
+  const { mutateAsync, isPending } = useSharePost();
 
   const form = useForm({
     defaultValues: {
@@ -47,7 +47,7 @@ export const CreateShareModal = () => {
     }  ,
     onSubmit: async ({ value }) => {
       // validate toàn form bằng zod
-      const parsed = SharePostSchema.safeParse(value);
+      const parsed = CreateShareInputSchema.safeParse(value);
       if (!parsed.success) {
         toast.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
         return;

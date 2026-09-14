@@ -4,7 +4,7 @@ import {
 } from '@/components/feeling-hover-popup';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { feelingsUI, FeelingUI } from '@/lib/types/feeling';
-import { Emotion } from '@/models/social/enums/social.enum';
+import { Emotion } from '@repo/shared';
 import { TrendingUp, UserRound } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PersonalFeed } from './_components/personal-feed';

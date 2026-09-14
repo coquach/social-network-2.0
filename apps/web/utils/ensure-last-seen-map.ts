@@ -1,4 +1,4 @@
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO } from '@repo/shared';
 
 export const ensureLastSeenMap = (
   value?: ConversationDTO['lastSeenMessageId']

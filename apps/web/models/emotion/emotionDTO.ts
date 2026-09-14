@@ -1,4 +1,4 @@
-import { Emotion, TargetType } from '@/models/social/enums/social.enum';
+import { Emotion, TargetType } from '@repo/shared';
 
 export type EmotionKey =
   | 'joy'

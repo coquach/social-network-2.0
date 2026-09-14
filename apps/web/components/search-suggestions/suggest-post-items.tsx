@@ -1,5 +1,5 @@
 import { FileText } from 'lucide-react';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { PostSnapshotDTO } from '@repo/shared';
 
 export function SuggestionPostItem({
   post,

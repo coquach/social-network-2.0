@@ -16,18 +16,18 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { useUpdatePost } from '@/hooks/use-post-hook';
-import { Audience } from '@/models/social/enums/social.enum';
+import { useUpdatePost } from '@repo/shared/hooks';
+import { Audience } from '@repo/shared';
 import { LiveRegion } from '@/components/ui/live-region';
 import {
   PostSnapshotDTO,
-  UpdatePostForm,
-  UpdatePostSchema,
-} from '@/models/social/post/postDTO';
+  UpdatePostInput,
+  UpdatePostInputSchema,
+} from '@repo/shared';
 import { useUpdatePostModal } from '@/store/use-post-modal';
 
 // Hoisted helper to prevent re-creation of default values
-const getDefaultFormValues = (snapshot?: PostSnapshotDTO): UpdatePostForm => ({
+const getDefaultFormValues = (snapshot?: PostSnapshotDTO): UpdatePostInput => ({
   content: snapshot?.content ?? '',
   audience: snapshot?.audience ?? Audience.PUBLIC,
 });
@@ -37,7 +37,7 @@ export const UpdatePostModal = () => {
 
 
   const snapshot = data as PostSnapshotDTO;
-  const form = useForm<UpdatePostForm>({
+  const form = useForm<UpdatePostInput>({
     defaultValues: getDefaultFormValues(snapshot),
   });
 
@@ -47,9 +47,9 @@ export const UpdatePostModal = () => {
     form.reset(getDefaultFormValues(snapshot));
   }, [snapshot, form]);
 
-  const handleSubmit = (vals: UpdatePostForm) => {
+  const handleSubmit = (vals: UpdatePostInput) => {
     // Validate with Zod
-    const result = UpdatePostSchema.safeParse(vals);
+    const result = UpdatePostInputSchema.safeParse(vals);
     if (!result.success) {
       toast.error('Dữ liệu không hợp lệ');
       return;

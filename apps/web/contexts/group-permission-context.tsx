@@ -2,11 +2,10 @@
 'use client';
 
 import { createContext, useContext, useMemo, ReactNode } from 'react';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { GroupDTO } from '@/models/group/groupDTO';
-import { useGroup } from '@repo/shared';
-import { hasGroupPermission } from '@/lib/auth/group-permission';
+import { GroupRole } from '@repo/shared/types/enums';
+import { GroupPermission } from '@repo/shared/types/enums';
+import { GroupDTO } from '@repo/shared';
+import { useGroup, hasGroupPermission } from '@repo/shared';
 
 type Ctx = {
   group: GroupDTO | undefined;

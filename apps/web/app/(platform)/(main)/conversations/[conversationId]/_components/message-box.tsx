@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageDTO } from '@/models/message/messageDTO';
+import { MessageDTO } from '@repo/shared';
 import { useChatStore, type MessageDTO as SharedMessageDTO } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import clsx from 'clsx';

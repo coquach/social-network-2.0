@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { UserDTO } from '@/models/user/userDTO';
+import type { UserDTO } from '@repo/shared';
 
 export const UserSearchCard = ({ user }: { user: UserDTO }) => {
   return (

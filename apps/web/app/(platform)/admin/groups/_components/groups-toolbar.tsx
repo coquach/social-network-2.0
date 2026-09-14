@@ -17,7 +17,7 @@ import {
   AdminGroupQuery,
   GroupMemberRange,
 } from "@/lib/actions/admin/admin-group-action";
-import { GroupStatus } from "@/models/group/enums/group-status.enum";
+import { GroupStatus } from "@repo/shared";
 
 type GroupsToolbarProps = {
   filter: AdminGroupQuery;

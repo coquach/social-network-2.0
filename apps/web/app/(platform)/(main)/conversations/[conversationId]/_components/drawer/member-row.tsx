@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser as useGetUser } from '@repo/shared/hooks';
 
 import { useAuth } from '@clerk/nextjs';
 import {

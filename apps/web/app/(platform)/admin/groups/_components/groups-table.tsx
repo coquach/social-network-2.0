@@ -38,9 +38,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { AdminGroupDTO } from '@/models/group/adminGroupDTO';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { GroupStatus } from '@/models/group/enums/group-status.enum';
+import { AdminGroupDTO } from "@repo/shared";
+import { GroupPrivacy } from '@repo/shared/types/enums';
+import { GroupStatus } from "@repo/shared";
 import { formatDateVN } from '@/utils/user.utils';
 import { Loader } from '@/components/loader-componnet';
 import { ConfirmActionDialog } from '../../_components/confirm-action-dialog';

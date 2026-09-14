@@ -25,15 +25,17 @@ import {
 import { LiveRegion } from '@/components/ui/live-region';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useGetUser, useUpdateUser } from '@/hooks/use-user-hook';
+import { useUser, useUpdateProfile } from '@repo/shared/hooks';
 import { ImageIcon, Pencil } from '@/lib/icons';
 import {
   INTEREST_OPTIONS,
+} from '@repo/shared/schemas';
+import {
   ProfileUpdateForm,
   ProfileUpdateSchema,
-} from '@/models/user/userDTO';
+} from '@/lib/schemas/profile.schema';
 import { useProfileModal } from '@/store/use-profile-modal';
-import { useUser } from '@clerk/nextjs';
+import { useUser as useClerkUser } from '@clerk/nextjs';
 import { useForm } from '@tanstack/react-form';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
@@ -54,11 +56,11 @@ export const ProfileModal = () => {
     isLoading,
     isError,
     error,
-  } = useGetUser(profileModal.id as string);
-  const { mutateAsync: updateUser, isPending } = useUpdateUser(
-    profileModal.id as string,
+  } = useUser(profileModal.id as string);
+  const { mutateAsync: updateUser, isPending } = useUpdateProfile(
+    
   );
-  const { user } = useUser();
+  const { user } = useClerkUser();
   const [customInterest, setCustomInterest] = useState('');
 
   const form = useForm({
@@ -85,7 +87,7 @@ export const ProfileModal = () => {
       },
     },
     onSubmit: async ({ value }) => {
-      const promise = updateUser(value, {
+      const promise = updateUser(value as any, {
         onSuccess: () => {
           profileModal.onClose();
           user?.reload();
@@ -572,14 +574,13 @@ export const ProfileModal = () => {
             </ScrollArea>
 
             <DialogFooter className="p-5 border-t mt-auto bg-white">
-              <form.Subscribe
-                selector={(state) => [state.isDirty]}
-                children={([isDirty]) => (
+              <form.Subscribe selector={(state) => [state.isDirty]}>
+                {([isDirty]) => (
                   <Button type="submit" disabled={!isDirty || isPending}>
                     Lưu thay đổi
                   </Button>
                 )}
-              />
+              </form.Subscribe>
             </DialogFooter>
           </form>
         )}

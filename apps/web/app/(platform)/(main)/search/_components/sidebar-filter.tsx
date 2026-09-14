@@ -9,9 +9,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { ReactionType } from '@/models/social/enums/social.enum';
-import { SearchGroupSortBy } from '@/lib/actions/search/search-actions';
+import { GroupPrivacy } from '@repo/shared/types/enums';
+import { ReactionType } from '@repo/shared';
+import { SearchGroupSortBy } from '@repo/shared';
 import { reactionsUI } from '@/lib/types/reaction';
 
 type SearchType = 'posts' | 'groups' | 'users';

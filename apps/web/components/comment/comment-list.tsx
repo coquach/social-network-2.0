@@ -1,7 +1,7 @@
 'use client';
 
-import { useGetComments } from '@/hooks/user-comment-hook';
-import { RootType } from '@/models/social/enums/social.enum';
+import { useComments } from '@repo/shared/hooks';
+import { RootType } from '@repo/shared';
 import { useMemo } from 'react';
 import { ErrorFallback } from '../error-fallback';
 import { CommentItem } from './comment-item';
@@ -23,7 +23,7 @@ export const CommentList = ({ postId, ownerPostId ,rootType }: CommentListProps)
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useGetComments({
+  } = useComments({
     rootId: postId,
     rootType,
   });

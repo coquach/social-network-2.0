@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ContentEntryFilter } from "@/lib/actions/admin/content-entry-action";
-import { TargetType } from "@/models/social/enums/social.enum";
-import { ContentStatus } from "@/models/social/post/contentEntryDTO";
+import { TargetType } from "@repo/shared";
+import { ContentStatus } from "@/models/admin/contentEntryDTO";
 
 const targetLabels: Record<TargetType, string> = {
   [TargetType.POST]: "Bài viết",

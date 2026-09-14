@@ -18,7 +18,7 @@ import {
   useDashboardSummary,
   useEmotionChart,
   useReportChart,
-} from '@/hooks/use-admin-dashboard';
+} from '@/hooks/admin/use-admin-dashboard';
 
 import { ContentPerformanceChart } from './_components/content-performance-chart';
 import { DateRangeFilter } from './_components/date-range-filter';

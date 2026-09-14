@@ -34,9 +34,9 @@ import {
 
 import { cn } from '@/lib/utils';
 
-import { useCreateReport } from '@/hooks/use-report-hook';
-import { CreateReportForm, ReportSchema } from '@/models/report/reportDTO';
-import { TargetType } from '@/models/social/enums/social.enum'; // chỉnh path
+import { useCreateReport } from '@repo/shared/hooks';
+import { CreateReportInput, CreateReportInputSchema } from '@repo/shared';
+import { TargetType } from '@repo/shared'; // chỉnh path
 import { LiveRegion } from '@/components/ui/live-region';
 
 const MAX_REASON = 1000;
@@ -62,11 +62,11 @@ export function CreateReportModal({
       targetId,
       targetType,
       reason: '',
-    } satisfies CreateReportForm,
+    } satisfies CreateReportInput,
 
     onSubmit: async ({ value }) => {
       // Validate with Zod
-      const result = ReportSchema.safeParse(value);
+      const result = CreateReportInputSchema.safeParse(value);
       if (!result.success) {
         toast.error('Invalid form data');
         return;

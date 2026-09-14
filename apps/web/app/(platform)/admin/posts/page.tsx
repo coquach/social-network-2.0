@@ -5,12 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { ContentToolbar } from './_components/content-toolbar';
 import { ContentTable } from './_components/content-table';
-import { useContentEntries } from '@/hooks/use-content-entries';
+import { useContentEntries } from '@/hooks/admin/use-admin-content-entries';
 import { ContentEntryFilter } from '@/lib/actions/admin/content-entry-action';
 import { AdminActivityLog } from '../_components/admin-activity-log';
 import { LogType } from '@/models/log/logDTO';
-import { TargetType } from '@/models/social/enums/social.enum';
-import { ContentStatus } from '@/models/social/post/contentEntryDTO';
+import { TargetType } from '@repo/shared';
+import { ContentStatus } from '@/models/admin/contentEntryDTO';
 
 export default function AdminPostsPage() {
   const searchParams = useSearchParams();

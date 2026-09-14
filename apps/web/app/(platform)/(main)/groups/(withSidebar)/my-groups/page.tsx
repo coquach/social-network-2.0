@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getMyGroups } from '@/lib/actions/group/group-action';
+import { groupService } from '@repo/shared';
 import { QueryErrorBoundary } from '@/components/query-error-boundary';
 import { getQueryClient } from '@/lib/query-client';
 import { auth } from '@clerk/nextjs/server';
@@ -22,7 +22,7 @@ export default async function MyGroupsPage() {
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery({
     queryKey: ['my-groups'],
-    queryFn: () => getMyGroups(token, { limit: 10 }),
+    queryFn: () => groupService.getMyGroups({ limit: 10 }),
   });
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

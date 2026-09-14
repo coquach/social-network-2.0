@@ -1,4 +1,4 @@
-import { Emotion } from '@/models/social/enums/social.enum';
+import { Emotion } from '@repo/shared';
 
 export interface FeelingUI {
   type: Emotion;

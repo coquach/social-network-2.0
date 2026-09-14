@@ -11,7 +11,7 @@
  * @see https://tanstack.com/query/latest/docs/react/guides/query-keys
  */
 
-import { TargetType, ReactionType } from '@/models/social/enums/social.enum';
+import { TargetType, ReactionType } from '@repo/shared';
 import type { CursorPagination } from '@repo/shared';
 
 export const queryKeys = {

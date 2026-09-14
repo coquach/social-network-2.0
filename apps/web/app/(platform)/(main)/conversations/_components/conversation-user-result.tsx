@@ -1,6 +1,6 @@
 'use client';
 
-import { UserDTO } from '@/models/user/userDTO';
+import { UserDTO } from '@repo/shared';
 import { AvatarWithStatus } from '@/components/avatar';
 
 export function ConversationUserResult({

@@ -1,15 +1,15 @@
 'use client';
 
-import { useDisReact, useReact } from '@/hooks/use-reaction-hook';
+import { useDisReact, useReact } from '@repo/shared/hooks';
 import { Reaction, reactionMap } from '@/lib/types/reaction';
 import { cn } from '@/lib/utils';
 import {
   ReactionType,
   RootType,
   TargetType,
-} from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+} from '@repo/shared';
+import { PostSnapshotDTO } from '@repo/shared';
+import { SharePostSnapshotDTO } from '@repo/shared';
 import { useCommentModal, useCreateShareModal } from '@/store/use-post-modal';
 import { MessageCircle, Share2, ThumbsUp } from '@/lib/icons';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -36,8 +36,8 @@ export default function PostActions({
   isShare,
   disableCommentModal = false,
 }: PostActionsProps) {
-  const { mutateAsync: react } = useReact(rootId);
-  const { mutateAsync: disReact } = useDisReact(rootId);
+  const { mutateAsync: react } = useReact();
+  const { mutateAsync: disReact } = useDisReact();
 
   const { openModal: openCommentModal } = useCommentModal();
   const { openModal: openCreateShareModal } = useCreateShareModal();

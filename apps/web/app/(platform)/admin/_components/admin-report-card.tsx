@@ -1,8 +1,8 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { ReportDTO, ReportStatus } from '@/models/report/reportDTO';
-import { GroupReportDTO } from '@/models/group/groupReportDTO';
+import { ReportDTO, ReportStatus } from '@repo/shared';
+import { GroupReportDTO } from '@repo/shared';
 import { formatDateVN } from '@/utils/user.utils';
 
 export type AdminReport = ReportDTO | GroupReportDTO;

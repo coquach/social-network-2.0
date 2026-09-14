@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { NotificationCardCompact } from '@/components/notification-card-compact';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useNotifications } from '@/hooks/use-notification-hooks';
+import { useNotifications, useUnreadCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from '@repo/shared/hooks';
 import { useAuth } from '@clerk/nextjs';
 import { Bell } from 'lucide-react';
 import Link from 'next/link';
@@ -16,8 +16,12 @@ import { useState } from 'react';
 
 export const NotificationDropdown = () => {
   const { userId } = useAuth();
-  const { notifications, isLoading, markRead, markReadAll, unreadCount } =
-    useNotifications(userId as string);
+  const { data, isLoading, fetchNextPage, hasNextPage } = useNotifications({});
+  const notifications = data?.pages.flatMap(p => p.data) ?? [];
+  const { data: unreadCount } = useUnreadCount();
+  const { mutate: markRead } = useMarkNotificationAsRead();
+  const { mutate: markReadAll } = useMarkAllNotificationsAsRead();
+
 
   const [open, setOpen] = useState(false);
   return (
@@ -25,7 +29,7 @@ export const NotificationDropdown = () => {
       <DropdownMenuTrigger asChild>
         <div className="relative h-full flex items-center justify-center p-2 hover:bg-sky-500/10 rounded-md cursor-pointer">
           <Bell size={22} className="text-sky-400" fill="#38bdf8" />
-          {unreadCount > 0 && (
+          {(unreadCount ?? 0) > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
               {unreadCount}
             </span>

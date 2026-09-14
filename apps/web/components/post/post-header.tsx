@@ -10,13 +10,13 @@ import {
   Audience,
   Emotion,
   TargetType,
-} from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+} from '@repo/shared';
+import { PostSnapshotDTO } from '@repo/shared';
+import { SharePostSnapshotDTO } from '@repo/shared';
 import {
   useDeletePostModal,
   useUpdatePostModal,
-  useUpdateSharePostModal,
+  useUpdateShareModal,
 } from '@/store/use-post-modal';
 import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -73,7 +73,7 @@ export default function PostHeader({
 
   const { openModal: deletePostModalOpen } = useDeletePostModal();
   const { openModal: updatePostModalOpen } = useUpdatePostModal();
-  const { openModal: updateSharePostModalOpen } = useUpdateSharePostModal();
+  const { openModal: updateSharePostModalOpen } = useUpdateShareModal();
 
   const isOwner = currentUserId === userId;
 

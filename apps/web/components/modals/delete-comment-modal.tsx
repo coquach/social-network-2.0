@@ -12,13 +12,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Trash2 } from '@/lib/icons';
 
-import { useDeleteComment } from '@/hooks/user-comment-hook';import { LiveRegion } from '@/components/ui/live-region';import { useDeleteCommentModal } from '@/store/use-post-modal';
+import { useDeleteComment } from '@repo/shared/hooks';import { LiveRegion } from '@/components/ui/live-region';import { useDeleteCommentModal } from '@/store/use-post-modal';
 import { toast } from 'sonner';
 
 export const DeleteCommentModal = () => {
   const { isOpen, closeModal, rootId, commentId } = useDeleteCommentModal();
   console.log('DeleteCommentModal rendered with commentId:', commentId, 'and rootId:', rootId);
-  const { mutateAsync, isPending } = useDeleteComment(rootId ?? '', commentId ?? '');
+  const { mutateAsync, isPending } = useDeleteComment();
 
   const handleDelete = async () => {
     if (!commentId) {
@@ -26,7 +26,7 @@ export const DeleteCommentModal = () => {
       return;
     }
 
-    const promise = mutateAsync().then(() => {
+    const promise = mutateAsync(commentId ?? '').then(() => {
       closeModal();
     });
 

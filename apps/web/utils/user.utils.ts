@@ -1,5 +1,5 @@
-import { SystemUserDTO } from "@/models/user/systemUserDTO";
-import { UserDTO } from "@/models/user/userDTO";
+import { UserDTO as SystemUserDTO } from '@repo/shared';
+import { UserDTO } from '@repo/shared';
 
 type NameableUser = Pick<UserDTO, "firstName" | "lastName"> |
   Pick<SystemUserDTO, "firstName" | "lastName">;

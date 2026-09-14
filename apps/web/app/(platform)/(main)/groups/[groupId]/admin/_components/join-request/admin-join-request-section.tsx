@@ -12,7 +12,7 @@ import {
 
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
+import { GroupPermission } from '@repo/shared/types/enums';
 
 import {
   Select,
@@ -23,8 +23,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { JoinRequestSortBy, JoinRequestStatus } from '@/models/group/enums/group-invite-status.enum';
-import { JoinRequestResponseDTO } from '@/models/group/groupRequestDTO';
+import { JoinRequestSortBy, JoinRequestStatus } from "@repo/shared";
+import { JoinRequestResponseDTO } from '@repo/shared';
 import { JoinRequestRow } from './join-request-row';
 
 type Props = {

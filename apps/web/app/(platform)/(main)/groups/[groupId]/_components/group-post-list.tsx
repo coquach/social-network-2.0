@@ -6,9 +6,9 @@ import { useInView } from "react-intersection-observer";
 import { ErrorFallback } from "@/components/error-fallback";
 import { PostCardFull } from "@/components/post/post-card-full";
 import { useGroupPermissionContext } from "@/contexts/group-permission-context";
-import { useGetPostByGroup } from "@/hooks/use-post-hook";
-import { MembershipStatus } from "@/models/group/groupDTO";
-import { PostGroupStatus } from "@/models/social/enums/social.enum";
+import { useGroupPosts as useGetPostByGroup } from "@repo/shared/hooks";
+import { MembershipStatus } from '@repo/shared';
+import { PostGroupStatus } from '@repo/shared';
 
 export const GroupPostList = ({ groupId }: { groupId: string }) => {
   const { group, role } = useGroupPermissionContext();
@@ -68,9 +68,10 @@ export const GroupPostList = ({ groupId }: { groupId: string }) => {
       )}
 
       {canViewPosts &&
-        allPosts.map((post) => (
-          <PostCardFull key={post.postId} data={post} />
-        ))}
+        allPosts.map((post) => {
+          const snapshotPost = { ...post, postId: post.id } as any;
+          return <PostCardFull key={post.id} data={snapshotPost} />;
+        })}
       {canViewPosts && isFetchingNextPage && <PostCardFull.Skeleton />}
       <div ref={ref}></div>
     </div>

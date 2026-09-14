@@ -18,7 +18,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 
-import { useAdminModerationRecordDetail } from '@/hooks/use-admin-moderation';
+import { useAdminModerationRecordDetail } from '@/hooks/admin/use-admin-moderation';
 import { formatDateVN } from '@/utils/user.utils';
 import { ModerationDecisionBadge } from './moderation-decision-badge';
 import { ModerationSeverityBadge } from './moderation-severity-badge';

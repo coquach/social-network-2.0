@@ -4,8 +4,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import clsx from 'clsx';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { ConversationDTO } from '@repo/shared';
+import { useUser as useGetUser } from '@repo/shared/hooks';
 
 type GroupConversationAvatarProps = {
   conversation: ConversationDTO;

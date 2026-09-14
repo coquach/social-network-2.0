@@ -19,8 +19,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { MediaType, TargetType } from '@/models/social/enums/social.enum';
-import { ContentEntryDTO, ContentStatus } from '@/models/social/post/contentEntryDTO';
+import { MediaType, TargetType } from '@repo/shared';
+import { ContentEntryDTO, ContentStatus } from '@/models/admin/contentEntryDTO';
 import { formatDateVN } from '@/utils/user.utils';
 import Image from 'next/image';
 import { TextCollapse } from '@/components/text-collapse';

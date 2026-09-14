@@ -3,9 +3,9 @@ import { auth } from '@clerk/nextjs/server';
 import {
   getCachedGroupMembers,
 } from '@/lib/cached-fetchers';
-import type { GroupMemberFilter } from '@/lib/actions/group/group-action';
+import type { GroupMemberFilter } from '@repo/shared';
 import { getQueryClient } from '@/lib/query-client';
-import { GroupMemberStatus } from '@/models/group/enums/group-member-status.enum';
+import { GroupMemberStatus } from "@repo/shared";
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { MemberSection } from './member-section';
 

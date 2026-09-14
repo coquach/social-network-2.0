@@ -10,8 +10,7 @@ import {
 import { ErrorFallback } from '@/components/error-fallback';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetUser } from '@/hooks/use-user-hook';
-import { useStartConversation } from '@/hooks/use-start-conversation';
+import { useUser, useCreateConversation } from '@repo/shared/hooks';
 import { useImageViewerModal } from '@/store/use-image-viewer-modal';
 import { useProfileModal } from '@/store/use-profile-modal';
 import {
@@ -53,7 +52,7 @@ export const UserProfileInfo = () => {
     isLoading,
     isError,
     error,
-  } = useGetUser(userId as string);
+  } = useUser(userId as string);
 
   const { mutate: requestFriend, isPending: isRequesting } =
     useSendFriendRequest();
@@ -66,8 +65,8 @@ export const UserProfileInfo = () => {
   const { mutate: removeFriend, isPending: isRemoving } = useRemoveFriend();
   const { mutate: blockUser, isPending: isBlocking } = useBlockUser();
   const { mutate: unblockUser, isPending: isUnblocking } = useUnblockUser();
-  const { startConversation, isPending: isStartingConversation } =
-    useStartConversation();
+  const { mutate: createConversation, isPending: isStartingConversation } =
+    useCreateConversation();
   const { onOpen: openImageViewer } = useImageViewerModal();
   const profileModal = useProfileModal();
 
@@ -217,7 +216,16 @@ export const UserProfileInfo = () => {
                   {!isBlocked && (
                     <Button
                       size="sm"
-                      onClick={() => startConversation(userId as string)}
+                      onClick={() =>
+                        createConversation(
+                          { isGroup: false, participants: [userId as string] },
+                          {
+                            onSuccess: (conv) => {
+                              if (conv?._id) router.push(`/conversations/${conv._id}`);
+                            },
+                          }
+                        )
+                      }
                       disabled={isBusy}
                     >
                       <MessageCircle className="mr-2 h-4 w-4" />

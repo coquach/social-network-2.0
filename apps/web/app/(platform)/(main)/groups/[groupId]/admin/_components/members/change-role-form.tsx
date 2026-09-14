@@ -1,6 +1,6 @@
 'use client';
-import { GroupMemberDTO } from '@/models/group/groupMemberDTO';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
+import { GroupMemberDTO } from '@repo/shared';
+import { GroupRole } from '@repo/shared/types/enums';
 import { useMemo, useState } from 'react';
 import {
   Select,

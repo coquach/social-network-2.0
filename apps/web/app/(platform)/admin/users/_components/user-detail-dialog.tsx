@@ -21,13 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useUpdateUserRole } from '@/hooks/use-admin-users';
+import { useUpdateProfileRole } from '@/hooks/admin/use-admin-users';
 import { getRoleFromClaims } from '@/lib/role';
 import {
   SystemRole,
   SystemUserDTO,
   UserStatus,
-} from '@/models/user/systemUserDTO';
+} from '@repo/shared';
 import { formatDateVN, getFullName } from '@/utils/user.utils';
 import { useAuth } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -73,7 +73,7 @@ export function UserDetailDialog({
   const myRole = getRoleFromClaims(sessionClaims);
   const canEditRole = myRole === 'admin';
 
-  const updateRole = useUpdateUserRole();
+  const updateRole = useUpdateProfileRole();
   const [role, setRole] = React.useState<SystemRole | null>(user?.role ?? null);
 
   React.useEffect(() => {

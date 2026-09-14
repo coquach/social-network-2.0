@@ -1,4 +1,4 @@
-import api from '@/lib/api-client';
+import { getApiClient } from "@repo/shared";
 
 export interface DashboardQueryDTO {
   from?: Date;
@@ -14,13 +14,10 @@ export const getDashboard = async (
   pendingReports: number;
 }> => {
   try {
-    const response = await api.get('/admin/dashboard', {
+    const response = await getApiClient().get("/admin/dashboard", {
       params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -39,13 +36,10 @@ export const getContentChart = async (
   }[]
 > => {
   try {
-    const response = await api.get('/admin/content-chart', {
+    const response = await getApiClient().get("/admin/content-chart", {
       params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -64,13 +58,10 @@ export const getReportChart = async (
   }[]
 > => {
   try {
-    const response = await api.get('/admin/report-chart', {
+    const response = await getApiClient().get("/admin/report-chart", {
       params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     });
-    return response.data;
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;
@@ -92,13 +83,13 @@ export const getEmotionDashboard = async (
   query: DashboardQueryDTO,
 ): Promise<EmotionDashboardDTO[]> => {
   try {
-    const response = await api.get('/admin/emotion/dashboard/charts', {
-      params: query,
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await getApiClient().get(
+      "/admin/emotion/dashboard/charts",
+      {
+        params: query,
       },
-    });
-    return response.data;
+    );
+    return response as any;
   } catch (error) {
     console.error(error);
     throw error;

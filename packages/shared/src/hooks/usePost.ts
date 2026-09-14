@@ -107,7 +107,8 @@ export const useUserPosts = (
  */
 export const useGroupPosts = (
   groupId: string,
-  params?: { mainEmotion?: Emotion; status?: PostGroupStatus },
+  params?: { mainEmotion?: Emotion; status?: PostGroupStatus; limit?: number },
+  options?: { enabled?: boolean },
 ) => {
   return useInfiniteQuery<CursorPageResponse<PostDTO>>({
     queryKey: params?.status
@@ -122,7 +123,7 @@ export const useGroupPosts = (
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
     initialPageParam: undefined,
-    enabled: !!groupId,
+    enabled: options?.enabled !== false && !!groupId,
     ...queryConfigs.standard,
   });
 };

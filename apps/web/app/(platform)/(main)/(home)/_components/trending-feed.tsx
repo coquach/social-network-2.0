@@ -2,8 +2,8 @@
 
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
-import { useGetTrendingFeed } from '@/hooks/use-feed-hook';
-import { Emotion } from '@/models/social/enums/social.enum';
+import { useTrendingFeed } from '@repo/shared';
+import { Emotion } from '@repo/shared';
 import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 
@@ -20,7 +20,7 @@ export const TrendingFeed = ({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetTrendingFeed({ limit: 10, mainEmotion });
+  } = useTrendingFeed({ limit: 10, mainEmotion });
 
   const { ref, inView } = useInView();
 

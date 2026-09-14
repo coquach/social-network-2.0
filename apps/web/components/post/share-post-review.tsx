@@ -1,6 +1,6 @@
 'use client';
 
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
+import { PostSnapshotDTO } from '@repo/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import { TextCollapse } from '../text-collapse';

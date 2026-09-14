@@ -9,11 +9,11 @@ import { useAuth } from '@clerk/nextjs';
 import { formatDistanceToNow } from 'date-fns';
 import { vi as viVN } from 'date-fns/locale';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO } from '@repo/shared';
 import { ProfileDrawer } from './drawer/profile-drawer';
 
 import { usePresenceStore } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser as useGetUser } from '@repo/shared/hooks';
 import { GroupAvatar } from '../../_components/group-avatar';
 import { DirectAvatar } from '../../_components/direct-avatar';
 

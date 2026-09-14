@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getInvitedGroups } from '@/lib/actions/group/group-action';
+import { groupService } from '@repo/shared';
 import { getQueryClient } from '@/lib/query-client';
 import { auth } from '@clerk/nextjs/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
@@ -21,7 +21,7 @@ export default async function InvitedGroupsPage() {
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery({
     queryKey: ['get-invited-groups', { limit: 10 }],
-    queryFn: () => getInvitedGroups(token, { limit: 10 }),
+    queryFn: () => groupService.getInvitedGroups({ limit: 10 }),
   });
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -3,11 +3,9 @@
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
 import { ShareCard } from '@/components/post/share-post';
-import { useGetMyFeed } from '@/hooks/use-feed-hook';
-import { FeedDTO, FeedType } from '@/models/feed/feedDTO';
-import { Emotion } from '@/models/social/enums/social.enum';
-import { PostSnapshotDTO } from '@/models/social/post/postDTO';
-import { SharePostSnapshotDTO } from '@/models/social/post/sharePostDTO';
+import { useMyFeed } from '@repo/shared';
+import { FeedDTO, FeedType, PostSnapshotDTO, ShareSnapshotDTO as SharePostSnapshotDTO, PersonalFeedItem } from '@repo/shared';
+import { Emotion } from '@repo/shared';
 import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 
@@ -24,7 +22,7 @@ export const PersonalFeed = ({
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useGetMyFeed({ limit: 10, mainEmotion });
+  } = useMyFeed({ limit: 10, mainEmotion });
   const { ref, inView } = useInView();
 
   useEffect(() => {
@@ -49,16 +47,16 @@ export const PersonalFeed = ({
       )}
 
       {/* Danh sách bài viết */}
-      {allFeedItems.map((feed: FeedDTO) =>
+      {allFeedItems.map((feed: PersonalFeedItem) =>
         feed.type === FeedType.POST ? (
           <PostCardFull
             key={feed.id}
-            data={feed.item as PostSnapshotDTO}
+            data={feed.data as PostSnapshotDTO}
           />
         ) : (
           <ShareCard
             key={feed.id}
-            data={feed.item as SharePostSnapshotDTO}
+            data={feed.data as SharePostSnapshotDTO}
           />
         )
       )}

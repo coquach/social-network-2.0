@@ -5,9 +5,9 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useAuth } from '@clerk/nextjs';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { ConversationDTO } from '@/models/conversation/conversationDTO';
+import { ConversationDTO } from '@repo/shared';
 import { ensureLastSeenMap } from '@/utils/ensure-last-seen-map';
-import { useMarkConversationAsRead } from '@/hooks/use-conversation';
+import { useMarkConversationAsRead } from '@repo/shared/hooks';
 
 type MarkReadFn = (p: {
   conversationId: string;
@@ -56,7 +56,7 @@ export function MarkReadProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      mutate({ conversationId, lastMessageId });
+      mutate(conversationId);
     }
   }, 250);
 

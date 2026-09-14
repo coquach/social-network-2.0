@@ -12,16 +12,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Trash2 } from '@/lib/icons';
 
-import { useDeletePost } from '@/hooks/use-post-hook';
+import { useDeletePost } from '@repo/shared/hooks';
 import { LiveRegion } from '@/components/ui/live-region';
 import { useDeletePostModal } from '@/store/use-post-modal';
 import { toast } from 'sonner';
-import { useDeleteSharePost } from '@/hooks/use-share-hook';
+import { useDeleteShare } from '@repo/shared/hooks';
 
 export const DeletePostModal = () => {
   const { isOpen, closeModal, postId, isShare, shareId } = useDeletePostModal();
-  const { mutateAsync: deletePost, isPending: postPending } = useDeletePost(postId ?? '');
-  const { mutateAsync: deleteShare, isPending: sharePending } = useDeleteSharePost(shareId ?? '', postId ?? '');
+  const { mutateAsync: deletePost, isPending: postPending } = useDeletePost();
+  const { mutateAsync: deleteShare, isPending: sharePending } = useDeleteShare();
 
 
   const handleDelete = async () => {
@@ -31,8 +31,8 @@ export const DeletePostModal = () => {
     }
 
     const promise = isShare
-      ? deleteShare().then(() => closeModal())
-      : deletePost().then(() => closeModal());
+      ? deleteShare({ shareId: shareId ?? '', postId: postId ?? '' }).then(() => closeModal())
+      : deletePost(postId ?? '').then(() => closeModal());
 
     toast.promise(promise, {
       loading: 'Đang xóa bài viết...',

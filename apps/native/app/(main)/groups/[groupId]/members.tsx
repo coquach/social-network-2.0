@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
 
-import { GroupPermission, useGroupPermission } from '@repo/shared';
+import { useGroupPermission } from '@repo/shared';
 import { useGroup } from '@repo/shared/hooks';
 
 import { MemberSection } from './members/member-section';
@@ -13,7 +13,7 @@ import { Text, View } from 'react-native';
 export default function GroupMembersScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const { data: group, isLoading, isError } = useGroup(groupId ?? '');
-  const { can } = useGroupPermission(group);
+  useGroupPermission(group);
 
   if (isLoading) {
     return (

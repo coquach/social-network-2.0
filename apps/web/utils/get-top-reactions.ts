@@ -1,5 +1,5 @@
 import { reactionsUI } from '@/lib/types/reaction';
-import { ReactionType } from '@/models/social/enums/social.enum';
+import { ReactionType } from '@repo/shared';
 
 interface ReactionCount {
   type: ReactionType;

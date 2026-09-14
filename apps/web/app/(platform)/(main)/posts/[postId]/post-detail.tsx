@@ -3,20 +3,20 @@
 import { CommentInput } from '@/components/comment/comment-input';
 import { CommentList } from '@/components/comment/comment-list';
 import { PostCardFull } from '@/components/post/post-card-full';
-import { RootType, TargetType } from '@/models/social/enums/social.enum';
+import { RootType, TargetType } from '@repo/shared';
 
 import PostActions from '@/components/post/post-action';
 
 import PostHeader from '@/components/post/post-header';
 import PostStats from '@/components/post/post-stats';
-import { useGetPost } from '@/hooks/use-post-hook';
+import { usePost } from '@repo/shared/hooks';
 import { cn } from '@/lib/utils';
 import { mapPostToSnapshot } from '@/utils/map-post-to-snapshot';
 import { MediaCarousel } from './_components/media-carousel';
 import { TextCollapse } from '@/components/text-collapse';
 
 export default function PostDetailView({ postId }: { postId: string }) {
-  const { data: post, isLoading, isError } = useGetPost(postId);
+  const { data: post, isLoading, isError } = usePost(postId);
 
   if (isLoading) {
     return (

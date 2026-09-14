@@ -1,11 +1,11 @@
 'use client';
 import { EmojiButton } from '@/components/emoji-button';
 import { Button } from '@/components/ui/button';
-import { useConversation } from '@/hooks/use-conversation';
-import { useSendMessage } from '@/hooks/use-message';
+import { useConversationId } from '@/hooks/use-conversation-id';
+import { useSendMessage } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
-import { CreateMessageForm, MessageDTO as LocalMessageDTO } from '@/models/message/messageDTO';
-import { MediaType } from '@/models/social/enums/social.enum';
+import { CreateMessageInput, MessageDTO as LocalMessageDTO } from '@repo/shared';
+import { MediaType } from '@repo/shared';
 import { useChatStore } from '@repo/shared';
 import { SendHorizonal, X } from 'lucide-react';
 import Image from 'next/image';
@@ -17,7 +17,7 @@ import { MessageReply } from './message-reply';
 const MAX_MEDIA = 5;
 
 export const FormInput = () => {
-  const { conversationId } = useConversation();
+  const { conversationId } = useConversationId();
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [previews, setPreviews] = useState<
@@ -32,7 +32,7 @@ export const FormInput = () => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // ---- hook gửi tin nhắn (REST) ----
-  const { mutateAsync: sendMessageMutate, isPending } = useSendMessage();
+  const { mutateAsync: sendMessageMutate, isPending } = useSendMessage(conversationId);
 
   // --- AUTO RESIZE TEXTAREA ---
   const autoResize = (el: HTMLTextAreaElement | null) => {
@@ -118,16 +118,11 @@ export const FormInput = () => {
     if (isPending) return;
     if (!content.trim() && media.length === 0) return;
 
-    const form: CreateMessageForm = {
+    await sendMessageMutate({
       conversationId,
       content: content.trim(),
       replyTo: replyTo?._id,
-      // attachments sẽ được hook tự gán sau khi upload
-    };
-
-    await sendMessageMutate({
-      form,
-      media,
+      uploadFiles: media,
     });
 
     setContent('');

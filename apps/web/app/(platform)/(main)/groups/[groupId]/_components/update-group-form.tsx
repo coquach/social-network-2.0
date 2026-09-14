@@ -7,10 +7,10 @@ import { toast } from 'sonner';
 import { PencilLine, UserCircle2 } from 'lucide-react';
 
 import { useGroupPermissionContext } from '@/contexts/group-permission-context';
-import { GroupPermission } from '@/models/group/enums/group-permission.enum';
-import { UpdateGroupSchema } from '@/models/group/groupDTO';
-import type { UpdateGroupForm as UpdateGroupFormValues } from '@/models/group/groupDTO';
-import { MediaType } from '@/models/social/enums/social.enum';
+import { GroupPermission } from '@repo/shared/types/enums';
+import { UpdateGroupInputSchema } from '@repo/shared';
+import type { UpdateGroupInput as UpdateGroupInputValues } from '@repo/shared';
+import { MediaType } from '@repo/shared';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -33,14 +33,14 @@ import { MediaItem } from '@/lib/types/media';
 import { cn } from '@/lib/utils';
 import { countChars } from '@/utils/count-chars';
 
-type UpdateGroupFormProps = {
+type UpdateGroupInputProps = {
   open: boolean;
 };
 
 const MAX_NAME = 100;
 const MAX_DESCRIPTION = 1000;
 
-export const UpdateGroupForm = ({ open }: UpdateGroupFormProps) => {
+export const UpdateGroupForm = ({ open }: UpdateGroupInputProps) => {
   const { group, can } = useGroupPermissionContext();
   const canEditInfo = can(GroupPermission.UPDATE_GROUP);
 
@@ -76,11 +76,11 @@ export const UpdateGroupForm = ({ open }: UpdateGroupFormProps) => {
     defaultValues: {
       name: group?.name ?? '',
       description: group?.description ?? '',
-    } satisfies UpdateGroupFormValues,
+    } satisfies UpdateGroupInputValues,
 
     validators: {
       onSubmit: ({ value }) => {
-        const result = UpdateGroupSchema.safeParse({
+        const result = UpdateGroupInputSchema.safeParse({
           name: value.name?.trim() || undefined,
           description: value.description?.trim() || undefined,
         });

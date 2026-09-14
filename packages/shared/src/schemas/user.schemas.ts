@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PrivacyLevel, MessagePrivacy } from '../types/user.types';
+import { PrivacyLevel, MessagePrivacy, SystemRole } from '../types/user.types';
 
 export const UserPrivacySettingsSchema = z.object({
   profileVisibility: z.nativeEnum(PrivacyLevel),
@@ -72,4 +72,12 @@ export const UpdateUserInputSchema = z.object({
   coverImageUrl: z.url().optional(),
   isActive: z.boolean().optional(),
   privacySettings: UserPrivacySettingsSchema.optional(),
+});
+
+export const CreateSystemUserSchema = z.object({
+  email: z.email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters long'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  role: z.nativeEnum(SystemRole),
 });

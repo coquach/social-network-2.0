@@ -41,9 +41,9 @@ import { useCreateGroup } from '@repo/shared';
 import { MediaItem } from '@/lib/types/media';
 import { cn } from '@/lib/utils';
 import { countChars } from '@/utils/count-chars';
-import { GroupPrivacy } from '@/models/group/enums/group-privacy.enum';
-import { CreateGroupForm, GroupSchema } from '@/models/group/groupDTO';
-import { MediaType } from '@/models/social/enums/social.enum';
+import { GroupPrivacy } from '@repo/shared/types/enums';
+import { CreateGroupInput, CreateGroupInputSchema } from '@repo/shared';
+import { MediaType } from '@repo/shared';
 
 type CreateGroupDialogProps = {
   open: boolean;
@@ -75,11 +75,11 @@ export const CreateGroupDialog = ({
       rules: '',
       groupCategoryId: undefined,
       avatar: undefined,
-    } satisfies CreateGroupForm,
+    } satisfies CreateGroupInput,
 
     validators: {
       onSubmit: ({ value }) => {
-        const result = GroupSchema.safeParse({
+        const result = CreateGroupInputSchema.safeParse({
           ...value,
           name: value.name?.trim() ?? '',
           description: value.description?.trim() || undefined,
@@ -100,7 +100,7 @@ export const CreateGroupDialog = ({
 
       setAvatarError(null);
 
-      const payload: CreateGroupForm = {
+      const payload: CreateGroupInput = {
         ...value,
         name: value.name.trim(),
         description: value.description?.trim() || undefined,

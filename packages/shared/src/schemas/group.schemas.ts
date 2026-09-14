@@ -22,3 +22,10 @@ export const UpdateGroupInputSchema = CreateGroupInputSchema.partial().extend({}
 export const CreateGroupReportInputSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 });
+
+export const GroupSettingSchema = z.object({
+  requiredPostApproval: z.boolean().optional(),
+  maxMembers: z.number().optional(),
+  requireAdminApprovalToJoin: z.boolean().optional(),
+  allowMemberInvite: z.boolean().optional(),
+});

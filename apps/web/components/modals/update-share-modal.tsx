@@ -18,33 +18,30 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { useUpdateSharePost } from '@/hooks/use-share-hook';
-import { Audience } from '@/models/social/enums/social.enum';
+import { useUpdateShare } from '@repo/shared/hooks';
+import { Audience } from '@repo/shared';
 import {
   SharePostSnapshotDTO,
-  UpdateSharePostForm,
-  UpdateSharePostSchema,
-} from '@/models/social/post/sharePostDTO';
-import { useUpdateSharePostModal } from '@/store/use-post-modal';
+  UpdateShareInput,
+  UpdateShareInputSchema,
+} from '@repo/shared';
+import { useUpdateShareModal } from '@/store/use-post-modal';
 
 export const UpdateSharePostModal = () => {
-  const { isOpen, closeModal, data, } = useUpdateSharePostModal();
+  const { isOpen, closeModal, data, } = useUpdateShareModal();
 
 
   const snapshot = data as SharePostSnapshotDTO;
   console.log('snapshot', snapshot);
 
-  const form = useForm<UpdateSharePostForm>({
+  const form = useForm<UpdateShareInput>({
     defaultValues: {
       content: snapshot?.content ?? '',
       audience: snapshot?.audience ?? Audience.PUBLIC,
     },
   });
 
-  const { mutateAsync: updateShare, isPending } = useUpdateSharePost(
-    snapshot?.shareId ?? '',
-    snapshot?.userId ?? ''
-  );
+  const { mutateAsync: updateShare, isPending } = useUpdateShare(snapshot?.shareId ?? '');
 
   useEffect(() => {
     form.reset({
@@ -54,9 +51,9 @@ export const UpdateSharePostModal = () => {
     });
   }, [snapshot, form]);
 
-  const handleSubmit = (vals: UpdateSharePostForm) => {
+  const handleSubmit = (vals: UpdateShareInput) => {
     // Validate with Zod
-    const result = UpdateSharePostSchema.safeParse(vals);
+    const result = UpdateShareInputSchema.safeParse(vals);
     if (!result.success) {
       toast.error('Dữ liệu không hợp lệ');
       return;

@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, useState } from 'react';
 
 import { useFriends } from '@repo/shared';
-import { useGetUser } from '@/hooks/use-user-hook';
+import { useUser as useGetUser } from '@repo/shared/hooks';
 import { DirectAvatar } from '../../../_components/direct-avatar';
 
 const FriendRow = ({

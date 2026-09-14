@@ -1,7 +1,7 @@
 import { AvatarWithStatus } from '@/components/avatar';
 import { cn } from '@/lib/utils';
-import { GroupRole } from '@/models/group/enums/group-role.enum';
-import { GroupMemberDTO } from '@/models/group/groupMemberDTO';
+import { GroupRole } from '@repo/shared/types/enums';
+import { GroupMemberDTO } from '@repo/shared';
 
 type MemberCardProps = {
   member: GroupMemberDTO;

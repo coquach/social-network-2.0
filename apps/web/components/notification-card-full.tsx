@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { NotificationDTO } from '@/models/notification/notificationDTO';
+import { NotificationDTO } from '@repo/shared';
 import { getNotificationTypeLabel } from '@/lib/notification-type-labels';
 import { getNotificationTypeHref } from '@/lib/notification-type-links';
 import { BLUR_PLACEHOLDERS } from '@/lib/blur-placeholder';

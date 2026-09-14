@@ -1,11 +1,11 @@
-import { createCloudinaryUploadService } from '@/lib/services/cloudinary-upload.service';
-import { MediaItem } from '@/lib/types/media';
-import { MediaDTO, MediaType } from '@/models/social/enums/social.enum';
-import { getRecommendedUploadBatchOptions } from '@repo/shared';
+import { createCloudinaryUploadService } from "@/lib/services/cloudinary-upload.service";
+import { MediaItem } from "@/lib/types/media";
+import { MediaDTO, MediaType } from '@repo/shared';
+import { getRecommendedUploadBatchOptions } from "@repo/shared";
 
-let uploadServiceInstance:
-  | ReturnType<typeof createCloudinaryUploadService>
-  | null = null;
+let uploadServiceInstance: ReturnType<
+  typeof createCloudinaryUploadService
+> | null = null;
 
 const getUploadService = () => {
   if (!uploadServiceInstance) {
@@ -51,7 +51,7 @@ export const uploadToCloudinary = async (
   type: MediaType,
   folder: string,
   signal?: AbortSignal,
-  publicId?: string
+  publicId?: string,
 ): Promise<MediaDTO> => {
   const uploadService = getUploadService();
   const result = await uploadService.uploadFile(
@@ -63,7 +63,7 @@ export const uploadToCloudinary = async (
       folder,
       signal,
       publicId,
-    }
+    },
   );
 
   return mapUploadResultToMediaDTO(result);

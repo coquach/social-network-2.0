@@ -22,8 +22,9 @@ import {
 } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { SettingForm } from './setting-form';
 import { UpdateGroupForm } from './update-group-form';
+import { SettingForm } from './setting-form';
+import { UpdateGroupInput } from '@repo/shared';
 
 type ManageGroupDialogProps = {
   open: boolean;
@@ -128,6 +129,7 @@ export const ManageGroupDialog = ({
                 <div className="flex h-full min-h-0 flex-col">
                   {activeSection === 'info' && <UpdateGroupForm open={open} />}
                   {activeSection === 'settings' && <SettingForm open={open} />}
+
                 </div>
               </SidebarInset>
             </div>

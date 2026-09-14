@@ -25,7 +25,7 @@ import {
   useCreateAdminMusic,
   useDeleteAdminMusic,
   useUpdateAdminMusic,
-} from '@/hooks/use-admin-music';
+} from '@/hooks/admin/use-admin-music';
 
 import {
   MusicFormDialog,
