@@ -96,7 +96,7 @@ const UpdatePostModal = dynamic(
 );
 
 const UpdateSharePostModal = dynamic(
-  () => import('../modals/update-share-modal').then((mod) => ({ default: mod.UpdateShareModal })),
+  () => import('../modals/update-share-modal').then((mod) => ({ default: mod.UpdateSharePostModal })),
   { loading: () => null, ssr: false }
 );
 

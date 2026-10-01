@@ -1,7 +1,7 @@
 'use client';
 
 import { useShare } from '@repo/shared';
-import { RootType } from '@/models/social/enums/social.enum';
+import { RootType } from '@repo/shared';
 import { DetailView } from '@/components/post/detail-view';
 
 export default function ShareDetailViewWrapper({ shareId }: { shareId: string }) {

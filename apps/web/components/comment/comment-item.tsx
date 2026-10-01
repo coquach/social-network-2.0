@@ -238,7 +238,7 @@ export const CommentItem = ({
 
     toast.promise(promise, { loading: 'Đang cập nhật bình luận...' });
     await promise;
-  }, [draftContent, localContent, updateComment, comment.id]);
+  }, [draftContent, localContent, updateComment]);
 
   // =========================
   // UI (unchanged)

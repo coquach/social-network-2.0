@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { NotificationDTO } from '@repo/shared';
 import { getNotificationTypeLabel } from '@/lib/notification-type-labels';
-import { getNotificationTypeHref } from '@/lib/notification-type-links';
+import { getNotificationRoute } from '@repo/shared';
 import { BLUR_PLACEHOLDERS } from '@/lib/blur-placeholder';
 
 interface NotificationCardCompactProps {
@@ -23,7 +23,7 @@ export const NotificationCardCompact = ({
   onClick,
 }: NotificationCardCompactProps) => {
   const { payload, message, status, createdAt } = notif;
-  const href = getNotificationTypeHref(notif);
+  const href = getNotificationRoute(payload as any, 'web');
   const safePayload =
     payload && typeof payload === 'object'
       ? (payload as Record<string, unknown>)

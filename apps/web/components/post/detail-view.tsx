@@ -3,7 +3,7 @@
 import { CommentInput } from '@/components/comment/comment-input';
 import { CommentList } from '@/components/comment/comment-list';
 import { PostCardFull } from '@/components/post/post-card-full';
-import { RootType, TargetType } from '@/models/social/enums/social.enum';
+import { RootType, TargetType } from '@repo/shared';
 import PostActions from '@/components/post/post-action';
 import PostHeader from '@/components/post/post-header';
 import PostStats from '@/components/post/post-stats';

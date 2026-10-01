@@ -163,7 +163,7 @@ export const FCMProvider = ({ children }: { children: React.ReactNode }) => {
         hasRegistered.current = false;
       }
     };
-  }, [isSignedIn, queryClient, addNotification]);
+  }, [isSignedIn, queryClient, addNotification, router]);
 
   return <>{children}</>;
 };

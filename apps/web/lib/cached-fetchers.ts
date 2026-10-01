@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { conversationService, groupService, postService, type GroupMemberFilter } from '@repo/shared';
+import { conversationService, groupService, postService, shareService, type GroupMemberFilter } from '@repo/shared';
 import { initServerApi } from './server-api-init';
 import type { PostGroupStatus } from '@repo/shared';
 
@@ -23,6 +23,16 @@ export const getCachedPost = cache(
   async (postId: string) => {
     await initServerApi();
     return postService.getPost(postId);
+  }
+);
+
+/**
+ * Fetch a single share by ID with automatic deduplication
+ */
+export const getCachedShare = cache(
+  async (token: string, shareId: string) => {
+    await initServerApi();
+    return shareService.getShareById(shareId);
   }
 );
 

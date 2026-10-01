@@ -13,11 +13,7 @@ import { format, formatDistanceToNowStrict } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { History, PencilLine, Loader2 } from '@/lib/icons';
 import { useMemo } from 'react';
-<<<<<<< HEAD
-import { usePostEditHistory } from '@repo/shared/hooks';
-=======
 import { usePostEditHistory } from '@repo/shared';
->>>>>>> main
 
 export interface EditHistoryDTO {
   id: string;
@@ -42,11 +38,7 @@ export function PostEditHistoryModal({
     isLoading,
     isFetching,
     isError,
-<<<<<<< HEAD
   } = usePostEditHistory(enabled ? postId! : '');
-=======
-  } = usePostEditHistory(enabled ? postId! : '', { enabled });
->>>>>>> main
 
   const sorted = useMemo(() => {
     return (histories ?? [])
@@ -60,7 +52,7 @@ export function PostEditHistoryModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[680px] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-170 p-0 overflow-hidden">
         {/* Header */}
         <DialogHeader className="px-5 py-4 border-b border-sky-100 bg-white/95">
           <div className="flex items-start justify-between gap-3">
@@ -77,13 +69,13 @@ export function PostEditHistoryModal({
                   {loading
                     ? 'Đang tải...'
                     : sorted.length > 0
-                    ? `Có ${sorted.length} lần chỉnh sửa`
-                    : 'Chưa có chỉnh sửa nào'}
+                      ? `Có ${sorted.length} lần chỉnh sửa`
+                      : 'Chưa có chỉnh sửa nào'}
                 </DialogDescription>
               </div>
             </div>
 
-           
+
           </div>
         </DialogHeader>
 
@@ -101,7 +93,7 @@ export function PostEditHistoryModal({
                 <div className="text-sm font-medium text-gray-800">
                   Không tải được lịch sử chỉnh sửa
                 </div>
-    
+
               </div>
             ) : sorted.length === 0 ? (
               <div className="rounded-2xl border border-dashed bg-linear-to-b from-sky-50/60 to-white p-6 text-center">
@@ -126,9 +118,9 @@ export function PostEditHistoryModal({
                     const valid = !Number.isNaN(d.getTime());
                     const rel = valid
                       ? formatDistanceToNowStrict(d, {
-                          addSuffix: true,
-                          locale: vi,
-                        })
+                        addSuffix: true,
+                        locale: vi,
+                      })
                       : '';
                     const abs = valid ? format(d, 'dd/MM/yyyy HH:mm') : '';
 

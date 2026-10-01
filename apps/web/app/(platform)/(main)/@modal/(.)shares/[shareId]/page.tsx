@@ -1,7 +1,7 @@
 'use client';
 
 import { useShare } from '@repo/shared';
-import { RootType } from '@/models/social/enums/social.enum';
+import { RootType } from '@repo/shared';
 import { DetailView } from '@/components/post/detail-view';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';

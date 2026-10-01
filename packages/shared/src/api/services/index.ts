@@ -15,3 +15,4 @@ export * from './emotion.service';
 export * from './chatbot.service';
 export * from './music.service';
 export * from './call.service';
+export * from './share.service';
