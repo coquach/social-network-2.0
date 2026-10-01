@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/expo";
-import { Skeleton } from "heroui-native/skeleton";
+
 import type { ConversationDTO } from "@repo/shared";
 import { usePresenceStore, useUser } from "@repo/shared";
 import React from "react";
@@ -41,6 +41,10 @@ const getConversationRowClassName = ({
     pressed &&
       "border-sky-200/90 bg-sky-50 dark:border-sky-300/25 dark:bg-sky-500/10",
   );
+
+function Skeleton({ className }: { className?: string }) {
+  return <View className={cn("bg-slate-200 dark:bg-slate-800/80 animate-pulse", className)} />;
+}
 
 export function ChatConversationRowSkeleton() {
   return (

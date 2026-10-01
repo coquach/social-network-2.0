@@ -129,8 +129,8 @@ export default function AdminModerationsPage() {
   const reviewAppealMutation = useReviewAppeal();
   const restoreMutation = useRestoreModeratedContent();
 
-  const moderationRows = moderationQuery.data?.data ?? [];
-  const appealRows = appealsQuery.data?.data ?? [];
+  const moderationRows = React.useMemo(() => moderationQuery.data?.data ?? [], [moderationQuery.data?.data]);
+  const appealRows = React.useMemo(() => appealsQuery.data?.data ?? [], [appealsQuery.data?.data]);
 
   const filteredModerationRows = React.useMemo(() => {
     const keyword = violationsSearch.trim().toLowerCase();

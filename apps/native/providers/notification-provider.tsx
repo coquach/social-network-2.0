@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/expo';
 import notifee, { EventType } from 'react-native-notify-kit';
-import { notificationService } from '@repo/shared';
+import { notificationService, queryKeys } from '@repo/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { getMessaging, onMessage, onTokenRefresh } from '@react-native-firebase/messaging';
@@ -95,7 +96,8 @@ export const NotificationProvider = ({
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const registeredTokenRef = useRef<string | null>(null);
-  const { setIncomingCall } = useCallStore();
+  const { setIncomingCall, setAutoAcceptCallId } = useCallStore();
+  const queryClient = useQueryClient();
   const segmentsRef = useRef<string[]>([]);
   
   try {
@@ -117,8 +119,13 @@ export const NotificationProvider = ({
         if (isCallNotificationData(incomingData)) {
           if (incomingData) {
             const convId = incomingData.conversationId;
+            const callId = incomingData.callId;
             const isInsideTargetChat = Boolean(convId && segmentsRef.current.includes('chat') && segmentsRef.current.includes(convId));
-            if (!isInsideTargetChat) {
+            
+            const { incomingCall, activeCall } = useCallStore.getState();
+            const isCallAlreadyHandledInApp = (incomingCall?.id === callId) || (activeCall?.id === callId);
+
+            if (!isInsideTargetChat && !(AppState.currentState === 'active' && isCallAlreadyHandledInApp)) {
               void displayCallNotification(incomingData).catch((notificationError) => {
                 setError(normalizeError(notificationError));
               });
@@ -153,6 +160,8 @@ export const NotificationProvider = ({
             }).catch((notificationError) => {
               setError(normalizeError(notificationError));
             });
+            // Update unread notification count badge
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
           }
         }
       }
@@ -187,6 +196,7 @@ export const NotificationProvider = ({
             status: CallSessionStatus.RINGING,
             participants: [],
           });
+          setAutoAcceptCallId(callId);
           router.push('/chat/call');
         }
         if (detail.notification?.id) {
@@ -246,6 +256,7 @@ export const NotificationProvider = ({
             status: CallSessionStatus.RINGING,
             participants: [],
           });
+          setAutoAcceptCallId(pendingCallAnswer.callId);
           router.push('/chat/call');
           return;
         }
@@ -310,6 +321,7 @@ export const NotificationProvider = ({
             status: CallSessionStatus.RINGING,
             participants: [],
           });
+          setAutoAcceptCallId(pendingCallAnswer.callId);
           router.push('/chat/call');
           return;
         }

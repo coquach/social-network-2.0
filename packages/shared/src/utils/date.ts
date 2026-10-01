@@ -1,4 +1,4 @@
-import { format, isValid, parseISO } from 'date-fns';
+import { format, isValid, parseISO, isSameDay, isSameYear, isYesterday } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 /**
@@ -45,10 +45,6 @@ export const parseSafeDate = (
       // PostgreSQL/Python thường trả về 6 số lẻ (microseconds), date-fns và Hermes chỉ hỗ trợ tối đa 3 số lẻ (milliseconds)
       normalized = normalized.replace(/(\.\d{3})\d+/, '$1');
 
-      // Nếu backend trả string không kèm timezone, mặc định là UTC
-      if (!normalized.endsWith('Z') && !normalized.includes('+') && !normalized.match(/-\d\d:\d\d$/)) {
-        normalized += 'Z';
-      }
       parsed = parseISO(normalized);
       
       // Nếu parseISO vẫn trả về invalid date, thử new Date fallback với chuỗi gốc
@@ -143,6 +139,30 @@ export const formatRelativeTime = (
   }
 
   return `${y} năm trước`;
+};
+
+/**
+ * Format friendly time for feeds (Today -> relative, Yesterday -> "Hôm qua", Else -> date).
+ */
+export const formatFriendlyTime = (
+  dateInput?: string | Date | number | number[] | null,
+): string => {
+  const date = parseSafeDate(dateInput);
+  const now = new Date();
+
+  if (isSameDay(date, now)) {
+    return formatRelativeTime(date);
+  }
+
+  if (isYesterday(date)) {
+    return 'Hôm qua';
+  }
+
+  if (isSameYear(date, now)) {
+    return format(date, 'dd/MM', { locale: vi });
+  }
+
+  return format(date, 'dd/MM/yy', { locale: vi });
 };
 
 /**

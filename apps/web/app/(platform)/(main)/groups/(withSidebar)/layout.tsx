@@ -11,7 +11,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { Globe2, Mail, PlusCircle, UsersRound } from 'lucide-react';
+import { FcGlobe, FcDepartment, FcInvite } from 'react-icons/fc';
+import { PlusCircle } from 'lucide-react';
 import { CreateGroupDialog } from './_components/create-group';
 import { Button } from '@/components/ui/button';
 
@@ -31,12 +32,12 @@ export default function GrroupsLayout({
   }, [pathname]);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-full min-h-0">
       <CreateGroupDialog
         open={createGroupModalOpen}
         onOpenChange={setCreateGroupModalOpen}
       />
-      <div className="flex w-full min-h-w-full">
+      <div className="flex w-full h-full">
         <Sidebar className="sm:block pt-16">
           <SidebarHeader className="px-3 py-3">
             <div className="flex items-center justify-between">
@@ -59,17 +60,17 @@ export default function GrroupsLayout({
                 {
                   label: 'Khám phá',
                   href: `/groups/explore`,
-                  icon: Globe2,
+                  icon: FcGlobe,
                 },
                 {
                   label: 'Nhóm của tôi',
                   href: '/groups/my-groups',
-                  icon: UsersRound,
+                  icon: FcDepartment,
                 },
                 {
                   label: 'Lời mời',
                   href: '/groups/invites',
-                  icon: Mail,
+                  icon: FcInvite,
                 },
               ]}
             />

@@ -38,11 +38,11 @@ export function JoinRequestRow({ request, canManage, approving, rejecting, onApp
     <View className="mb-2 flex-row items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <View className="flex-1 flex-row items-center">
         <View className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
-          <Image source={{ uri: `https://api.dicebear.com/7.x/avataaars/svg?seed=${request.inviteeId}` }} className="h-full w-full" />
+          <Image source={{ uri: `https://api.dicebear.com/7.x/avataaars/svg?seed=${request.inviteeId || 'unknown'}` }} className="h-full w-full" />
         </View>
         <View className="ml-3 flex-1">
           <Text className="text-sm font-bold text-slate-900 dark:text-white" numberOfLines={1}>
-            ID: {request.inviteeId.substring(0, 8)}...
+            ID: {request.inviteeId ? `${request.inviteeId.substring(0, 8)}...` : 'N/A'}
           </Text>
           <Text className="text-[10px] uppercase text-slate-500">{statusLabelMap[request.status] ?? request.status}</Text>
         </View>

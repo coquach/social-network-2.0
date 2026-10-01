@@ -172,7 +172,7 @@ export default function ChatConversationScreen() {
     markConversationAsRead,
   });
 
-  const { startCall, joinOngoingCall } = useCallActions();
+  const { startCall, joinOngoingCall, endCall } = useCallActions();
 
   const otherParticipant = React.useMemo(() => {
     if (!conversation) {
@@ -633,6 +633,7 @@ export default function ChatConversationScreen() {
             }}
             onStartCall={handleStartCall}
             onJoinCall={(callId) => joinOngoingCall(callId, CallType.VIDEO)}
+            onEndCall={(callId, isGroup) => endCall(callId, isGroup)}
           />
 
           {isConversationLoading ? (

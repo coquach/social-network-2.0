@@ -17,7 +17,8 @@
     return NextResponse.redirect(url);
   }
   export default clerkMiddleware(async (auth, req) => {
-    const { isAuthenticated, sessionClaims } = await auth();
+    const { userId, sessionClaims } = await auth();
+    const isAuthenticated = !!userId;
     const role = getRoleFromClaims(sessionClaims);
     const pathname = new URL(req.url).pathname;
     if (isPublicRoute(req)) {
@@ -27,8 +28,17 @@
       return NextResponse.next();
     }
 
-    if (!isAuthenticated)
+    if (!isAuthenticated) {
+      const isApi = pathname.startsWith('/api') || pathname.startsWith('/trpc');
+      const isPrefetch = req.headers.get('next-router-prefetch') === '1';
+      
+      // Không redirect các request API hoặc request prefetch của Next.js
+      // Tránh lỗi Next.js cache lại lệnh redirect làm hỏng điều hướng
+      if (isApi || isPrefetch) {
+        return new NextResponse('Unauthorized', { status: 401 });
+      }
       return NextResponse.redirect(new URL('/marketing', req.url));
+    }
 
   if (isAdminRoute(req) && !roleAtLeast(role ?? 'user', 'staff')) {
     return NextResponse.redirect(new URL('/', req.url));

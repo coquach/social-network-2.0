@@ -1,10 +1,10 @@
-import { useGroupSettings, useUpdateGroupSettings, useGroup } from '@repo/shared/hooks';
+import { useGroupSettings, useUpdateGroupSettings, useGroup, useGroupPermission } from '@repo/shared/hooks';
 import { useLocalSearchParams } from 'expo-router';
 import { Switch } from 'heroui-native/switch';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
-import { GroupPermission, useGroupPermission } from '@repo/shared';
+import { GroupPermission } from '@repo/shared/types';
 import { AppHeader } from '~/components/ui/app-header';
 import { AppLoadingBlock } from '~/components/ui/app-loading';
 import { AppTitle } from '~/components/ui/app-text';

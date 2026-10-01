@@ -30,6 +30,7 @@ import {
 import { AppLoadingBlock } from '~/components/ui/app-loading';
 import { AppModal } from '~/components/ui/app-modal';
 import { AppToast } from '~/components/ui/app-toast';
+import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
 
 interface GroupHeaderProps {
   group: GroupDTO;
@@ -134,21 +135,35 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
     return new Set(ids);
   }, [requestData?.pages]);
 
-  const renderQuickAction = (
+  const [isOptionsVisible, setIsOptionsVisible] = React.useState(false);
+
+  const renderOptionItem = (
     icon: React.ComponentProps<typeof Ionicons>['name'],
     label: string,
     onPress: () => void,
+    isDestructive = false,
   ) => (
     <TouchableOpacity
-      onPress={onPress}
-      className="h-11 rounded-xl bg-slate-100 px-4 dark:bg-slate-800"
+      onPress={() => {
+        setIsOptionsVisible(false);
+        onPress();
+      }}
+      className="flex-row items-center gap-4 rounded-2xl bg-app-surface p-4 active:bg-slate-50 dark:bg-app-surface-dark dark:active:bg-slate-800/50"
     >
-      <View className="h-full flex-row items-center gap-2">
-        <Ionicons name={icon} size={18} color="#64748b" />
-        <Text className="font-bold text-slate-600 dark:text-slate-300">
-          {label}
-        </Text>
+      <View
+        className={`h-10 w-10 items-center justify-center rounded-full ${
+          isDestructive ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-100 dark:bg-slate-800'
+        }`}
+      >
+        <Ionicons name={icon} size={20} color={isDestructive ? '#ef4444' : '#64748b'} />
       </View>
+      <Text
+        className={`text-base font-semibold ${
+          isDestructive ? 'text-red-500' : 'text-app-fg dark:text-app-fg-dark'
+        }`}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -274,80 +289,89 @@ export const GroupHeader = ({ group }: GroupHeaderProps) => {
           ) : null}
 
           {membershipStatus === MembershipStatus.MEMBER ? (
-            <>
-              <View className="flex-row gap-2">
-                {can(GroupPermission.INVITE_MEMBERS) ? (
-                  <TouchableOpacity
-                    disabled={isInviting}
-                    onPress={() => {
-                      setIsInviteModalOpen(true);
-                      void refetchFriends();
-                    }}
-                    className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600 disabled:opacity-70"
-                  >
-                    <Ionicons name="share-social" size={18} color="white" />
-                    <Text className="font-bold text-white">Mời thành viên</Text>
-                  </TouchableOpacity>
-                ) : null}
-
-                {isOwner ? (
-                  <View className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-slate-200 bg-app-surface dark:border-slate-700 dark:bg-app-surface-dark">
-                    <Ionicons name="key" size={18} color="#64748b" />
-                    <Text className="font-bold text-slate-700 dark:text-slate-300">
-                      Chủ nhóm
-                    </Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    disabled={isLeaving}
-                    onPress={() => setIsLeaveModalOpen(true)}
-                    className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-70"
-                  >
-                    <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-                  </TouchableOpacity>
-                )}
+            <View className="flex-row gap-2 w-full">
+              <View className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800">
+                <Ionicons
+                  name={isOwner ? 'key' : 'checkmark-circle'}
+                  size={18}
+                  color="#64748b"
+                />
+                <Text className="font-bold text-slate-700 dark:text-slate-300">
+                  {isOwner ? 'Chủ nhóm' : 'Đã tham gia'}
+                </Text>
               </View>
 
-              <View className="flex-row flex-wrap gap-2">
-                {renderQuickAction('people-outline', 'Thành viên', () =>
-                  router.push(`/(main)/groups/${group.id}/members`),
-                )}
-                {can(GroupPermission.MANAGE_MEMBERS) || can(GroupPermission.MANAGE_JOIN_REQUESTS)
-                  ? renderQuickAction('shield-checkmark-outline', 'Quản trị nhóm', () =>
-                      router.push(`/(main)/groups/${group.id}/admin`),
-                    )
-                  : null}
-                {can(GroupPermission.UPDATE_GROUP_SETTINGS)
-                  ? renderQuickAction('settings-outline', 'Cài đặt', () =>
-                      router.push(`/(main)/groups/${group.id}/settings`),
-                    )
-                  : null}
-                {isOwner ? (
-                  <TouchableOpacity
-                    onPress={() => setIsDeleteModalOpen(true)}
-                    className="h-11 rounded-xl bg-red-100 px-4 dark:bg-red-900/30"
-                  >
-                    <View className="h-full flex-row items-center gap-2">
-                      <Ionicons name="trash-outline" size={18} color="#ef4444" />
-                      <Text className="font-bold text-red-600 dark:text-red-400">
-                        Xóa nhóm
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            </>
+              {can(GroupPermission.INVITE_MEMBERS) ? (
+                <TouchableOpacity
+                  disabled={isInviting}
+                  onPress={() => {
+                    setIsInviteModalOpen(true);
+                    void refetchFriends();
+                  }}
+                  className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-blue-600 disabled:opacity-70"
+                >
+                  <Ionicons name="person-add" size={18} color="white" />
+                  <Text className="font-bold text-white">Mời</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              <TouchableOpacity
+                onPress={() => setIsOptionsVisible(true)}
+                className="h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 active:opacity-70"
+              >
+                <Ionicons name="ellipsis-horizontal" size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
           ) : null}
 
           {membershipStatus === MembershipStatus.BANNED ? (
-            <View className="h-11 flex-1 flex-row items-center justify-center rounded-xl bg-red-100">
-              <Text className="font-bold text-red-600">
+            <View className="h-11 flex-1 flex-row items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30">
+              <Text className="font-bold text-red-600 dark:text-red-400">
                 Bạn đã bị chặn khỏi nhóm
               </Text>
             </View>
           ) : null}
         </View>
       </View>
+
+      <AppBottomSheet
+        visible={isOptionsVisible}
+        onClose={() => setIsOptionsVisible(false)}
+        title="Tuỳ chọn nhóm"
+        dismissible
+      >
+        <View className="gap-2 pb-6">
+          {renderOptionItem('people-outline', 'Thành viên', () =>
+            router.push(`/(main)/groups/${group.id}/members`),
+          )}
+          {can(GroupPermission.MANAGE_MEMBERS) || can(GroupPermission.MANAGE_JOIN_REQUESTS)
+            ? renderOptionItem('shield-checkmark-outline', 'Quản trị nhóm', () =>
+                router.push(`/(main)/groups/${group.id}/admin`),
+              )
+            : null}
+          {can(GroupPermission.UPDATE_GROUP_SETTINGS)
+            ? renderOptionItem('settings-outline', 'Cài đặt', () =>
+                router.push(`/(main)/groups/${group.id}/settings`),
+              )
+            : null}
+          {!isOwner && membershipStatus === MembershipStatus.MEMBER
+            ? renderOptionItem(
+                'log-out-outline',
+                'Rời nhóm',
+                () => setIsLeaveModalOpen(true),
+                true,
+              )
+            : null}
+          {isOwner
+            ? renderOptionItem(
+                'trash-outline',
+                'Xóa nhóm',
+                () => setIsDeleteModalOpen(true),
+                true,
+              )
+            : null}
+        </View>
+      </AppBottomSheet>
 
       <AppModal
         visible={isDeleteModalOpen}

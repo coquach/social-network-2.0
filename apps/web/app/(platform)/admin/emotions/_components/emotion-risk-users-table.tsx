@@ -69,7 +69,7 @@ const normalizeRiskScore = (score: number) =>
   score <= 1 ? score * 100 : score;
 
 function resolveStatus(row: RiskUserDTO) {
-  const riskLevel = row.riskItem.riskLevel.toLowerCase();
+  const riskLevel = row.riskItem?.riskLevel?.toLowerCase() || 'normal';
 
   if (['warning', 'high', 'critical'].includes(riskLevel)) {
     return statusMeta.monitored;
@@ -78,8 +78,10 @@ function resolveStatus(row: RiskUserDTO) {
   return statusMeta.stable;
 }
 
-const getFullName = (user: RiskUserDTO['user']) =>
-  `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.id;
+const getFullName = (user: RiskUserDTO['user'] | null | undefined) => {
+  if (!user) return 'Người dùng không xác định';
+  return `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.id;
+};
 
 export function EmotionRiskUsersTable({
   rows,
@@ -97,7 +99,7 @@ export function EmotionRiskUsersTable({
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
             <Avatar.Root
-              userId={row.original.user.id}
+              userId={row.original.user?.id ?? 'unknown'}
               size="medium"
               hasBorder
               isClickable={false}
@@ -111,7 +113,7 @@ export function EmotionRiskUsersTable({
                 {getFullName(row.original.user)}
               </div>
               <div className="text-xs text-slate-400">
-                {row.original.user.id}
+                {row.original.user?.id ?? 'N/A'}
               </div>
             </div>
           </div>
@@ -121,20 +123,20 @@ export function EmotionRiskUsersTable({
         accessorKey: 'riskItem.riskLevel',
         header: 'Mức rủi ro',
         cell: ({ row }) => (
-          <EmotionRiskLevelBadge level={row.original.riskItem.riskLevel} />
+          <EmotionRiskLevelBadge level={row.original.riskItem?.riskLevel ?? 'normal'} />
         ),
       },
       {
         accessorKey: 'riskItem.riskScore',
         header: 'Điểm rủi ro',
         cell: ({ row }) => {
-          const score = normalizeRiskScore(row.original.riskItem.riskScore);
+          const score = normalizeRiskScore(row.original.riskItem?.riskScore ?? 0);
 
           return (
             <div className="min-w-36 space-y-2">
               <div className="flex items-center justify-between gap-3 text-sm">
                 <span className="font-semibold text-slate-800">
-                  {formatRiskScore(row.original.riskItem.riskScore)}
+                  {formatRiskScore(row.original.riskItem?.riskScore ?? 0)}
                 </span>
                 <span className="text-xs text-slate-400">
                   {score.toFixed(0)} / 100
@@ -150,7 +152,7 @@ export function EmotionRiskUsersTable({
         header: 'Số tín hiệu',
         cell: ({ row }) => (
           <div className="text-sm font-semibold text-slate-800">
-            {row.original.riskItem.signalCount.toLocaleString('vi-VN')}
+            {(row.original.riskItem?.signalCount ?? 0).toLocaleString('vi-VN')}
           </div>
         ),
       },
@@ -159,7 +161,7 @@ export function EmotionRiskUsersTable({
         header: 'Cập nhật lúc',
         cell: ({ row }) => (
           <div className="text-sm text-slate-600">
-            {row.original.riskItem.updatedAt
+            {row.original.riskItem?.updatedAt
               ? format(
                   new Date(row.original.riskItem.updatedAt),
                   'dd/MM/yyyy HH:mm',
@@ -187,8 +189,11 @@ export function EmotionRiskUsersTable({
               size="sm"
               className="h-9 rounded-lg border border-sky-100 bg-sky-50 text-sky-700 hover:bg-sky-100"
               onClick={async () => {
-                await navigator.clipboard.writeText(row.original.user.id);
+                if (row.original.user?.id) {
+                  await navigator.clipboard.writeText(row.original.user.id);
+                }
               }}
+              disabled={!row.original.user?.id}
             >
               <Copy className="mr-2 h-4 w-4" />
               Copy ID

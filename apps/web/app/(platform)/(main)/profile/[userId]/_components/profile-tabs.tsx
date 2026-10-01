@@ -31,7 +31,7 @@ const TABS: ProfileTab[] = [
 ];
 
 export const ProfileTabs = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId } = useParams<{ userId: string }>() as { userId: string };
   const pathname = usePathname();
   const router = useRouter();
   const basePath = useMemo(() => {
@@ -46,7 +46,7 @@ export const ProfileTabs = () => {
       if (href === pathname) return;
       router.push(href);
     },
-    [basePath, pathname, router]
+    [basePath, pathname, router],
   );
 
   const getIsActive = (tab: ProfileTab) => {

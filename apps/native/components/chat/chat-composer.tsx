@@ -353,7 +353,7 @@ export function ChatComposer({
           className={cn(
             'flex-1 flex-row items-end gap-1 border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark',
             isFocused
-              ? 'rounded-[24px] px-3 py-3'
+              ? 'rounded-[24px] px-3 py-3 border-app-primary dark:border-app-primary-dark'
               : 'min-h-12 rounded-full px-3 py-1.5',
           )}
         >
@@ -422,10 +422,9 @@ export function ChatComposer({
         
         <View className="pb-1 items-center justify-end">
           <Button
-            variant={isSendDisabled ? 'secondary' : 'primary'}
             className={cn(
               'h-10 w-10 min-w-10 min-h-10 rounded-full px-0',
-              isSendDisabled ? 'opacity-70' : '',
+              isSendDisabled ? 'bg-app-border dark:bg-app-border-dark opacity-70' : 'bg-app-primary dark:bg-app-primary-dark',
             )}
             isDisabled={isSendDisabled}
             onPress={() => {

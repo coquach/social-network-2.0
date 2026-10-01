@@ -98,24 +98,22 @@ export function AssistantMessageList({
     }
 
     const previousLastMessageId = previousLastMessageIdRef.current;
-    if (!previousLastMessageId) {
+    
+    // If it's a new message OR the content of the last message changed (streaming)
+    if (previousLastMessageId !== lastMessage.id) {
       previousLastMessageIdRef.current = lastMessage.id;
-      return;
-    }
-
-    if (previousLastMessageId === lastMessage.id) {
-      return;
-    }
-
-    previousLastMessageIdRef.current = lastMessage.id;
-
-    if (isAtBottomRef.current) {
-      setShowScrollToBottom(false);
+      
+      if (isAtBottomRef.current) {
+        setShowScrollToBottom(false);
+        scrollToBottom(true);
+      } else {
+        setShowScrollToBottom(true);
+      }
+    } else if (isResponding && isAtBottomRef.current) {
+      // During streaming, if we are already at the bottom, stay at the bottom
       scrollToBottom(true);
-    } else {
-      setShowScrollToBottom(true);
     }
-  }, [lastMessage?.id, scrollToBottom]);
+  }, [lastMessage?.id, lastMessage?.content.length, isResponding, scrollToBottom]);
 
   const handleScroll = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -176,6 +174,7 @@ export function AssistantMessageList({
             renderItem={({ item }: { item: AssistantMessageItem }) => {
               const message = item;
               const isUser = message.role === "user";
+              const isStreaming = message.isPending && !isUser;
 
               return (
                 <View className="w-full py-1">
@@ -186,16 +185,21 @@ export function AssistantMessageList({
                         : "mr-auto max-w-[85%] rounded-[16px] bg-white px-3 py-2 dark:bg-app-surface-dark"
                     }
                   >
-                    <Text
-                      className={
-                        isUser
-                          ? "text-sm text-white"
-                          : "text-sm text-app-fg dark:text-app-fg-dark"
-                      }
-                    >
-                      {message.content}
-                    </Text>
-                    {message.isPending ? (
+                    <View className="flex-row flex-wrap items-center">
+                      <Text
+                        className={
+                          isUser
+                            ? "text-sm text-white"
+                            : "text-sm text-app-fg dark:text-app-fg-dark"
+                        }
+                      >
+                        {message.content}
+                      </Text>
+                      {isStreaming && (
+                        <View className="ml-1 h-4 w-1.5 bg-app-primary animate-pulse" />
+                      )}
+                    </View>
+                    {message.isPending && isUser ? (
                       <Text className="mt-1 text-[11px] text-white/80">Đang gửi...</Text>
                     ) : null}
                   </View>

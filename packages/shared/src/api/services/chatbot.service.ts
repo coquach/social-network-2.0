@@ -106,10 +106,162 @@ const normalizeClearHistory = (
 
 export const chatbotService = {
   /**
-   * Send a message to assistant/chatbot
+   * Stream response from assistant/chatbot
    */
-  async respond(data: AssistantMessageInput): Promise<AssistantRespondDataDTO> {
-    return getApiClient().post<AssistantRespondDataDTO>('/assistant/messages', data);
+  async *streamRespond(data: AssistantMessageInput): AsyncGenerator<AssistantRespondDataDTO> {
+    const client = getApiClient();
+    const axiosInstance = client.getAxiosInstance();
+    const baseURL = axiosInstance.defaults.baseURL;
+    
+    const token = await client.getToken();
+    
+    // Construct URL with query params for SSE GET request (matching API Gateway @Sse)
+    const url = new URL(`${baseURL}/assistant/messages-stream`);
+    url.searchParams.append('message', data.message);
+    if (data.clientMessageId) {
+      url.searchParams.append('clientMessageId', data.clientMessageId);
+    }
+
+    // React Native Fallback: Use XMLHttpRequest since fetch() doesn't support ReadableStream
+    if (
+      typeof ReadableStream === 'undefined' ||
+      (typeof navigator !== 'undefined' && (navigator as any).product === 'ReactNative')
+    ) {
+      const XHR = (globalThis as any).XMLHttpRequest;
+      const xhr = new XHR();
+      xhr.open('GET', url.toString(), true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Accept', 'text/event-stream');
+
+      let lastIndex = 0;
+      let buffer = '';
+      
+      const queue: string[] = [];
+      let resolveNext: (() => void) | null = null;
+      let isDone = false;
+      let streamError: any = null;
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === 3 || xhr.readyState === 4) {
+          const currentText = xhr.responseText || '';
+          const newText = currentText.substring(lastIndex);
+          lastIndex = currentText.length;
+          
+          if (newText) {
+            buffer += newText;
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const jsonStr = line.replace('data: ', '').trim();
+                if (jsonStr) {
+                  queue.push(jsonStr);
+                  if (resolveNext) {
+                    resolveNext();
+                    resolveNext = null;
+                  }
+                }
+              }
+            }
+          }
+          
+          if (xhr.readyState === 4) {
+            isDone = true;
+            if (xhr.status !== 200) {
+              streamError = new Error(`Chat stream failed: ${xhr.status}`);
+            }
+            if (resolveNext) {
+              resolveNext();
+              resolveNext = null;
+            }
+          }
+        }
+      };
+      
+      xhr.onerror = () => {
+        streamError = new Error('Network error during stream');
+        isDone = true;
+        if (resolveNext) {
+          resolveNext();
+          resolveNext = null;
+        }
+      };
+
+      xhr.send();
+
+      try {
+        while (true) {
+          if (queue.length > 0) {
+            const jsonStr = queue.shift()!;
+            try {
+              const chunk = JSON.parse(jsonStr);
+              yield chunk;
+            } catch (e) {
+              console.error('[chatbotService] Failed to parse SSE chunk:', e);
+            }
+          } else if (isDone) {
+            if (streamError) throw streamError;
+            break;
+          } else {
+            await new Promise<void>(resolve => { resolveNext = resolve; });
+          }
+        }
+      } finally {
+        xhr.abort();
+      }
+      return;
+    }
+
+    // Web Environment (Native fetch + ReadableStream)
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'text/event-stream',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`Chat stream failed: ${response.status} ${errorText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('ReadableStream not supported by this platform');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        
+        // Keep the last partial line in buffer
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.replace('data: ', '').trim();
+            if (jsonStr) {
+              try {
+                const chunk = JSON.parse(jsonStr);
+                yield chunk;
+              } catch (e) {
+                console.error('[chatbotService] Failed to parse SSE chunk:', e);
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
   },
 
   /**

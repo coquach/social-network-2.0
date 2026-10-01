@@ -1,4 +1,4 @@
-﻿import { useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   FlatList,
@@ -9,10 +9,10 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { Button } from 'heroui-native/button';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '~/providers/theme-provider';
 import { setOnboardingSeen } from '~/utils/storage';
+import { PrimaryButton } from '~/components/ui/app-button';
 
 type OnboardingItem = {
   id: string;
@@ -105,13 +105,10 @@ export default function WelcomeScreen() {
 
               {index === ONBOARDING_DATA.length - 1 ? (
                 <View className="mt-4">
-                  <Button
-                    variant="primary"
-                    className="min-h-12 rounded-2xl"
+                  <PrimaryButton
+                    label="Hoàn tất"
                     onPress={() => void finishOnboarding()}
-                  >
-                    Hoàn tất
-                  </Button>
+                  />
                 </View>
               ) : null}
             </View>

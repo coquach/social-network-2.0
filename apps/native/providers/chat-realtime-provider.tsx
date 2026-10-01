@@ -215,11 +215,11 @@ const upsertMessageInPages = (
           ...firstPage,
           data: firstPage.data
             .map((item) => (item._id === message._id ? message : item))
-            .sort(compareMessagesAscending),
+            .sort((a, b) => compareMessagesAscending(b, a)),
         }
       : {
           ...firstPage,
-          data: [...firstPage.data, message].sort(compareMessagesAscending),
+          data: [...firstPage.data, message].sort((a, b) => compareMessagesAscending(b, a)),
         };
 
   return {
@@ -326,12 +326,6 @@ export function useNativeConversationRealtime({
   React.useEffect(() => {
     setRealtimeMessages([]);
   }, [conversationId]);
-
-  React.useEffect(() => {
-    setRealtimeMessages((current) =>
-      mergeFetchedAndRealtimeMessages(fetchedMessages, current),
-    );
-  }, [fetchedMessages]);
 
   React.useEffect(() => {
     if (!conversationId || !chatSocket || isHiddenForMe) {

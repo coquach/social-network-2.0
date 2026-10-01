@@ -30,6 +30,7 @@ import {
 } from '../utils/cache-utils';
 import { queryConfigs } from '../utils/query-configs';
 import { queryKeys } from './query-keys';
+import { applyPrivacyPolicy } from '../utils/privacy';
 
 // ==================== Query Hooks ====================
 
@@ -60,7 +61,18 @@ export const useUser = (userId: string, options?: { enabled?: boolean }) => {
   return useQuery<UserProfile>({
     queryKey: queryKeys.user.detail(userId),
     queryFn: async () => {
-      return userService.getUser(userId);
+      const [profile, relation] = await Promise.all([
+        userService.getUser(userId),
+        friendService.getRelationshipStatus(userId).catch(() => ({ status: 'NONE' as const })),
+      ]);
+
+      const finalRelation = profile.relation?.status === 'SELF' ? profile.relation : relation;
+      const sanitizedProfile = applyPrivacyPolicy(profile, finalRelation.status);
+
+      return {
+        ...sanitizedProfile,
+        relation: finalRelation,
+      } as UserProfile;
     },
     enabled: options?.enabled !== false && !!userId,
     ...queryConfigs.semiStatic,
@@ -100,15 +112,15 @@ export const useUserFriends = (userId: string, params?: QueryParams) => {
         cursor: pageParam as string | undefined,
       });
 
-      const users = await Promise.all(
-        (friendIdsPage.data ?? []).map(async (friendId) => {
-          try {
-            return await userService.getUser(friendId);
-          } catch {
-            return null;
-          }
-        }),
-      );
+      const users: (UserDTO | null)[] = [];
+      for (const friendId of (friendIdsPage.data ?? [])) {
+        try {
+          const user = await userService.getUser(friendId);
+          users.push(user);
+        } catch {
+          users.push(null);
+        }
+      }
 
       return {
         ...friendIdsPage,

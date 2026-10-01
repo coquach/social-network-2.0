@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { AppBackButton, AppHeader, AppHeaderIconButton } from '~/components/ui/app-header';
 import { AppScreen } from '~/components/ui/app-screen';
-import { formatRelativeTime } from '~/utils/format-relative-time';
+import { formatFriendlyTime } from '~/utils/format-relative-time';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -93,7 +93,7 @@ export default function NotificationsScreen() {
             {item.message || 'Bạn có một thông báo mới'}
           </Text>
           <Text className="text-xs text-app-fg-muted dark:text-app-fg-muted-dark mt-2 font-medium">
-            {formatRelativeTime(item.createdAt)}
+            {formatFriendlyTime(item.createdAt)}
           </Text>
         </View>
         {!isRead && (

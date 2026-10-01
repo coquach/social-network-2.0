@@ -35,7 +35,7 @@ export function UserSearchField({
         <SearchField.Input
           variant="secondary"
           placeholder={placeholder}
-          className="min-h-12 rounded-[26px] bg-transparent"
+          className="min-h-12 rounded-[26px] bg-transparent flex-1 px-10"
         />
         <SearchField.ClearButton />
       </SearchField.Group>

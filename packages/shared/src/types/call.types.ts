@@ -120,6 +120,7 @@ export interface CallEndedPayload {
 export type OutgoingCallStatus = 'dialing' | 'ringing' | 'accepted' | 'rejected' | 'failed';
 
 export interface OutgoingCallState {
+  id?: string;
   conversationId: string;
   type: CallType;
   status: OutgoingCallStatus;

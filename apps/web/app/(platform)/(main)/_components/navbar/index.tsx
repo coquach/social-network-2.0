@@ -9,6 +9,7 @@ import { NotificationDropdown } from './notification-dropdown';
 import { Search } from './search';
 import { Tabs } from './tabs';
 import { ThemeSwitcher } from './theme-switcher';
+import { Settings } from 'lucide-react';
 
 export const Navbar = () => {
   const pathname = usePathname();
@@ -44,7 +45,15 @@ export const Navbar = () => {
               <Skeleton className="h-10 w-10 rounded-full" />
             </ClerkLoading>
             <ClerkLoaded>
-              <UserButton />
+              <UserButton>
+                <UserButton.MenuItems>
+                  <UserButton.Link
+                    label="Cài đặt hệ thống"
+                    labelIcon={<Settings className="h-4 w-4" />}
+                    href="/settings"
+                  />
+                </UserButton.MenuItems>
+              </UserButton>
             </ClerkLoaded>
           </div>
         </div>

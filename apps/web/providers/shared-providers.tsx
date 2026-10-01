@@ -11,6 +11,7 @@ import { ReactNode, useMemo } from 'react';
 import { AuthProvider, UploadProvider } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
 import { createCloudinaryUploadService } from '@/lib/services/cloudinary-upload.service';
+import { CallProvider } from './call-provider';
 
 interface SharedProvidersProps {
   children: ReactNode;
@@ -59,13 +60,15 @@ export function SharedProviders({ children }: SharedProvidersProps) {
         isAuthenticated: isLoaded && !!userId,
       }}
     >
-      {uploadService ? (
-        <UploadProvider uploadService={uploadService}>
-          {children}
-        </UploadProvider>
-      ) : (
-        children
-      )}
+      <CallProvider>
+        {uploadService ? (
+          <UploadProvider uploadService={uploadService}>
+            {children}
+          </UploadProvider>
+        ) : (
+          children
+        )}
+      </CallProvider>
     </AuthProvider>
   );
 }

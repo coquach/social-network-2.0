@@ -6,11 +6,13 @@ import {
   useEndCall,
   useJoinCall,
   useRejectCall,
+  useLeaveCall,
   queryKeys,
   ConversationDTO,
 } from '@repo/shared';
 import { useCallClient } from '~/providers/call-provider';
 import { useCallback, useRef } from 'react';
+import { Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 
 export type CallErrorCode =
@@ -62,6 +64,7 @@ export function useCallActions() {
   const { mutateAsync: acceptCallSession } = useAcceptCall();
   const { mutateAsync: rejectCallSession } = useRejectCall();
   const { mutateAsync: endCallSession } = useEndCall();
+  const { mutateAsync: leaveCallSession } = useLeaveCall();
   const { mutateAsync: joinCallSession } = useJoinCall();
 
   const startCall = useCallback(
@@ -90,26 +93,35 @@ export function useCallActions() {
         const conversation = queryClient.getQueryData<ConversationDTO>(
           queryKeys.conversations.detail(conversationId),
         );
+        const isGroup = conversation?.isGroup === true;
         const members = (conversation?.participants ?? []).map((id) => ({
           user_id: id,
         }));
 
-        await call.getOrCreate({
-          ring: true,
-          data: {
-            members,
-            custom: { type },
-          },
-        });
-
-        // Control camera AFTER room creation to avoid premature hardware spin-up
-        if (type === CallType.AUDIO) {
-          await call.camera.disable();
+        if (isGroup) {
+          setActiveCall(session);
+          setOutgoingCall(null);
+          await call.join({ create: true, data: { members, custom: { type } } });
+          
+          if (type === CallType.AUDIO) {
+            await call.camera.disable();
+          } else {
+            await call.camera.enable();
+          }
+          await call.microphone.enable();
         } else {
-          await call.camera.enable();
+          // 1-to-1 call: don't join or enable hardware yet.
+          const currentState = useCallStore.getState();
+          if (currentState.activeCall?.conversationId === conversationId) {
+            // Call was accepted via WebSocket before HTTP finished! Do not revert to ringing.
+          } else {
+            setOutgoingCall({ id: session._id || session.id, conversationId, type, status: 'ringing' });
+          }
+          await call.getOrCreate({
+            ring: true,
+            data: { members, custom: { type } },
+          });
         }
-
-        setOutgoingCall({ conversationId, type, status: 'accepted' });
         return { ok: true };
       } catch (error) {
         console.error('[Call] Failed to start call:', error);
@@ -125,50 +137,65 @@ export function useCallActions() {
   const answerCall = useCallback(async () => {
     if (!incomingCall || !client) return;
 
-    try {
-      await acceptCallSession(incomingCall.id);
+    // Snapshot the call so we can use it, and immediately transition the UI
+    const callToAnswer = incomingCall;
+    setActiveCall(callToAnswer);
+    setIncomingCall(null);
 
-      const call = client.call('default', incomingCall.id);
+    try {
+      await acceptCallSession(callToAnswer.id);
+
+      const call = client.call('default', callToAnswer.id);
       await call.join();
 
       // Notify BE so Redis group-online-set stays accurate
-      void joinCallSession(incomingCall.id).catch((e) =>
+      void joinCallSession(callToAnswer.id).catch((e) =>
         console.warn('[Call] joinCallSession error:', e),
       );
 
       // Control camera after joining
-      if (incomingCall.type === CallType.AUDIO) {
+      if (callToAnswer.type === CallType.AUDIO) {
         await call.camera.disable();
       } else {
         await call.camera.enable();
       }
-
-      setActiveCall(incomingCall);
-      setIncomingCall(null);
+      
+      // Ensure microphone is explicitly enabled for the callee
+      await call.microphone.enable();
     } catch (error) {
       console.error('[Call] Failed to answer call:', error);
+      Alert.alert('Không thể kết nối', 'Cuộc gọi đã kết thúc hoặc không còn đổ chuông.');
+      reset();
     }
-  }, [acceptCallSession, joinCallSession, client, setActiveCall, setIncomingCall, incomingCall]);
+  }, [acceptCallSession, joinCallSession, client, setActiveCall, setIncomingCall, incomingCall, reset]);
 
   const rejectCall = useCallback(async () => {
     if (!incomingCall || !client) return;
 
     try {
       const call = client.call('default', incomingCall.id);
-      // Fire-and-forget both — don't let either block the UI reset
-      void rejectCallSession(incomingCall.id).catch((e) =>
-        console.warn('[Call] rejectCallSession error:', e),
-      );
-      void call.reject().catch((e) =>
-        console.warn('[Call] call.reject error:', e),
-      );
+      
+      // If it's a 1-to-1 call, we explicitly reject on backend and Stream
+      if (!incomingCall.isGroupCall) {
+        // Fire-and-forget both — don't let either block the UI reset
+        void rejectCallSession(incomingCall.id).catch((e) =>
+          console.warn('[Call] rejectCallSession error:', e),
+        );
+        void call.reject().catch((e) =>
+          console.warn('[Call] call.reject error:', e),
+        );
+      }
+      // For group calls, rejecting just means "Dismiss", so we do nothing on the backend
+      // to avoid ending the call for everyone.
     } finally {
       setIncomingCall(null);
     }
   }, [incomingCall, client, rejectCallSession, setIncomingCall]);
 
-  const endCall = useCallback(async () => {
-    const callId = activeCall?.id;
+  const endCall = useCallback(async (explicitCallId?: string, explicitIsGroup?: boolean) => {
+    const store = useCallStore.getState();
+    const callId = explicitCallId || store.activeCall?.id || store.outgoingCall?.id;
+    const isGroup = explicitIsGroup !== undefined ? explicitIsGroup : store.activeCall?.isGroupCall;
 
     // Reset store immediately so UI unblocks right away
     reset();
@@ -177,14 +204,27 @@ export function useCallActions() {
 
     if (client) {
       const call = client.call('default', callId);
-      void call.leave().catch((e) =>
-        console.warn('[Call] call.leave error:', e),
+      if (isGroup) {
+        void call.leave().catch((e) =>
+          console.warn('[Call] call.leave error:', e),
+        );
+      } else {
+        void call.endCall().catch((e) =>
+          console.warn('[Call] call.endCall error:', e),
+        );
+      }
+    }
+    
+    if (isGroup) {
+      void leaveCallSession(callId).catch((e) =>
+        console.warn('[Call] leaveCallSession error:', e),
+      );
+    } else {
+      void endCallSession(callId).catch((e) =>
+        console.warn('[Call] endCallSession error:', e),
       );
     }
-    void endCallSession(callId).catch((e) =>
-      console.warn('[Call] endCallSession error:', e),
-    );
-  }, [activeCall, client, endCallSession, reset]);
+  }, [activeCall, client, endCallSession, leaveCallSession, reset]);
 
   const joinOngoingCall = useCallback(async (callId: string, type: CallType = CallType.VIDEO) => {
     if (!client) return;

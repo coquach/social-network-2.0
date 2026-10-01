@@ -14,22 +14,17 @@ import React, { useEffect, useRef } from 'react';
 import { useSocket } from '~/providers/socket-provider';
 import { useCallClient } from '~/providers/call-provider';
 
-export function CallRealtimeProvider({ children }: { children: React.ReactNode }) {
+export function CallRealtimeProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const queryClient = useQueryClient();
   const { userId, isSignedIn } = useAuth();
   const { chatSocket } = useSocket();
   const client = useCallClient();
   const { setIncomingCall, setActiveCall, reset } = useCallStore();
   const { mutateAsync: joinCallSession } = useJoinCall();
-  const segmentsRef = useRef<string[]>([]);
-  
-  try {
-    const { useSegments } = require('expo-router');
-    const segs = useSegments();
-    useEffect(() => {
-      segmentsRef.current = segs;
-    }, [segs]);
-  } catch (e) {}
 
   // Guard so caller only calls joinCallSession once per accepted call
   const joinedCallIds = useRef<Set<string>>(new Set());
@@ -50,13 +45,19 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
       // Add active call indicator to conversation UI immediately
       queryClient.setQueryData(
         queryKeys.conversations.detail(payload.conversationId),
-        (old: any) => old ? { ...old, activeCallId: callId } : old
+        (old: any) => (old ? { ...old, activeCallId: callId } : old),
       );
 
-      if (payload.participants.includes(userId) && payload.initiatorId !== userId) {
+      if (
+        payload.participants.includes(userId) &&
+        payload.initiatorId !== userId
+      ) {
         if (payload.status === CallSessionStatus.RINGING) {
-          // Normalize id so other components using store don't fail
-          setIncomingCall({ ...payload, id: callId });
+          // Only ring and force incoming screen for 1-to-1 calls.
+          // Group calls are just passively shown in the conversation UI.
+          if (!payload.isGroupCall) {
+            setIncomingCall({ ...payload, id: callId });
+          }
 
           // Pre-fetch so the call registers in Stream useCalls()
           if (client) {
@@ -64,18 +65,12 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
               const call = client.call('default', callId);
               await call.get();
             } catch (error) {
-              console.error('[CallRealtimeProvider] Pre-fetch incoming Stream call failed:', error);
+              console.error(
+                '[CallRealtimeProvider] Pre-fetch incoming Stream call failed:',
+                error,
+              );
             }
           }
-
-          // If the user is CURRENTLY in the chat screen for this conversation, auto-navigate to the call screen
-          try {
-            const isInsideTargetChat = segmentsRef.current.includes('chat') && segmentsRef.current.includes(payload.conversationId);
-            if (isInsideTargetChat) {
-              const { router } = require('expo-router');
-              router.push('/chat/call');
-            }
-          } catch (e) {}
         }
       }
     };
@@ -84,20 +79,76 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
     // call.accepted — callee accepted, both sides need to join the call room.
     // ──────────────────────────────────────────────────────────────────────────
     const handleCallAccepted = async (payload: CallAcceptedPayload) => {
-      const { callId, participants } = payload;
+    
+      const { callId } = payload;
 
-      queryClient.invalidateQueries({ queryKey: queryKeys.calls.detail(callId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.calls.detail(callId),
+      });
 
-      // Caller: join the Redis online-set on BE exactly once
+      // Only the caller should automatically transition to ActiveCall and join the session
+      const store = useCallStore.getState();
+      const isCaller = !!(
+        store.outgoingCall &&
+        (store.outgoingCall.id === callId ||
+          (store.outgoingCall as any)._id === callId ||
+          store.outgoingCall.conversationId === payload.conversationId)
+      );
+
+   
+
       if (
-        payload.userId !== userId &&
-        (participants ?? []).includes(userId) &&
+        isCaller &&
         !joinedCallIds.current.has(callId)
       ) {
+       
         joinedCallIds.current.add(callId);
-        void joinCallSession(callId).catch((e) =>
-          console.warn('[CallRealtimeProvider] joinCallSession (caller) error:', e),
-        );
+
+
+        const { type, conversationId } = store.outgoingCall!;
+
+          setActiveCall({
+            id: callId,
+            _id: callId,
+            conversationId,
+            type,
+            status: 'accepted',
+            isGroupCall: false,
+            participants: [],
+            initiatorId: userId,
+          } as any);
+          useCallStore.setState({ outgoingCall: null });
+
+          if (client) {
+            const call = client.call('default', callId);
+            call
+              .join()
+              .then(() => {
+                if (type === 'audio') {
+                  return call.camera.disable();
+                } else {
+                  return call.camera.enable();
+                }
+              })
+              .then(() => {
+                return call.microphone.enable();
+              })
+              .catch((e) =>
+                console.error(
+                  '[CallRealtimeProvider] Failed to join call upon acceptance:',
+                  e,
+                ),
+              );
+          }
+      }
+
+      // Cleanup incoming call if it matches the accepted call (e.g., accepted on another device)
+      const currentState = useCallStore.getState();
+      if (
+        currentState.incomingCall?.id === callId ||
+        currentState.incomingCall?._id === callId
+      ) {
+        setIncomingCall(null);
       }
     };
 
@@ -106,16 +157,19 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
     // ──────────────────────────────────────────────────────────────────────────
     const handleCallRejected = (payload: CallRejectedPayload) => {
       const { callId, conversationId } = payload;
-      queryClient.invalidateQueries({ queryKey: queryKeys.calls.detail(callId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.calls.detail(callId),
+      });
       joinedCallIds.current.delete(callId);
 
       // Remove active call indicator from conversation UI immediately
       queryClient.setQueryData(
         queryKeys.conversations.detail(conversationId),
-        (old: any) => old ? { ...old, activeCallId: undefined } : old
+        (old: any) => (old ? { ...old, activeCallId: undefined } : old),
       );
 
-      const { incomingCall, activeCall, outgoingCall } = useCallStore.getState();
+      const { incomingCall, activeCall, outgoingCall } =
+        useCallStore.getState();
       if (
         incomingCall?.id === callId ||
         activeCall?.id === callId ||
@@ -132,16 +186,19 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
     // ──────────────────────────────────────────────────────────────────────────
     const handleCallEnded = (payload: CallEndedPayload) => {
       const { callId, conversationId } = payload;
-      queryClient.invalidateQueries({ queryKey: queryKeys.calls.detail(callId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.calls.detail(callId),
+      });
       joinedCallIds.current.delete(callId);
 
       // Remove active call indicator from conversation UI immediately
       queryClient.setQueryData(
         queryKeys.conversations.detail(conversationId),
-        (old: any) => old ? { ...old, activeCallId: undefined } : old
+        (old: any) => (old ? { ...old, activeCallId: undefined } : old),
       );
 
-      const { incomingCall, activeCall, outgoingCall } = useCallStore.getState();
+      const { incomingCall, activeCall, outgoingCall } =
+        useCallStore.getState();
       if (
         incomingCall?.id === callId ||
         activeCall?.id === callId ||
@@ -150,7 +207,7 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
         outgoingCall?.conversationId === conversationId
       ) {
         reset();
-        
+
         // Ensure Stream SDK also drops the call if it's active
         if (client) {
           try {
@@ -174,7 +231,17 @@ export function CallRealtimeProvider({ children }: { children: React.ReactNode }
       chatSocket.off('call.rejected', handleCallRejected);
       chatSocket.off('call.ended', handleCallEnded);
     };
-  }, [chatSocket, isSignedIn, userId, queryClient, client, setIncomingCall, setActiveCall, reset, joinCallSession]);
+  }, [
+    chatSocket,
+    isSignedIn,
+    userId,
+    queryClient,
+    client,
+    setIncomingCall,
+    setActiveCall,
+    reset,
+    joinCallSession,
+  ]);
 
   return <>{children}</>;
 }

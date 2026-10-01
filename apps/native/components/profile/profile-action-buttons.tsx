@@ -12,6 +12,7 @@ import { useToast } from 'heroui-native/toast';
 import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { AppToast } from '~/components/ui/app-toast';
+import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
 import { useStartConversation } from '~/hooks/use-start-conversation';
 
 interface ProfileActionButtonsProps {
@@ -111,99 +112,126 @@ export function ProfileActionButtons({ user }: ProfileActionButtonsProps) {
     privacySettings.messagePrivacy === MessagePrivacy.EVERYONE ||
     relationStatus === RelationStatus.FRIEND;
 
+  const [isOptionsVisible, setIsOptionsVisible] = React.useState(false);
+
   return (
-    <View className="mt-4 flex-row gap-2 w-full">
-      {/* Dynamic Relation Button */}
-      {relationStatus === RelationStatus.NONE && (
-        <Pressable
-          onPress={handleAddFriend}
-          disabled={sendFriendRequest.isPending}
-          className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-app-primary active:opacity-85 dark:bg-app-primary-dark"
-        >
-          <Ionicons name="person-add-outline" size={18} color="#ffffff" />
-          <Text className="text-[15px] font-semibold text-white">
-            {sendFriendRequest.isPending ? 'Đang gửi...' : 'Thêm bạn bè'}
-          </Text>
-        </Pressable>
-      )}
-
-      {(relationStatus === RelationStatus.PENDING ||
-        relationStatus === 'REQUESTED_OUT') && (
-        <Pressable
-          onPress={handleRemoveFriend}
-          disabled={removeFriend.isPending}
-          className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-rose-500 active:opacity-85"
-        >
-          <Ionicons name="close-circle-outline" size={18} color="#ffffff" />
-          <Text className="text-[15px] font-semibold text-white">
-            Huỷ lời mời
-          </Text>
-        </Pressable>
-      )}
-
-      {relationStatus === 'REQUESTED_IN' && (
-        <>
+    <>
+      <View className="mt-4 flex-row gap-2 w-full">
+        {/* Dynamic Relation Button */}
+        {relationStatus === RelationStatus.NONE && (
           <Pressable
-            onPress={handleAcceptFriend}
-            disabled={acceptFriendRequest.isPending}
-            className="h-11 flex-1 flex-row items-center justify-center gap-1 rounded-xl bg-app-primary active:opacity-85 dark:bg-app-primary-dark"
+            onPress={handleAddFriend}
+            disabled={sendFriendRequest.isPending}
+            className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-app-primary active:opacity-85 dark:bg-app-primary-dark"
           >
+            <Ionicons name="person-add-outline" size={18} color="#ffffff" />
             <Text className="text-[15px] font-semibold text-white">
-              Chấp nhận
+              {sendFriendRequest.isPending ? 'Đang gửi...' : 'Thêm bạn bè'}
             </Text>
           </Pressable>
+        )}
+
+        {(relationStatus === RelationStatus.PENDING ||
+          relationStatus === 'REQUESTED_OUT') && (
           <Pressable
-            onPress={handleRejectFriend}
-            disabled={rejectFriendRequest.isPending}
-            className="h-11 flex-1 flex-row items-center justify-center gap-1 rounded-xl bg-rose-500 active:opacity-85"
+            onPress={handleRemoveFriend}
+            disabled={removeFriend.isPending}
+            className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-rose-500 active:opacity-85"
           >
+            <Ionicons name="close-circle-outline" size={18} color="#ffffff" />
             <Text className="text-[15px] font-semibold text-white">
-              Từ chối
+              Huỷ lời mời
             </Text>
           </Pressable>
-        </>
-      )}
+        )}
 
-      {relationStatus === RelationStatus.FRIEND && (
-        <Pressable
-          onPress={handleRemoveFriend}
-          disabled={removeFriend.isPending}
-          className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-app-surface-elevated active:opacity-85 dark:bg-app-surface-elevated-dark"
-        >
-          <Ionicons name="checkmark-circle-outline" size={18} color="#10b981" />
-          <Text className="text-[15px] font-semibold text-emerald-500">
-            Bạn bè
-          </Text>
-        </Pressable>
-      )}
-
-      {/* Message Button */}
-      <Pressable
-        onPress={handleMessage}
-        disabled={!canMessage || isStartingChat}
-        className={`h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl ${
-          canMessage
-            ? 'bg-app-surface-elevated active:opacity-85 dark:bg-app-surface-elevated-dark'
-            : 'bg-app-border dark:bg-app-border-dark opacity-50'
-        }`}
-      >
-        {isStartingChat ? (
-          <ActivityIndicator size="small" color="#334155" />
-        ) : (
+        {relationStatus === 'REQUESTED_IN' && (
           <>
-            <Ionicons
-              name="chatbubble-outline"
-              size={18}
-              color={canMessage ? '#334155' : '#94a3b8'}
-            />
-            <Text
-              className={`text-[15px] font-semibold ${canMessage ? 'text-app-fg dark:text-app-fg-dark' : 'text-app-muted-fg'}`}
+            <Pressable
+              onPress={handleAcceptFriend}
+              disabled={acceptFriendRequest.isPending}
+              className="h-11 flex-1 flex-row items-center justify-center gap-1 rounded-xl bg-app-primary active:opacity-85 dark:bg-app-primary-dark"
             >
-              Nhắn tin
-            </Text>
+              <Text className="text-[15px] font-semibold text-white">
+                Chấp nhận
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleRejectFriend}
+              disabled={rejectFriendRequest.isPending}
+              className="h-11 flex-1 flex-row items-center justify-center gap-1 rounded-xl bg-rose-500 active:opacity-85"
+            >
+              <Text className="text-[15px] font-semibold text-white">
+                Từ chối
+              </Text>
+            </Pressable>
           </>
         )}
-      </Pressable>
-    </View>
+
+        {relationStatus === RelationStatus.FRIEND && (
+          <Pressable
+            onPress={() => setIsOptionsVisible(true)}
+            className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-app-surface-elevated active:opacity-85 dark:bg-app-surface-elevated-dark"
+          >
+            <Ionicons name="checkmark-circle-outline" size={18} color="#10b981" />
+            <Text className="text-[15px] font-semibold text-emerald-500">
+              Bạn bè
+            </Text>
+          </Pressable>
+        )}
+
+        {/* Message Button */}
+        <Pressable
+          onPress={handleMessage}
+          disabled={!canMessage || isStartingChat}
+          className={`h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl ${
+            canMessage
+              ? 'bg-app-surface-elevated active:opacity-85 dark:bg-app-surface-elevated-dark'
+              : 'bg-app-border dark:bg-app-border-dark opacity-50'
+          }`}
+        >
+          {isStartingChat ? (
+            <ActivityIndicator size="small" color="#334155" />
+          ) : (
+            <>
+              <Ionicons
+                name="chatbubble-outline"
+                size={18}
+                color={canMessage ? '#334155' : '#94a3b8'}
+              />
+              <Text
+                className={`text-[15px] font-semibold ${canMessage ? 'text-app-fg dark:text-app-fg-dark' : 'text-app-muted-fg'}`}
+              >
+                Nhắn tin
+              </Text>
+            </>
+          )}
+        </Pressable>
+      </View>
+
+      <AppBottomSheet
+        visible={isOptionsVisible}
+        onClose={() => setIsOptionsVisible(false)}
+        title="Quản lý tình bạn"
+        dismissible
+      >
+        <View className="gap-2 pb-6">
+          <Pressable
+            onPress={() => {
+              setIsOptionsVisible(false);
+              void handleRemoveFriend();
+            }}
+            className="flex-row items-center gap-4 rounded-2xl bg-app-surface p-4 active:bg-app-bg dark:bg-app-surface-dark dark:active:bg-app-bg-dark"
+          >
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+              <Ionicons name="person-remove-outline" size={20} color="#ef4444" />
+            </View>
+            <Text className="text-base font-semibold text-red-500">
+              Hủy kết bạn
+            </Text>
+          </Pressable>
+        </View>
+      </AppBottomSheet>
+    </>
   );
 }

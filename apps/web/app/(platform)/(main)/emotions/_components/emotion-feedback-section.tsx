@@ -423,7 +423,7 @@ export const EmotionFeedbackSection = ({
     summary.targetId,
   );
 
-  const feedbacks = feedbackQuery.data ?? [];
+  const feedbacks = useMemo(() => feedbackQuery.data ?? [], [feedbackQuery.data]);
   const feedbackStats = useMemo(
     () => ({
       total: feedbacks.length,

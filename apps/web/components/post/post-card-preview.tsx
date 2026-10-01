@@ -20,7 +20,7 @@ export const PostCardPreview = ({ data }: PostCardPreviewProps) => {
   const router = useRouter();
   const goToPost = useCallback(() => {
     if (!data?.postId) return;
-    router.push(`/posts/${data.postId}`);
+    router.push(`/posts/${data.postId}`, { scroll: false });
   }, [router, data?.postId]);
 
   return (

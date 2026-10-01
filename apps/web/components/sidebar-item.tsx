@@ -4,11 +4,12 @@ import { LucideIcon } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { IconType } from 'react-icons';
 
 interface SidebarItemProps {
   label?: string;
   href?: string;
-  icon?: LucideIcon;
+  icon?: LucideIcon | IconType;
 
   /** Dùng cho item kiểu “select param” (Search) */
   onClick?: () => void;
@@ -47,35 +48,28 @@ export const SidebarItem = ({
       type="button"
       onClick={handleClick}
       className={cn(
-        'w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition cursor-pointer',
-        'hover:bg-slate-100 active:scale-[0.99]',
-        isActive && 'bg-sky-100',
+        'group w-full flex items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all duration-200 cursor-pointer',
+        'hover:bg-sky-50/80 active:scale-[0.98]',
+        isActive ? 'bg-sky-50 shadow-sm' : 'bg-transparent',
         className
       )}
     >
-      {/* ICON CIRCLE */}
-      <div
-        className={cn(
-          'h-10 w-10 rounded-full flex items-center justify-center shrink-0',
-          isActive ? 'bg-sky-500 text-white' : 'bg-slate-200 text-sky-400'
-        )}
-      >
-        {Icon ? <Icon className="h-5 w-5" /> : null}
+      {/* ICON */}
+      <div className="flex shrink-0 items-center justify-center transition-transform duration-300 group-hover:scale-110">
+        {Icon ? <Icon className="h-8 w-8" /> : null}
       </div>
 
       {/* LABEL */}
       <div className="min-w-0 flex-1">
         <p
           className={cn(
-            'truncate text-sm',
-            isActive ? 'font-semibold text-sky-700' : 'text-sky-600'
+            'truncate text-[15px] transition-colors duration-200',
+            isActive ? 'font-bold text-sky-700' : 'font-medium text-slate-600 group-hover:text-sky-600'
           )}
         >
           {label}
         </p>
       </div>
-
-   
     </button>
   );
 };

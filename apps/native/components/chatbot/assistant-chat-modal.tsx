@@ -1,15 +1,15 @@
 import { useAuth } from '@clerk/expo';
 import { AntDesign } from '@expo/vector-icons';
 import { useAssistantChatSession } from '@repo/shared';
-import { Button } from 'heroui-native/button';
 import React from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import {
   AssistantMessageList,
   type AssistantMessageItem,
 } from '~/components/chatbot/assistant-message-list';
 import { AppModal } from '~/components/ui/app-modal';
+import { SecondaryButton, GhostButton } from '~/components/ui/app-button';
 
 type AssistantChatModalProps = {
   visible: boolean;
@@ -133,9 +133,8 @@ export function AssistantChatModal({
                 {error.message || 'Không thể tải hội thoại với trợ lý.'}
               </Text>
               {isHistoryError ? (
-                <Button
-                  variant="ghost"
-                  className="mt-1 h-8 self-start rounded-full px-3"
+                <GhostButton
+                  className="mt-1 h-8 self-start rounded-full"
                   onPress={() => {
                     resetError();
                     void retryHistory();
@@ -144,16 +143,15 @@ export function AssistantChatModal({
                   <Text className="text-xs font-semibold text-rose-700 dark:text-rose-200">
                     Thử tải lại
                   </Text>
-                </Button>
+                </GhostButton>
               ) : null}
             </View>
           ) : null}
 
           <View className="mb-2 flex-row items-center justify-end gap-2">
-            <Button
-              variant="secondary"
-              className="rounded-full px-4"
-              isDisabled={isRefreshingHistory}
+            <SecondaryButton
+              className="h-10 rounded-full px-4"
+              disabled={isRefreshingHistory}
               onPress={() => {
                 void refreshHistory();
               }}
@@ -162,11 +160,10 @@ export function AssistantChatModal({
               <Text className="ml-2 text-sm font-semibold text-app-fg dark:text-app-fg-dark">
                 {isRefreshingHistory ? 'Đang làm mới...' : 'Làm mới'}
               </Text>
-            </Button>
-            <Button
-              variant="secondary"
-              className="rounded-full px-4"
-              isDisabled={isClearing || isChatBusy || messages.length === 0}
+            </SecondaryButton>
+            <SecondaryButton
+              className="h-10 rounded-full px-4"
+              disabled={isClearing || isChatBusy || messages.length === 0}
               onPress={() => {
                 void handleClearHistory();
               }}
@@ -175,7 +172,7 @@ export function AssistantChatModal({
               <Text className="ml-2 text-sm font-semibold text-app-fg dark:text-app-fg-dark">
                 Xóa lịch sử
               </Text>
-            </Button>
+            </SecondaryButton>
           </View>
 
           <View style={{ minHeight: 220, flex: 1 }}>
@@ -208,16 +205,23 @@ export function AssistantChatModal({
                 }}
               />
             </View>
-            <Button
-              variant="primary"
-              className="h-11 w-11 rounded-full px-0"
-              isDisabled={!input.trim() || isChatBusy}
+            <TouchableOpacity
+              disabled={!input.trim() || isChatBusy}
               onPress={() => {
                 void handleSend();
               }}
+              className={`h-11 w-11 items-center justify-center rounded-full ${
+                !input.trim() || isChatBusy
+                  ? 'bg-slate-200 dark:bg-slate-800'
+                  : 'bg-app-primary dark:bg-app-primary-dark'
+              }`}
             >
-              <AntDesign name="send" size={16} color="#ffffff" />
-            </Button>
+              <AntDesign
+                name="send"
+                size={16}
+                color={!input.trim() || isChatBusy ? '#94a3b8' : '#ffffff'}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </View>

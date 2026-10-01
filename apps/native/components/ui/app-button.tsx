@@ -5,11 +5,13 @@ import { appThemeColors } from '~/constants/theme';
 import { cn } from '~/lib/cn';
 
 type ButtonProps = {
-  label: string;
+  label?: string;
+  children?: React.ReactNode;
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
   className?: string;
+  labelClassName?: string;
   hasShadow?: boolean;
 };
 
@@ -23,29 +25,30 @@ const shadowStyle = {
 
 function AppButtonBase({
   label,
+  children,
   onPress,
   disabled = false,
   loading = false,
   className = '',
+  labelClassName = '',
   variant,
   spinnerColor,
   hasShadow = false,
 }: ButtonProps & {
-  variant: 'primary' | 'secondary' | 'outline';
+  variant?: React.ComponentProps<typeof Button>['variant'];
   spinnerColor: string;
 }) {
   return (
-    <Button variant={variant} className={className} onPress={onPress} isDisabled={disabled}
+    <Button variant={variant} className={className} onPress={onPress} isDisabled={disabled || loading}
       style={hasShadow ? shadowStyle : undefined}
-
     >
       {loading ? (
         <View className="flex-row items-center gap-2">
           <ActivityIndicator size="small" color={spinnerColor} />
-          <Button.Label>{label}</Button.Label>
+          {label ? <Button.Label className={labelClassName}>{label}</Button.Label> : children}
         </View>
       ) : (
-        label
+        label ? <Button.Label className={labelClassName}>{label}</Button.Label> : children
       )}
     </Button>
   );
@@ -56,9 +59,10 @@ export function PrimaryButton(props: ButtonProps) {
     <AppButtonBase
       {...props}
       className={cn(
-        'min-h-12 rounded-2xl',
+        'min-h-12 rounded-2xl bg-app-primary dark:bg-app-primary-dark',
         props.className,
       )}
+      labelClassName="text-white dark:text-white"
       variant="primary"
       spinnerColor="#ffffff"
     />
@@ -70,10 +74,38 @@ export function SecondaryButton(props: ButtonProps) {
     <AppButtonBase
       {...props}
       className={cn(
-        'min-h-12 rounded-2xl',
+        'min-h-12 rounded-2xl border border-app-border bg-app-surface-elevated dark:border-app-border-dark dark:bg-app-surface-elevated-dark',
         props.className,
       )}
       variant="secondary"
+      spinnerColor="#406179"
+    />
+  );
+}
+
+export function OutlineButton(props: ButtonProps) {
+  return (
+    <AppButtonBase
+      {...props}
+      className={cn(
+        'min-h-12 rounded-2xl border border-app-border bg-transparent dark:border-app-border-dark',
+        props.className,
+      )}
+      variant="outline"
+      spinnerColor="#406179"
+    />
+  );
+}
+
+export function GhostButton(props: ButtonProps) {
+  return (
+    <AppButtonBase
+      {...props}
+      className={cn(
+        'min-h-10 rounded-xl px-4',
+        props.className,
+      )}
+      variant="ghost"
       spinnerColor="#406179"
     />
   );

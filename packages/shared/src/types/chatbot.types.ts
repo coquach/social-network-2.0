@@ -7,6 +7,7 @@ import type { CursorPageResponse } from './common.types';
 
 export interface AssistantMessageInput {
   message: string;
+  clientMessageId?: string;
 }
 
 export interface AssistantSourceDTO {

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNotificationPreferences, useUpdateNotificationPreferences } from '@repo/shared';
-import { Button } from 'heroui-native/button';
 import { Switch } from 'heroui-native/switch';
+import { Spinner } from 'heroui-native/spinner';
 import React from 'react';
-import { Text, View, ActivityIndicator } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { AppBottomSheet } from '~/components/ui/app-bottom-sheet';
+import { SecondaryButton } from '~/components/ui/app-button';
 
 type ChatSettingsSheetProps = {
   visible: boolean;
@@ -35,20 +36,18 @@ export function ChatSettingsSheet({ visible, onClose }: ChatSettingsSheetProps) 
       bodyClassName="mt-4"
       footer={
         <View className="flex-row gap-3">
-          <Button
-            variant="secondary"
-            className="min-h-12 flex-1 rounded-[22px]"
+          <SecondaryButton
+            label="Đóng"
+            className="flex-1"
             onPress={onClose}
-          >
-            Đóng
-          </Button>
+          />
         </View>
       }
     >
-      <View className="w-full gap-4 pb-2">
+      <View className="w-full gap-4 pb-2 min-h-[160px]">
         {isLoading ? (
-          <View className="py-8 items-center justify-center">
-            <ActivityIndicator size="small" color="#0ea5e9" />
+          <View className="flex-1 items-center justify-center py-12">
+            <Spinner color="default" size="sm" />
           </View>
         ) : (
           <View className="rounded-2xl border border-app-border dark:border-app-border-dark bg-app-surface-elevated dark:bg-app-surface-elevated-dark overflow-hidden">

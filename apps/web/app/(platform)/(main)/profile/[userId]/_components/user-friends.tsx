@@ -8,7 +8,7 @@ import { Loader } from '@/components/loader-componnet';
 import { useUserFriends } from '@repo/shared';
 
 export const UserFriends = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId } = useParams<{ userId: string }>() as { userId: string };
   const { ref, inView } = useInView({
     threshold: 0.3,
   });
@@ -25,7 +25,7 @@ export const UserFriends = () => {
 
   const friends = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
-    [data]
+    [data],
   );
 
   useEffect(() => {

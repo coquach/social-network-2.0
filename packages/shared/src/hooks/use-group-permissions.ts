@@ -5,7 +5,8 @@ import { ROLE_PERMISSIONS } from "../utils/constants";
 
 export const hasGroupPermission = (
   role: GroupRole | undefined,
-  permission: GroupPermission
+  permission: GroupPermission,
+  groupSetting?: { allowMemberInvite?: boolean }
 ) => {
   if (!role) return false;
 
@@ -13,7 +14,13 @@ export const hasGroupPermission = (
   if (role === GroupRole.OWNER) return true;
 
   const allowed = ROLE_PERMISSIONS[role] ?? [];
-  return allowed.includes(permission);
+  if (allowed.includes(permission)) return true;
+
+  if (permission === GroupPermission.INVITE_MEMBERS && role === GroupRole.MEMBER && groupSetting?.allowMemberInvite) {
+    return true;
+  }
+
+  return false;
 };
 
 
@@ -26,10 +33,11 @@ export const useGroupPermission = (
   group?: GroupDTO | null
 ): UseGroupPermissionResult => {
   const role = group?.userRole;
+  const groupSetting = group?.groupSetting;
 
   const can = useMemo(
-    () => (permission: GroupPermission) => hasGroupPermission(role, permission),
-    [role]
+    () => (permission: GroupPermission) => hasGroupPermission(role, permission, groupSetting),
+    [role, groupSetting]
   );
 
   return { role, can };

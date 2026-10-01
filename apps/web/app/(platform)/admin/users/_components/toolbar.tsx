@@ -35,28 +35,23 @@ export function UsersToolbar({
   const latestQueryRef = React.useRef(q);
 
   React.useEffect(() => {
-    setQ(filter.query ?? "");
+    const next = filter.query ?? "";
+    setQ((prev) => (prev === next ? prev : next));
   }, [filter.query]);
 
   React.useEffect(() => {
-    setStatus(filter.status ?? "all");
+    const next = filter.status ?? "all";
+    setStatus((prev) => (prev === next ? prev : next));
   }, [filter.status]);
 
   React.useEffect(() => {
-    setRole(filter.role ?? "all");
+    const next = filter.role ?? "all";
+    setRole((prev) => (prev === next ? prev : next));
   }, [filter.role]);
 
   React.useEffect(() => {
     latestQueryRef.current = q;
   }, [q]);
-
-  const handleStatusChange = (value: string) => {
-    setStatus(value);
-  };
-
-  const handleRoleChange = (value: string) => {
-    setRole(value);
-  };
 
   const applyFilters = React.useCallback(
     (text: string, nextStatus: string, nextRole: string) => {
@@ -70,6 +65,22 @@ export function UsersToolbar({
     [onFilterChange],
   );
 
+  const handleStatusChange = React.useCallback(
+    (value: string) => {
+      setStatus((prev) => (prev === value ? prev : value));
+      applyFilters(latestQueryRef.current, value, role);
+    },
+    [applyFilters, role],
+  );
+
+  const handleRoleChange = React.useCallback(
+    (value: string) => {
+      setRole((prev) => (prev === value ? prev : value));
+      applyFilters(latestQueryRef.current, status, value);
+    },
+    [applyFilters, status],
+  );
+
   const debouncedSearch = useDebouncedCallback(
     (text: string) => {
       applyFilters(text, status, role);
@@ -77,10 +88,6 @@ export function UsersToolbar({
     300,
     { maxWait: 800 },
   );
-
-  React.useEffect(() => {
-    applyFilters(latestQueryRef.current, status, role);
-  }, [applyFilters, status, role]);
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

@@ -38,15 +38,18 @@ type FriendQueryOptions = {
 const hydrateUserIdsPage = async (
   page: CursorPageResponse<string>,
 ): Promise<CursorPageResponse<UserDTO>> => {
-  const users = await Promise.all(
-    (page.data ?? []).map(async (userId) => {
-      try {
-        return await userService.getUser(userId);
-      } catch {
-        return null;
-      }
-    }),
-  );
+  const users: (UserDTO | null)[] = [];
+  
+  // Fetch users one by one to avoid thundering herd on user-service
+  // especially helpful when Redis cache is empty
+  for (const userId of (page.data ?? [])) {
+    try {
+      const user = await userService.getUser(userId);
+      users.push(user);
+    } catch {
+      users.push(null);
+    }
+  }
 
   return {
     ...page,

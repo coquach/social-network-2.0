@@ -4,7 +4,7 @@ import { QueryErrorBoundary } from '@/components/query-error-boundary';
 import { getQueryClient } from '@/lib/query-client';
 import { auth } from '@clerk/nextjs/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import PostDetailView from './post-detail';
+import PostDetailViewWrapper from './post-detail';
 
 export async function generateMetadata({
   params,
@@ -39,7 +39,7 @@ export default async function PostDetailPage({
   return (
     <HydrationBoundary state={dehydrate(qc)}>
       <QueryErrorBoundary>
-        <PostDetailView postId={postId} />
+        <PostDetailViewWrapper postId={postId} />
       </QueryErrorBoundary>
     </HydrationBoundary>
   );

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEmotionAnalysis, useSubmitEmotionFeedback } from '@repo/shared/hooks/useEmotion';
+import { useEmotionAnalysis, useEmotionFeedback, useSubmitEmotionFeedback } from '@repo/shared/hooks/useEmotion';
 import { TargetType } from '@repo/shared/types/enums';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
@@ -40,7 +40,12 @@ const FeedbackSection = ({ summary }: { summary: any }) => {
     });
   };
 
-  if (submitted) {
+  const { data: existingFeedback, isLoading: isCheckingFeedback } = useEmotionFeedback(summary.targetType, summary.targetId);
+  const hasFeedback = submitted || (existingFeedback && existingFeedback.length > 0);
+
+  if (isCheckingFeedback) return null;
+
+  if (hasFeedback) {
     return (
       <Card className="bg-emerald-50 dark:bg-emerald-900/20 rounded-[24px] p-6 shadow-sm border border-emerald-200 dark:border-emerald-800 mt-2">
         <View className="flex-row items-center justify-center gap-3">

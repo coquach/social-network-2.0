@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import {
   Activity,
   ArrowRight,
@@ -11,6 +12,7 @@ import {
   Sparkles,
   Tag,
   Target,
+  ChevronLeft
 } from 'lucide-react';
 
 import {
@@ -306,17 +308,29 @@ export default function SettingsActivityPage() {
     }));
   }, []);
 
+  const router = useRouter();
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-sky-600">
-            Nhật ký hoạt động
-          </h1>
+        <div className="flex items-start gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.back()} 
+            className="md:hidden shrink-0 mt-1"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-sky-600">
+              Nhật ký hoạt động
+            </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Theo dõi các thao tác gần đây của tài khoản hiện tại.
-          </p>
+            <p className="mt-1 text-sm text-slate-500">
+              Theo dõi các thao tác gần đây của tài khoản hiện tại.
+            </p>
+          </div>
         </div>
 
         <Button

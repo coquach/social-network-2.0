@@ -22,7 +22,7 @@ const quickLinks = [
 
 export function QuickLinksCard() {
   return (
-    <div className="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="bg-linear-to-r from-sky-50 via-white to-indigo-50 px-4 py-3">
         <p className="text-lg font-bold text-sky-500">Gợi ý nhanh</p>
       </div>
@@ -31,6 +31,7 @@ export function QuickLinksCard() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={item.href === '/friends/suggestions' ? false : undefined}
             className="group flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 transition hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md"
           >
             <div

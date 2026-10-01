@@ -9,4 +9,13 @@ import './lib/notifications/background-notification-task';
 import './lib/notifications/notifee-chat-events';
 
 // 2. Start Expo Router
-import 'expo-router/entry';
+import React from 'react';
+import { registerRootComponent } from 'expo';
+import { ExpoRoot } from 'expo-router';
+
+export function App() {
+  const ctx = require.context('./app');
+  return <ExpoRoot context={ctx} />;
+}
+
+registerRootComponent(App);

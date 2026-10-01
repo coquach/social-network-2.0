@@ -2,11 +2,12 @@
 
 import { LucideIcon } from 'lucide-react';
 import { SidebarItem } from './sidebar-item';
+import { IconType } from 'react-icons';
 
 type ItemSidebar = {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon?: LucideIcon | IconType;
 };
 
 interface SidebarProps {

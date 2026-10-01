@@ -176,7 +176,7 @@ export default function AdminMusicsPage() {
         setPlaybackState((current) => ({ ...current, isPlaying: false }));
       }
     },
-    [playbackState.activeMusicId],
+    [],
   );
 
   const seekMusic = React.useCallback((time: number) => {
