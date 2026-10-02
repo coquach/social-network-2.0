@@ -33,64 +33,25 @@ export function GroupsToolbar({
   loading,
 }: GroupsToolbarProps) {
   const [name, setName] = React.useState(filter.name ?? "");
-  const [status, setStatus] = React.useState<string>(filter.status ?? "all");
-  const [memberRange, setMemberRange] = React.useState<string>(
-    filter.memberRange ?? "all",
-  );
-  const latestNameRef = React.useRef(name);
 
   React.useEffect(() => {
     const next = filter.name ?? "";
     setName((prev) => (prev === next ? prev : next));
   }, [filter.name]);
 
-  React.useEffect(() => {
-    const next = filter.status ?? "all";
-    setStatus((prev) => (prev === next ? prev : next));
-  }, [filter.status]);
-
-  React.useEffect(() => {
-    const next = filter.memberRange ?? "all";
-    setMemberRange((prev) => (prev === next ? prev : next));
-  }, [filter.memberRange]);
-
-  React.useEffect(() => {
-    latestNameRef.current = name;
-  }, [name]);
-
-  const applyFilters = React.useCallback(
-    (text: string, nextStatus: string, nextRange: string) => {
-      onFilterChange({
-        name: text.trim() || undefined,
-        status: nextStatus === "all" ? undefined : (nextStatus as GroupStatus),
-        memberRange:
-          nextRange === "all" ? undefined : (nextRange as GroupMemberRange),
-        page: 1,
-      });
-    },
-    [onFilterChange],
-  );
-
   const debouncedSearch = useDebouncedCallback(
     (text: string) => {
-      applyFilters(text, status, memberRange);
+      onFilterChange({
+        name: text.trim() || undefined,
+        page: 1,
+      });
     },
     300,
     { maxWait: 800 },
   );
 
-  const handleStatusChange = (value: string) => {
-    setStatus(value);
-  };
-
-  const handleMemberChange = (value: string) => {
-    setMemberRange(value);
-  };
-
   const handleReset = () => {
     setName("");
-    setStatus("all");
-    setMemberRange("all");
     onReset();
   };
 
@@ -121,11 +82,13 @@ export function GroupsToolbar({
             Trạng thái
           </div>
           <Select
-            value={status}
-            onValueChange={(value) => {
-              setStatus(value);
-              applyFilters(name, value, memberRange);
-            }}
+            value={filter.status ?? "all"}
+            onValueChange={(val) =>
+              onFilterChange({
+                status: val === "all" ? undefined : (val as GroupStatus),
+                page: 1,
+              })
+            }
           >
             <SelectTrigger className="border-sky-100 focus:ring-sky-200">
               <SelectValue placeholder="Chọn trạng thái" />
@@ -144,11 +107,14 @@ export function GroupsToolbar({
             Số lượng thành viên
           </div>
           <Select
-            value={memberRange}
-            onValueChange={(value) => {
-              setMemberRange(value);
-              applyFilters(name, status, value);
-            }}
+            value={filter.memberRange ?? "all"}
+            onValueChange={(val) =>
+              onFilterChange({
+                memberRange:
+                  val === "all" ? undefined : (val as GroupMemberRange),
+                page: 1,
+              })
+            }
           >
             <SelectTrigger className="border-sky-100 focus:ring-sky-200">
               <SelectValue placeholder="Chọn phạm vi" />
