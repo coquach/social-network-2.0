@@ -15,11 +15,13 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-sky-100">
-      <SidebarProvider>
+      <SidebarProvider
+        style={{ '--sidebar-width': '235px' } as React.CSSProperties}
+      >
         <AppSidebar role={role} />
-        <main className="w-full">
+        <main className="w-full min-w-0 overflow-x-hidden">
           <AdminTopbar />
-          <div className="p-4">{children}</div>
+          <div className="p-3 sm:p-4">{children}</div>
         </main>
       </SidebarProvider>
     </div>

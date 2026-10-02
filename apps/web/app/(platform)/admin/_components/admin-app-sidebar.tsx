@@ -26,17 +26,17 @@ export function AppSidebar({ role }: { role: Role }) {
   return (
     <Sidebar className="border-r border-slate-200 bg-white/90 backdrop-blur">
       <SidebarHeader>
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white font-bold">
+        <div className="px-3 py-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 font-bold text-white shadow-xs">
               S
             </div>
 
             <div className="flex flex-col leading-tight">
-              <span className="text-lg font-semibold text-sky-700">
+              <span className="text-base font-semibold text-sky-700">
                 Sentimeta
               </span>
-              <span className="text-xs text-slate-500 capitalize">
+              <span className="text-[11px] capitalize text-slate-500">
                 {role} quản trị
               </span>
             </div>
@@ -45,7 +45,7 @@ export function AppSidebar({ role }: { role: Role }) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-400">
+          <SidebarGroupLabel className="text-[11px] font-medium text-slate-400">
             Quản lý hệ thống
           </SidebarGroupLabel>
 
@@ -61,25 +61,26 @@ export function AppSidebar({ role }: { role: Role }) {
                       asChild
                       isActive={active}
                       className="
-    h-14
-    p-4
+    h-11
+    px-3
+    py-2
     rounded-xl
     transition-all
-    text-[15px]
+    text-[14px]
 
     data-[active=true]:bg-sky-100
     data-[active=true]:text-sky-700
     data-[active=true]:font-semibold
-    text-sky-500
+    text-sky-600
 
     hover:bg-sky-50
     hover:text-sky-700
   "
                     >
-                      <Link href={item.url} className="flex items-center gap-3">
+                      <Link href={item.url} className="flex items-center gap-2.5">
                         <div
                           className="
-        flex h-8 w-8 items-center justify-center
+        flex h-7 w-7 items-center justify-center
         rounded-lg
         bg-sky-50
         text-sky-600
@@ -91,7 +92,7 @@ export function AppSidebar({ role }: { role: Role }) {
                           <item.icon className="h-4 w-4" />
                         </div>
 
-                        <span className="">{item.title}</span>
+                        <span className="truncate">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
