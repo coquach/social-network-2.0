@@ -18,14 +18,16 @@ import {
 import {
   AppealStatus,
   FinalDecision,
+  FinalDecisionFilter,
+  ModerationAction,
   Severity,
 } from '@/models/moderation/enums/moderationEnum';
 
 export type ModerationViolationToolbarValue = {
   search: string;
   targetType: TargetType | 'all';
-  maxSeverity: Severity | 'all';
-  finalDecision: FinalDecision | 'all';
+  action: ModerationAction | 'all';
+  finalDecision: FinalDecisionFilter | 'all';
   fromDate: string;
   toDate: string;
 };
@@ -41,6 +43,7 @@ type ViolationProps = {
   onChange: (next: ModerationViolationToolbarValue) => void;
   onReset: () => void;
   loading?: boolean;
+  children?: React.ReactNode;
 };
 
 type AppealProps = {
@@ -49,15 +52,16 @@ type AppealProps = {
   onChange: (next: ModerationAppealsToolbarValue) => void;
   onReset: () => void;
   loading?: boolean;
+  children?: React.ReactNode;
 };
 
 type Props = ViolationProps | AppealProps;
 
 const labelClass =
-  'mb-1.5 text-[13px] font-medium tracking-wide text-slate-500';
+  'mb-1 text-[12px] font-medium tracking-wide text-slate-500';
 
 const controlClass =
-  'h-10 rounded-lg border-slate-200 bg-white shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-sky-100';
+  'h-9 rounded-lg border-slate-200 bg-white text-xs shadow-xs transition-all focus-visible:ring-2 focus-visible:ring-sky-100';
 
 export function ModerationToolbar(props: Props) {
   const [search, setSearch] = React.useState(props.value.search);
@@ -78,162 +82,175 @@ export function ModerationToolbar(props: Props) {
     const value = props.value;
 
     return (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(300px,1fr)_140px_140px_150px_165px_165px_auto]">
-        {/* Search */}
-        <div>
-          <div className={labelClass}>Tìm kiếm</div>
-
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-            <Input
-              value={search}
-              onChange={(event) => {
-                const nextValue = event.target.value;
-                setSearch(nextValue);
-                debouncedSearch(nextValue);
-              }}
-              placeholder="Nội dung, người dùng..."
-              className={`${controlClass} pl-9`}
-            />
+      <div className="space-y-2.5">
+        {/* Row 1: Search & Core Filters */}
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-[1fr_130px_160px_185px]">
+          {/* Search */}
+          <div>
+            <div className={labelClass}>Tìm kiếm</div>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={search}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setSearch(nextValue);
+                  debouncedSearch(nextValue);
+                }}
+                placeholder="Nội dung, người dùng..."
+                className={`${controlClass} pl-8`}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Type */}
-        <div>
-          <div className={labelClass}>Loại</div>
-
-          <Select
-            value={value.targetType}
-            onValueChange={(next) =>
-              props.onChange({
-                ...value,
-                targetType: next as TargetType | 'all',
-              })
-            }
-          >
-            <SelectTrigger className={controlClass}>
-              <SelectValue placeholder="Loại" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value={TargetType.POST}>Bài viết</SelectItem>
-              <SelectItem value={TargetType.SHARE}>Chia sẻ</SelectItem>
-              <SelectItem value={TargetType.COMMENT}>Bình luận</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Severity */}
-        <div>
-          <div className={labelClass}>Mức độ</div>
-
-          <Select
-            value={value.maxSeverity}
-            onValueChange={(next) =>
-              props.onChange({
-                ...value,
-                maxSeverity: next as Severity | 'all',
-              })
-            }
-          >
-            <SelectTrigger className={controlClass}>
-              <SelectValue placeholder="Mức độ" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value={Severity.LOW}>Thấp</SelectItem>
-              <SelectItem value={Severity.MEDIUM}>Trung bình</SelectItem>
-              <SelectItem value={Severity.HIGH}>Cao</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Decision */}
-        <div>
-          <div className={labelClass}>Kết quả</div>
-
-          <Select
-            value={value.finalDecision}
-            onValueChange={(next) =>
-              props.onChange({
-                ...value,
-                finalDecision: next as FinalDecision | 'all',
-              })
-            }
-          >
-            <SelectTrigger className={controlClass}>
-              <SelectValue placeholder="Kết quả" />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-
-              <SelectItem value={FinalDecision.VIOLATION}>Vi phạm</SelectItem>
-
-              <SelectItem value={FinalDecision.NO_VIOLATION}>
-                Không VP
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* From */}
-        <div>
-          <div className={labelClass}>Từ ngày</div>
-
-          <div className="relative">
-            <CalendarRange className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-            <Input
-              type="date"
-              value={value.fromDate}
-              onChange={(event) =>
+          {/* Type */}
+          <div>
+            <div className={labelClass}>Loại</div>
+            <Select
+              value={value.targetType}
+              onValueChange={(next) =>
                 props.onChange({
                   ...value,
-                  fromDate: event.target.value,
+                  targetType: next as TargetType | 'all',
                 })
               }
-              className={`${controlClass} pl-9`}
-            />
+            >
+              <SelectTrigger className={`${controlClass} w-full truncate text-left`}>
+                <SelectValue placeholder="Loại" className="truncate" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value={TargetType.POST}>Bài viết</SelectItem>
+                <SelectItem value={TargetType.SHARE}>Chia sẻ</SelectItem>
+                <SelectItem value={TargetType.COMMENT}>Bình luận</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
 
-        {/* To */}
-        <div>
-          <div className={labelClass}>Đến ngày</div>
-
-          <div className="relative">
-            <CalendarRange className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-            <Input
-              type="date"
-              value={value.toDate}
-              min={value.fromDate || undefined}
-              onChange={(event) =>
+          {/* Action */}
+          <div>
+            <div className={labelClass}>Hình thức</div>
+            <Select
+              value={value.action}
+              onValueChange={(next) =>
                 props.onChange({
                   ...value,
-                  toDate: event.target.value,
+                  action: next as ModerationAction | 'all',
                 })
               }
-              className={`${controlClass} pl-9`}
-            />
+            >
+              <SelectTrigger className={`${controlClass} w-full truncate text-left`}>
+                <SelectValue placeholder="Hình thức" className="truncate" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value={ModerationAction.HARD_BLOCK}>
+                  Chặn nội dung
+                </SelectItem>
+                <SelectItem value={ModerationAction.ALLOW_WITH_WARNING}>
+                  Cảnh báo
+                </SelectItem>
+                <SelectItem value={ModerationAction.ALLOW_WITH_SUPPORT}>
+                  Hỗ trợ
+                </SelectItem>
+                <SelectItem value={ModerationAction.ALLOW}>
+                  Cho phép
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Decision */}
+          <div>
+            <div className={labelClass}>Quyết định xử lý</div>
+            <Select
+              value={value.finalDecision}
+              onValueChange={(next) =>
+                props.onChange({
+                  ...value,
+                  finalDecision: next as FinalDecisionFilter | 'all',
+                })
+              }
+            >
+              <SelectTrigger className={`${controlClass} w-full truncate text-left`}>
+                <SelectValue placeholder="Quyết định" className="truncate" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value={FinalDecisionFilter.AUTO}>
+                  Tự động (AI)
+                </SelectItem>
+                <SelectItem value={FinalDecisionFilter.NO_VIOLATION}>
+                  Thủ công - Khôi phục
+                </SelectItem>
+                <SelectItem value={FinalDecisionFilter.VIOLATION}>
+                  Thủ công - Vi phạm
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Reset */}
-        <div className="flex items-end">
-          <Button
-            variant="outline"
-            className="h-10 rounded-lg border-slate-200 px-4 shadow-sm hover:bg-slate-50"
-            onClick={props.onReset}
-            disabled={props.loading}
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Reset
-          </Button>
+        {/* Row 2: Date Range, Reset, and Slot */}
+        <div className="flex flex-wrap items-end gap-2.5">
+          {/* From */}
+          <div className="w-[calc(50%-5px)] sm:w-40">
+            <div className={labelClass}>Từ ngày</div>
+            <div className="relative">
+              <CalendarRange className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="date"
+                value={value.fromDate}
+                onChange={(event) =>
+                  props.onChange({
+                    ...value,
+                    fromDate: event.target.value,
+                  })
+                }
+                className={`${controlClass} pl-8`}
+              />
+            </div>
+          </div>
+
+          {/* To */}
+          <div className="w-[calc(50%-5px)] sm:w-40">
+            <div className={labelClass}>Đến ngày</div>
+            <div className="relative">
+              <CalendarRange className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <Input
+                type="date"
+                value={value.toDate}
+                min={value.fromDate || undefined}
+                onChange={(event) =>
+                  props.onChange({
+                    ...value,
+                    toDate: event.target.value,
+                  })
+                }
+                className={`${controlClass} pl-8`}
+              />
+            </div>
+          </div>
+
+          {/* Reset */}
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-lg border-slate-200 px-3 text-xs text-slate-600 shadow-xs hover:bg-slate-50"
+              onClick={props.onReset}
+              disabled={props.loading}
+            >
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+              Đặt lại
+            </Button>
+          </div>
+
+          {props.children && (
+            <div className="ml-auto">
+              {props.children}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -242,14 +259,12 @@ export function ModerationToolbar(props: Props) {
   const value = props.value;
 
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(300px,1fr)_180px_auto]">
+    <div className="flex flex-wrap items-end gap-2.5">
       {/* Search */}
-      <div>
+      <div className="min-w-[200px] flex-1">
         <div className={labelClass}>Tìm kiếm</div>
-
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           <Input
             value={search}
             onChange={(event) => {
@@ -258,15 +273,14 @@ export function ModerationToolbar(props: Props) {
               debouncedSearch(nextValue);
             }}
             placeholder="Appeal ID, user..."
-            className={`${controlClass} pl-9`}
+            className={`${controlClass} pl-8`}
           />
         </div>
       </div>
 
       {/* Status */}
-      <div>
+      <div className="w-full sm:w-44">
         <div className={labelClass}>Trạng thái</div>
-
         <Select
           value={value.appealStatus}
           onValueChange={(next) =>
@@ -276,34 +290,37 @@ export function ModerationToolbar(props: Props) {
             })
           }
         >
-          <SelectTrigger className={controlClass}>
-            <SelectValue placeholder="Trạng thái" />
+          <SelectTrigger className={`${controlClass} w-full truncate text-left`}>
+            <SelectValue placeholder="Trạng thái" className="truncate" />
           </SelectTrigger>
-
           <SelectContent>
             <SelectItem value="all">Tất cả</SelectItem>
-
             <SelectItem value={AppealStatus.PENDING}>Đang chờ</SelectItem>
-
             <SelectItem value={AppealStatus.APPROVED}>Đã duyệt</SelectItem>
-
             <SelectItem value={AppealStatus.REJECTED}>Bị từ chối</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Reset */}
-      <div className="flex items-end">
+      <div>
         <Button
           variant="outline"
-          className="h-10 rounded-lg border-slate-200 px-4 shadow-sm hover:bg-slate-50"
+          size="sm"
+          className="h-9 rounded-lg border-slate-200 px-3 text-xs text-slate-600 shadow-xs hover:bg-slate-50"
           onClick={props.onReset}
           disabled={props.loading}
         >
-          <RotateCcw className="mr-2 h-4 w-4" />
+          <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
           Đặt lại
         </Button>
       </div>
+
+      {props.children && (
+        <div className="ml-auto">
+          {props.children}
+        </div>
+      )}
     </div>
   );
 }

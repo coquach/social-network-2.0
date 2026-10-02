@@ -40,9 +40,10 @@ import { DataTableToolbar } from '../../_components/data-table-toolbar';
 import { ConfirmActionDialog } from '../../_components/confirm-action-dialog';
 
 import { ModerationDecisionBadge } from './moderation-decision-badge';
-import { ModerationSeverityBadge } from './moderation-severity-badge';
+import { ModerationActionBadge } from './moderation-action-badge';
 
 import { formatDateVN } from '@/utils/user.utils';
+
 
 type Props = {
   rows: ContentModerationDTO[];
@@ -54,6 +55,7 @@ type Props = {
   onPageChange: (page: number) => void;
   onViewDetail: (moderationId: string) => void;
   onRestore: (row: ContentModerationDTO) => void;
+  toolbar?: (table: any) => React.ReactNode;
 };
 
 const targetLabels: Record<string, string> = {
@@ -77,6 +79,7 @@ export function ModerationTable({
   onPageChange,
   onViewDetail,
   onRestore,
+  toolbar,
 }: Props) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -105,18 +108,18 @@ export function ModerationTable({
           const hasImage = !!preview?.imageUrl?.url;
 
           return (
-            <div className="flex max-w-[360px] items-center gap-3">
+            <div className="flex min-w-[200px] max-w-[340px] items-center gap-2.5">
               {hasImage && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={preview?.imageUrl?.url}
                   alt="preview"
-                  className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 object-cover"
+                  className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 object-cover"
                 />
               )}
 
               <p
-                className="truncate text-sm text-slate-700"
+                className="line-clamp-2 text-xs text-slate-700 leading-relaxed"
                 title={preview?.content || ''}
               >
                 {preview?.content || 'Không có nội dung xem trước'}
@@ -132,29 +135,35 @@ export function ModerationTable({
         accessorFn: (row) => row.targetType,
 
         cell: ({ row }) => (
-          <Badge className="border border-sky-100 bg-sky-50 text-sky-700 hover:bg-sky-50">
-            {targetLabels[row.original.targetType] ?? row.original.targetType}
-          </Badge>
+          <div className="text-center">
+            <Badge className="border border-sky-100 bg-sky-50 px-2 py-0.5 text-xs text-sky-700 hover:bg-sky-50">
+              {targetLabels[row.original.targetType] ?? row.original.targetType}
+            </Badge>
+          </div>
         ),
       },
 
       {
-        id: 'severity',
-        header: 'Mức độ',
-        accessorFn: (row) => row.maxSeverity,
+        id: 'action',
+        header: 'Hình thức',
+        accessorFn: (row) => row.action ?? '',
 
         cell: ({ row }) => (
-          <ModerationSeverityBadge severity={row.original.maxSeverity} />
+          <div className="text-center">
+            <ModerationActionBadge action={row.original.action} />
+          </div>
         ),
       },
 
       {
         id: 'decision',
-        header: 'Kết quả',
+        header: 'Quyết định',
         accessorFn: (row) => row.finalDecision ?? '',
 
         cell: ({ row }) => (
-          <ModerationDecisionBadge decision={row.original.finalDecision} />
+          <div className="text-center">
+            <ModerationDecisionBadge decision={row.original.finalDecision} />
+          </div>
         ),
       },
 
@@ -164,7 +173,7 @@ export function ModerationTable({
         accessorFn: (row) => row.confidence,
 
         cell: ({ row }) => (
-          <div className="text-center text-sm font-semibold text-slate-700">
+          <div className="text-center text-xs font-semibold text-slate-700">
             {formatConfidence(row.original.confidence)}
           </div>
         ),
@@ -176,7 +185,7 @@ export function ModerationTable({
         accessorFn: (row) => row.createdAt,
 
         cell: ({ row }) => (
-          <div className="text-center text-sm text-slate-600">
+          <div className="text-center text-xs text-slate-600">
             {formatDateVN(row.original.createdAt)}
           </div>
         ),
@@ -191,17 +200,17 @@ export function ModerationTable({
         cell: ({ row }) => (
           <div className="text-center">
             <TooltipProvider delayDuration={150}>
-              <div className="inline-flex items-center gap-2">
+              <div className="inline-flex items-center gap-1.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-9 w-9 rounded-lg border border-sky-100 bg-sky-50 text-sky-700 shadow-sm hover:bg-sky-100"
+                      className="h-8 w-8 rounded-lg border border-sky-100 bg-sky-50 text-sky-700 shadow-xs hover:bg-sky-100"
                       onClick={() => onViewDetail(row.original.id)}
                       aria-label="Xem chi tiết"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
 
@@ -213,12 +222,12 @@ export function ModerationTable({
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-9 w-9 rounded-lg border border-emerald-100 bg-emerald-50 text-emerald-700 shadow-sm hover:bg-emerald-100"
+                      className="h-8 w-8 rounded-lg border border-emerald-100 bg-emerald-50 text-emerald-700 shadow-xs hover:bg-emerald-100"
                       onClick={() => setConfirmRow(row.original)}
                       disabled={!row.original.isViolation || restoring}
                       aria-label="Khôi phục nội dung"
                     >
-                      <RotateCcw className="h-4 w-4" />
+                      <RotateCcw className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
 
@@ -250,30 +259,45 @@ export function ModerationTable({
   });
 
   return (
-    <>
-      <DataTableToolbar table={table} />
+    <div className="space-y-2.5">
+      {toolbar ? toolbar(table) : (
+        <div className="flex items-center justify-end">
+          <DataTableToolbar table={table} />
+        </div>
+      )}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <Table className="min-w-[980px]">
-          <TableHeader className="bg-sky-50">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs">
+        <Table className="min-w-[860px]">
+          <TableHeader className="bg-sky-50/80">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const isActions = header.column.id === 'actions';
+                  const isCentered =
+                    header.column.id === 'targetType' ||
+                    header.column.id === 'action' ||
+                    header.column.id === 'decision' ||
+                    header.column.id === 'confidence' ||
+                    header.column.id === 'createdAt' ||
+                    isActions;
 
                   return (
                     <TableHead
                       key={header.id}
                       className={clsx(
-                        'text-[15px] font-medium',
-                        isActions && 'w-36 text-center',
+                        'py-2.5 text-xs font-semibold text-slate-600',
+                        isCentered && 'text-center',
+                        isActions && 'w-24',
                       )}
                     >
                       {header.isPlaceholder ? null : header.column.getCanSort() ? (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="-ml-3 h-8 text-[15px] font-medium"
+                          className={clsx(
+                            'h-7 text-xs font-semibold text-slate-600',
+                            isCentered ? 'mx-auto' : '-ml-2',
+                          )}
                           onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(
@@ -282,11 +306,11 @@ export function ModerationTable({
                           )}
 
                           {header.column.getIsSorted() === 'asc' ? (
-                            <ArrowUp className="ml-2 h-3.5 w-3.5" />
+                            <ArrowUp className="ml-1 h-3 w-3" />
                           ) : header.column.getIsSorted() === 'desc' ? (
-                            <ArrowDown className="ml-2 h-3.5 w-3.5" />
+                            <ArrowDown className="ml-1 h-3 w-3" />
                           ) : (
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                            <ArrowUpDown className="ml-1 h-3 w-3" />
                           )}
                         </Button>
                       ) : (
@@ -371,6 +395,6 @@ export function ModerationTable({
           setConfirmRow(null);
         }}
       />
-    </>
+    </div>
   );
 }

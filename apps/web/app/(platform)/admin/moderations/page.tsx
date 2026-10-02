@@ -21,6 +21,8 @@ import {
 import {
   AppealStatus,
   FinalDecision,
+  FinalDecisionFilter,
+  ModerationAction,
   Severity,
 } from '@/models/moderation/enums/moderationEnum';
 import { ModerationAppealResponseDTO } from '@/models/moderation/moderationDTO';
@@ -32,32 +34,13 @@ import {
   ModerationToolbar,
   ModerationViolationToolbarValue,
 } from './_components/moderation-toolbar';
+import { DataTableToolbar } from '../_components/data-table-toolbar';
 import { AdminActivityLog } from '../_components/admin-activity-log';
 import { LogType } from '@/models/log/logDTO';
 
 const DEFAULT_LIMIT = 10;
 
 type TabKey = 'violations' | 'appeals';
-
-const formatDateInput = (date: Date) => {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-};
-
-const getDefaultViolationDateRange = () => {
-  const toDate = new Date();
-  const fromDate = new Date();
-
-  fromDate.setDate(toDate.getDate() - 7);
-
-  return {
-    fromDate: formatDateInput(fromDate),
-    toDate: formatDateInput(toDate),
-  };
-};
 
 export default function AdminModerationsPage() {
   const [tab, setTab] = React.useState<TabKey>('violations');
@@ -68,22 +51,19 @@ export default function AdminModerationsPage() {
   const [moderationId, setModerationId] = React.useState<string | null>(null);
   const [selectedAppeal, setSelectedAppeal] =
     React.useState<ModerationAppealResponseDTO | null>(null);
-  const defaultViolationDateRange = React.useMemo(
-    () => getDefaultViolationDateRange(),
-    [],
-  );
   const [violationsFilter, setViolationsFilter] = React.useState<{
     targetType: TargetType | 'all';
-    maxSeverity: Severity | 'all';
-    finalDecision: FinalDecision | 'all';
+    action: ModerationAction | 'all';
+    finalDecision: FinalDecisionFilter | 'all';
     fromDate: string;
     toDate: string;
-  }>(() => ({
+  }>({
     targetType: 'all',
-    maxSeverity: 'all',
+    action: 'all',
     finalDecision: 'all',
-    ...getDefaultViolationDateRange(),
-  }));
+    fromDate: '',
+    toDate: '',
+  });
   const [appealsFilter, setAppealsFilter] = React.useState<{
     appealStatus: AppealStatus | 'all';
   }>({
@@ -98,10 +78,10 @@ export default function AdminModerationsPage() {
         violationsFilter.targetType === 'all'
           ? undefined
           : violationsFilter.targetType,
-      maxSeverity:
-        violationsFilter.maxSeverity === 'all'
+      action:
+        violationsFilter.action === 'all'
           ? undefined
-          : violationsFilter.maxSeverity,
+          : violationsFilter.action,
       finalDecision:
         violationsFilter.finalDecision === 'all'
           ? undefined
@@ -111,6 +91,7 @@ export default function AdminModerationsPage() {
     }),
     [violationsPage, violationsFilter],
   );
+
 
   const appealsQueryFilters = React.useMemo<AdminAppealQuery>(
     () => ({
@@ -172,9 +153,10 @@ export default function AdminModerationsPage() {
     setViolationsSearch('');
     setViolationsFilter({
       targetType: 'all',
-      maxSeverity: 'all',
+      action: 'all',
       finalDecision: 'all',
-      ...defaultViolationDateRange,
+      fromDate: '',
+      toDate: '',
     });
   };
 
@@ -225,7 +207,7 @@ export default function AdminModerationsPage() {
   const violationToolbarValue: ModerationViolationToolbarValue = {
     search: violationsSearch,
     targetType: violationsFilter.targetType,
-    maxSeverity: violationsFilter.maxSeverity,
+    action: violationsFilter.action,
     finalDecision: violationsFilter.finalDecision,
     fromDate: violationsFilter.fromDate,
     toDate: violationsFilter.toDate,
@@ -236,80 +218,64 @@ export default function AdminModerationsPage() {
     appealStatus: appealsFilter.appealStatus,
   };
 
+
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="space-y-3.5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-sky-600">
+          <h1 className="text-lg font-semibold text-sky-700">
             Kiểm duyệt nội dung
           </h1>
-          <p className="text-sm text-slate-500">
-            Quản lý nội dung vi phạm và kháng nghị.
+          <p className="text-xs text-slate-500">
+            Quản lý nội dung vi phạm và kháng nghị hệ thống.
           </p>
         </div>
 
         <Button
           variant="outline"
-          className="border-sky-200 text-slate-700 hover:bg-sky-50"
+          size="sm"
+          className="h-8 rounded-lg border-sky-200 text-xs text-slate-700 hover:bg-sky-50"
           onClick={handleRefresh}
         >
           {moderationQuery.isFetching || appealsQuery.isFetching ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
           ) : (
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
           )}
           Làm mới
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-sky-100 bg-white p-3.5 shadow-xs">
         <Tabs value={tab} onValueChange={(value) => setTab(value as TabKey)}>
-          <TabsList className="mb-4 inline-flex h-auto w-fit max-w-full items-center gap-1.5 rounded-2xl border border-slate-200/60 bg-slate-50/80 p-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <TabsList className="mb-3 inline-flex h-auto w-fit max-w-full items-center gap-1 rounded-xl border border-slate-200/60 bg-slate-50/80 p-0.5 shadow-xs">
             <TabsTrigger
               value="violations"
-              className="group flex h-12 min-w-44 items-center justify-between rounded-[14px] border border-transparent bg-transparent px-5 py-3 text-sm font-medium text-slate-500 transition-all duration-200 ease-out hover:bg-white hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-sky-200 data-[state=active]:-translate-y-px data-[state=active]:border-sky-200 data-[state=active]:bg-[#E6F4FF] data-[state=active]:font-semibold data-[state=active]:text-sky-800 data-[state=active]:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+              className="group flex h-9 min-w-36 items-center justify-between rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-slate-500 transition-all duration-200 ease-out hover:bg-white hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-sky-200 data-[state=active]:border-sky-200 data-[state=active]:bg-[#E6F4FF] data-[state=active]:font-semibold data-[state=active]:text-sky-800 data-[state=active]:shadow-xs"
             >
-              <span className="flex items-center gap-2 font-semibold text-inherit">
-                <ShieldAlert className="h-4 w-4 text-inherit transition-all duration-200 group-data-[state=active]:scale-105" />
+              <span className="flex items-center gap-1.5 font-semibold text-inherit">
+                <ShieldAlert className="h-3.5 w-3.5 text-inherit transition-all duration-200 group-data-[state=active]:scale-105" />
                 Vi phạm
               </span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 transition-all duration-200 group-data-[state=active]:bg-sky-600 group-data-[state=active]:text-white">
+              <span className="rounded-full bg-slate-100 px-2 py-0.2 text-[11px] font-semibold text-slate-500 transition-all duration-200 group-data-[state=active]:bg-sky-600 group-data-[state=active]:text-white">
                 {moderationQuery.data?.total ?? 0}
               </span>
             </TabsTrigger>
             <TabsTrigger
               value="appeals"
-              className="group flex h-12 min-w-44 items-center justify-between rounded-[14px] border border-transparent bg-transparent px-5 py-3 text-sm font-medium text-slate-500 transition-all duration-200 ease-out hover:bg-white hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-sky-200 data-[state=active]:-translate-y-px data-[state=active]:border-sky-200 data-[state=active]:bg-[#E6F4FF] data-[state=active]:font-semibold data-[state=active]:text-sky-800 data-[state=active]:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+              className="group flex h-9 min-w-36 items-center justify-between rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-slate-500 transition-all duration-200 ease-out hover:bg-white hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-sky-200 data-[state=active]:border-sky-200 data-[state=active]:bg-[#E6F4FF] data-[state=active]:font-semibold data-[state=active]:text-sky-800 data-[state=active]:shadow-xs"
             >
-              <span className="flex items-center gap-2 font-semibold text-inherit">
-                <MessagesSquare className="h-4 w-4 text-inherit transition-all duration-200 group-data-[state=active]:scale-105" />
+              <span className="flex items-center gap-1.5 font-semibold text-inherit">
+                <MessagesSquare className="h-3.5 w-3.5 text-inherit transition-all duration-200 group-data-[state=active]:scale-105" />
                 Kháng nghị
               </span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 transition-all duration-200 group-data-[state=active]:bg-sky-600 group-data-[state=active]:text-white">
+              <span className="rounded-full bg-slate-100 px-2 py-0.2 text-[11px] font-semibold text-slate-500 transition-all duration-200 group-data-[state=active]:bg-sky-600 group-data-[state=active]:text-white">
                 {appealsQuery.data?.total ?? 0}
               </span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="violations" className="space-y-4">
-            <ModerationToolbar
-              variant="violations"
-              value={violationToolbarValue}
-              onChange={(next) => {
-                setViolationsSearch(next.search);
-                setViolationsFilter({
-                  targetType: next.targetType,
-                  maxSeverity: next.maxSeverity,
-                  finalDecision: next.finalDecision,
-                  fromDate: next.fromDate,
-                  toDate: next.toDate,
-                });
-                setViolationsPage(1);
-              }}
-              onReset={handleResetViolations}
-              loading={moderationQuery.isLoading}
-            />
-
+          <TabsContent value="violations" className="space-y-3">
             <ModerationTable
               rows={filteredModerationRows}
               page={violationsPage}
@@ -328,22 +294,31 @@ export default function AdminModerationsPage() {
                   status: AppealStatus.APPROVED,
                 });
               }}
+              toolbar={(table) => (
+                <ModerationToolbar
+                  variant="violations"
+                  value={violationToolbarValue}
+                  onChange={(next) => {
+                    setViolationsSearch(next.search);
+                    setViolationsFilter({
+                      targetType: next.targetType,
+                      action: next.action,
+                      finalDecision: next.finalDecision,
+                      fromDate: next.fromDate,
+                      toDate: next.toDate,
+                    });
+                    setViolationsPage(1);
+                  }}
+                  onReset={handleResetViolations}
+                  loading={moderationQuery.isLoading}
+                >
+                  <DataTableToolbar table={table} />
+                </ModerationToolbar>
+              )}
             />
           </TabsContent>
 
-          <TabsContent value="appeals" className="space-y-4">
-            <ModerationToolbar
-              variant="appeals"
-              value={appealToolbarValue}
-              onChange={(next) => {
-                setAppealsSearch(next.search);
-                setAppealsFilter({ appealStatus: next.appealStatus });
-                setAppealsPage(1);
-              }}
-              onReset={handleResetAppeals}
-              loading={appealsQuery.isLoading}
-            />
-
+          <TabsContent value="appeals" className="space-y-3">
             <AppealsTable
               rows={filteredAppealRows}
               page={appealsPage}
@@ -356,6 +331,21 @@ export default function AdminModerationsPage() {
                 setModerationId(row.moderationId);
                 setSelectedAppeal(row);
               }}
+              toolbar={(table) => (
+                <ModerationToolbar
+                  variant="appeals"
+                  value={appealToolbarValue}
+                  onChange={(next) => {
+                    setAppealsSearch(next.search);
+                    setAppealsFilter({ appealStatus: next.appealStatus });
+                    setAppealsPage(1);
+                  }}
+                  onReset={handleResetAppeals}
+                  loading={appealsQuery.isLoading}
+                >
+                  <DataTableToolbar table={table} />
+                </ModerationToolbar>
+              )}
             />
           </TabsContent>
         </Tabs>

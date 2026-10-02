@@ -36,6 +36,9 @@ export interface ContentModerationDTO {
   targetId: string;
   targetType: TargetType | string;
   isViolation: boolean;
+  action?: string;
+  label?: string;
+  mentalHealthSupport?: boolean;
   violations: ModerationViolationDTO[];
   maxSeverity: string;
   confidence: number;
