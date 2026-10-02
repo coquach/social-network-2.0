@@ -54,11 +54,16 @@ const summaryMeta = [
 const formatNumber = (value?: number) =>
   typeof value === 'number' ? value.toLocaleString('vi-VN') : '0';
 
-const formatAccuracy = (value?: number) => {
-  if (typeof value !== 'number') return '0%';
+const formatAccuracy = (value?: number, totalFeedbacks?: number) => {
+  if (
+    !totalFeedbacks ||
+    totalFeedbacks === 0 ||
+    typeof value !== 'number'
+  )
+    return '--';
   const normalized = value <= 1 ? value * 100 : value;
 
-  return `${normalized.toFixed(normalized >= 10 ? 0 : 1)}%`;
+  return `${normalized % 1 === 0 ? normalized.toFixed(0) : normalized.toFixed(1)}%`;
 };
 
 const normalizeAccuracy = (value?: number) => {
@@ -94,6 +99,8 @@ export function EmotionFeedbackSummary({ data, loading }: Props) {
     );
   }
 
+  const hasFeedbacks = (data?.totalFeedbacks ?? 0) > 0;
+
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {summaryMeta.map((metric) => {
@@ -119,7 +126,7 @@ export function EmotionFeedbackSummary({ data, loading }: Props) {
                   }
                 >
                   {metric.key === 'accuracyRate'
-                    ? formatAccuracy(data?.accuracyRate)
+                    ? formatAccuracy(data?.accuracyRate, data?.totalFeedbacks)
                     : formatNumber(
                         data?.[
                           metric.key as keyof FeedbackAccuracySummaryDTO
@@ -136,13 +143,21 @@ export function EmotionFeedbackSummary({ data, loading }: Props) {
             <CardContent className="relative pt-4">
               {metric.key === 'accuracyRate' ? (
                 <div className="space-y-2">
-                  <Progress
-                    value={normalizeAccuracy(data?.accuracyRate)}
-                    className="h-2 bg-white/90"
-                  />
-                  <div className="text-sm text-slate-500">
-                    Độ chính xác mô hình trên feedback đã ghi nhận.
-                  </div>
+                  {hasFeedbacks ? (
+                    <>
+                      <Progress
+                        value={normalizeAccuracy(data?.accuracyRate)}
+                        className="h-2 bg-white/90"
+                      />
+                      <div className="text-sm text-slate-500">
+                        Độ chính xác mô hình trên {data?.totalFeedbacks} feedback đã ghi nhận.
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-slate-500">
+                      Chưa có dữ liệu phản hồi từ người dùng.
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-sm text-slate-500">

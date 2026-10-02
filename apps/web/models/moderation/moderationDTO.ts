@@ -27,7 +27,7 @@ export interface ContentModerationDTO {
 
   violations: ViolationDTO[];
 
-  maxSeverity: string;
+  maxSeverity?: string;
 
   confidence: number;
 

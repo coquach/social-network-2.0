@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, Flame, Smile, Users } from 'lucide-react';
+import { HeartHandshake, MessageSquareWarning, Send, Sparkles } from 'lucide-react';
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,52 +14,58 @@ type Props = {
 const formatNumber = (value?: number) =>
   typeof value === 'number' ? value.toLocaleString('vi-VN') : '0';
 
-const formatPercent = (value?: number) => {
-  if (typeof value !== 'number') return '0%';
+const formatPercent = (value?: number, totalSnapshots?: number) => {
+  if (
+    typeof value !== 'number' ||
+    (totalSnapshots !== undefined && totalSnapshots === 0)
+  )
+    return '--';
   const normalized = value <= 1 ? value * 100 : value;
+  if (normalized === 0) return '0%';
+  if (normalized < 0.1) return `${normalized.toFixed(2)}%`;
 
-  return `${normalized.toFixed(normalized >= 10 ? 0 : 1)}%`;
+  return `${normalized % 1 === 0 ? normalized.toFixed(0) : normalized.toFixed(1)}%`;
 };
 
 const metrics = [
   {
     key: 'totalAnalyzedSnapshots',
-    label: 'Lượt phân tích',
-    description: 'Tổng snapshot đã xử lý',
-    icon: Users,
+    label: 'Lượt phân tích AI',
+    description: 'Tổng snapshot cảm xúc đã quét',
+    icon: Sparkles,
     tone: 'text-sky-600',
     panelClass:
       'border-sky-200 bg-linear-to-br from-sky-100 via-sky-50 to-white',
     percent: false,
   },
   {
-    key: 'highRiskUsers',
-    label: 'Người dùng rủi ro',
-    description: 'Cần theo dõi thêm',
-    icon: AlertTriangle,
+    key: 'totalInterventionsDispatched',
+    label: 'Lượt can thiệp đã gửi',
+    description: 'Số lần chủ động gợi ý bài tập & hotline',
+    icon: Send,
     tone: 'text-amber-600',
     panelClass:
       'border-amber-200 bg-linear-to-br from-amber-100 via-amber-50 to-white',
     percent: false,
   },
   {
-    key: 'criticalRiskUsers',
-    label: 'Người dùng nguy cấp',
-    description: 'Ưu tiên kiểm tra ngay',
-    icon: Flame,
-    tone: 'text-rose-600',
-    panelClass:
-      'border-rose-200 bg-linear-to-br from-rose-100 via-rose-50 to-white',
-    percent: false,
-  },
-  {
-    key: 'averageNegativityScore',
-    label: 'Điểm tiêu cực',
-    description: 'Mức độ tiêu cực trung bình',
-    icon: Smile,
+    key: 'activeInterventionResources',
+    label: 'Tài nguyên sẵn sàng',
+    description: 'Bài tập & Hotline đang kích hoạt',
+    icon: HeartHandshake,
     tone: 'text-emerald-600',
     panelClass:
       'border-emerald-200 bg-linear-to-br from-emerald-100 via-emerald-50 to-white',
+    percent: false,
+  },
+  {
+    key: 'feedbackRate',
+    label: 'Tỷ lệ báo sai AI',
+    description: 'Tỉ lệ người dùng báo sai trên tổng lượt quét',
+    icon: MessageSquareWarning,
+    tone: 'text-rose-600',
+    panelClass:
+      'border-rose-200 bg-linear-to-br from-rose-100 via-rose-50 to-white',
     percent: true,
   },
 ] as const;
@@ -95,9 +101,11 @@ export function EmotionOverviewCards({ data, loading }: Props) {
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {metrics.map((metric) => {
         const Icon = metric.icon;
-        const value = data?.[
-          metric.key as keyof DashboardOverviewResponseDTO
-        ] as number | undefined;
+        const value = (
+          metric.key === 'feedbackRate'
+            ? data?.feedbackRate ?? data?.aiAccuracyRate
+            : data?.[metric.key as keyof DashboardOverviewResponseDTO]
+        ) as number | undefined;
 
         return (
           <Card
@@ -112,7 +120,9 @@ export function EmotionOverviewCards({ data, loading }: Props) {
                   {metric.label}
                 </div>
                 <div className="text-3xl font-bold tracking-tight text-slate-900">
-                  {metric.percent ? formatPercent(value) : formatNumber(value)}
+                  {metric.percent
+                    ? formatPercent(value, data?.totalAnalyzedSnapshots)
+                    : formatNumber(value)}
                 </div>
               </div>
 
@@ -122,7 +132,13 @@ export function EmotionOverviewCards({ data, loading }: Props) {
             </CardHeader>
 
             <CardContent className="relative pt-4">
-              <div className="text-sm text-slate-500">{metric.description}</div>
+              <div className="text-sm text-slate-500">
+                {metric.key === 'feedbackRate' &&
+                (!data?.totalAnalyzedSnapshots ||
+                  data.totalAnalyzedSnapshots === 0)
+                  ? 'Chưa có dữ liệu phân tích'
+                  : metric.description}
+              </div>
             </CardContent>
           </Card>
         );
