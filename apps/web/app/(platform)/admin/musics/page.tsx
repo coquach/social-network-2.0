@@ -246,9 +246,14 @@ export default function AdminMusicsPage() {
     if (editingMusic) {
       await updateMutation.mutateAsync({
         id: editingMusic.id,
-        payload: payload as unknown as Parameters<
-          typeof updateMutation.mutateAsync
-        >[0]['payload'],
+        payload: {
+          title: payload.title,
+          artist: payload.artist,
+          genre: payload.genre,
+          valence: payload.valence,
+          arousal: payload.arousal,
+          coverImage: payload.coverImage,
+        },
       });
     } else {
       await createMutation.mutateAsync(payload as never);

@@ -25,25 +25,25 @@ import Image from 'next/image';
 
 import {
   formatDateTime,
+  getActionLabel,
+  getActionToneClassName,
   getDecisionLabel,
   getDecisionToneClassName,
-  getModerationTypeLabel,
-  getSeverityLabel,
-  getSeverityToneClassName,
+  getTargetLabel,
   normalizeViolations,
 } from './moderation-history-utils';
 
-function SeverityBadge({ severity }: { severity: string }) {
-  const normalized = severity.toUpperCase();
+function ActionBadge({ action }: { action?: string }) {
+  const normalized = action?.toUpperCase();
 
   return (
     <Badge
-      className={['gap-1.5 border', getSeverityToneClassName(normalized)].join(
+      className={['gap-1.5 border', getActionToneClassName(normalized)].join(
         ' ',
       )}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-current/80" />
-      {getSeverityLabel(normalized)}
+      {getActionLabel(normalized)}
     </Badge>
   );
 }
@@ -104,6 +104,11 @@ export function ModerationDetailSheet({
     setAppealReason('');
   };
 
+  const previewImageUrl =
+    typeof moderation?.targetPreview?.imageUrl === 'string'
+      ? moderation.targetPreview.imageUrl
+      : (moderation?.targetPreview?.imageUrl as any)?.url;
+
   return (
     <Sheet
       open={open}
@@ -147,17 +152,29 @@ export function ModerationDetailSheet({
               <>
                 <section className="space-y-4 rounded-2xl border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge className="border-sky-200/70 bg-sky-50/80 text-sky-700 hover:bg-sky-50 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-300">
-                      {getModerationTypeLabel(moderation)}
+                    <Badge
+                      variant="outline"
+                      className="border-slate-200/80 bg-white/80 text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300"
+                    >
+                      {getTargetLabel(moderation.targetType)}
                     </Badge>
-                    <SeverityBadge severity={moderation.maxSeverity} />
+                    <ActionBadge action={moderation.action} />
                     <DecisionBadge decision={moderation.finalDecision} />
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
                       <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                        Trạng thái
+                        Hình thức xử lý
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {getActionLabel(moderation.action)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                      <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        Quyết định xử lý
                       </p>
                       <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200">
                         {getDecisionLabel(moderation.finalDecision)}
@@ -243,19 +260,19 @@ export function ModerationDetailSheet({
                         </div>
                       )}
                     </div>
-                  ) : moderation.targetPreview?.content || moderation.targetPreview?.imageUrl ? (
+                  ) : moderation.targetPreview?.content || previewImageUrl ? (
                     <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-950/70">
                       <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
                         Preview mục tiêu
                       </p>
-                      {moderation.targetPreview.content && (
+                      {moderation.targetPreview?.content && (
                         <p className="mt-2 mb-3 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-300">
                           {moderation.targetPreview.content}
                         </p>
                       )}
-                      {moderation.targetPreview.imageUrl && (
+                      {previewImageUrl && (
                         <Image
-                          src={moderation.targetPreview.imageUrl} 
+                          src={previewImageUrl} 
                           alt="preview" 
                           width={80}
                           height={80}
@@ -265,6 +282,7 @@ export function ModerationDetailSheet({
                     </div>
                   ) : null}
                 </section>
+
 
                 <section className="space-y-3 rounded-2xl border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
                   <h3 className="text-sm font-semibold text-sky-700 dark:text-sky-300">

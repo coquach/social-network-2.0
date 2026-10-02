@@ -1,62 +1,52 @@
-'use client';
+"use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import * as React from 'react';
+import { useRouter, useSearchParams } from "next/navigation";
+import * as React from "react";
 
-import {  useAdminGroups, useGroupModeration  } from "@/hooks/admin/use-admin-group";
-import { AdminGroupQuery } from '@/lib/actions/admin/admin-group-action';
-import { AdminGroupDTO } from "@repo/shared";
-import { GroupStatus } from "@repo/shared";
-import { LogType } from '@/models/log/logDTO';
-import { AdminActivityLog } from '../_components/admin-activity-log';
-import { GroupDetailDialog } from './_components/group-detail-dialog';
-import { GroupReportsDrawer } from './_components/group-reports-drawer';
-import { GroupsTable } from './_components/groups-table';
-import { GroupsToolbar } from './_components/groups-toolbar';
-
-const DEFAULT_PAGE = 1;
-const DEFAULT_LIMIT = 8;
-
-function parseFilterFromParams(paramsStr: string): AdminGroupQuery {
-  const sp = new URLSearchParams(paramsStr);
-  const page = Number(sp.get('page') ?? String(DEFAULT_PAGE));
-  const limit = Number(sp.get('limit') ?? String(DEFAULT_LIMIT));
-  const name = sp.get('name') || undefined;
-  const status = sp.get('status') || undefined;
-  const memberRange = sp.get('memberRange') || undefined;
-
-  return {
-    page: Number.isFinite(page) && page > 0 ? page : DEFAULT_PAGE,
-    limit: Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT,
-    name,
-    status: status as any,
-    memberRange: memberRange as any,
-  };
-}
-
-function createQueryString(filter: AdminGroupQuery) {
-  const params = new URLSearchParams();
-  params.set('page', String(filter.page ?? DEFAULT_PAGE));
-  params.set('limit', String(filter.limit ?? DEFAULT_LIMIT));
-  if (filter.name) params.set('name', filter.name);
-  if (filter.status) params.set('status', filter.status);
-  if (filter.memberRange) params.set('memberRange', filter.memberRange);
-  return params.toString();
-}
+import { useAdminGroups, useGroupModeration } from "@/hooks/admin/use-admin-group";
+import {
+  AdminGroupQuery,
+  GroupMemberRange,
+} from "@/lib/actions/admin/admin-group-action";
+import { AdminGroupDTO, GroupStatus } from "@repo/shared";
+import { LogType } from "@/models/log/logDTO";
+import { AdminActivityLog } from "../_components/admin-activity-log";
+import { GroupDetailDialog } from "./_components/group-detail-dialog";
+import { GroupReportsDrawer } from "./_components/group-reports-drawer";
+import { GroupsTable } from "./_components/groups-table";
+import { GroupsToolbar } from "./_components/groups-toolbar";
 
 export default function AdminGroupsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const paramsString = searchParams?.toString() ?? '';
-  const filter = React.useMemo(
-    () => parseFilterFromParams(paramsString),
-    [paramsString],
+  const paramsString = searchParams?.toString() ?? "";
+
+  const parseFilterFromParams = React.useCallback(
+    (paramsStr: string): AdminGroupQuery => {
+      const sp = new URLSearchParams(paramsStr);
+      const page = Number(sp.get("page") ?? "1");
+      const limit = Number(sp.get("limit") ?? "8");
+      const name = sp.get("name") || undefined;
+      const status = sp.get("status") || undefined;
+      const memberRange = sp.get("memberRange") || undefined;
+      return {
+        page: Number.isFinite(page) && page > 0 ? page : 1,
+        limit: Number.isFinite(limit) && limit > 0 ? limit : 8,
+        name,
+        status: status as GroupStatus | undefined,
+        memberRange: memberRange as GroupMemberRange | undefined,
+      };
+    },
+    []
   );
 
+  const [filter, setFilter] = React.useState<AdminGroupQuery>(() =>
+    parseFilterFromParams(paramsString)
+  );
   const [selectedGroup, setSelectedGroup] =
     React.useState<AdminGroupDTO | null>(null);
   const [detailGroup, setDetailGroup] = React.useState<AdminGroupDTO | null>(
-    null,
+    null
   );
 
   const groupsQuery = useAdminGroups(filter);
@@ -68,44 +58,62 @@ export default function AdminGroupsPage() {
   const { banMutation, unbanMutation, updateStatusLocally } =
     useGroupModeration();
 
-  const replaceFilter = React.useCallback(
-    (nextFilter: AdminGroupQuery) => {
-      const next = createQueryString(nextFilter);
-      if (next !== paramsString) router.replace(`?${next}`);
-    },
-    [paramsString, router],
-  );
-
   const handleFilterChange = React.useCallback(
     (changes: Partial<AdminGroupQuery>) => {
-      replaceFilter({ ...filter, page: DEFAULT_PAGE, ...changes });
+      setFilter((prev) => ({ ...prev, page: 1, ...changes }));
     },
-    [filter, replaceFilter],
+    []
   );
+
+  const handlePageChange = React.useCallback((nextPage: number) => {
+    setFilter((prev) => ({ ...prev, page: nextPage }));
+  }, []);
 
   const handleReset = React.useCallback(() => {
-    replaceFilter({
-      page: DEFAULT_PAGE,
-      limit: filter.limit ?? DEFAULT_LIMIT,
-    });
-  }, [filter.limit, replaceFilter]);
+    setFilter((prev) => ({ page: 1, limit: prev.limit ?? 8 }));
+  }, []);
 
-  const handlePageChange = React.useCallback(
-    (nextPage: number) => {
-      replaceFilter({ ...filter, page: nextPage });
+  React.useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(filter.page ?? 1));
+    params.set("limit", String(filter.limit ?? 8));
+    if (filter.name) params.set("name", filter.name);
+    if (filter.status) params.set("status", filter.status);
+    if (filter.memberRange) params.set("memberRange", filter.memberRange);
+    const next = params.toString();
+    if (next !== paramsString) {
+      router.replace(`?${next}`, { scroll: false });
+    }
+  }, [filter, router, paramsString]);
+
+  React.useEffect(() => {
+    const next = parseFilterFromParams(paramsString);
+    setFilter((prev) => {
+      const same =
+        prev.page === next.page &&
+        prev.limit === next.limit &&
+        prev.name === next.name &&
+        prev.status === next.status &&
+        prev.memberRange === next.memberRange;
+      return same ? prev : next;
+    });
+  }, [paramsString, parseFilterFromParams]);
+
+  const handleBan = React.useCallback(
+    (group: AdminGroupDTO) => {
+      updateStatusLocally(group.id, GroupStatus.BANNED);
+      banMutation.mutate(group.id);
     },
-    [filter, replaceFilter],
+    [updateStatusLocally, banMutation]
   );
 
-  const handleBan = (group: AdminGroupDTO) => {
-    updateStatusLocally(group.id, GroupStatus.BANNED);
-    banMutation.mutate(group.id);
-  };
-
-  const handleUnban = (group: AdminGroupDTO) => {
-    updateStatusLocally(group.id, GroupStatus.ACTIVE);
-    unbanMutation.mutate(group.id);
-  };
+  const handleUnban = React.useCallback(
+    (group: AdminGroupDTO) => {
+      updateStatusLocally(group.id, GroupStatus.ACTIVE);
+      unbanMutation.mutate(group.id);
+    },
+    [updateStatusLocally, unbanMutation]
+  );
 
   return (
     <div className="space-y-5">

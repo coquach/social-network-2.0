@@ -1,7 +1,8 @@
-import { getApiClient } from "@repo/shared";
 import {
   AppealStatus,
   FinalDecision,
+  FinalDecisionFilter,
+  ModerationAction,
   Severity,
 } from "@/models/moderation/enums/moderationEnum";
 import {
@@ -9,15 +10,17 @@ import {
   ModerationAppealResponseDTO,
   ModerationRecordDetailDTO,
 } from "@/models/moderation/moderationDTO";
-import { PageResponse, Pagination, TargetType } from "@repo/shared";
+import { getApiClient, PageResponse, Pagination, TargetType } from "@repo/shared";
 
 export interface AdminModerationQuery extends Pagination {
   targetType?: TargetType;
+  action?: ModerationAction;
   maxSeverity?: Severity;
-  finalDecision?: FinalDecision;
+  finalDecision?: FinalDecisionFilter;
   fromDate?: string;
   toDate?: string;
 }
+
 
 export interface AdminAppealQuery extends Pagination {
   status?: AppealStatus;

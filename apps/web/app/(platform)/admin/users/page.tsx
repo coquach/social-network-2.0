@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useSystemUsers } from "@/hooks/admin/use-admin-users";
 import { SystemUserFilter } from "@/lib/actions/admin/admin-users-action";
 import { LogType } from "@/models/log/logDTO";
+import { SystemRole, UserStatus } from "@repo/shared";
 import { AdminActivityLog } from "../_components/admin-activity-log";
 import { UsersTable } from "./_components/table";
 import { UsersToolbar } from "./_components/toolbar";
@@ -17,7 +18,7 @@ export default function AdminUsersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const paramsString = searchParams.toString();
+  const paramsString = searchParams?.toString() ?? "";
 
   const parseFilterFromParams = React.useCallback(
     (paramsStr: string): SystemUserFilter => {
@@ -30,8 +31,8 @@ export default function AdminUsersPage() {
       return {
         page: Number.isFinite(page) && page > 0 ? page : 1,
         limit: Number.isFinite(limit) && limit > 0 ? limit : 10,
-        status: status as any,
-        role: role as any,
+        status: status as UserStatus | undefined,
+        role: role as SystemRole | undefined,
         query,
       };
     },
@@ -45,15 +46,21 @@ export default function AdminUsersPage() {
 
   const { data, isLoading, isFetching } = useSystemUsers(filter);
 
-  const handleFilterChange = (changes: Partial<SystemUserFilter>) => {
-    setFilter((prev) => ({ ...prev, page: 1, ...changes }));
-  };
+  const handleFilterChange = React.useCallback(
+    (changes: Partial<SystemUserFilter>) => {
+      setFilter((prev) => ({ ...prev, page: 1, ...changes }));
+    },
+    []
+  );
 
-  const handleReset = () => {
-    setFilter({ page: 1, limit: filter.limit ?? 10 });
-  };
+  const handlePageChange = React.useCallback((page: number) => {
+    setFilter((prev) => ({ ...prev, page }));
+  }, []);
 
-  // sync URL with filter
+  const handleReset = React.useCallback(() => {
+    setFilter((prev) => ({ page: 1, limit: prev.limit ?? 10 }));
+  }, []);
+
   // sync filter -> URL (avoid replace if unchanged)
   React.useEffect(() => {
     const params = new URLSearchParams();
@@ -63,10 +70,12 @@ export default function AdminUsersPage() {
     if (filter.status) params.set("status", filter.status);
     if (filter.role) params.set("role", filter.role);
     const next = params.toString();
-    if (next !== paramsString) router.replace(`?${next}`);
+    if (next !== paramsString) {
+      router.replace(`?${next}`, { scroll: false });
+    }
   }, [filter, router, paramsString]);
 
-  // update state when search params change (back/forward)
+  // update state when search params change (browser back/forward)
   React.useEffect(() => {
     const next = parseFilterFromParams(paramsString);
     setFilter((prev) => {
@@ -78,15 +87,18 @@ export default function AdminUsersPage() {
         prev.role === next.role;
       return same ? prev : next;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramsString]);
+  }, [paramsString, parseFilterFromParams]);
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-sky-600">Quản lý người dùng</h1>
-          <p className="text-sm text-slate-500">Theo dõi tài khoản, trạng thái hoạt động và thông tin hồ sơ.</p>
+          <h1 className="text-xl font-semibold text-sky-600">
+            Quản lý người dùng
+          </h1>
+          <p className="text-sm text-slate-500">
+            Theo dõi tài khoản, trạng thái hoạt động và thông tin hồ sơ.
+          </p>
         </div>
         <Button
           className="w-full sm:w-auto bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
@@ -111,7 +123,7 @@ export default function AdminUsersPage() {
           pageSize={filter.limit ?? 10}
           total={data?.total ?? 0}
           loading={isLoading || isFetching}
-          onPageChange={(page) => setFilter((prev) => ({ ...prev, page }))}
+          onPageChange={handlePageChange}
         />
       </div>
 

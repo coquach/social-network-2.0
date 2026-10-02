@@ -93,9 +93,12 @@ export const updateMusicFeature = async (
   payload: UpdateMusicFeatureDTO,
 ): Promise<MusicFeatureResponseDTO> => {
   try {
+    // Đảm bảo loại bỏ trường audio nếu bị truyền nhầm và dùng PATCH
+    const { audio, ...cleanPayload } = (payload || {}) as any;
+
     const response = await getApiClient().patch<MusicFeatureResponseDTO>(
       `/musics/${id}`,
-      payload,
+      cleanPayload,
       {},
     );
 

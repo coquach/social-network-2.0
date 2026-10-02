@@ -9,7 +9,7 @@ export const ProfileContentGuard = ({
 }: {
   children: ReactNode;
 }) => {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId } = useParams<{ userId?: string }>() ?? {};
   const { data: fetchedUser, isLoading } = useUser(userId as string);
 
   if (isLoading) {

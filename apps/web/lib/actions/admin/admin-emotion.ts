@@ -1,6 +1,7 @@
 import { getApiClient } from "@repo/shared";
 import {
   DashboardOverviewResponseDTO,
+  EmotionDashboardChartItemDTO,
   FeedbackAccuracySummaryDTO,
   FeedbackListItemDTO,
   RiskLevel,
@@ -28,6 +29,26 @@ export const getEmotionDashboardOverview = async (
     const response = await getApiClient().get<DashboardOverviewResponseDTO>(
       "/admin/emotion/dashboard",
       {},
+    );
+
+    return response as any;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const getEmotionDashboardCharts = async (
+  token: string,
+  from?: string,
+  to?: string,
+): Promise<EmotionDashboardChartItemDTO[]> => {
+  try {
+    const response = await getApiClient().get<EmotionDashboardChartItemDTO[]>(
+      "/admin/emotion/dashboard/charts",
+      {
+        params: { from, to },
+      },
     );
 
     return response as any;

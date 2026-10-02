@@ -19,9 +19,15 @@ export interface ContentModerationDTO {
 
   isViolation: boolean;
 
+  action?: string;
+
+  label?: string;
+
+  mentalHealthSupport?: boolean;
+
   violations: ViolationDTO[];
 
-  maxSeverity: string;
+  maxSeverity?: string;
 
   confidence: number;
 
@@ -42,6 +48,7 @@ export interface ModerationRecordDetailDTO {
 
   target: CommentDTO | PostDTO | SharePostDTO | null;
 }
+
 
 // models/moderation/moderation-appeal.dto.ts
 

@@ -8,6 +8,7 @@ import { PageResponse } from '@repo/shared';
 import {
   AdminFeedbackQuery,
   AdminRiskUserQuery,
+  getEmotionDashboardCharts,
   getEmotionDashboardOverview,
   getFeedbackAccuracySummary,
   getFeedbacks,
@@ -15,6 +16,7 @@ import {
 } from '@/lib/actions/admin/admin-emotion';
 import {
   DashboardOverviewResponseDTO,
+  EmotionDashboardChartItemDTO,
   FeedbackAccuracySummaryDTO,
   FeedbackListItemDTO,
   RiskUserDTO,
@@ -33,6 +35,25 @@ export const useEmotionDashboardOverview = () => {
       }
 
       return getEmotionDashboardOverview(token);
+    },
+    staleTime: 10_000,
+    gcTime: 120_000,
+  });
+};
+
+export const useEmotionDashboardCharts = (from?: string, to?: string) => {
+  const { getToken } = useAuth();
+
+  return useQuery<EmotionDashboardChartItemDTO[]>({
+    queryKey: ['emotion-dashboard-charts', { from, to }],
+    queryFn: async () => {
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error('Token is required');
+      }
+
+      return getEmotionDashboardCharts(token, from, to);
     },
     staleTime: 10_000,
     gcTime: 120_000,

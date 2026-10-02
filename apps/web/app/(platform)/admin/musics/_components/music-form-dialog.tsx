@@ -411,18 +411,34 @@ export function MusicFormDialog({
               </section>
 
               <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950/50">
-                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Tải nhạc lên
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {mode === 'edit' ? 'File âm thanh (Audio)' : 'Tải nhạc lên'}
+                  </div>
+                  {mode === 'edit' && (
+                    <Badge
+                      variant="outline"
+                      className="border-amber-200 bg-amber-50 text-[11px] font-medium text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400"
+                    >
+                      Cố định khi chỉnh sửa
+                    </Badge>
+                  )}
                 </div>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Chọn file âm thanh để lấy thời lượng và phân tích cảm xúc.
+                  {mode === 'edit'
+                    ? 'File âm thanh gốc của bản nhạc (không thể thay đổi khi cập nhật).'
+                    : 'Chọn file âm thanh để lấy thời lượng và phân tích cảm xúc.'}
                 </p>
 
                 <div className="mt-4">
                   <MusicUploadCard
                     type="audio"
                     title="Audio file"
-                    description="Kéo thả hoặc chọn file audio. Sau khi upload xong bạn có thể phân tích valence/arousal."
+                    description={
+                      mode === 'edit'
+                        ? 'Audio gốc của bài nhạc'
+                        : 'Kéo thả hoặc chọn file audio. Sau khi upload xong bạn có thể phân tích valence/arousal.'
+                    }
                     accept="audio/*"
                     previewUrl={audio.remote?.url ?? undefined}
                     fileName={audio.fileName ?? undefined}
@@ -433,25 +449,15 @@ export function MusicFormDialog({
                     }
                     progress={audio.progress}
                     uploading={audio.uploading}
-                    onFileSelect={(file) => void uploadAsset('audio', file)}
+                    disabled={mode === 'edit'}
+                    onFileSelect={(file) => {
+                      if (mode === 'edit') return;
+                      void uploadAsset('audio', file);
+                    }}
                     onRemove={() => {
+                      if (mode === 'edit') return;
                       audioAbortRef.current?.abort();
-                      if (mode === 'edit' && music) {
-                        setAudio({
-                          remote: {
-                            url: music.audio.url,
-                            publicId: music.audio.publicId ?? '',
-                            type: 'audio' as any,
-                            duration: music.audio.duration,
-                          },
-                          fileName: music.audio.publicId ?? null,
-                          progress: 100,
-                          uploading: false,
-                          duration: music.audio.duration,
-                        });
-                      } else {
-                        setAudio(emptyAssetState());
-                      }
+                      setAudio(emptyAssetState());
                     }}
                   />
                 </div>

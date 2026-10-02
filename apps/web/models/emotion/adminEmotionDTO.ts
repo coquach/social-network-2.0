@@ -2,16 +2,65 @@ import { UserSnapshotDTO } from '@repo/shared';
 
 export type RiskLevel = 'normal' | 'warning' | 'high' | 'critical';
 
+export interface EmotionDistributionDTO {
+  joy: number;
+  sadness: number;
+  anger: number;
+  fear: number;
+  disgust: number;
+  surprise: number;
+  neutral: number;
+  total: number;
+}
+
+export interface RiskLevelDistributionDTO {
+  normal: number;
+  low: number;
+  medium: number;
+  high: number;
+  critical: number;
+  totalUsers: number;
+}
+
+export interface TargetTypeBreakdownDTO {
+  posts: number;
+  comments: number;
+  total: number;
+}
+
+export interface ResourceSummaryDTO {
+  totalHotlines: number;
+  activeHotlines: number;
+  totalExercises: number;
+  activeExercises: number;
+}
+
 export interface DashboardOverviewResponseDTO {
   totalAnalyzedSnapshots: number;
+  totalInterventionsDispatched: number;
+  activeInterventionResources: number;
+  feedbackRate?: number;
+  aiAccuracyRate?: number;
 
-  highRiskUsers: number;
+  daysWindow?: number;
+  emotionDistribution: EmotionDistributionDTO;
+  riskDistribution: RiskLevelDistributionDTO;
+  targetTypeDistribution: TargetTypeBreakdownDTO;
+  resourceSummary: ResourceSummaryDTO;
+}
 
-  criticalRiskUsers: number;
-
-  averageNegativityScore: number;
-
-  topEmotions: Record<string, number>;
+export interface EmotionDashboardChartItemDTO {
+  date: string;
+  joy?: number;
+  happy?: number;
+  sadness?: number;
+  sad?: number;
+  anger?: number;
+  angry?: number;
+  fear?: number;
+  disgust?: number;
+  surprise?: number;
+  neutral?: number;
 }
 
 export interface RiskUserItemDTO {

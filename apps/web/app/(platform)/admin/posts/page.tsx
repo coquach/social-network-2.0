@@ -1,93 +1,100 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import { ContentToolbar } from './_components/content-toolbar';
-import { ContentTable } from './_components/content-table';
-import { useContentEntries } from '@/hooks/admin/use-admin-content-entries';
-import { ContentEntryFilter } from '@/lib/actions/admin/content-entry-action';
-import { AdminActivityLog } from '../_components/admin-activity-log';
-import { LogType } from '@/models/log/logDTO';
-import { TargetType } from '@repo/shared';
-import { ContentStatus } from '@/models/admin/contentEntryDTO';
-
-const DEFAULT_PAGE = 1;
-const DEFAULT_LIMIT = 10;
-
-function parseFilterFromParams(paramsStr: string): ContentEntryFilter {
-  const sp = new URLSearchParams(paramsStr);
-  const page = Number(sp.get('page') ?? String(DEFAULT_PAGE));
-  const limit = Number(sp.get('limit') ?? String(DEFAULT_LIMIT));
-  const targetType =
-    (sp.get('targetType') as TargetType | null) ?? TargetType.POST;
-  const status = (sp.get('status') as ContentStatus | null) ?? undefined;
-  const query = sp.get('query') || undefined;
-  const createAt = sp.get('createAt');
-
-  return {
-    page: Number.isFinite(page) && page > 0 ? page : DEFAULT_PAGE,
-    limit: Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_LIMIT,
-    targetType,
-    status,
-    query,
-    createAt: createAt ? new Date(createAt) : undefined,
-  };
-}
-
-function createQueryString(filter: ContentEntryFilter) {
-  const params = new URLSearchParams();
-  params.set('page', String(filter.page ?? DEFAULT_PAGE));
-  params.set('limit', String(filter.limit ?? DEFAULT_LIMIT));
-  if (filter.targetType) params.set('targetType', filter.targetType);
-  if (filter.status) params.set('status', filter.status);
-  if (filter.query) params.set('query', filter.query);
-  if (filter.createAt) {
-    params.set('createAt', new Date(filter.createAt).toISOString());
-  }
-  return params.toString();
-}
+import { ContentToolbar } from "./_components/content-toolbar";
+import { ContentTable } from "./_components/content-table";
+import { useContentEntries } from "@/hooks/admin/use-admin-content-entries";
+import { ContentEntryFilter } from "@/lib/actions/admin/content-entry-action";
+import { AdminActivityLog } from "../_components/admin-activity-log";
+import { LogType } from "@/models/log/logDTO";
+import { TargetType } from "@repo/shared";
+import { ContentStatus } from "@/models/admin/contentEntryDTO";
 
 export default function AdminPostsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const paramsString = searchParams?.toString() ?? '';
-  const filter = React.useMemo(
-    () => parseFilterFromParams(paramsString),
-    [paramsString],
+  const paramsString = searchParams?.toString() ?? "";
+
+  const parseFilterFromParams = React.useCallback(
+    (paramsStr: string): ContentEntryFilter => {
+      const sp = new URLSearchParams(paramsStr);
+      const page = Number(sp.get("page") ?? "1");
+      const limit = Number(sp.get("limit") ?? "10");
+      const targetType =
+        (sp.get("targetType") as TargetType | null) ?? TargetType.POST;
+      const status = (sp.get("status") as ContentStatus | null) ?? undefined;
+      const query = sp.get("query") || undefined;
+      const createAt = sp.get("createAt");
+      return {
+        page: Number.isFinite(page) && page > 0 ? page : 1,
+        limit: Number.isFinite(limit) && limit > 0 ? limit : 10,
+        targetType,
+        status,
+        query,
+        createAt: createAt ? new Date(createAt) : undefined,
+      };
+    },
+    []
+  );
+
+  const [filter, setFilter] = React.useState<ContentEntryFilter>(() =>
+    parseFilterFromParams(paramsString)
   );
 
   const { data, isLoading, isFetching } = useContentEntries(filter);
 
-  const replaceFilter = React.useCallback(
-    (nextFilter: ContentEntryFilter) => {
-      const next = createQueryString(nextFilter);
-      if (next !== paramsString) router.replace(`?${next}`);
-    },
-    [paramsString, router],
-  );
-
   const handleFilterChange = React.useCallback(
     (changes: Partial<ContentEntryFilter>) => {
-      replaceFilter({ ...filter, page: DEFAULT_PAGE, ...changes });
+      setFilter((prev) => ({ ...prev, page: 1, ...changes }));
     },
-    [filter, replaceFilter],
+    []
   );
+
+  const handlePageChange = React.useCallback((page: number) => {
+    setFilter((prev) => ({ ...prev, page }));
+  }, []);
 
   const handleReset = React.useCallback(() => {
-    replaceFilter({
-      page: DEFAULT_PAGE,
-      limit: filter.limit ?? DEFAULT_LIMIT,
+    setFilter((prev) => ({
+      page: 1,
+      limit: prev.limit ?? 10,
       targetType: TargetType.POST,
-    });
-  }, [filter.limit, replaceFilter]);
+    }));
+  }, []);
 
-  const handlePageChange = React.useCallback(
-    (page: number) => {
-      replaceFilter({ ...filter, page });
-    },
-    [filter, replaceFilter],
-  );
+  React.useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(filter.page ?? 1));
+    params.set("limit", String(filter.limit ?? 10));
+    if (filter.targetType) params.set("targetType", filter.targetType);
+    if (filter.status) params.set("status", filter.status);
+    if (filter.query) params.set("query", filter.query);
+    if (filter.createAt)
+      params.set("createAt", new Date(filter.createAt).toISOString());
+    const next = params.toString();
+    if (next !== paramsString) {
+      router.replace(`?${next}`, { scroll: false });
+    }
+  }, [filter, router, paramsString]);
+
+  React.useEffect(() => {
+    const next = parseFilterFromParams(paramsString);
+    setFilter((prev) => {
+      const same =
+        prev.page === next.page &&
+        prev.limit === next.limit &&
+        prev.query === next.query &&
+        prev.targetType === next.targetType &&
+        prev.status === next.status &&
+        ((prev.createAt &&
+          next.createAt &&
+          prev.createAt.toString() === next.createAt.toString()) ||
+          (!prev.createAt && !next.createAt));
+      return same ? prev : next;
+    });
+  }, [paramsString, parseFilterFromParams]);
 
   return (
     <div className="space-y-5">
@@ -107,6 +114,7 @@ export default function AdminPostsPage() {
           filter={filter}
           onFilterChange={handleFilterChange}
           onReset={handleReset}
+          loading={isLoading || isFetching}
         />
         <div className="mt-4">
           <ContentTable

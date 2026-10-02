@@ -32,6 +32,7 @@ type ContentToolbarProps = {
   filter: ContentEntryFilter;
   onFilterChange: (changes: Partial<ContentEntryFilter>) => void;
   onReset: () => void;
+  loading?: boolean;
 };
 
 function toDateInputValue(d?: Date | string | null) {
@@ -45,69 +46,28 @@ export function ContentToolbar({
   filter,
   onFilterChange,
   onReset,
+  loading,
 }: ContentToolbarProps) {
   const [keyword, setKeyword] = React.useState(filter.query ?? "");
-  const [draftTargetType, setDraftTargetType] = React.useState<string>(
-    filter.targetType ?? TargetType.POST,
-  );
-  const [draftStatus, setDraftStatus] = React.useState<string>(
-    filter.status ?? "all",
-  );
-  const [draftCreateAt, setDraftCreateAt] = React.useState<string>(
-    toDateInputValue(filter.createAt as any),
-  );
-  const latestKeywordRef = React.useRef(keyword);
 
   React.useEffect(() => {
     const next = filter.query ?? "";
     setKeyword((prev) => (prev === next ? prev : next));
   }, [filter.query]);
 
-  React.useEffect(() => {
-    const next = filter.targetType ?? TargetType.POST;
-    setDraftTargetType((prev) => (prev === next ? prev : next));
-  }, [filter.targetType]);
-
-  React.useEffect(() => {
-    const next = filter.status ?? "all";
-    setDraftStatus((prev) => (prev === next ? prev : next));
-  }, [filter.status]);
-
-  React.useEffect(() => {
-    const next = toDateInputValue(filter.createAt as any);
-    setDraftCreateAt((prev) => (prev === next ? prev : next));
-  }, [filter.createAt]);
-
-  React.useEffect(() => {
-    latestKeywordRef.current = keyword;
-  }, [keyword]);
-
-  const applyFilters = React.useCallback(
-    (text: string, target: string, status: string, date: string) => {
-      onFilterChange({
-        query: text.trim() || undefined,
-        targetType: target === "all" ? undefined : (target as TargetType),
-        status: status === "all" ? undefined : (status as ContentStatus),
-        createAt: date ? new Date(date) : undefined,
-        page: 1,
-      });
-    },
-    [onFilterChange],
-  );
-
   const debouncedSearch = useDebouncedCallback(
     (text: string) => {
-      applyFilters(text, draftTargetType, draftStatus, draftCreateAt);
+      onFilterChange({
+        query: text.trim() || undefined,
+        page: 1,
+      });
     },
     300,
     { maxWait: 800 },
   );
 
-  const reset = () => {
+  const handleReset = () => {
     setKeyword("");
-    setDraftTargetType(TargetType.POST);
-    setDraftStatus("all");
-    setDraftCreateAt("");
     onReset();
   };
 
@@ -138,11 +98,13 @@ export function ContentToolbar({
             Loại nội dung
           </div>
           <Select
-            value={draftTargetType}
-            onValueChange={(value) => {
-              setDraftTargetType(value);
-              applyFilters(keyword, value, draftStatus, draftCreateAt);
-            }}
+            value={filter.targetType ?? TargetType.POST}
+            onValueChange={(value) =>
+              onFilterChange({
+                targetType: value === "all" ? undefined : (value as TargetType),
+                page: 1,
+              })
+            }
           >
             <SelectTrigger className="border-sky-100 focus:ring-sky-200">
               <SelectValue placeholder="Chọn loại" />
@@ -162,11 +124,13 @@ export function ContentToolbar({
             Trạng thái
           </div>
           <Select
-            value={draftStatus}
-            onValueChange={(value) => {
-              setDraftStatus(value);
-              applyFilters(keyword, draftTargetType, value, draftCreateAt);
-            }}
+            value={filter.status ?? "all"}
+            onValueChange={(value) =>
+              onFilterChange({
+                status: value === "all" ? undefined : (value as ContentStatus),
+                page: 1,
+              })
+            }
           >
             <SelectTrigger className="border-sky-100 focus:ring-sky-200">
               <SelectValue placeholder="Chọn trạng thái" />
@@ -188,11 +152,13 @@ export function ContentToolbar({
           </div>
           <Input
             type="date"
-            value={draftCreateAt}
+            value={toDateInputValue(filter.createAt as any)}
             onChange={(e) => {
               const val = e.target.value;
-              setDraftCreateAt(val);
-              applyFilters(keyword, draftTargetType, draftStatus, val);
+              onFilterChange({
+                createAt: val ? new Date(val) : undefined,
+                page: 1,
+              });
             }}
             className="border-sky-100 focus-visible:ring-sky-200"
           />
@@ -203,7 +169,8 @@ export function ContentToolbar({
         <Button
           variant="outline"
           className="border-sky-200 text-slate-700 hover:bg-sky-50"
-          onClick={reset}
+          onClick={handleReset}
+          disabled={loading}
         >
           <RotateCcw className="mr-1 h-4 w-4" />
           Đặt lại

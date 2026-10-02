@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SystemUserFilter } from "@/lib/actions/admin/admin-users-action";
-import { SystemRole, UserStatus } from '@repo/shared';
+import { SystemRole, UserStatus } from "@repo/shared";
 
 type UsersToolbarProps = {
   filter: SystemUserFilter;
@@ -29,65 +29,27 @@ export function UsersToolbar({
   onReset,
   loading,
 }: UsersToolbarProps) {
-  const [q, setQ] = React.useState(filter.query ?? "");
-  const [status, setStatus] = React.useState<string>(filter.status ?? "all");
-  const [role, setRole] = React.useState<string>(filter.role ?? "all");
-  const latestQueryRef = React.useRef(q);
+  const [search, setSearch] = React.useState(filter.query ?? "");
 
   React.useEffect(() => {
-    const next = filter.query ?? "";
-    setQ((prev) => (prev === next ? prev : next));
+    setSearch(filter.query ?? "");
   }, [filter.query]);
-
-  React.useEffect(() => {
-    const next = filter.status ?? "all";
-    setStatus((prev) => (prev === next ? prev : next));
-  }, [filter.status]);
-
-  React.useEffect(() => {
-    const next = filter.role ?? "all";
-    setRole((prev) => (prev === next ? prev : next));
-  }, [filter.role]);
-
-  React.useEffect(() => {
-    latestQueryRef.current = q;
-  }, [q]);
-
-  const applyFilters = React.useCallback(
-    (text: string, nextStatus: string, nextRole: string) => {
-      onFilterChange({
-        query: text.trim() || undefined,
-        status: nextStatus === "all" ? undefined : (nextStatus as UserStatus),
-        role: nextRole === "all" ? undefined : (nextRole as SystemRole),
-        page: 1,
-      });
-    },
-    [onFilterChange],
-  );
-
-  const handleStatusChange = React.useCallback(
-    (value: string) => {
-      setStatus((prev) => (prev === value ? prev : value));
-      applyFilters(latestQueryRef.current, value, role);
-    },
-    [applyFilters, role],
-  );
-
-  const handleRoleChange = React.useCallback(
-    (value: string) => {
-      setRole((prev) => (prev === value ? prev : value));
-      applyFilters(latestQueryRef.current, status, value);
-    },
-    [applyFilters, status],
-  );
 
   const debouncedSearch = useDebouncedCallback(
     (text: string) => {
-      applyFilters(text, status, role);
+      onFilterChange({
+        query: text.trim() || undefined,
+        page: 1,
+      });
     },
     300,
     { maxWait: 800 },
   );
+
+  const handleReset = () => {
+    setSearch("");
+    onReset();
+  };
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -99,10 +61,10 @@ export function UsersToolbar({
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
-              value={q}
+              value={search}
               onChange={(e) => {
                 const val = e.target.value;
-                setQ(val);
+                setSearch(val);
                 debouncedSearch(val);
               }}
               placeholder="Tên hoặc email..."
@@ -115,7 +77,15 @@ export function UsersToolbar({
           <div className="mb-1 text-xs font-medium text-slate-500">
             Trạng thái
           </div>
-          <Select value={status} onValueChange={handleStatusChange}>
+          <Select
+            value={filter.status ?? "all"}
+            onValueChange={(val) =>
+              onFilterChange({
+                status: val === "all" ? undefined : (val as UserStatus),
+                page: 1,
+              })
+            }
+          >
             <SelectTrigger className="border-sky-100 focus:ring-sky-200">
               <SelectValue placeholder="Chọn trạng thái" />
             </SelectTrigger>
@@ -130,7 +100,15 @@ export function UsersToolbar({
 
         <div>
           <div className="mb-1 text-xs font-medium text-slate-500">Vai trò</div>
-          <Select value={role} onValueChange={handleRoleChange}>
+          <Select
+            value={filter.role ?? "all"}
+            onValueChange={(val) =>
+              onFilterChange({
+                role: val === "all" ? undefined : (val as SystemRole),
+                page: 1,
+              })
+            }
+          >
             <SelectTrigger className="border-sky-100 focus:ring-sky-200">
               <SelectValue placeholder="Chọn vai trò" />
             </SelectTrigger>
@@ -148,7 +126,7 @@ export function UsersToolbar({
         <Button
           variant="outline"
           className="border-sky-200 text-slate-700 hover:bg-sky-50"
-          onClick={onReset}
+          onClick={handleReset}
           disabled={loading}
         >
           <RotateCcw className="mr-1 h-4 w-4" />

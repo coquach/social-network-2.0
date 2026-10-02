@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import {
+  HeartHandshake,
   Loader2,
   MessageSquareMore,
+  PhoneCall,
   RefreshCw,
-  ShieldAlert,
   Sparkles,
 } from 'lucide-react';
 
@@ -14,32 +15,32 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useAdminFeedbacks,
-  useAdminRiskUsers,
   useEmotionDashboardOverview,
   useFeedbackAccuracySummary,
 } from '@/hooks/admin/use-admin-emotion';
 import {
-  AdminFeedbackQuery,
-  AdminRiskUserQuery,
-} from '@/lib/actions/admin/admin-emotion';
+  useAdminHotlines,
+  useAdminResources,
+} from '@/hooks/admin/use-admin-intervention';
+import { AdminFeedbackQuery } from '@/lib/actions/admin/admin-emotion';
 import {
+  EmotionCommunityDistribution,
   EmotionFeedbackSummary,
   EmotionFeedbackTable,
+  EmotionHotlinesManager,
   EmotionOverviewCards,
-  EmotionTopEmotionsChart,
-  type EmotionRiskToolbarValue,
-  EmotionToolbar,
+  EmotionResourcesManager,
+  EmotionRiskDistributionCard,
+  EmotionTargetAndResourcesCard,
 } from './_components';
-import { EmotionRiskUsersTable } from './_components/emotion-risk-users-table';
 
 const PAGE_SIZE = 10;
-type TabKey = 'overview' | 'risk-users' | 'feedback';
+type TabKey = 'overview' | 'exercises' | 'hotlines' | 'feedback';
 
 const emotionLabels: Record<string, string> = {
   joy: 'Vui',
   sadness: 'Buồn',
   anger: 'Tức giận',
-  angry: 'Tức giận',
   fear: 'Sợ hãi',
   disgust: 'Chán ghét',
   surprise: 'Ngạc nhiên',
@@ -49,11 +50,6 @@ const emotionLabels: Record<string, string> = {
 const formatEmotionLabel = (emotion: string) =>
   emotionLabels[emotion.toLowerCase()] ?? emotion;
 
-const getDefaultRiskFilter = (): AdminRiskUserQuery => ({
-  page: 1,
-  limit: PAGE_SIZE,
-});
-
 const getDefaultFeedbackFilter = (): AdminFeedbackQuery => ({
   page: 1,
   limit: PAGE_SIZE,
@@ -61,38 +57,30 @@ const getDefaultFeedbackFilter = (): AdminFeedbackQuery => ({
 
 export default function AdminEmotionsPage() {
   const [tab, setTab] = React.useState<TabKey>('overview');
-  const [riskFilter, setRiskFilter] =
-    React.useState<AdminRiskUserQuery>(getDefaultRiskFilter);
   const [feedbackFilter, setFeedbackFilter] =
     React.useState<AdminFeedbackQuery>(getDefaultFeedbackFilter);
 
   const overviewQuery = useEmotionDashboardOverview();
-  const riskUsersQuery = useAdminRiskUsers(riskFilter);
+  const resourcesQuery = useAdminResources();
+  const hotlinesQuery = useAdminHotlines();
   const feedbackQuery = useAdminFeedbacks(feedbackFilter);
   const feedbackSummaryQuery = useFeedbackAccuracySummary();
 
   const handleRefresh = async () => {
     await Promise.all([
       overviewQuery.refetch(),
-      riskUsersQuery.refetch(),
+      resourcesQuery.refetch(),
+      hotlinesQuery.refetch(),
       feedbackQuery.refetch(),
       feedbackSummaryQuery.refetch(),
     ]);
   };
 
-  const riskToolbarValue = React.useMemo<EmotionRiskToolbarValue>(
-    () => ({
-      search: riskFilter.search ?? '',
-      riskLevel: riskFilter.riskLevel ?? 'all',
-    }),
-    [riskFilter.riskLevel, riskFilter.search],
-  );
-
-  const riskRows = riskUsersQuery.data?.data ?? [];
   const feedbackRows = feedbackQuery.data?.data ?? [];
   const loadingAny =
     overviewQuery.isFetching ||
-    riskUsersQuery.isFetching ||
+    resourcesQuery.isFetching ||
+    hotlinesQuery.isFetching ||
     feedbackQuery.isFetching ||
     feedbackSummaryQuery.isFetching;
 
@@ -109,8 +97,7 @@ export default function AdminEmotionsPage() {
                 Cảm xúc cộng đồng
               </h1>
               <p className="text-sm text-slate-500">
-                Theo dõi cảm xúc cộng đồng, người dùng rủi ro và độ chính xác
-                AI.
+                Theo dõi cảm xúc cộng đồng, bài tập hỗ trợ, hotline và độ chính xác AI.
               </p>
             </div>
           </div>
@@ -146,18 +133,35 @@ export default function AdminEmotionsPage() {
             </TabsTrigger>
 
             <TabsTrigger
-              value="risk-users"
+              value="exercises"
               className="group flex h-12 items-center rounded-[14px] border border-transparent bg-transparent px-5 py-3 text-sm font-medium text-slate-500 transition-all duration-200 ease-out hover:bg-white hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-sky-200 data-[state=active]:-translate-y-px data-[state=active]:border-sky-200 data-[state=active]:bg-[#E6F4FF] data-[state=active]:font-semibold data-[state=active]:text-sky-800 data-[state=active]:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
             >
               <div className="flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-inherit transition-all duration-200 group-data-[state=active]:scale-105" />
+                <HeartHandshake className="h-4 w-4 text-inherit transition-all duration-200 group-data-[state=active]:scale-105" />
 
                 <span className="font-semibold text-inherit">
-                  Người dùng cần chú ý
+                  Bài tập hỗ trợ
                 </span>
 
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 transition-all duration-200 group-data-[state=active]:bg-sky-600 group-data-[state=active]:text-white">
-                  {riskUsersQuery.data?.total ?? 0}
+                  {resourcesQuery.data?.length ?? 0}
+                </span>
+              </div>
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="hotlines"
+              className="group flex h-12 items-center rounded-[14px] border border-transparent bg-transparent px-5 py-3 text-sm font-medium text-slate-500 transition-all duration-200 ease-out hover:bg-white hover:text-slate-700 focus-visible:ring-2 focus-visible:ring-sky-200 data-[state=active]:-translate-y-px data-[state=active]:border-sky-200 data-[state=active]:bg-[#E6F4FF] data-[state=active]:font-semibold data-[state=active]:text-sky-800 data-[state=active]:shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+            >
+              <div className="flex items-center gap-2">
+                <PhoneCall className="h-4 w-4 text-inherit transition-all duration-200 group-data-[state=active]:scale-105" />
+
+                <span className="font-semibold text-inherit">
+                  Hotline hỗ trợ
+                </span>
+
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 transition-all duration-200 group-data-[state=active]:bg-sky-600 group-data-[state=active]:text-white">
+                  {hotlinesQuery.data?.length ?? 0}
                 </span>
               </div>
             </TabsTrigger>
@@ -178,46 +182,37 @@ export default function AdminEmotionsPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-4">
+          <TabsContent value="overview" className="space-y-5">
             <EmotionOverviewCards
               data={overviewQuery.data}
               loading={overviewQuery.isLoading}
             />
 
-            <EmotionTopEmotionsChart
-              data={overviewQuery.data}
+            <EmotionCommunityDistribution
+              distribution={overviewQuery.data?.emotionDistribution}
+              daysWindow={overviewQuery.data?.daysWindow}
+              loading={overviewQuery.isLoading}
+            />
+
+            <EmotionRiskDistributionCard
+              distribution={overviewQuery.data?.riskDistribution}
+              loading={overviewQuery.isLoading}
+            />
+
+            <EmotionTargetAndResourcesCard
+              targets={overviewQuery.data?.targetTypeDistribution}
+              resources={overviewQuery.data?.resourceSummary}
+              daysWindow={overviewQuery.data?.daysWindow}
               loading={overviewQuery.isLoading}
             />
           </TabsContent>
 
-          <TabsContent value="risk-users" className="space-y-4">
-            <EmotionToolbar
-              value={riskToolbarValue}
-              onChange={(nextValue) => {
-                setRiskFilter((previous) => ({
-                  ...previous,
-                  page: 1,
-                  search: nextValue.search || undefined,
-                  riskLevel:
-                    nextValue.riskLevel === 'all'
-                      ? undefined
-                      : nextValue.riskLevel,
-                }));
-              }}
-              onRefresh={() => void riskUsersQuery.refetch()}
-              loading={riskUsersQuery.isFetching}
-            />
+          <TabsContent value="exercises" className="space-y-4">
+            <EmotionResourcesManager />
+          </TabsContent>
 
-            <EmotionRiskUsersTable
-              rows={riskRows}
-              page={riskFilter.page ?? 1}
-              pageSize={riskFilter.limit ?? PAGE_SIZE}
-              total={riskUsersQuery.data?.total ?? 0}
-              loading={riskUsersQuery.isLoading || riskUsersQuery.isFetching}
-              onPageChange={(nextPage: number) =>
-                setRiskFilter((previous) => ({ ...previous, page: nextPage }))
-              }
-            />
+          <TabsContent value="hotlines" className="space-y-4">
+            <EmotionHotlinesManager />
           </TabsContent>
 
           <TabsContent value="feedback" className="space-y-4">

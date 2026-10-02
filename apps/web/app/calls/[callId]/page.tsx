@@ -23,7 +23,7 @@ import { useSocket } from '@/components/providers/socket-provider';
 export default function CallPage() {
   const { callId } = useParams() as { callId: string };
   const searchParams = useSearchParams();
-  const type = searchParams.get('type') || 'video';
+  const type = searchParams?.get('type') || 'video';
   
   const client = useCallClient();
   const [call, setCall] = useState<any>(null);

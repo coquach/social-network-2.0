@@ -39,6 +39,7 @@ type Props = {
   reviewLoading?: boolean;
   onPageChange: (page: number) => void;
   onReview: (row: ModerationAppealResponseDTO) => void;
+  toolbar?: (table: any) => React.ReactNode;
 };
 
 export function AppealsTable({
@@ -50,6 +51,7 @@ export function AppealsTable({
   reviewLoading,
   onPageChange,
   onReview,
+  toolbar,
 }: Props) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -140,8 +142,12 @@ export function AppealsTable({
   });
 
   return (
-    <>
-      <DataTableToolbar table={table} />
+    <div className="space-y-2.5">
+      {toolbar ? toolbar(table) : (
+        <div className="flex items-center justify-end">
+          <DataTableToolbar table={table} />
+        </div>
+      )}
       <div className="overflow-x-auto rounded-xl border border-sky-100">
         <Table className="min-w-235">
           <TableHeader className="bg-sky-50">
@@ -234,6 +240,6 @@ export function AppealsTable({
         entityLabel="kháng nghị"
         onPageChange={onPageChange}
       />
-    </>
+    </div>
   );
 }

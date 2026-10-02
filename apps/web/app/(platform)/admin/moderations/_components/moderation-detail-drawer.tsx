@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { useAdminModerationRecordDetail } from '@/hooks/admin/use-admin-moderation';
 import { formatDateVN } from '@/utils/user.utils';
+import { ModerationActionBadge } from './moderation-action-badge';
 import { ModerationDecisionBadge } from './moderation-decision-badge';
 import { ModerationSeverityBadge } from './moderation-severity-badge';
 import { ModerationStatusBadge } from './moderation-status-badge';
@@ -153,6 +154,7 @@ export function ModerationDetailDrawer({
                     >
                       {moderation.isViolation ? 'Vi phạm' : 'Không vi phạm'}
                     </Badge>
+                    <ModerationActionBadge action={moderation.action} />
                     <Badge
                       variant="secondary"
                       className="bg-slate-100 text-slate-700"
@@ -176,14 +178,14 @@ export function ModerationDetailDrawer({
                     </div>
                     <div className="rounded-lg border border-slate-100 bg-white p-3">
                       <p className="text-xs text-slate-500">
-                        Mức độ nghiêm trọng
+                        Hình thức xử lý
                       </p>
-                      <ModerationSeverityBadge
-                        severity={moderation.maxSeverity}
+                      <ModerationActionBadge
+                        action={moderation.action}
                       />
                     </div>
                     <div className="rounded-lg border border-slate-100 bg-white p-3">
-                      <p className="text-xs text-slate-500">Quyết định</p>
+                      <p className="text-xs text-slate-500">Quyết định xử lý</p>
                       <ModerationDecisionBadge
                         decision={moderation.finalDecision}
                       />
@@ -201,6 +203,7 @@ export function ModerationDetailDrawer({
                       </p>
                     </div>
                   </div>
+
 
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
                     <p className="text-xs text-slate-500">

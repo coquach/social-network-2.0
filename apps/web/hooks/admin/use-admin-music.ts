@@ -154,7 +154,8 @@ export const useUpdateAdminMusic = () => {
       payload: UpdateMusicFeatureDTO;
     }) => {
       const token = await assertToken(getToken);
-      return updateMusicFeature(token, id, payload);
+      const { audio, ...cleanPayload } = (payload || {}) as any;
+      return updateMusicFeature(token, id, cleanPayload);
     },
     onSuccess: (data, variables) => {
       toast.success('Đã cập nhật nhạc');

@@ -8,12 +8,26 @@ const targetLabelMap: Record<string, string> = {
   SHARE: 'Chia sẻ',
 };
 
+const actionLabelMap: Record<string, string> = {
+  ALLOW: 'Cho phép',
+  ALLOW_WITH_WARNING: 'Cảnh báo',
+  ALLOW_WITH_SUPPORT: 'Hỗ trợ tâm lý',
+  HARD_BLOCK: 'Chặn nội dung',
+};
+
+const moderationLabelMap: Record<string, string> = {
+  CLEAN: 'Nội dung hợp lệ',
+  PROFANITY_VENTING: 'Ngôn từ thô tục / Xả stress',
+  HATE_SPEECH: 'Ngôn từ thù ghét',
+  EMOTIONAL_CRISIS: 'Khủng hoảng tâm lý',
+  ILLEGAL_PORN: 'Nội dung đồi trụy',
+};
+
 const decisionLabelMap: Record<string, string> = {
+  NO_VIOLATION: 'Khôi phục (Thủ công)',
+  VIOLATION: 'Vi phạm (Thủ công)',
   APPROVED: 'Đã phê duyệt',
   REJECTED: 'Từ chối',
-  PENDING: 'Chờ xử lý',
-  NO_VIOLATION: 'Không vi phạm',
-  VIOLATION: 'Vi phạm',
 };
 
 const severityLabelMap: Record<string, string> = {
@@ -39,8 +53,40 @@ export const formatLabel = (value: string) =>
 export const getTargetLabel = (targetType: string) =>
   targetLabelMap[targetType] ?? formatLabel(targetType);
 
+export const getActionLabel = (action?: string) => {
+  if (!action) return 'Không xác định';
+  return actionLabelMap[action] ?? formatLabel(action);
+};
+
+export const getModerationLabel = (label?: string) => {
+  if (!label) return 'Không xác định';
+  return moderationLabelMap[label] ?? formatLabel(label);
+};
+
+export const getActionToneClassName = (action?: string) => {
+  const normalized = action?.toUpperCase();
+
+  if (normalized === 'ALLOW') {
+    return 'border-emerald-200/70 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300';
+  }
+
+  if (normalized === 'ALLOW_WITH_WARNING') {
+    return 'border-amber-200/70 bg-amber-50/80 text-amber-700 hover:bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300';
+  }
+
+  if (normalized === 'ALLOW_WITH_SUPPORT') {
+    return 'border-purple-200/70 bg-purple-50/80 text-purple-700 hover:bg-purple-50 dark:border-purple-900/50 dark:bg-purple-950/40 dark:text-purple-300';
+  }
+
+  if (normalized === 'HARD_BLOCK') {
+    return 'border-rose-200/70 bg-rose-50/80 text-rose-700 hover:bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300';
+  }
+
+  return 'border-slate-200/70 bg-slate-50/80 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300';
+};
+
 export const getDecisionLabel = (decision?: string) => {
-  if (!decision) return 'Chờ xử lý';
+  if (!decision) return 'Tự động (AI)';
 
   return decisionLabelMap[decision] ?? formatLabel(decision);
 };
@@ -65,27 +111,15 @@ export const getSeverityToneClassName = (severity: string) => {
 export const getDecisionToneClassName = (decision?: string) => {
   const normalized = decision?.toUpperCase();
 
-  if (normalized === 'NO_VIOLATION') {
+  if (normalized === 'NO_VIOLATION' || normalized === 'APPROVED') {
     return 'border-emerald-200/70 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300';
   }
 
-  if (normalized === 'VIOLATION') {
+  if (normalized === 'VIOLATION' || normalized === 'REJECTED') {
     return 'border-rose-200/70 bg-rose-50/80 text-rose-700 hover:bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300';
   }
 
-  if (normalized === 'APPROVED') {
-    return 'border-emerald-200/70 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300';
-  }
-
-  if (normalized === 'REJECTED') {
-    return 'border-rose-200/70 bg-rose-50/80 text-rose-700 hover:bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300';
-  }
-
-  if (normalized === 'PENDING') {
-    return 'border-amber-200/70 bg-amber-50/80 text-amber-700 hover:bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300';
-  }
-
-  return 'border-slate-200/70 bg-slate-50/80 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300';
+  return 'border-slate-200/70 bg-slate-100 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300';
 };
 
 export const getViolationStatusLabel = (hasViolations: boolean) =>

@@ -11,24 +11,23 @@ import Image from 'next/image';
 
 import {
   formatDateTime,
+  getActionLabel,
+  getActionToneClassName,
   getDecisionLabel,
   getDecisionToneClassName,
-  getModerationTypeLabel,
   getReasonLabel,
-  getSeverityLabel,
-  getSeverityToneClassName,
   getTargetLabel,
 } from './moderation-history-utils';
 
-function SeverityBadge({ severity }: { severity: string }) {
-  const normalized = severity.toUpperCase();
+function ActionBadge({ action }: { action?: string }) {
+  const normalized = action?.toUpperCase();
 
   return (
     <Badge
-      className={cn('gap-1.5 border', getSeverityToneClassName(normalized))}
+      className={cn('gap-1.5 border', getActionToneClassName(normalized))}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-current/80" />
-      {getSeverityLabel(normalized)}
+      {getActionLabel(normalized)}
     </Badge>
   );
 }
@@ -54,6 +53,10 @@ export function ModerationHistoryItem({
   onOpenDetail: () => void;
 }) {
   const targetPreview = item.targetPreview;
+  const previewImageUrl =
+    typeof targetPreview?.imageUrl === 'string'
+      ? targetPreview.imageUrl
+      : (targetPreview?.imageUrl as any)?.url;
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-200/70 hover:shadow-md dark:border-slate-800 dark:bg-slate-950/70 dark:hover:border-sky-900/70 sm:p-4">
@@ -63,16 +66,13 @@ export function ModerationHistoryItem({
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3.5">
           <div className="min-w-0 flex-1 space-y-3">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <Badge className="border-sky-200/70 bg-sky-50/80 text-sky-700 hover:bg-sky-50 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-300">
-                {getModerationTypeLabel(item)}
-              </Badge>
               <Badge
                 variant="outline"
                 className="border-slate-200/80 bg-white/80 text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300"
               >
                 {getTargetLabel(item.targetType)}
               </Badge>
-              <SeverityBadge severity={item.maxSeverity} />
+              <ActionBadge action={item.action} />
               <DecisionBadge decision={item.finalDecision} />
             </div>
 
@@ -96,11 +96,11 @@ export function ModerationHistoryItem({
             </p>
           </div>
 
-          {targetPreview?.content || targetPreview?.imageUrl ? (
+          {targetPreview?.content || previewImageUrl ? (
             <div className="flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 px-3.5 py-2.5 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-              {targetPreview.imageUrl && (
+              {previewImageUrl && (
                 <Image
-                  src={targetPreview.imageUrl} 
+                  src={previewImageUrl} 
                   alt="preview" 
                   width={32}
                   height={32}
@@ -112,11 +112,12 @@ export function ModerationHistoryItem({
                   Preview mục tiêu
                 </p>
                 <p className="line-clamp-2 whitespace-pre-line wrap-break-word">
-                  {targetPreview.content || <span className="italic text-slate-400">[Hình ảnh]</span>}
+                  {targetPreview?.content || <span className="italic text-slate-400">[Hình ảnh]</span>}
                 </p>
               </div>
             </div>
           ) : null}
+
 
           {item.violations.length > 0 ? (
             <div className="flex flex-wrap gap-2">
