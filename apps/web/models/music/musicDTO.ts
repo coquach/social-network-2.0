@@ -51,13 +51,11 @@ export const CreateMusicFeatureSchema = z
     audio: AudioSchema,
 
     coverImage: z
-      .array(
-        z.object({
-          type: z.enum(MediaType),
-          url: z.url(),
-          publicId: z.string().optional(),
-        }),
-      )
+      .object({
+        type: z.nativeEnum(MediaType).optional(),
+        url: z.string().url(),
+        publicId: z.string().optional(),
+      })
       .optional(),
 
     artist: z.string().optional(),
@@ -75,17 +73,16 @@ export const CreateMusicFeatureSchema = z
 export type CreateMusicFeatureDTO = z.infer<typeof CreateMusicFeatureSchema>;
 
 // ==================== UPDATE ====================
+// Audio không được phép cập nhật và phải dùng PATCH
 
 export const UpdateMusicFeatureSchema = z
   .object({
     coverImage: z
-      .array(
-        z.object({
-          type: z.enum(MediaType),
-          url: z.url(),
-          publicId: z.string().optional(),
-        }),
-      )
+      .object({
+        type: z.nativeEnum(MediaType).optional(),
+        url: z.string().url(),
+        publicId: z.string().optional(),
+      })
       .optional(),
 
     artist: z.string().optional(),
