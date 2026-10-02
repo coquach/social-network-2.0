@@ -45,7 +45,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 export const UserProfileInfo = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId } = useParams<{ userId?: string }>() ?? {};
   const router = useRouter();
   const {
     data: fetchedUser,

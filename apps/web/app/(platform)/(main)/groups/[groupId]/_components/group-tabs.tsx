@@ -36,7 +36,7 @@ const TABS: GroupTab[] = [
 ];
 
 export const GroupTabs = () => {
-  const { groupId } = useParams<{ groupId: string }>();
+  const { groupId } = useParams<{ groupId?: string }>() ?? {};
   const pathname = usePathname();
   const router = useRouter();
   const { role } = useGroupPermissionContext();

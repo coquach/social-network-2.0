@@ -144,10 +144,11 @@ export function EmotionResourcesManager() {
     React.useState<InterventionResourceDTO | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
-  const resources = resourcesQuery.data ?? [];
+  const resources = resourcesQuery.data;
 
   const filteredResources = React.useMemo(() => {
-    return resources
+    const list = resources ?? [];
+    return list
       .filter((item) => {
         if (statusFilter === 'active' && !item.isActive) return false;
         if (statusFilter === 'inactive' && item.isActive) return false;

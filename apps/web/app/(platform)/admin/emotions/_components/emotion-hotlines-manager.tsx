@@ -74,10 +74,11 @@ export function EmotionHotlinesManager() {
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
-  const hotlines = hotlinesQuery.data ?? [];
+  const hotlines = hotlinesQuery.data;
 
   const filteredHotlines = React.useMemo(() => {
-    return hotlines
+    const list = hotlines ?? [];
+    return list
       .filter((item) => {
         if (statusFilter === 'active' && !item.isActive) return false;
         if (statusFilter === 'inactive' && item.isActive) return false;
