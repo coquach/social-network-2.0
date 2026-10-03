@@ -115,12 +115,12 @@ export const chatbotService = {
     
     const token = await client.getToken();
     
-    // Construct URL with query params for SSE GET request (matching API Gateway @Sse)
-    const url = new URL(`${baseURL}/assistant/messages-stream`);
-    url.searchParams.append('message', data.message);
-    if (data.clientMessageId) {
-      url.searchParams.append('clientMessageId', data.clientMessageId);
-    }
+    // Construct URL for POST request
+    const url = new URL(`${baseURL}/assistant/respond-stream`);
+    const bodyPayload = JSON.stringify({
+      message: data.message,
+      clientMessageId: data.clientMessageId,
+    });
 
     // React Native Fallback: Use XMLHttpRequest since fetch() doesn't support ReadableStream
     if (
@@ -129,9 +129,10 @@ export const chatbotService = {
     ) {
       const XHR = (globalThis as any).XMLHttpRequest;
       const xhr = new XHR();
-      xhr.open('GET', url.toString(), true);
+      xhr.open('POST', url.toString(), true);
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       xhr.setRequestHeader('Accept', 'text/event-stream');
+      xhr.setRequestHeader('Content-Type', 'application/json');
 
       let lastIndex = 0;
       let buffer = '';
@@ -188,14 +189,27 @@ export const chatbotService = {
         }
       };
 
-      xhr.send();
+      xhr.send(bodyPayload);
 
       try {
         while (true) {
           if (queue.length > 0) {
             const jsonStr = queue.shift()!;
             try {
-              const chunk = JSON.parse(jsonStr);
+              const parsed = JSON.parse(jsonStr);
+              if (parsed.error) {
+                streamError = new Error(parsed.error.message || 'Stream error');
+                break;
+              }
+              const chunk: AssistantRespondDataDTO = {
+                reply: parsed.delta || '',
+                sources: parsed.sources || [],
+                suggestedActions: parsed.suggestedActions || [],
+                model: parsed.model || '',
+                provider: parsed.provider || '',
+                type: parsed.type,
+                crisis: parsed.crisis,
+              };
               yield chunk;
             } catch (e) {
               console.error('[chatbotService] Failed to parse SSE chunk:', e);
@@ -215,10 +229,13 @@ export const chatbotService = {
 
     // Web Environment (Native fetch + ReadableStream)
     const response = await fetch(url.toString(), {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'text/event-stream',
+        'Content-Type': 'application/json',
       },
+      body: bodyPayload,
     });
 
     if (!response.ok) {
@@ -250,7 +267,19 @@ export const chatbotService = {
             const jsonStr = line.replace('data: ', '').trim();
             if (jsonStr) {
               try {
-                const chunk = JSON.parse(jsonStr);
+                const parsed = JSON.parse(jsonStr);
+                if (parsed.error) {
+                  throw new Error(parsed.error.message || 'Stream error');
+                }
+                const chunk: AssistantRespondDataDTO = {
+                  reply: parsed.delta || '',
+                  sources: parsed.sources || [],
+                  suggestedActions: parsed.suggestedActions || [],
+                  model: parsed.model || '',
+                  provider: parsed.provider || '',
+                  type: parsed.type,
+                  crisis: parsed.crisis,
+                };
                 yield chunk;
               } catch (e) {
                 console.error('[chatbotService] Failed to parse SSE chunk:', e);
@@ -283,7 +312,7 @@ export const chatbotService = {
     }
 
     const response = await getApiClient().get<ChatbotHistoryPageRaw>(
-      `/assistant/chat-history/me`,
+      `/assistant/history/me`,
       { params },
     );
 
@@ -295,7 +324,7 @@ export const chatbotService = {
    */
   async clearHistory(_userId: string): Promise<ChatbotClearHistoryResultDTO> {
     const response = await getApiClient().delete<ChatbotClearHistoryResultRaw>(
-      `/assistant/chat-history/me`,
+      `/assistant/history/me`,
     );
 
     return normalizeClearHistory(response);

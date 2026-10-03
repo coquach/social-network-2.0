@@ -100,6 +100,11 @@ const UpdateSharePostModal = dynamic(
   { loading: () => null, ssr: false }
 );
 
+const CrisisBanner = dynamic(
+  () => import('../modals/crisis-banner').then((mod) => ({ default: mod.CrisisBanner })),
+  { loading: () => null, ssr: false }
+);
+
 export const ModalProvider = () => {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -123,6 +128,7 @@ export const ModalProvider = () => {
       <DeletePostModal />
       <UpdatePostModal />
       <UpdateSharePostModal />
+      <CrisisBanner />
     </>
   );
 };

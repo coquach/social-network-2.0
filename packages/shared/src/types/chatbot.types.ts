@@ -24,7 +24,20 @@ export interface AssistantSuggestedActionDTO {
   payload: Record<string, unknown>;
 }
 
+export interface CrisisResourceDTO {
+  name: string;
+  phone: string;
+}
+
+export interface CrisisInfoDTO {
+  severity: 'high' | 'medium';
+  resources: CrisisResourceDTO[];
+  notificationSent: boolean;
+}
+
 export interface AssistantRespondDataDTO {
+  type?: string;
+  crisis?: CrisisInfoDTO;
   reply: string;
   sources: AssistantSourceDTO[];
   suggestedActions: AssistantSuggestedActionDTO[];
