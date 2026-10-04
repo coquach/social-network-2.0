@@ -4,6 +4,12 @@ import { useCrisisStore } from '@repo/shared';
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// Keep in sync with CRISIS_RESOURCES in ai-chatbot-service (prompt_builder.py).
+const DEFAULT_RESOURCES = [
+  { name: 'Đường dây nóng Ngày Mai', phone: '1900 599 830' },
+  { name: 'Tổng đài Quốc gia', phone: '111' },
+];
+
 export function CrisisBanner() {
   const { activeCrisis, dismissCrisis } = useCrisisStore();
   const insets = useSafeAreaInsets();
@@ -18,7 +24,7 @@ export function CrisisBanner() {
 
   const resources = activeCrisis.resources && activeCrisis.resources.length > 0
     ? activeCrisis.resources
-    : [{ name: 'Đường dây nóng bảo vệ Trẻ em & Tâm lý', phone: '111' }];
+    : DEFAULT_RESOURCES;
 
   const isHighSeverity = activeCrisis.severity === 'high';
 
@@ -28,7 +34,9 @@ export function CrisisBanner() {
         <View style={styles.toastContent}>
           <Feather name="info" size={20} color="#ffffff" />
           <Text style={styles.toastText}>
-            Hệ thống nhận thấy bạn đang có dấu hiệu căng thẳng. Vui lòng kiểm tra mục thông báo để xem hỗ trợ.
+            {activeCrisis.notificationSent
+              ? 'Hệ thống nhận thấy bạn đang có dấu hiệu căng thẳng. Vui lòng kiểm tra mục thông báo để xem hỗ trợ.'
+              : 'Hệ thống nhận thấy bạn đang có dấu hiệu căng thẳng. Nếu cần hỗ trợ, hãy liên hệ Tổng đài Quốc gia 111.'}
           </Text>
         </View>
         <TouchableOpacity onPress={dismissCrisis} style={styles.toastClose}>
@@ -100,7 +108,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#ef4444',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',

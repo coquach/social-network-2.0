@@ -1,4 +1,4 @@
-﻿import { AntDesign } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Button } from "heroui-native/button";
 import { Spinner } from "heroui-native/spinner";
@@ -8,7 +8,43 @@ import {
   type NativeSyntheticEvent,
   Text,
   View,
+  Animated,
 } from "react-native";
+import Markdown from 'react-native-markdown-display';
+
+const TypingIndicator = () => {
+  const opacities = React.useRef([
+    new Animated.Value(0.3),
+    new Animated.Value(0.3),
+    new Animated.Value(0.3)
+  ]).current;
+
+  React.useEffect(() => {
+    const animations = opacities.map((op, i) =>
+      Animated.sequence([
+        Animated.delay(i * 200),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(op, { toValue: 1, duration: 400, useNativeDriver: true }),
+            Animated.timing(op, { toValue: 0.3, duration: 400, useNativeDriver: true })
+          ])
+        )
+      ])
+    );
+    Animated.parallel(animations).start();
+  }, []);
+
+  return (
+    <View className="flex-row items-center space-x-1 py-1 px-1">
+      {opacities.map((op, i) => (
+        <Animated.View 
+          key={i} 
+          style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#0ea5e9', opacity: op, marginHorizontal: 2 }} 
+        />
+      ))}
+    </View>
+  );
+};
 
 export type AssistantMessageItem = {
   id: string;
@@ -181,22 +217,37 @@ export function AssistantMessageList({
                   <View
                     className={
                       isUser
-                        ? "ml-auto max-w-[85%] rounded-[16px] bg-app-primary px-3 py-2"
-                        : "mr-auto max-w-[85%] rounded-[16px] bg-white px-3 py-2 dark:bg-app-surface-dark"
+                        ? "ml-auto max-w-[85%] rounded-[20px] rounded-tr-[4px] bg-app-primary px-3 py-2 shadow-sm"
+                        : "mr-auto max-w-[85%] rounded-[20px] rounded-tl-[4px] bg-white px-3 py-2 dark:bg-app-surface-dark shadow-sm border border-app-border/50 dark:border-app-border-dark/50"
                     }
                   >
                     <View className="flex-row flex-wrap items-center">
-                      <Text
-                        className={
-                          isUser
-                            ? "text-sm text-white"
-                            : "text-sm text-app-fg dark:text-app-fg-dark"
-                        }
-                      >
-                        {message.content}
-                      </Text>
-                      {isStreaming && (
-                        <View className="ml-1 h-4 w-1.5 bg-app-primary animate-pulse" />
+                      {isUser ? (
+                        <Text className="text-[15px] text-white">
+                          {message.content}
+                        </Text>
+                      ) : (
+                        <View className="w-full">
+                          {message.content ? (
+                            <Markdown 
+                              style={{
+                                body: { fontSize: 15, color: '#1e293b' },
+                                code_inline: { backgroundColor: '#f1f5f9', padding: 2, borderRadius: 4 },
+                                code_block: { backgroundColor: '#0f172a', color: '#f8fafc', padding: 8, borderRadius: 8 },
+                              }}
+                            >
+                              {message.content}
+                            </Markdown>
+                          ) : null}
+                          
+                          {isStreaming && !message.content ? (
+                            <TypingIndicator />
+                          ) : null}
+                          
+                          {isStreaming && message.content ? (
+                            <View className="ml-1 mt-1 h-3 w-3 rounded-full bg-app-primary animate-pulse" />
+                          ) : null}
+                        </View>
                       )}
                     </View>
                     {message.isPending && isUser ? (

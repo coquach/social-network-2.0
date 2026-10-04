@@ -71,16 +71,6 @@ export const SocketProvider = ({ children, url, getToken }: SocketProviderProps)
       });
     });
 
-    // Listen for global crisis alerts to trigger emergency UI
-    chatSocketInstance.on('crisis_alert', (payload: any) => {
-      const { useCrisisStore } = require('../store/useCrisisStore');
-      useCrisisStore.getState().triggerCrisis({
-        severity: payload.severity || 'high',
-        resources: payload.resources || [],
-        notificationSent: payload.notificationSent || false,
-      });
-    });
-
     setChatSocket(chatSocketInstance);
 
     return () => {

@@ -15,6 +15,7 @@ import {
 } from '@tanstack/react-query';
 import { chatbotService } from '../api/services/chatbot.service';
 import { queryKeys } from './query-keys';
+import { useCrisisStore } from '../store/useCrisisStore';
 import type {
   AssistantRespondDataDTO,
   ChatbotClearHistoryResultDTO,
@@ -333,6 +334,11 @@ export const useAssistantChatSession = (
         for await (const chunk of stream) {
           fullReply += chunk.reply;
           lastResult = chunk;
+
+          // Open the crisis banner/toast when the assistant flags a crisis reply
+          if (chunk.type === 'crisis' && chunk.crisis) {
+            useCrisisStore.getState().triggerCrisis(chunk.crisis);
+          }
 
           // Update assistant message in cache with partial reply
           queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(

@@ -1,6 +1,7 @@
 import { ChatBox } from './_components/chat-box';
 import { Navbar } from './_components/navbar';
 import { CallOverlay } from '@/components/chat/call-overlay';
+import { UIDevTools } from './_components/ui-dev-tools';
 
 const GeneralLayout = ({
   children,
@@ -33,6 +34,8 @@ const GeneralLayout = ({
       </aside>
 
       <CallOverlay />
+      <UIDevTools />
+      
     </div>
   );
 };

@@ -31,6 +31,7 @@ import { playbackService } from '~/service/track-player-service';
 TrackPlayer.registerPlaybackService(() => playbackService);
 
 import { AssistantOverlay } from '~/components/chatbot/assistant-overlay';
+import { UIDevTools } from '~/components/ui-dev-tools';
 import { ModalProvider } from '~/components/providers/modal-provider';
 import { ensureChatThreadNotificationInfrastructure } from '~/lib/notifications/chat-thread-notifications';
 import { CallProvider } from '~/providers/call-provider';
@@ -120,6 +121,7 @@ export default function RootLayout() {
                                   <AssistantOverlay />
                                   <CallManager />
                                   <CallMiniOverlay />
+                                  <UIDevTools />
                                 </BottomSheetModalProvider>
                               </NativePresenceProvider>
                             </CallRealtimeProvider>
