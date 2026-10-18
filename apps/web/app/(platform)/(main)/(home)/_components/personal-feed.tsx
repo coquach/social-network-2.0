@@ -3,11 +3,16 @@
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
 import { ShareCard } from '@/components/post/share-post';
-import { useMyFeed } from '@repo/shared';
-import { FeedDTO, FeedType, PostSnapshotDTO, ShareSnapshotDTO as SharePostSnapshotDTO, PersonalFeedItem } from '@repo/shared';
-import { Emotion } from '@repo/shared';
-import { useEffect } from 'react';
-import { useInView } from 'react-intersection-observer';
+import { AsyncList } from '@/components/ui/async-list';
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
+import {
+  useMyFeed,
+  FeedType,
+  PostSnapshotDTO,
+  ShareSnapshotDTO as SharePostSnapshotDTO,
+  PersonalFeedItem,
+  Emotion,
+} from '@repo/shared';
 
 export const PersonalFeed = ({
   mainEmotion,
@@ -23,45 +28,33 @@ export const PersonalFeed = ({
     fetchNextPage,
     hasNextPage,
   } = useMyFeed({ limit: 10, mainEmotion });
-  const { ref, inView } = useInView();
 
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, fetchNextPage, isFetchingNextPage, hasNextPage]);
+  const { sentinelRef } = useInfiniteScroll({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   return (
-    <div className="space-y-4">
-      {isLoading &&
-        Array.from({ length: 2 }).map((_, index) => (
-          <div key={index}>
-            <PostCardFull.Skeleton />
-          </div>
-        ))}
-      {isError && <ErrorFallback message={error.message} />}
-      {!isLoading && !isError && allFeedItems.length === 0 && (
-        <div className="w-full p-8 text-neutral-500 text-center">
+    <AsyncList<PersonalFeedItem>
+      items={allFeedItems}
+      keyExtractor={(feed) => feed.id}
+      isLoading={isLoading}
+      isError={isError}
+      errorState={<ErrorFallback message={error?.message} />}
+      skeleton={<PostCardFull.Skeleton />}
+      skeletonCount={2}
+      emptyState={
+        <div className="w-full rounded-2xl border border-dashed border-border bg-card p-12 text-center text-muted-foreground">
           Không có bài viết nào trong bảng tin.
         </div>
-      )}
-
-      {/* Danh sách bài viết */}
-      {allFeedItems.map((feed: PersonalFeedItem) =>
+      }
+      renderItem={(feed) =>
         feed.type === FeedType.POST ? (
-          <PostCardFull
-            key={feed.id}
-            data={feed.data as PostSnapshotDTO}
-          />
+          <PostCardFull data={feed.data as PostSnapshotDTO} />
         ) : (
-          <ShareCard
-            key={feed.id}
-            data={feed.data as SharePostSnapshotDTO}
-          />
+          <ShareCard data={feed.data as SharePostSnapshotDTO} />
         )
-      )}
-      {isFetchingNextPage && <PostCardFull.Skeleton />}
-      <div ref={ref}></div>
-    </div>
+      }
+      sentinelRef={sentinelRef}
+      loadingMore={<PostCardFull.Skeleton />}
+      stagger
+    />
   );
 };
