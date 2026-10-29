@@ -34,7 +34,7 @@ import { queryKeys } from './query-keys';
  */
 export const useConversations = (
   params?: QueryParams,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; staleTime?: number },
 ) => {
   return useInfiniteQuery<CursorPageResponse<ConversationDTO>>({
     queryKey: [...queryKeys.conversations.list(), params ?? {}] as const,
@@ -47,8 +47,8 @@ export const useConversations = (
     getNextPageParam: (lastPage) => lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined,
     enabled: options?.enabled ?? true,
-    staleTime: 10_000, // 10 seconds
-    gcTime: 60_000, // 1 minute
+    staleTime: options?.staleTime ?? 60_000, // 1 minute
+    gcTime: 5 * 60_000, // 5 minutes
   });
 };
 

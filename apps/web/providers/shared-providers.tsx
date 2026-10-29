@@ -42,6 +42,7 @@ interface SharedProvidersProps {
  */
 export function SharedProviders({ children }: SharedProvidersProps) {
   const { userId, isLoaded } = useAuth();
+  const isAuthenticated = isLoaded && !!userId;
 
   // Create upload service instance once
   const uploadService = useMemo(() => {
@@ -53,22 +54,26 @@ export function SharedProviders({ children }: SharedProvidersProps) {
     }
   }, []);
 
+  const content = uploadService ? (
+    <UploadProvider uploadService={uploadService}>
+      {children}
+    </UploadProvider>
+  ) : (
+    children
+  );
+
   return (
     <AuthProvider
       value={{
         userId: userId || null,
-        isAuthenticated: isLoaded && !!userId,
+        isAuthenticated,
       }}
     >
-      <CallProvider>
-        {uploadService ? (
-          <UploadProvider uploadService={uploadService}>
-            {children}
-          </UploadProvider>
-        ) : (
-          children
-        )}
-      </CallProvider>
+      {isAuthenticated ? (
+        <CallProvider>{content}</CallProvider>
+      ) : (
+        content
+      )}
     </AuthProvider>
   );
 }

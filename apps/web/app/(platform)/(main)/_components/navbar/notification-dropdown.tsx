@@ -16,14 +16,15 @@ import { useState } from 'react';
 
 export const NotificationDropdown = () => {
   const { userId } = useAuth();
-  const { data, isLoading, fetchNextPage, hasNextPage } = useNotifications({});
-  const notifications = data?.pages.flatMap(p => p.data) ?? [];
+  const [open, setOpen] = useState(false);
+  const { data, isLoading, fetchNextPage, hasNextPage } = useNotifications(
+    {},
+    { enabled: open }
+  );
+  const notifications = data?.pages.flatMap((p) => p.data) ?? [];
   const { data: unreadCount } = useUnreadCount();
   const { mutate: markRead } = useMarkNotificationAsRead();
   const { mutate: markReadAll } = useMarkAllNotificationsAsRead();
-
-
-  const [open, setOpen] = useState(false);
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>

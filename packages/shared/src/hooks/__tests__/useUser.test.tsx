@@ -34,6 +34,7 @@ vi.mock('../../api/services/friend.service', () => {
   return {
     friendService: {
       getFriends: vi.fn(),
+      getRelationshipStatus: vi.fn().mockResolvedValue({ status: 'NONE' }),
     },
   };
 });
@@ -94,7 +95,10 @@ describe('useUser hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.data).toEqual(mockProfile);
+      expect(result.current.data).toEqual({
+        ...mockProfile,
+        relation: { status: 'NONE' },
+      });
       expect(userService.getUser).toHaveBeenCalledWith('user-2');
     });
   });

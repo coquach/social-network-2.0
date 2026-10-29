@@ -3,7 +3,7 @@
 import { RootType, TargetType } from '@repo/shared';
 import { PostSnapshotDTO } from '@repo/shared';
 import { useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { TextCollapse } from '../text-collapse';
 import { Skeleton } from '../ui/skeleton';
 import PostActions from './post-action';
@@ -19,7 +19,7 @@ interface PostCardFullProps {
  * Full-featured post card with stats and actions.
  * Use for main feed displays where users can interact with posts.
  */
-export const PostCardFull = ({ data }: PostCardFullProps) => {
+const PostCardFullComponent = ({ data }: PostCardFullProps) => {
   const router = useRouter();
   const goToPost = useCallback(() => {
     if (!data?.postId) return;
@@ -61,7 +61,7 @@ export const PostCardFull = ({ data }: PostCardFullProps) => {
   );
 };
 
-PostCardFull.Skeleton = function PostCardFullSkeleton() {
+function PostCardFullSkeleton() {
   return (
     <div className="bg-card rounded-2xl border border-border p-4 sm:p-8 space-y-4 w-full">
       {/* Header */}
@@ -103,4 +103,23 @@ PostCardFull.Skeleton = function PostCardFullSkeleton() {
       </div>
     </div>
   );
-};
+}
+
+export const PostCardFull = Object.assign(
+  React.memo(PostCardFullComponent, (prev, next) => {
+    return (
+      prev.data.postId === next.data.postId &&
+      prev.data.content === next.data.content &&
+      prev.data.audience === next.data.audience &&
+      prev.data.reactedType === next.data.reactedType &&
+      prev.data.mediaRemaining === next.data.mediaRemaining &&
+      prev.data.mediaPreviews?.length === next.data.mediaPreviews?.length &&
+      prev.data.postStat?.reactions === next.data.postStat?.reactions &&
+      prev.data.postStat?.comments === next.data.postStat?.comments &&
+      prev.data.postStat?.shares === next.data.postStat?.shares
+    );
+  }),
+  {
+    Skeleton: PostCardFullSkeleton,
+  }
+);

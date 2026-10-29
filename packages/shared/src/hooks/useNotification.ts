@@ -31,7 +31,10 @@ import { queryKeys } from './query-keys';
 /**
  * Get notifications list with infinite scroll
  */
-export const useNotifications = (params?: QueryParams & { type?: string; isRead?: boolean }) => {
+export const useNotifications = (
+  params?: QueryParams & { type?: string; isRead?: boolean },
+  options?: { enabled?: boolean },
+) => {
   return useInfiniteQuery<CursorPageResponse<NotificationDTO>>({
     queryKey: [...queryKeys.notifications.list(), params],
     queryFn: async ({ pageParam }) => {
@@ -42,6 +45,7 @@ export const useNotifications = (params?: QueryParams & { type?: string; isRead?
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
+    enabled: options?.enabled ?? true,
     ...queryConfigs.realtime,
   });
 };
