@@ -300,4 +300,19 @@ export const chatbotService = {
 
     return normalizeClearHistory(response);
   },
+
+  /**
+   * Record click telemetry on an assistant suggested action button
+   */
+  async recordActionClick(actionId: string, destinationId: string): Promise<boolean> {
+    try {
+      const response = await getApiClient().post<{ success: boolean }>(
+        `/assistant/actions/click`,
+        { actionId, destinationId },
+      );
+      return response.success ?? true;
+    } catch {
+      return false;
+    }
+  },
 };

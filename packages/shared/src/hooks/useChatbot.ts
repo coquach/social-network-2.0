@@ -14,6 +14,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { chatbotService } from '../api/services/chatbot.service';
+import { getAssistantMessageActions } from '../navigation/actions';
 import { queryKeys } from './query-keys';
 import type {
   AssistantRespondDataDTO,
@@ -347,7 +348,17 @@ export const useAssistantChatSession = (
                         ...page,
                         data: page.data.map(msg => 
                           msg.id === assistantMessageId 
-                            ? { ...msg, content: fullReply, sources: chunk.sources.length > 0 ? chunk.sources : msg.sources } 
+                            ? { 
+                                ...msg, 
+                                content: fullReply, 
+                                sources: chunk.sources && chunk.sources.length > 0 ? chunk.sources : msg.sources,
+                                metadata: {
+                                  ...msg.metadata,
+                                  actions: chunk.suggestedActions && chunk.suggestedActions.length > 0 
+                                    ? chunk.suggestedActions 
+                                    : getAssistantMessageActions(msg.metadata),
+                                },
+                              } 
                             : msg
                         )
                       }
@@ -380,7 +391,10 @@ export const useAssistantChatSession = (
                                 isPending: false, 
                                 source: LOCAL_CACHE_SOURCE,
                                 model: lastResult?.model,
-                                provider: lastResult?.provider
+                                provider: lastResult?.provider,
+                                actions: lastResult?.suggestedActions && lastResult.suggestedActions.length > 0
+                                  ? lastResult.suggestedActions
+                                  : getAssistantMessageActions(msg.metadata),
                               } 
                             } 
                           : msg.id === optimisticUserMessage.id
