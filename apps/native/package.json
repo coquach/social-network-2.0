@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "expo start --dev-client",
     "android": "expo run:android",
-    "android:release": "set NODE_OPTIONS=--max_old_space_size=8192 && expo run:android --variant release",
+    "android:release": "NODE_OPTIONS=--max_old_space_size=8192 expo run:android --variant release",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "eject": "expo eject",
+    "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "doctor": "expo-doctor"
   },

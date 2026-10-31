@@ -31,7 +31,7 @@ export const ShareCard = ({
       {/* Header của người share */}
       <PostHeader
         data={data}
-        postId={data.post.postId}
+        postId={data.post?.postId}
         shareId={data.shareId}
         userId={data.userId}
         audience={Audience.PUBLIC}
@@ -46,7 +46,13 @@ export const ShareCard = ({
       />
 
       {/* Bài post được chia sẻ */}
-      {data.post && <SharedPostPreview post={data.post} />}
+      {data.post ? (
+        <SharedPostPreview post={data.post} />
+      ) : (
+        <div className="w-full rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-xs italic text-neutral-500">
+          Bài viết gốc này hiện không khả dụng hoặc đã bị gỡ bỏ.
+        </div>
+      )}
 
       {/* Stats */}
 

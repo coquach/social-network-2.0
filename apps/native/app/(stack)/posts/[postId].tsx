@@ -76,7 +76,7 @@ function PostDetailScreenContent() {
   React.useEffect(() => {
     if (!post || isCommentPressed !== 'true') return;
 
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       listRef.current?.scrollToOffset({
         offset: commentOffsetY.current - insets.top,
         animated: true,
@@ -84,6 +84,10 @@ function PostDetailScreenContent() {
 
       inputRef.current?.focus();
     }, 100);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [post, isCommentPressed, insets.top]);
 
   /** ================= HEADER ================= */

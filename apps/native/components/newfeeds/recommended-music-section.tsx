@@ -7,7 +7,11 @@ import { setupTrackPlayer } from '~/service/track-player-service';
 
 export function RecommendedMusicSection() {
   const recommendationsQuery = useMusicRecommendations({ page: 1, limit: 10 });
-  const fallbackQuery = useMusicFeatures({ page: 1, limit: 10 });
+  const hasRecommendations = (recommendationsQuery.data?.data?.length ?? 0) > 0;
+  const fallbackQuery = useMusicFeatures(
+    { page: 1, limit: 10 },
+    { enabled: !recommendationsQuery.isLoading && !hasRecommendations },
+  );
   const recommendedTracks = recommendationsQuery.data?.data ?? [];
   const fallbackTracks = fallbackQuery.data?.data ?? [];
   const tracks = React.useMemo(() => {

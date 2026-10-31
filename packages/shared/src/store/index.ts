@@ -14,6 +14,7 @@ export * from './usePresenceStore';
 
 // Post-related modals store
 export * from './usePostModel';
+export * from './useCreatePostModal';
 
 // Call store
 export * from './useCallStore';
