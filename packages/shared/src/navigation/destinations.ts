@@ -164,3 +164,63 @@ export function buildDestinationHref(
 
   return platform === 'native' ? config.nativePath(params) : config.webPath(params);
 }
+
+/**
+ * Maps a web or native URL pathname to a surface context object.
+ */
+export function resolveSurfaceFromPathname(
+  pathname: string,
+  platform: NavigationPlatform = 'web',
+): { screen: string; entityId?: string } {
+  if (!pathname || pathname === '/' || pathname === '/newfeeds') {
+    return { screen: 'home' };
+  }
+
+  const normalized = pathname.replace(/\/$/, '');
+
+  // Entity extraction: /groups/[id]
+  const groupMatch = normalized.match(/\/groups\/([^/]+)/);
+  if (groupMatch && !['explore', 'my-groups', 'invites'].includes(groupMatch[1])) {
+    return { screen: 'groups.detail', entityId: groupMatch[1] };
+  }
+
+  // Entity extraction: /posts/[id]
+  const postMatch = normalized.match(/\/posts\/([^/]+)/);
+  if (postMatch) {
+    return { screen: 'posts.detail', entityId: postMatch[1] };
+  }
+
+  // Entity extraction: /profile/[id]
+  const profileMatch = normalized.match(/\/profile\/([^/]+)/);
+  if (profileMatch) {
+    return { screen: 'profile', entityId: profileMatch[1] };
+  }
+
+  // Entity extraction: /conversations/[id] or /chat/[id]
+  const chatMatch = normalized.match(/\/(conversations|chat)\/([^/]+)/);
+  if (chatMatch) {
+    return { screen: 'conversations.detail', entityId: chatMatch[2] };
+  }
+
+  // Check exact matches first
+  for (const [key, item] of Object.entries(DESTINATION_CATALOG)) {
+    const itemPath = platform === 'native' ? item.nativePath() : item.webPath();
+    if (normalized === itemPath) {
+      return { screen: key };
+    }
+  }
+
+  // Then check prefix matches (e.g. /settings/something) sorted by path length descending
+  const sortedEntries = Object.entries(DESTINATION_CATALOG).sort(
+    (a, b) => (platform === 'native' ? b[1].nativePath().length - a[1].nativePath().length : b[1].webPath().length - a[1].webPath().length)
+  );
+
+  for (const [key, item] of sortedEntries) {
+    const itemPath = platform === 'native' ? item.nativePath() : item.webPath();
+    if (itemPath !== '/' && normalized.startsWith(`${itemPath}/`)) {
+      return { screen: key };
+    }
+  }
+
+  return { screen: 'home' };
+}

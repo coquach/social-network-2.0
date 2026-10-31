@@ -1,8 +1,12 @@
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
-import { getAssistantMessageActions, useAssistantChatSession } from '@repo/shared';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  getAssistantMessageActions,
+  resolveSurfaceFromPathname,
+  useAssistantChatSession,
+} from '@repo/shared';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
@@ -195,6 +199,11 @@ function FormattedAssistantText({ content }: { content: string }) {
 export function AssistantSheet() {
   const { userId } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const surface = useMemo(
+    () => resolveSurfaceFromPathname(pathname || '/', 'web'),
+    [pathname]
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -219,7 +228,7 @@ export function AssistantSheet() {
     error,
     retryHistory,
     resetError,
-  } = useAssistantChatSession(userId ?? '', { limit: 30, enabled: isOpen });
+  } = useAssistantChatSession(userId ?? '', { limit: 30, enabled: isOpen, surface });
 
   // Close popup on outside click (excluding floating button)
   useClickOutside(

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildDestinationHref, DESTINATION_CATALOG } from '../destinations';
+import {
+  buildDestinationHref,
+  DESTINATION_CATALOG,
+  resolveSurfaceFromPathname,
+} from '../destinations';
 import { getAssistantMessageActions } from '../actions';
 
 describe('Navigation Destination Allowlist & Router', () => {
@@ -99,5 +103,41 @@ describe('getAssistantMessageActions Validator', () => {
     expect(getAssistantMessageActions(undefined)).toEqual([]);
     expect(getAssistantMessageActions({})).toEqual([]);
     expect(getAssistantMessageActions({ actions: 'not-an-array' })).toEqual([]);
+  });
+});
+
+describe('resolveSurfaceFromPathname', () => {
+  it('correctly maps URL paths to surfaces and extracts entity IDs', () => {
+    // Standard pages
+    expect(resolveSurfaceFromPathname('/')).toEqual({ screen: 'home' });
+    expect(resolveSurfaceFromPathname('/friends')).toEqual({ screen: 'friends' });
+    expect(resolveSurfaceFromPathname('/friends/requests')).toEqual({ screen: 'friends.requests' });
+    expect(resolveSurfaceFromPathname('/emotions')).toEqual({ screen: 'emotions' });
+
+    // Entity extractions
+    expect(resolveSurfaceFromPathname('/groups/ai-builders')).toEqual({
+      screen: 'groups.detail',
+      entityId: 'ai-builders',
+    });
+    expect(resolveSurfaceFromPathname('/posts/post_abc123')).toEqual({
+      screen: 'posts.detail',
+      entityId: 'post_abc123',
+    });
+    expect(resolveSurfaceFromPathname('/profile/user_999')).toEqual({
+      screen: 'profile',
+      entityId: 'user_999',
+    });
+    expect(resolveSurfaceFromPathname('/conversations/conv_555')).toEqual({
+      screen: 'conversations.detail',
+      entityId: 'conv_555',
+    });
+
+    // Native paths
+    expect(resolveSurfaceFromPathname('/newfeeds', 'native')).toEqual({ screen: 'home' });
+    expect(resolveSurfaceFromPathname('/sentiment', 'native')).toEqual({ screen: 'emotions' });
+    expect(resolveSurfaceFromPathname('/chat/conv_888', 'native')).toEqual({
+      screen: 'conversations.detail',
+      entityId: 'conv_888',
+    });
   });
 });

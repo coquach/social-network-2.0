@@ -21,6 +21,7 @@ import type {
   ChatbotClearHistoryResultDTO,
   ChatbotHistoryPageDTO,
   ChatbotHistoryMessageDTO,
+  SurfaceContextDTO,
 } from '../types';
 
 /**
@@ -64,6 +65,7 @@ export const useClearAssistantHistory = () => {
 type UseAssistantChatSessionOptions = {
   limit?: number;
   enabled?: boolean;
+  surface?: SurfaceContextDTO;
 };
 
 const LOCAL_CACHE_SOURCE = 'local-cache';
@@ -265,7 +267,7 @@ export const useAssistantChatSession = (
   }, [historyQuery.data?.pages]);
 
   const sendMessage = useCallback(
-    async (message: string) => {
+    async (message: string, overrideSurface?: SurfaceContextDTO) => {
       const normalizedMessage = message.trim();
       if (
         !normalizedMessage ||
@@ -329,7 +331,11 @@ export const useAssistantChatSession = (
       let lastResult: AssistantRespondDataDTO | null = null;
 
       try {
-        const stream = chatbotService.streamRespond({ message: normalizedMessage });
+        const surface = overrideSurface ?? options?.surface;
+        const stream = chatbotService.streamRespond({
+          message: normalizedMessage,
+          surface,
+        });
 
         for await (const chunk of stream) {
           fullReply += chunk.reply;

@@ -5,9 +5,16 @@
 
 import type { CursorPageResponse } from './common.types';
 
+export interface SurfaceContextDTO {
+  screen: string;
+  entityId?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface AssistantMessageInput {
   message: string;
   clientMessageId?: string;
+  surface?: SurfaceContextDTO;
 }
 
 export interface AssistantSourceDTO {

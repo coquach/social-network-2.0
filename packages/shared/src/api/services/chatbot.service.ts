@@ -121,6 +121,9 @@ export const chatbotService = {
     if (data.clientMessageId) {
       url.searchParams.append('clientMessageId', data.clientMessageId);
     }
+    if (data.surface) {
+      url.searchParams.append('surface', JSON.stringify(data.surface));
+    }
 
     // React Native Fallback: Use XMLHttpRequest since fetch() doesn't support ReadableStream
     if (
