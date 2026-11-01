@@ -6,7 +6,7 @@ import {
 import type { GroupMemberFilter } from '@repo/shared';
 import { getQueryClient } from '@/lib/query-client';
 import { GroupMemberStatus } from "@repo/shared";
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { dehydrate, HydrationBoundary, infiniteQueryOptions } from '@tanstack/react-query';
 import { MemberSection } from './member-section';
 
 type MembersPageProps = {
@@ -26,15 +26,19 @@ export default async function GroupMembersPage({ params }: MembersPageProps) {
   };
 
   if (token) {
-    await queryClient.prefetchInfiniteQuery({
-      queryKey: ['group-members', groupId, filter],
-      queryFn: ({ pageParam }) =>
-        getCachedGroupMembers(groupId, {
-          ...filter,
-          cursor: pageParam,
-        } as GroupMemberFilter),
-      initialPageParam: undefined,
-    });
+    await queryClient.prefetchQuery(
+      infiniteQueryOptions({
+        queryKey: ['group-members', groupId, filter],
+        queryFn: ({ pageParam }) =>
+          getCachedGroupMembers(groupId, {
+            ...filter,
+            cursor: pageParam as string | undefined,
+          } as GroupMemberFilter),
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: any) =>
+          lastPage?.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
+      })
+    );
   }
 
   return (

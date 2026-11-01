@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { getMessaging, onMessage, onTokenRefresh } from '@react-native-firebase/messaging';
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 import React, {
   createContext,
   useContext,
@@ -99,16 +99,11 @@ export const NotificationProvider = ({
   const { setIncomingCall, setAutoAcceptCallId } = useCallStore();
   const queryClient = useQueryClient();
   const segmentsRef = useRef<string[]>([]);
-  
-  try {
-    const { useSegments } = require('expo-router');
-    const segs = useSegments();
-    useEffect(() => {
-      segmentsRef.current = segs;
-    }, [segs]);
-  } catch (e) {
-    // Ignore during tests
-  }
+  const segments = useSegments();
+
+  useEffect(() => {
+    segmentsRef.current = segments as string[];
+  }, [segments]);
 
   // Handle FCM foreground messages
   useEffect(() => {
@@ -423,19 +418,14 @@ export const NotificationProvider = ({
     };
   }, [isLoaded, isSignedIn]);
 
-  // Handle Sign Out token cleanup
+  // Handle Sign Out token cleanup (Backend owns token invalidation upon session termination)
   useEffect(() => {
-    if (!isLoaded || isSignedIn || !registeredTokenRef.current) {
+    if (!isLoaded || isSignedIn) {
       return;
     }
 
-    const tokenToRemove = registeredTokenRef.current;
     registeredTokenRef.current = null;
     setPushToken(null);
-
-    void notificationService.removeDeviceToken(tokenToRemove).catch(() => {
-      registeredTokenRef.current = tokenToRemove;
-    });
   }, [isLoaded, isSignedIn]);
 
   const value = useMemo<NotificationContextValue>(

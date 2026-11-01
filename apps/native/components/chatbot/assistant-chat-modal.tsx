@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/expo';
 import { AntDesign } from '@expo/vector-icons';
-import { useAssistantChatSession } from '@repo/shared';
+import { resolveSurfaceFromPathname, useAssistantChatSession } from '@repo/shared';
+import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -21,6 +22,12 @@ export function AssistantChatModal({
   onClose,
 }: AssistantChatModalProps) {
   const { userId } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const surface = React.useMemo(
+    () => resolveSurfaceFromPathname(pathname || '', 'native'),
+    [pathname],
+  );
   const [input, setInput] = React.useState('');
   const fallbackTimestampBaseRef = React.useRef(Date.now());
   const {
@@ -40,7 +47,7 @@ export function AssistantChatModal({
     isRefreshingHistory,
     isSyncingHistory,
     resetError,
-  } = useAssistantChatSession(userId ?? '', { limit: 20, enabled: visible });
+  } = useAssistantChatSession(userId ?? '', { limit: 20, enabled: visible, surface });
 
   const messages = React.useMemo(() => {
     const fallbackBase = fallbackTimestampBaseRef.current;
@@ -82,6 +89,7 @@ export function AssistantChatModal({
         content: message.content,
         createdAt,
         isPending: message.metadata?.isPending === true,
+        metadata: message.metadata,
       } satisfies AssistantMessageItem;
     });
   }, [historyMessages]);
@@ -184,6 +192,10 @@ export function AssistantChatModal({
               isFetchingNextPage={isFetchingNextPage}
               onFetchNextPage={() => {
                 void fetchNextPage();
+              }}
+              onActionNavigate={(targetPath) => {
+                onClose();
+                router.push(targetPath as any);
               }}
             />
           </View>

@@ -1,6 +1,5 @@
-import { ChatBox } from './_components/chat-box';
 import { Navbar } from './_components/navbar';
-import { CallOverlay } from '@/components/chat/call-overlay';
+import { PlatformOverlays } from './_components/platform-overlays';
 
 const GeneralLayout = ({
   children,
@@ -10,7 +9,7 @@ const GeneralLayout = ({
   modal: React.ReactNode;
 }>) => {
   return (
-    <div className="relative h-screen bg-slate-50 overflow-hidden">
+    <div className="relative h-screen bg-background overflow-hidden">
       {/* Header landmark - contains navigation */}
       <header>
         <Navbar />
@@ -27,12 +26,8 @@ const GeneralLayout = ({
 
       {modal}
 
-      {/* Complementary landmark - chat feature */}
-      <aside aria-label="Chat bot">
-        <ChatBox />
-      </aside>
-
-      <CallOverlay />
+      {/* Dynamic client overlays (ChatBox, CallOverlay) */}
+      <PlatformOverlays />
     </div>
   );
 };

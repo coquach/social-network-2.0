@@ -18,7 +18,10 @@ import { queryKeys } from './query-keys';
 /**
  * Hook to search posts (infinite scroll)
  */
-export const useSearchPosts = (filter: SearchPostFilter) => {
+export const useSearchPosts = (
+  filter: SearchPostFilter,
+  options?: { enabled?: boolean }
+) => {
   const { query, ...otherFilters } = filter;
   
   return useInfiniteQuery<CursorPageResponse<PostSnapshotDTO>>({
@@ -30,14 +33,17 @@ export const useSearchPosts = (filter: SearchPostFilter) => {
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
-    enabled: !!query,
+    enabled: (options?.enabled !== false) && !!query,
   });
 };
 
 /**
  * Hook to search groups (infinite scroll)
  */
-export const useSearchGroups = (filter: SearchGroupFilter) => {
+export const useSearchGroups = (
+  filter: SearchGroupFilter,
+  options?: { enabled?: boolean }
+) => {
   const { query, ...otherFilters } = filter;
   
   return useInfiniteQuery<CursorPageResponse<GroupSummaryDTO>>({
@@ -49,14 +55,17 @@ export const useSearchGroups = (filter: SearchGroupFilter) => {
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
-    enabled: !!query,
+    enabled: (options?.enabled !== false) && !!query,
   });
 };
 
 /**
  * Hook to search users (infinite scroll)
  */
-export const useSearchUsers = (filter: SearchUserFilter) => {
+export const useSearchUsers = (
+  filter: SearchUserFilter,
+  options?: { enabled?: boolean }
+) => {
   const { query, ...otherFilters } = filter;
   
   return useInfiniteQuery<CursorPageResponse<UserDTO>>({
@@ -68,6 +77,6 @@ export const useSearchUsers = (filter: SearchUserFilter) => {
       }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
-    enabled: !!query,
+    enabled: (options?.enabled !== false) && !!query,
   });
 };

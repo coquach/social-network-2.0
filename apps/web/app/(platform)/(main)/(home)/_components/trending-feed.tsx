@@ -2,10 +2,9 @@
 
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
-import { useTrendingFeed } from '@repo/shared';
-import { Emotion } from '@repo/shared';
-import { useEffect } from 'react';
-import { useInView } from 'react-intersection-observer';
+import { AsyncList } from '@/components/ui/async-list';
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
+import { useTrendingFeed, Emotion, PostSnapshotDTO } from '@repo/shared';
 
 export const TrendingFeed = ({
   mainEmotion,
@@ -22,35 +21,26 @@ export const TrendingFeed = ({
     isFetchingNextPage,
   } = useTrendingFeed({ limit: 10, mainEmotion });
 
-  const { ref, inView } = useInView();
-
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, fetchNextPage, isFetchingNextPage, hasNextPage]);
+  const { sentinelRef } = useInfiniteScroll({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   return (
-    <div className="space-y-4">
-      {isLoading &&
-        Array.from({ length: 2 }).map((_, index) => (
-          <div key={index}>
-            <PostCardFull.Skeleton />
-          </div>
-        ))}
-      {isError && <ErrorFallback message={error.message} />}
-      {!isLoading && !isError && allPosts.length === 0 && (
-        <div className="w-full p-8 text-neutral-500 text-center">
+    <AsyncList<PostSnapshotDTO>
+      items={allPosts}
+      keyExtractor={(post) => post.postId}
+      isLoading={isLoading}
+      isError={isError}
+      errorState={<ErrorFallback message={error?.message} />}
+      skeleton={<PostCardFull.Skeleton />}
+      skeletonCount={2}
+      emptyState={
+        <div className="w-full rounded-2xl border border-dashed border-border bg-card p-12 text-center text-muted-foreground">
           Không có bài viết xu hướng nào.
         </div>
-      )}
-
-      {/* Danh sách bài viết */}
-      {allPosts.map((post) => (
-        <PostCardFull key={post.postId} data={post} />
-      ))}
-      {isFetchingNextPage && <PostCardFull.Skeleton />}
-      <div ref={ref}></div>
-    </div>
+      }
+      renderItem={(post) => <PostCardFull data={post} />}
+      sentinelRef={sentinelRef}
+      loadingMore={<PostCardFull.Skeleton />}
+      stagger
+    />
   );
 };

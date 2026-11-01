@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 export interface TokenCache {
@@ -11,35 +11,26 @@ const createTokenCache = (): TokenCache => {
   return {
     async getToken(key: string) {
       try {
-        const item = await AsyncStorage.getItem(key);
-        if (item) {
-          console.log(`[TokenCache] ${key} was used 🔐`);
-        } else {
-          console.log('[TokenCache] No values stored under key: ' + key);
-        }
+        const item = await SecureStore.getItemAsync(key);
         return item;
       } catch (error) {
-        console.error('[TokenCache] AsyncStorage get item error: ', error);
-        await AsyncStorage.removeItem(key);
+        console.error('[TokenCache] SecureStore get item error: ', error);
+        await SecureStore.deleteItemAsync(key).catch(() => {});
         return null;
       }
     },
     async saveToken(key: string, value: string) {
       try {
-        console.log(`[TokenCache] ⏳ Attempting to save token for key: ${key}, value length: ${value.length}`);
-        await AsyncStorage.setItem(key, value);
-        console.log(`[TokenCache] ✅ Successfully saved token for key: ${key}`);
+        await SecureStore.setItemAsync(key, value);
       } catch (err) {
-        console.error('[TokenCache] ❌ AsyncStorage save item error: ', err);
+        console.error('[TokenCache] SecureStore save item error: ', err);
       }
     },
     async clearToken(key: string) {
       try {
-        console.log(`[TokenCache] 🧹 Clearing token for key: ${key}`);
-        await AsyncStorage.removeItem(key);
-        console.log(`[TokenCache] ✅ Successfully cleared token for key: ${key}`);
+        await SecureStore.deleteItemAsync(key);
       } catch (err) {
-        console.error('[TokenCache] ❌ AsyncStorage delete item error: ', err);
+        console.error('[TokenCache] SecureStore delete item error: ', err);
       }
     },
   };

@@ -1,7 +1,8 @@
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { auth } from '@clerk/nextjs/server';
-import { getRoleFromClaims } from '@/lib/role';
+import { redirect } from 'next/navigation';
+import { getRoleFromClaims, roleAtLeast } from '@/lib/role';
 import { AppSidebar } from './_components/admin-app-sidebar';
 import { AdminTopbar } from './_components/admin-topbar';
 
@@ -12,6 +13,10 @@ export default async function AdminLayout({
 }) {
   const { sessionClaims } = await auth();
   const role = getRoleFromClaims(sessionClaims);
+
+  if (!roleAtLeast(role ?? 'user', 'staff')) {
+    redirect('/');
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-50 via-white to-sky-100">

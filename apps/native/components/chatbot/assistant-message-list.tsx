@@ -1,5 +1,6 @@
-﻿import { AntDesign } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { getAssistantMessageActions, getAssistantMessageCards } from "@repo/shared";
 import { Button } from "heroui-native/button";
 import { Spinner } from "heroui-native/spinner";
 import React from "react";
@@ -10,12 +11,16 @@ import {
   View,
 } from "react-native";
 
+import { AssistantActionButtons } from "./assistant-action-buttons";
+import { AssistantCards } from "./assistant-cards";
+
 export type AssistantMessageItem = {
   id: string;
   role: "user" | "assistant";
   content: string;
   createdAt: number;
   isPending?: boolean;
+  metadata?: Record<string, unknown>;
 };
 
 type AssistantMessageListProps = {
@@ -25,6 +30,7 @@ type AssistantMessageListProps = {
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onFetchNextPage?: () => void;
+  onActionNavigate?: (path: string) => void;
 };
 
 function AssistantMessageSkeleton() {
@@ -59,6 +65,7 @@ export function AssistantMessageList({
   hasNextPage = false,
   isFetchingNextPage = false,
   onFetchNextPage,
+  onActionNavigate,
 }: AssistantMessageListProps) {
   // Dữ liệu từ hook đã được chuẩn hóa theo thứ tự cũ -> mới.
   const orderedMessages = React.useMemo(() => messages, [messages]);
@@ -199,6 +206,18 @@ export function AssistantMessageList({
                         <View className="ml-1 h-4 w-1.5 bg-app-primary animate-pulse" />
                       )}
                     </View>
+                    {!isUser && (
+                      <>
+                        <AssistantCards
+                          cards={getAssistantMessageCards(message.metadata)}
+                          onNavigate={onActionNavigate}
+                        />
+                        <AssistantActionButtons
+                          actions={getAssistantMessageActions(message.metadata)}
+                          onNavigate={onActionNavigate}
+                        />
+                      </>
+                    )}
                     {message.isPending && isUser ? (
                       <Text className="mt-1 text-[11px] text-white/80">Đang gửi...</Text>
                     ) : null}

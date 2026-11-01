@@ -3,7 +3,7 @@
 import { RootType, TargetType } from '@repo/shared';
 import { PostSnapshotDTO } from '@repo/shared';
 import { useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { TextCollapse } from '../text-collapse';
 import { Skeleton } from '../ui/skeleton';
 import PostActions from './post-action';
@@ -19,7 +19,7 @@ interface PostCardFullProps {
  * Full-featured post card with stats and actions.
  * Use for main feed displays where users can interact with posts.
  */
-export const PostCardFull = ({ data }: PostCardFullProps) => {
+const PostCardFullComponent = ({ data }: PostCardFullProps) => {
   const router = useRouter();
   const goToPost = useCallback(() => {
     if (!data?.postId) return;
@@ -27,7 +27,7 @@ export const PostCardFull = ({ data }: PostCardFullProps) => {
   }, [router, data?.postId]);
 
   return (
-    <article className="w-full rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 space-y-4">
+    <article className="w-full rounded-2xl border border-border bg-card p-4 sm:p-6 space-y-4 transition-shadow duration-200 hover:shadow-md">
       <PostHeader
         data={data}
         postId={data.postId}
@@ -38,7 +38,7 @@ export const PostCardFull = ({ data }: PostCardFullProps) => {
       <TextCollapse
         text={data.content}
         maxLength={100}
-        className="min-w-0 text-[15px] leading-6 text-slate-800"
+        className="min-w-0 text-[15px] leading-6 text-card-foreground"
         textClassName="wrap-break-word"
         buttonClassName="mt-1 text-sm"
       />
@@ -61,47 +61,65 @@ export const PostCardFull = ({ data }: PostCardFullProps) => {
   );
 };
 
-PostCardFull.Skeleton = function PostCardFullSkeleton() {
+function PostCardFullSkeleton() {
   return (
-    <div className="bg-white rounded-xl shadow p-4 sm:p-8 space-y-4 w-full animate-pulse">
+    <div className="bg-card rounded-2xl border border-border p-4 sm:p-8 space-y-4 w-full">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Skeleton className="h-10 w-10 rounded-full" />
+        <div className="skeleton-shimmer h-10 w-10 rounded-full" />
         <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-1/3" />
-          <Skeleton className="h-3 w-1/4" />
+          <div className="skeleton-shimmer h-4 w-1/3" />
+          <div className="skeleton-shimmer h-3 w-1/4" />
         </div>
       </div>
 
       {/* Content */}
       <div className="space-y-2">
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-5/6" />
-        <Skeleton className="h-3 w-4/6" />
+        <div className="skeleton-shimmer h-3 w-full" />
+        <div className="skeleton-shimmer h-3 w-5/6" />
+        <div className="skeleton-shimmer h-3 w-4/6" />
       </div>
 
       {/* Media preview */}
       <div className="grid grid-cols-2 gap-1">
-        <Skeleton className="w-full h-48 rounded-lg" />
-        <Skeleton className="w-full h-48 rounded-lg" />
+        <div className="skeleton-shimmer w-full h-48 rounded-lg" />
+        <div className="skeleton-shimmer w-full h-48 rounded-lg" />
       </div>
+
       {/* Stat */}
-      <div className="flex items-center justify-between text-sm text-gray-600">
-        <div className="flex items-center gap-2">
-          <Skeleton className="w-16 h-4 rounded" />
-        </div>
+      <div className="flex items-center justify-between">
+        <div className="skeleton-shimmer w-16 h-4 rounded" />
         <div className="flex items-center gap-4">
-          <Skeleton className="w-12 h-4 rounded" />
-          <Skeleton className="w-12 h-4 rounded" />
+          <div className="skeleton-shimmer w-12 h-4 rounded" />
+          <div className="skeleton-shimmer w-12 h-4 rounded" />
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex justify-between pt-2 border-t border-gray-100">
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-16" />
+      <div className="flex justify-between pt-2 border-t border-border">
+        <div className="skeleton-shimmer h-4 w-16" />
+        <div className="skeleton-shimmer h-4 w-16" />
+        <div className="skeleton-shimmer h-4 w-16" />
       </div>
     </div>
   );
-};
+}
+
+export const PostCardFull = Object.assign(
+  React.memo(PostCardFullComponent, (prev, next) => {
+    return (
+      prev.data.postId === next.data.postId &&
+      prev.data.content === next.data.content &&
+      prev.data.audience === next.data.audience &&
+      prev.data.reactedType === next.data.reactedType &&
+      prev.data.mediaRemaining === next.data.mediaRemaining &&
+      prev.data.mediaPreviews?.length === next.data.mediaPreviews?.length &&
+      prev.data.postStat?.reactions === next.data.postStat?.reactions &&
+      prev.data.postStat?.comments === next.data.postStat?.comments &&
+      prev.data.postStat?.shares === next.data.postStat?.shares
+    );
+  }),
+  {
+    Skeleton: PostCardFullSkeleton,
+  }
+);

@@ -5,7 +5,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useAuth } from '@clerk/nextjs';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { ConversationDTO } from '@repo/shared';
+import { ConversationDTO, queryKeys } from '@repo/shared';
 import { ensureLastSeenMap } from '@/utils/ensure-last-seen-map';
 import { useMarkConversationAsRead } from '@repo/shared/hooks';
 
@@ -47,7 +47,7 @@ export function MarkReadProvider({ children }: { children: React.ReactNode }) {
 
       // optimistic update cache detail (nếu có)
       queryClient.setQueryData<ConversationDTO>(
-        ['conversation', conversationId],
+        queryKeys.conversations.detail(conversationId),
         (old) => {
           if (!old) return old;
           const map = ensureLastSeenMap(old.lastSeenMessageId);
@@ -68,10 +68,9 @@ export function MarkReadProvider({ children }: { children: React.ReactNode }) {
       if (lastMessageId.startsWith('temp:')) return;
 
       // Gate: nếu cache đã seen tới target => khỏi push
-      const conv = queryClient.getQueryData<ConversationDTO>([
-        'conversation',
-        conversationId,
-      ]);
+      const conv = queryClient.getQueryData<ConversationDTO>(
+        queryKeys.conversations.detail(conversationId)
+      );
       const map = ensureLastSeenMap(conv?.lastSeenMessageId);
       const myLastSeen = map.get(userId);
       if (myLastSeen === lastMessageId) return;

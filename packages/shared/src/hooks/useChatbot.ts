@@ -14,12 +14,14 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { chatbotService } from '../api/services/chatbot.service';
+import { getAssistantMessageActions } from '../navigation/actions';
 import { queryKeys } from './query-keys';
 import type {
   AssistantRespondDataDTO,
   ChatbotClearHistoryResultDTO,
   ChatbotHistoryPageDTO,
   ChatbotHistoryMessageDTO,
+  SurfaceContextDTO,
 } from '../types';
 
 /**
@@ -63,6 +65,7 @@ export const useClearAssistantHistory = () => {
 type UseAssistantChatSessionOptions = {
   limit?: number;
   enabled?: boolean;
+  surface?: SurfaceContextDTO;
 };
 
 const LOCAL_CACHE_SOURCE = 'local-cache';
@@ -264,7 +267,7 @@ export const useAssistantChatSession = (
   }, [historyQuery.data?.pages]);
 
   const sendMessage = useCallback(
-    async (message: string) => {
+    async (message: string, overrideSurface?: SurfaceContextDTO) => {
       const normalizedMessage = message.trim();
       if (
         !normalizedMessage ||
@@ -328,7 +331,11 @@ export const useAssistantChatSession = (
       let lastResult: AssistantRespondDataDTO | null = null;
 
       try {
-        const stream = chatbotService.streamRespond({ message: normalizedMessage });
+        const surface = overrideSurface ?? options?.surface;
+        const stream = chatbotService.streamRespond({
+          message: normalizedMessage,
+          surface,
+        });
 
         for await (const chunk of stream) {
           fullReply += chunk.reply;
@@ -347,7 +354,20 @@ export const useAssistantChatSession = (
                         ...page,
                         data: page.data.map(msg => 
                           msg.id === assistantMessageId 
-                            ? { ...msg, content: fullReply, sources: chunk.sources.length > 0 ? chunk.sources : msg.sources } 
+                            ? { 
+                                ...msg, 
+                                content: fullReply, 
+                                sources: chunk.sources && chunk.sources.length > 0 ? chunk.sources : msg.sources,
+                                metadata: {
+                                  ...msg.metadata,
+                                  actions: chunk.suggestedActions && chunk.suggestedActions.length > 0 
+                                    ? chunk.suggestedActions 
+                                    : getAssistantMessageActions(msg.metadata),
+                                  cards: chunk.cards && chunk.cards.length > 0
+                                    ? chunk.cards
+                                    : (msg.metadata as { cards?: unknown })?.cards,
+                                },
+                              } 
                             : msg
                         )
                       }
@@ -380,7 +400,13 @@ export const useAssistantChatSession = (
                                 isPending: false, 
                                 source: LOCAL_CACHE_SOURCE,
                                 model: lastResult?.model,
-                                provider: lastResult?.provider
+                                provider: lastResult?.provider,
+                                actions: lastResult?.suggestedActions && lastResult.suggestedActions.length > 0
+                                  ? lastResult.suggestedActions
+                                  : getAssistantMessageActions(msg.metadata),
+                                cards: lastResult?.cards && lastResult.cards.length > 0
+                                  ? lastResult.cards
+                                  : (msg.metadata as { cards?: unknown })?.cards,
                               } 
                             } 
                           : msg.id === optimisticUserMessage.id

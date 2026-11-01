@@ -1,6 +1,12 @@
 const fs = require('fs');
 const https = require('https');
-const path = 'e:/social-network-2.0/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt';
+const pathModule = require('path');
+
+const candidates = [
+  pathModule.resolve(__dirname, '../../node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt'),
+  pathModule.resolve(__dirname, 'node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt'),
+];
+const targetPath = candidates.find((p) => fs.existsSync(p)) || candidates[0];
 
 https.get('https://raw.githubusercontent.com/doublesymmetry/react-native-track-player/v4.1.1/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt', (res) => {
     let data = '';
@@ -56,8 +62,8 @@ https.get('https://raw.githubusercontent.com/doublesymmetry/react-native-track-p
             'musicService.tracks[musicService.getCurrentTrackIndex()].originalItem ?: Bundle()'
         );
         
-        fs.writeFileSync(path, result);
-        console.log('Restored and patched MusicModule.kt safely.');
+        fs.writeFileSync(targetPath, result);
+        console.log(`Restored and patched MusicModule.kt safely at: ${targetPath}`);
     });
 }).on('error', err => {
     console.error('Failed to download original file:', err);

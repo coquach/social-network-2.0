@@ -72,11 +72,43 @@ export const openCallWindow = (callId: string, type: CallType, isGroup: boolean,
   if (conversationId) url += `&conversationId=${conversationId}`;
   if (isCaller) url += `&isCaller=${isCaller}`;
 
-  window.open(
+  return window.open(
     url,
     `call-${callId}`,
     `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`,
   );
+};
+
+export const createCallWindowTarget = (callId: string) => {
+  const width = 1000;
+  const height = 700;
+  const left = window.screen.width / 2 - width / 2;
+  const top = window.screen.height / 2 - height / 2;
+
+  return window.open(
+    'about:blank',
+    `call-${callId}`,
+    `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`,
+  );
+};
+
+export const navigateCallWindow = (
+  win: Window | null,
+  callId: string,
+  type: CallType,
+  isGroup: boolean,
+  conversationId?: string,
+  isCaller?: boolean
+) => {
+  let url = `/calls/${callId}?type=${type}&isGroup=${isGroup}`;
+  if (conversationId) url += `&conversationId=${conversationId}`;
+  if (isCaller) url += `&isCaller=${isCaller}`;
+
+  if (win && !win.closed) {
+    win.location.href = url;
+  } else {
+    openCallWindow(callId, type, isGroup, conversationId, isCaller);
+  }
 };
 
 export function useCallActions() {
@@ -118,6 +150,10 @@ export function useCallActions() {
       }
       isStartingCall.current = true;
 
+      // Synchronously open window inside user gesture to prevent popup blocking
+      const tempCallId = `init-${Date.now()}`;
+      const callWin = createCallWindowTarget(tempCallId);
+
       try {
         setOutgoingCall({ conversationId, type, status: 'dialing' });
 
@@ -149,10 +185,11 @@ export function useCallActions() {
 
         // control camera after
         setOutgoingCall({ conversationId, type, status: 'accepted' });
-        openCallWindow(session.id, type, isGroup || false, conversationId, true);
+        navigateCallWindow(callWin, session.id, type, isGroup || false, conversationId, true);
 
         return { ok: true };
       } catch (error) {
+        callWin?.close();
         console.error('[Call] Failed to start call:', error);
         reset();
         return { ok: false, ...parseCallError(error) };
@@ -173,6 +210,9 @@ export function useCallActions() {
   const answerCall = useCallback(async () => {
     if (!incomingCall || !client) return;
 
+    // Synchronously open window inside user click gesture to prevent popup blocking
+    const callWin = createCallWindowTarget(incomingCall.id);
+
     try {
       await acceptCallSession(incomingCall.id);
 
@@ -184,9 +224,17 @@ export function useCallActions() {
       setActiveCall(incomingCall);
       setIncomingCall(null);
 
-      // Open call window
-      openCallWindow(incomingCall.id, incomingCall.type as CallType, incomingCall.isGroupCall || false, incomingCall.conversationId, false);
+      // Navigate call window to actual call page
+      navigateCallWindow(
+        callWin,
+        incomingCall.id,
+        incomingCall.type as CallType,
+        incomingCall.isGroupCall || false,
+        incomingCall.conversationId,
+        false
+      );
     } catch (error) {
+      callWin?.close();
       console.error('[Call] Failed to answer call:', error);
     }
   }, [
