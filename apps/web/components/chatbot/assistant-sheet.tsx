@@ -4,6 +4,7 @@ import { useAuth } from '@clerk/nextjs';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   getAssistantMessageActions,
+  getAssistantMessageCards,
   resolveSurfaceFromPathname,
   useAssistantChatSession,
 } from '@repo/shared';
@@ -24,6 +25,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button';
 import { useClickOutside } from '@/hooks/use-click-outside';
 import { AssistantActionButtons } from './assistant-action-buttons';
+import { AssistantCards } from './assistant-cards';
 import {
   BUTTON_SIZE,
   AssistantFloatingButton,
@@ -508,6 +510,13 @@ export function AssistantSheet() {
                       ) : (
                         <>
                           <FormattedAssistantText content={msg.content} />
+                          <AssistantCards
+                            cards={getAssistantMessageCards(msg.metadata)}
+                            onNavigate={(href) => {
+                              setIsOpen(false);
+                              router.push(href);
+                            }}
+                          />
                           <AssistantActionButtons
                             actions={getAssistantMessageActions(msg.metadata)}
                             onNavigate={(href) => {

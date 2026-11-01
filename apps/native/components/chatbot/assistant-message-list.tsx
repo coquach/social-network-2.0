@@ -1,6 +1,6 @@
 import { AntDesign } from "@expo/vector-icons";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { getAssistantMessageActions } from "@repo/shared";
+import { getAssistantMessageActions, getAssistantMessageCards } from "@repo/shared";
 import { Button } from "heroui-native/button";
 import { Spinner } from "heroui-native/spinner";
 import React from "react";
@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import { AssistantActionButtons } from "./assistant-action-buttons";
+import { AssistantCards } from "./assistant-cards";
 
 export type AssistantMessageItem = {
   id: string;
@@ -206,10 +207,16 @@ export function AssistantMessageList({
                       )}
                     </View>
                     {!isUser && (
-                      <AssistantActionButtons
-                        actions={getAssistantMessageActions(message.metadata)}
-                        onNavigate={onActionNavigate}
-                      />
+                      <>
+                        <AssistantCards
+                          cards={getAssistantMessageCards(message.metadata)}
+                          onNavigate={onActionNavigate}
+                        />
+                        <AssistantActionButtons
+                          actions={getAssistantMessageActions(message.metadata)}
+                          onNavigate={onActionNavigate}
+                        />
+                      </>
                     )}
                     {message.isPending && isUser ? (
                       <Text className="mt-1 text-[11px] text-white/80">Đang gửi...</Text>

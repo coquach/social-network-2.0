@@ -3,13 +3,13 @@
 import {
   buildDestinationHref,
   chatbotService,
-  type AssistantSuggestedActionDTO,
+  type AssistantNavigateAction,
 } from '@repo/shared';
 import { ArrowRight, Search } from 'lucide-react';
 import { useRef } from 'react';
 
 type AssistantActionButtonsProps = {
-  actions: AssistantSuggestedActionDTO[];
+  actions: AssistantNavigateAction[];
   onNavigate: (href: string) => void;
 };
 
@@ -18,6 +18,7 @@ export function AssistantActionButtons({ actions, onNavigate }: AssistantActionB
   const recordedActionIds = useRef<Set<string>>(new Set());
 
   const items = actions.flatMap((action) => {
+    if (action.type !== 'navigate') return [];
     const href = buildDestinationHref(action.payload.destinationId, action.payload.params, 'web');
     return href ? [{ action, href }] : [];
   });

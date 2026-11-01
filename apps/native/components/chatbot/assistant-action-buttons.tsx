@@ -2,13 +2,13 @@ import { AntDesign } from "@expo/vector-icons";
 import {
   buildDestinationHref,
   chatbotService,
-  type AssistantSuggestedActionDTO,
+  type AssistantNavigateAction,
 } from "@repo/shared";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 type AssistantActionButtonsProps = {
-  actions: AssistantSuggestedActionDTO[];
+  actions: AssistantNavigateAction[];
   onNavigate?: (path: string) => void;
 };
 
@@ -17,6 +17,7 @@ export function AssistantActionButtons({ actions, onNavigate }: AssistantActionB
   const recordedActionIds = React.useRef<Set<string>>(new Set());
 
   const items = actions.flatMap((action) => {
+    if (action.type !== 'navigate') return [];
     const path = buildDestinationHref(
       action.payload.destinationId,
       action.payload.params,

@@ -363,6 +363,9 @@ export const useAssistantChatSession = (
                                   actions: chunk.suggestedActions && chunk.suggestedActions.length > 0 
                                     ? chunk.suggestedActions 
                                     : getAssistantMessageActions(msg.metadata),
+                                  cards: chunk.cards && chunk.cards.length > 0
+                                    ? chunk.cards
+                                    : (msg.metadata as { cards?: unknown })?.cards,
                                 },
                               } 
                             : msg
@@ -401,6 +404,9 @@ export const useAssistantChatSession = (
                                 actions: lastResult?.suggestedActions && lastResult.suggestedActions.length > 0
                                   ? lastResult.suggestedActions
                                   : getAssistantMessageActions(msg.metadata),
+                                cards: lastResult?.cards && lastResult.cards.length > 0
+                                  ? lastResult.cards
+                                  : (msg.metadata as { cards?: unknown })?.cards,
                               } 
                             } 
                           : msg.id === optimisticUserMessage.id
