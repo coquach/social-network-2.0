@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   getAssistantMessageActions,
   getAssistantMessageCards,
+  getAssistantProposeActions,
   resolveSurfaceFromPathname,
   useAssistantChatSession,
 } from '@repo/shared';
@@ -24,6 +25,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useClickOutside } from '@/hooks/use-click-outside';
+import { ActionConfirmationCard } from './action-confirmation-card';
 import { AssistantActionButtons } from './assistant-action-buttons';
 import { AssistantCards } from './assistant-cards';
 import {
@@ -516,6 +518,9 @@ export function AssistantSheet() {
                               setIsOpen(false);
                               router.push(href);
                             }}
+                          />
+                          <ActionConfirmationCard
+                            proposals={getAssistantProposeActions(msg.metadata)}
                           />
                           <AssistantActionButtons
                             actions={getAssistantMessageActions(msg.metadata)}

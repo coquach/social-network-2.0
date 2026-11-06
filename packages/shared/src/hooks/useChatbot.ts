@@ -366,6 +366,9 @@ export const useAssistantChatSession = (
                                   cards: chunk.cards && chunk.cards.length > 0
                                     ? chunk.cards
                                     : (msg.metadata as { cards?: unknown })?.cards,
+                                  proposals: chunk.proposals && chunk.proposals.length > 0
+                                    ? chunk.proposals
+                                    : (msg.metadata as { proposals?: unknown })?.proposals,
                                 },
                               } 
                             : msg
@@ -407,6 +410,9 @@ export const useAssistantChatSession = (
                                 cards: lastResult?.cards && lastResult.cards.length > 0
                                   ? lastResult.cards
                                   : (msg.metadata as { cards?: unknown })?.cards,
+                                proposals: lastResult?.proposals && lastResult.proposals.length > 0
+                                  ? lastResult.proposals
+                                  : (msg.metadata as { proposals?: unknown })?.proposals,
                               } 
                             } 
                           : msg.id === optimisticUserMessage.id

@@ -1,6 +1,10 @@
 import { AntDesign } from "@expo/vector-icons";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { getAssistantMessageActions, getAssistantMessageCards } from "@repo/shared";
+import {
+  getAssistantMessageActions,
+  getAssistantMessageCards,
+  getAssistantProposeActions,
+} from "@repo/shared";
 import { Button } from "heroui-native/button";
 import { Spinner } from "heroui-native/spinner";
 import React from "react";
@@ -11,6 +15,7 @@ import {
   View,
 } from "react-native";
 
+import { ActionConfirmationCard } from "./action-confirmation-card";
 import { AssistantActionButtons } from "./assistant-action-buttons";
 import { AssistantCards } from "./assistant-cards";
 
@@ -211,6 +216,9 @@ export function AssistantMessageList({
                         <AssistantCards
                           cards={getAssistantMessageCards(message.metadata)}
                           onNavigate={onActionNavigate}
+                        />
+                        <ActionConfirmationCard
+                          proposals={getAssistantProposeActions(message.metadata)}
                         />
                         <AssistantActionButtons
                           actions={getAssistantMessageActions(message.metadata)}

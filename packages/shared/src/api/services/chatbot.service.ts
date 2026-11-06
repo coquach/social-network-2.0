@@ -11,6 +11,8 @@ import type {
   ChatbotHistoryPageDTO,
   ChatbotHistoryQuery,
   ChatbotHistoryMessageDTO,
+  ExecuteActionInputDTO,
+  ExecuteActionResultDTO,
 } from '../../types';
 
 type ChatbotHistoryMessageRaw = {
@@ -317,5 +319,18 @@ export const chatbotService = {
     } catch {
       return false;
     }
+  },
+
+  /**
+   * Execute a user-confirmed write action with idempotency protection
+   */
+  async executeAction(
+    input: ExecuteActionInputDTO
+  ): Promise<ExecuteActionResultDTO> {
+    const response = await getApiClient().post<ExecuteActionResultDTO>(
+      `/assistant/actions/execute`,
+      input,
+    );
+    return response;
   },
 };

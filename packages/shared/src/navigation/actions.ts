@@ -1,5 +1,6 @@
 import type {
   AssistantNavigateAction,
+  AssistantProposeAction,
   AssistantShowCardAction,
 } from '../types/chatbot.types';
 
@@ -24,6 +25,19 @@ export const isShowCardAction = (value: unknown): value is AssistantShowCardActi
     action.payload !== null &&
     typeof (action.payload as { cardType?: unknown }).cardType === 'string' &&
     typeof (action.payload as { title?: unknown }).title === 'string'
+  );
+};
+
+export const isProposeAction = (value: unknown): value is AssistantProposeAction => {
+  if (!value || typeof value !== 'object') return false;
+  const action = value as Partial<AssistantProposeAction>;
+  return (
+    action.type === 'propose_action' &&
+    typeof action.id === 'string' &&
+    typeof action.payload === 'object' &&
+    action.payload !== null &&
+    typeof (action.payload as { actionName?: unknown }).actionName === 'string' &&
+    typeof (action.payload as { idempotencyKey?: unknown }).idempotencyKey === 'string'
   );
 };
 
@@ -53,6 +67,24 @@ export const getAssistantMessageCards = (
   }
   if (Array.isArray(meta.actions)) {
     return meta.actions.filter(isShowCardAction);
+  }
+  return [];
+};
+
+/**
+ * Reads action proposals (write confirmation cards) from a chat message's `metadata`.
+ */
+export const getAssistantProposeActions = (
+  metadata: unknown,
+): AssistantProposeAction[] => {
+  if (!metadata || typeof metadata !== 'object') return [];
+  const meta = metadata as { proposals?: unknown; actions?: unknown };
+  if (Array.isArray(meta.proposals)) {
+    const fromProposals = meta.proposals.filter(isProposeAction);
+    if (fromProposals.length > 0) return fromProposals;
+  }
+  if (Array.isArray(meta.actions)) {
+    return meta.actions.filter(isProposeAction);
   }
   return [];
 };
