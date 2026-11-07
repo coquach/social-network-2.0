@@ -1,10 +1,20 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import EmojiPicker from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
 import { MdOutlineEmojiEmotions } from 'react-icons/md';
 import clsx from 'clsx';
 import { useClickOutside } from '@/hooks/use-click-outside';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[350px] w-[300px] items-center justify-center rounded-xl border border-gray-200 bg-white shadow-lg">
+      <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+    </div>
+  ),
+});
 
 type PopupSide = 'top' | 'bottom';
 type Align = 'left' | 'right' | 'center';

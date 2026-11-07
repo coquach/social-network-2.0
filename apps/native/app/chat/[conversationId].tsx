@@ -24,6 +24,7 @@ import {
 } from "expo-audio";
 import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
+import TrackPlayer from "react-native-track-player";
 import { useLocalSearchParams } from "expo-router";
 import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
@@ -496,6 +497,7 @@ export default function ChatConversationScreen() {
       return;
     }
 
+    void TrackPlayer.pause().catch(() => {});
     await setAudioModeAsync({
       playsInSilentMode: true,
       allowsRecording: true,
@@ -526,6 +528,10 @@ export default function ChatConversationScreen() {
     return () => {
       if (isRecordingRef.current) {
         void audioRecorder.stop().catch(() => undefined);
+        void setAudioModeAsync({
+          playsInSilentMode: true,
+          allowsRecording: false,
+        }).catch(() => undefined);
       }
     };
   }, [audioRecorder]);
@@ -536,17 +542,26 @@ export default function ChatConversationScreen() {
       return;
     }
 
-    await sendMessage({
-      conversationId,
-      content,
-      replyTo: replyTo?._id,
-      uploadFiles: attachments.map((attachment) => attachment.uploadFile),
-    });
+    try {
+      await sendMessage({
+        conversationId,
+        content,
+        replyTo: replyTo?._id,
+        uploadFiles: attachments.map((attachment) => attachment.uploadFile),
+      });
 
-    setComposerValue("");
-    setAttachments([]);
-    clearReply();
-  }, [attachments, clearReply, composerValue, conversationId, replyTo?._id, sendMessage]);
+      setComposerValue("");
+      setAttachments([]);
+      clearReply();
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      showToast({
+        title: "Không thể gửi tin nhắn",
+        message: "Vui lòng kiểm tra kết nối mạng và thử lại.",
+        variant: "error",
+      });
+    }
+  }, [attachments, clearReply, composerValue, conversationId, replyTo?._id, sendMessage, showToast]);
 
   const handleLongPressMessage = React.useCallback((message: MessageDTO) => {
     setSelectedMessage(message);

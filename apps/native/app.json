@@ -27,9 +27,9 @@
         "usesNonExemptEncryption": false
       },
       "icon": {
-        "dark": "./assests/icons/ios-dark.png",
-        "light": "./assests/icons/ios-light.png",
-        "tinted": "./assests/icons/ios-tinted.png"
+        "dark": "./assets/icons/ios-dark.png",
+        "light": "./assets/icons/ios-light.png",
+        "tinted": "./assets/icons/ios-tinted.png"
       }
     },
     "android": {

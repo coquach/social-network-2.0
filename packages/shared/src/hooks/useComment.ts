@@ -57,7 +57,10 @@ export const useComment = (
 /**
  * Get comments for a post or share (infinite scroll - page based)
  */
-export const useComments = (query: GetCommentsQuery) => {
+export const useComments = (
+  query: GetCommentsQuery,
+  options?: { enabled?: boolean }
+) => {
   return useInfiniteQuery<
     PageResponse<CommentDTO>,
     Error,
@@ -79,7 +82,7 @@ export const useComments = (query: GetCommentsQuery) => {
 
     initialPageParam: 1,
 
-    enabled: !!query.rootId,
+    enabled: (options?.enabled !== false) && !!query.rootId,
 
     staleTime: 60_000,
     gcTime: 120_000,

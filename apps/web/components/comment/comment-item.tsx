@@ -63,11 +63,14 @@ export const CommentItem = ({
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
 
-  const { data: replyData, isLoading: loadingReplies } = useComments({
-    rootId,
-    rootType,
-    parentId: comment.id,
-  });
+  const { data: replyData, isLoading: loadingReplies } = useComments(
+    {
+      rootId,
+      rootType,
+      parentId: comment.id,
+    },
+    { enabled: showReplies }
+  );
 
   const replies = useMemo(
     () => (replyData ? replyData.pages.flatMap((p) => p.data) : []),
@@ -212,7 +215,7 @@ export const CommentItem = ({
     if (!editing) setDraftContent(comment.content);
   }, [comment.content, editing]); // intentionally not include editing to avoid reset while typing
 
-  const { mutateAsync: updateComment, isPending } = useUpdateComment(rootId);
+  const { mutateAsync: updateComment, isPending } = useUpdateComment(comment.id);
 
   const onSave = useCallback(async () => {
     const next = draftContent.trim();

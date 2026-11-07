@@ -3,7 +3,7 @@ import { QueryErrorBoundary } from '@/components/query-error-boundary';
 import { getQueryClient } from '@/lib/query-client';
 import { PostGroupStatus } from '@repo/shared';
 import { auth } from '@clerk/nextjs/server';
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import { dehydrate, HydrationBoundary, infiniteQueryOptions } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
 import { GroupCreatePost } from './_components/group-create-post';
 import { GroupPostList } from './_components/group-post-list';
@@ -22,15 +22,21 @@ export default async function GroupIdPage({
   }
   const queryClient = getQueryClient();
 
-  await queryClient.prefetchQuery({
-    queryKey: ['posts', 'group', groupId],
-    queryFn: async () => {
-      return await getCachedPostsByGroup(groupId, {
-        limit: 10,
-        status: PostGroupStatus.PUBLISHED,
-      });
-    },
-  });
+  await queryClient.prefetchQuery(
+    infiniteQueryOptions({
+      queryKey: ['posts', 'group', groupId, PostGroupStatus.PUBLISHED],
+      queryFn: async ({ pageParam }) => {
+        return await getCachedPostsByGroup(groupId, {
+          limit: 10,
+          status: PostGroupStatus.PUBLISHED,
+          cursor: pageParam as string | undefined,
+        });
+      },
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage: any) =>
+        lastPage?.hasNextPage ? (lastPage.nextCursor ?? undefined) : undefined,
+    })
+  );
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <QueryErrorBoundary>

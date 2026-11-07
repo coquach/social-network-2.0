@@ -25,7 +25,11 @@ export const MessageDropdown = () => {
   const { userId } = useAuth();
   const { chatSocket } = useSocket();
   const queryClient = useQueryClient();
-  const { data, isLoading } = useConversations({ limit: 10 });
+  const [open, setOpen] = useState(false);
+  const { data, isLoading } = useConversations(
+    { limit: 10 },
+    { staleTime: 5 * 60_000 }
+  );
   const [liveConversations, setLiveConversations] = useState<
     Record<string, ConversationDTO>
   >({});
@@ -156,7 +160,7 @@ export const MessageDropdown = () => {
   }, [conversations, userId]);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <div className="relative flex items-center justify-center rounded-md p-2 hover:bg-sky-500/10 cursor-pointer">
           <MessageCircle size={22} className="text-sky-400" />

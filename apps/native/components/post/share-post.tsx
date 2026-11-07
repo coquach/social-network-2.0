@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View } from 'react-native';
 import { RootType, TargetType } from '@repo/shared';
 import { AppCard } from '~/components/ui/app-card';
@@ -30,7 +30,7 @@ function SharePostComponent({
     >
       <PostHeader
         data={data}
-        postId={data.post.postId}
+        postId={data.post?.postId ?? ''}
         shareId={data.shareId}
         createdAt={data.createdAt}
         audience={data.audience}

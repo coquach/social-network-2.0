@@ -159,6 +159,42 @@ function CallViewContent() {
     };
   }, [chatSocket, call]);
 
+  // Fallback: Check Stream call state & listen to call events in case socket event was missed
+  useEffect(() => {
+    if (!call || isAccepted) return;
+
+    const joinIfAccepted = async () => {
+      const otherMembers = (call.state.members || []).filter(
+        (m: any) => m.user_id !== call.currentUserId,
+      );
+      if (otherMembers.length > 0) {
+        setIsAccepted(true);
+        try {
+          await call.join();
+          const searchParams = new URLSearchParams(window.location.search);
+          if (searchParams.get('type') === 'audio') {
+            await call.camera.disable();
+          } else {
+            await call.camera.enable();
+          }
+          await call.microphone.enable();
+        } catch (e) {
+          console.error('[CallPage] Stream auto-join error:', e);
+        }
+      }
+    };
+
+    void joinIfAccepted();
+
+    const unsubscribe = call.on('call.session_started', () => {
+      void joinIfAccepted();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [call, isAccepted]);
+
   if (callEnded) {
     return <CallEndedView />;
   }

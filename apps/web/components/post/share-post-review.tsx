@@ -8,7 +8,7 @@ import PostHeader from './post-header';
 import PostMedia from './post-media';
 
 interface SharedPostPreviewProps {
-  post: PostSnapshotDTO
+  post?: PostSnapshotDTO | null;
 }
 
 const SharedPostPreview = ({ post }: SharedPostPreviewProps) => {
@@ -18,6 +18,14 @@ const SharedPostPreview = ({ post }: SharedPostPreviewProps) => {
     if (!post?.postId) return;
     router.push(`/posts/${post.postId}`, { scroll: false });
   }, [router, post?.postId]);
+
+  if (!post || !post.postId) {
+    return (
+      <div className="w-full rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-xs italic text-neutral-500">
+        Bài viết gốc này hiện không khả dụng hoặc đã bị gỡ bỏ.
+      </div>
+    );
+  }
 
 
   return (

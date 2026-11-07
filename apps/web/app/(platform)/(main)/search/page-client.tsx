@@ -50,9 +50,18 @@ export default function SearchPageClient() {
     isActiveStr === 'true' ? true : isActiveStr === 'false' ? false : undefined;
 
   // Queries
-  const postsQ = useSearchPosts({ query: q, emotion });
-  const groupsQ = useSearchGroups({ query: q, privacy, sortBy });
-  const usersQ = useSearchUsers({ query: q });
+  const postsQ = useSearchPosts(
+    { query: q, emotion },
+    { enabled: type === 'posts' }
+  );
+  const groupsQ = useSearchGroups(
+    { query: q, privacy, sortBy },
+    { enabled: type === 'groups' }
+  );
+  const usersQ = useSearchUsers(
+    { query: q },
+    { enabled: type === 'users' }
+  );
 
   const activeQ =
     type === 'posts' ? postsQ : type === 'groups' ? groupsQ : usersQ;

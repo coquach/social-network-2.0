@@ -5,7 +5,7 @@ import { PostCardPreview } from './post-card-preview';
 import type { PostSnapshotDTO, UserSnapshotDTO } from '@repo/shared';
 
 export interface SharePostReviewProps {
-  post: PostSnapshotDTO;
+  post?: PostSnapshotDTO | null;
   author?: UserSnapshotDTO;
 }
 
@@ -13,8 +13,18 @@ export function SharePostReview({ post, author }: SharePostReviewProps) {
   const router = useRouter();
   const { height } = useWindowDimensions();
 
+  if (!post || !post.postId) {
+    return (
+      <View className="rounded-2xl border border-app-border/70 bg-app-surface-elevated/50 p-4 dark:border-app-border-dark/70 dark:bg-app-surface-elevated-dark/50">
+        <Text className="text-xs italic text-app-muted-fg dark:text-app-muted-fg-dark">
+          Bài viết gốc này hiện không khả dụng hoặc đã bị gỡ bỏ.
+        </Text>
+      </View>
+    );
+  }
+
   const authorData: UserSnapshotDTO = author ?? {
-    id: post.userId,
+    id: post.userId ?? '',
     firstName: '',
     lastName: '',
   };

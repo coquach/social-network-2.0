@@ -62,19 +62,27 @@ export const SocketProvider = ({ children, url, getToken }: SocketProviderProps)
     });
 
     // Realtime event listeners to mutate cache
-    chatSocketInstance.on('new_message', (payload: { conversationId: string; message: any }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.list(payload.conversationId),
-      });
+    const handleNewMessage = (payload: any) => {
+      const convId = payload?.conversationId || payload?.message?.conversationId;
+      if (convId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.messages.list(convId),
+        });
+      }
       queryClient.invalidateQueries({
         queryKey: queryKeys.conversations.all,
       });
-    });
+    };
+
+    chatSocketInstance.on('message.new', handleNewMessage);
+    chatSocketInstance.on('new_message', handleNewMessage);
 
     setChatSocket(chatSocketInstance);
 
     return () => {
       if (chatHeartbeat) clearInterval(chatHeartbeat);
+      chatSocketInstance.off('message.new', handleNewMessage);
+      chatSocketInstance.off('new_message', handleNewMessage);
       chatSocketInstance.disconnect();
     };
   }, [url, queryClient]);

@@ -14,6 +14,7 @@ import { useCallClient } from '~/providers/call-provider';
 import { useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import TrackPlayer from 'react-native-track-player';
 
 export type CallErrorCode =
   | 'USER_BUSY_IN_ANOTHER_CALL'
@@ -77,6 +78,7 @@ export function useCallActions() {
       isStartingCall.current = true;
 
       try {
+        void TrackPlayer.pause().catch(() => {});
         setOutgoingCall({ conversationId, type, status: 'dialing' });
 
         const session = await createCallSession({ conversationId, type });
@@ -136,6 +138,8 @@ export function useCallActions() {
 
   const answerCall = useCallback(async () => {
     if (!incomingCall || !client) return;
+
+    void TrackPlayer.pause().catch(() => {});
 
     // Snapshot the call so we can use it, and immediately transition the UI
     const callToAnswer = incomingCall;

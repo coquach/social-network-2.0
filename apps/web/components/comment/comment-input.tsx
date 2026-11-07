@@ -64,15 +64,19 @@ export const CommentInput = ({
   const imgInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
 
-  const preview = useMemo(
-    () => (media ? URL.createObjectURL(media.file) : null),
-    [media]
-  );
+  const [preview, setPreview] = useState<string | null>(null);
+
   useEffect(() => {
+    if (!media) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(media.file);
+    setPreview(url);
     return () => {
-      if (preview) URL.revokeObjectURL(preview);
+      URL.revokeObjectURL(url);
     };
-  }, [preview]);
+  }, [media]);
 
   const { mutateAsync: createComment, isPending } = useCreateComment();
 

@@ -1,5 +1,10 @@
-import { useGroup, useGroupPosts } from '@repo/shared/hooks';
-import type { PostDTO } from '@repo/shared/types';
+import {
+  useGroup,
+  useGroupPosts,
+  useCurrentUser,
+  useCreatePostModal,
+  type PostDTO,
+} from '@repo/shared';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
@@ -11,8 +16,6 @@ import { useTabBarAutoHide } from '~/components/navigation/use-tab-bar-auto-hide
 import { PostCardFull } from '~/components/post/post-card-full';
 import { AppHeader } from '~/components/ui/app-header';
 import { AppLoadingBlock } from '~/components/ui/app-loading';
-import { useCreatePostModal } from '@repo/shared/store/useCreatePostModal';
-import { useCurrentUser } from '@repo/shared';
 import { Image, TouchableOpacity, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -91,7 +94,7 @@ export default function GroupDetailScreen() {
     <View className="flex-1 bg-app-bg dark:bg-app-bg-dark">
       <FeedList
         items={posts}
-        keyExtractor={(item) => item.id || (item as any).postId || Math.random().toString()}
+        keyExtractor={(item) => item.id || (item as any).postId || (item as any)._id || ''}
         renderItem={({ item }) => <PostCardFull data={toPostSnapshot(item)} />}
         isLoading={isLoading}
         isError={isError}

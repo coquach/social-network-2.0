@@ -177,7 +177,7 @@ export default function FriendsScreen() {
   );
   const suggestionsQuery = useFriendSuggestions(
     { limit: PAGE_SIZE },
-    { enabled: !isViewingOtherUser },
+    { enabled: !isViewingOtherUser && activeTab === 'suggestions' },
   );
   const blockedQuery = useBlockedUserProfiles(
     { limit: PAGE_SIZE },

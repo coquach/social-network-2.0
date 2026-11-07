@@ -44,17 +44,30 @@ function AudioAttachmentCard({
   attachment: AttachmentDTO;
   isOwn: boolean;
 }) {
-  const player = useAudioPlayer(attachment.url);
+  const [shouldPlay, setShouldPlay] = React.useState(false);
+  const player = useAudioPlayer(shouldPlay ? attachment.url : null);
   const status = useAudioPlayerStatus(player);
   
   const isPlaying = status.playing;
-  // duration and currentTime are in milliseconds? The documentation usually indicates seconds or milliseconds, let's assume milliseconds as that's what we found in SDK 55
-  // Actually Expo Audio in SDK 55: currentTime and duration are in milliseconds.
   const progressMs = status.currentTime || 0;
   const durationMs = status.duration || 1; 
   const progress = Math.min(1, Math.max(0, progressMs / durationMs));
+
+  React.useEffect(() => {
+    if (shouldPlay && player && !isPlaying) {
+      try {
+        player.play();
+      } catch (e) {
+        console.warn('Failed to play audio:', e);
+      }
+    }
+  }, [shouldPlay, player, isPlaying]);
   
   const togglePlay = () => {
+    if (!shouldPlay) {
+      setShouldPlay(true);
+      return;
+    }
     if (isPlaying) {
       player.pause();
     } else {

@@ -11,6 +11,8 @@ import type {
   ChatbotHistoryPageDTO,
   ChatbotHistoryQuery,
   ChatbotHistoryMessageDTO,
+  ExecuteActionInputDTO,
+  ExecuteActionResultDTO,
 } from '../../types';
 
 type ChatbotHistoryMessageRaw = {
@@ -120,6 +122,9 @@ export const chatbotService = {
     url.searchParams.append('message', data.message);
     if (data.clientMessageId) {
       url.searchParams.append('clientMessageId', data.clientMessageId);
+    }
+    if (data.surface) {
+      url.searchParams.append('surface', JSON.stringify(data.surface));
     }
 
     // React Native Fallback: Use XMLHttpRequest since fetch() doesn't support ReadableStream
@@ -299,5 +304,33 @@ export const chatbotService = {
     );
 
     return normalizeClearHistory(response);
+  },
+
+  /**
+   * Record click telemetry on an assistant suggested action button
+   */
+  async recordActionClick(actionId: string, destinationId: string): Promise<boolean> {
+    try {
+      const response = await getApiClient().post<{ success: boolean }>(
+        `/assistant/actions/click`,
+        { actionId, destinationId },
+      );
+      return response.success ?? true;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Execute a user-confirmed write action with idempotency protection
+   */
+  async executeAction(
+    input: ExecuteActionInputDTO
+  ): Promise<ExecuteActionResultDTO> {
+    const response = await getApiClient().post<ExecuteActionResultDTO>(
+      `/assistant/actions/execute`,
+      input,
+    );
+    return response;
   },
 };

@@ -53,37 +53,54 @@ body,
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
+  /* ── Music bar animations ── */
   @keyframes music-bar-1 {
-    0%,
-    100% {
-      height: 4px;
-    }
-    50% {
-      height: 12px;
-    }
+    0%, 100% { height: 4px; }
+    50%       { height: 12px; }
   }
   @keyframes music-bar-2 {
-    0%,
-    100% {
-      height: 8px;
-    }
-    50% {
-      height: 16px;
-    }
+    0%, 100% { height: 8px; }
+    50%       { height: 16px; }
   }
   @keyframes music-bar-3 {
-    0%,
-    100% {
-      height: 6px;
-    }
-    50% {
-      height: 14px;
-    }
+    0%, 100% { height: 6px; }
+    50%       { height: 14px; }
   }
 
   --animate-music-bar-1: music-bar-1 0.8s ease-in-out infinite;
   --animate-music-bar-2: music-bar-2 0.7s ease-in-out infinite;
   --animate-music-bar-3: music-bar-3 0.9s ease-in-out infinite;
+
+  /* ── Entry / motion animations ── */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      translate: 0 0.75rem;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+  }
+
+  --animate-fade-in-up: fade-in-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fade-in 0.25s ease both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  /* ── Transition design tokens ── */
+  --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 400ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :root {
@@ -172,6 +189,7 @@ body,
   }
 }
 
+/* ── Custom scrollbar ── */
 .app-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
@@ -192,46 +210,54 @@ body,
   background: var(--scrollbar-thumb-hover);
 }
 
+/* ── Glassmorphism ── */
+@layer components {
+  .glass-card {
+    backdrop-filter: blur(20px) saturate(180%);
+    background: color-mix(in oklch, var(--card) 70%, transparent);
+    border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  }
+
+  /* Shimmer skeleton — replaces plain animate-pulse */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--muted) 25%,
+      color-mix(in oklch, var(--muted) 50%, var(--border)) 50%,
+      var(--muted) 75%
+    );
+    background-size: 400% 100%;
+    animation: var(--animate-shimmer);
+    border-radius: var(--radius-md);
+  }
+}
+
+/* ── Animation utilities ── */
 @layer utilities {
-  .dark .bg-white {
-    background-color: var(--card);
-  }
-  .dark .bg-white\/90 {
-    background-color: var(--card);
-  }
-  .dark .bg-white\/95 {
-    background-color: var(--card);
-  }
-  .dark .bg-gray-50 {
-    background-color: var(--muted);
-  }
-  .dark .bg-gray-100 {
-    background-color: var(--accent);
-  }
-  .dark .bg-gray-200 {
-    background-color: var(--secondary);
-  }
-  .dark .bg-gray-300 {
-    background-color: var(--secondary);
-  }
-  .dark .bg-slate-50 {
-    background-color: var(--muted);
-  }
-  .dark .bg-slate-50\/70 {
-    background-color: var(--muted);
-  }
-  .dark .bg-slate-100 {
-    background-color: var(--secondary);
-  }
-  .dark .bg-slate-200 {
-    background-color: var(--secondary);
-  }
-  .dark .bg-sky-50 {
-    background-color: var(--accent);
-  }
-  .dark .bg-sky-100 {
-    background-color: var(--accent);
-  }
+  .animate-fade-in-up  { animation: var(--animate-fade-in-up); }
+  .animate-fade-in     { animation: var(--animate-fade-in); }
+  .animate-shimmer     { animation: var(--animate-shimmer); }
+  .transition-fast     { transition: all var(--transition-fast); }
+  .transition-smooth   { transition: all var(--transition-smooth); }
+  .transition-spring   { transition: all var(--transition-spring); }
+}
+
+/* ── Legacy dark-mode color fallbacks (for components not yet migrated to tokens) ── */
+@layer utilities {
+  .dark .bg-white        { background-color: var(--card); }
+  .dark .bg-white\/90    { background-color: var(--card); }
+  .dark .bg-white\/95    { background-color: var(--card); }
+  .dark .bg-white\/80    { background-color: color-mix(in oklch, var(--card) 80%, transparent); }
+  .dark .bg-gray-50,
+  .dark .bg-slate-50,
+  .dark .bg-slate-50\/70 { background-color: var(--muted); }
+  .dark .bg-gray-100,
+  .dark .bg-slate-100,
+  .dark .bg-sky-50,
+  .dark .bg-sky-100      { background-color: var(--accent); }
+  .dark .bg-gray-200,
+  .dark .bg-gray-300,
+  .dark .bg-slate-200    { background-color: var(--secondary); }
 
   .dark .text-neutral-900,
   .dark .text-neutral-800,
@@ -241,28 +267,23 @@ body,
   .dark .text-gray-700,
   .dark .text-slate-900,
   .dark .text-slate-800,
-  .dark .text-slate-700 {
-    color: var(--foreground);
-  }
+  .dark .text-slate-700  { color: var(--foreground); }
+
   .dark .text-gray-600,
   .dark .text-gray-500,
   .dark .text-slate-600,
-  .dark .text-slate-500 {
-    color: var(--muted-foreground);
-  }
+  .dark .text-slate-500  { color: var(--muted-foreground); }
+
   .dark .text-gray-400,
   .dark .text-gray-300,
   .dark .text-slate-300,
-  .dark .text-slate-400 {
-    color: var(--muted-foreground);
-  }
+  .dark .text-slate-400  { color: var(--muted-foreground); }
+
   .dark .border-gray-100,
   .dark .border-gray-200,
   .dark .border-gray-300,
   .dark .border-slate-100,
   .dark .border-slate-200,
   .dark .border-sky-100,
-  .dark .border-sky-200 {
-    border-color: var(--border);
-  }
+  .dark .border-sky-200  { border-color: var(--border); }
 }

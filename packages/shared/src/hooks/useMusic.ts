@@ -15,7 +15,10 @@ import { queryKeys } from './query-keys';
 /**
  * Hook to get music recommendations (page-based pagination)
  */
-export const useMusicRecommendations = (params?: MusicRecommendationParams) => {
+export const useMusicRecommendations = (
+  params?: MusicRecommendationParams,
+  options?: { enabled?: boolean },
+) => {
   return useQuery<MusicRecommendationPage>({
     queryKey: queryKeys.music.recommendations(params),
     queryFn: async () => musicService.getMusicRecommendations(params),
@@ -23,13 +26,14 @@ export const useMusicRecommendations = (params?: MusicRecommendationParams) => {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
+    ...options,
   });
 };
 
 /**
  * Hook to get a single music feature
  */
-export const useMusicFeature = (id: string) => {
+export const useMusicFeature = (id: string, options?: { enabled?: boolean }) => {
   return useQuery<MusicFeatureDTO>({
     queryKey: queryKeys.music.detail(id),
     queryFn: async () => musicService.getMusicFeatureById(id),
@@ -38,6 +42,7 @@ export const useMusicFeature = (id: string) => {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
+    ...options,
   });
 };
 
@@ -46,6 +51,7 @@ export const useMusicFeature = (id: string) => {
  */
 export const useMusicFeatures = (
   params?: MusicRecommendationParams & { search?: string; genre?: string },
+  options?: { enabled?: boolean },
 ) => {
   return useQuery<MusicRecommendationPage>({
     queryKey: queryKeys.music.list(params),
@@ -54,5 +60,6 @@ export const useMusicFeatures = (
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
+    ...options,
   });
 };

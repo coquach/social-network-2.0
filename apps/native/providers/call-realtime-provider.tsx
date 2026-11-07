@@ -11,6 +11,7 @@ import {
 } from '@repo/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useRef } from 'react';
+import TrackPlayer from 'react-native-track-player';
 import { useSocket } from '~/providers/socket-provider';
 import { useCallClient } from '~/providers/call-provider';
 
@@ -56,6 +57,7 @@ export function CallRealtimeProvider({
           // Only ring and force incoming screen for 1-to-1 calls.
           // Group calls are just passively shown in the conversation UI.
           if (!payload.isGroupCall) {
+            void TrackPlayer.pause().catch(() => {});
             setIncomingCall({ ...payload, id: callId });
           }
 
@@ -101,9 +103,13 @@ export function CallRealtimeProvider({
         isCaller &&
         !joinedCallIds.current.has(callId)
       ) {
-       
         joinedCallIds.current.add(callId);
+        void TrackPlayer.pause().catch(() => {});
 
+        // Notify BE so caller is registered in Redis call participants set
+        void joinCallSession(callId).catch((e) =>
+          console.warn('[CallRealtimeProvider] joinCallSession error:', e),
+        );
 
         const { type, conversationId } = store.outgoingCall!;
 

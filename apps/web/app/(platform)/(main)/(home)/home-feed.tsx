@@ -57,16 +57,16 @@ export const HomeFeed = () => {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-sky-200 bg-linear-to-br from-sky- via-white to-sky-100 p-6 shadow-md dark:border-slate-800 dark:from-slate-950 dark:via-slate-900/80 dark:to-slate-950">
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-sky-50 via-white to-sky-100 p-6 shadow-md dark:border-primary/10 dark:from-slate-950 dark:via-slate-900/80 dark:to-slate-950">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-500/90">
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary/90">
               Bảng tin
             </p>
-            <h2 className="text-2xl font-bold text-sky-500">
+            <h2 className="text-2xl font-bold text-primary">
               Theo dõi điều mới nhất
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               Lọc theo cảm xúc và chuyển tab nhanh chóng.
             </p>
           </div>
@@ -76,16 +76,16 @@ export const HomeFeed = () => {
             onOpenChange={setShowFeeling}
             selectedFeeling={selectedFeeling}
             onSelect={handleSelectFeeling}
-            side="bottom" // hoặc "top"
+            side="bottom"
           >
             <button
               type="button"
               ref={feelingAnchorRef}
-              className="cursor-pointer inline-flex items-center gap-2 rounded-full border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-700 shadow-sm transition hover:bg-sky-50"
+              className="cursor-pointer inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background px-4 py-2 text-sm font-semibold text-primary shadow-sm transition-smooth hover:bg-accent"
             >
               <span
                 className={`text-base ${
-                  selectedFeeling?.color ?? 'text-sky-600'
+                  selectedFeeling?.color ?? 'text-primary'
                 }`}
               >
                 {selectedFeeling?.emoji ?? '✨'}
@@ -97,17 +97,17 @@ export const HomeFeed = () => {
       </div>
 
       <Tabs defaultValue={HomeFeedTab.TRENDING} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 rounded-full border border-sky-300 bg-sky-100 p-y-5 h-15 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
+      <TabsList className="grid w-full grid-cols-2 rounded-full border border-primary/20 bg-accent/50 h-[3.75rem] shadow-sm dark:border-primary/10 dark:bg-slate-900/60">
         <TabsTrigger
           value={HomeFeedTab.TRENDING}
-          className="flex w-full items-center justify-center rounded-full text-lg font-semibold text-slate-500 transition hover:text-sky-700 data-[state=active]:bg-sky-500 data-[state=active]:text-white dark:text-slate-400 dark:hover:text-sky-300 dark:data-[state=active]:bg-sky-400/20 dark:data-[state=active]:text-sky-200"
+          className="flex w-full items-center justify-center rounded-full text-lg font-semibold text-muted-foreground transition-smooth hover:text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:hover:text-primary dark:data-[state=active]:bg-primary/20 dark:data-[state=active]:text-primary"
         >
           <TrendingUp size={18} />
           {HomeFeedTab.TRENDING}
         </TabsTrigger>
         <TabsTrigger
           value={HomeFeedTab.MYFEED}
-          className="flex  w-full items-center justify-center rounded-full text-lg font-semibold text-slate-500 transition hover:text-sky-700 data-[state=active]:bg-sky-500 data-[state=active]:text-white dark:text-slate-400 dark:hover:text-sky-300 dark:data-[state=active]:bg-sky-400/20 dark:data-[state=active]:text-sky-200"
+          className="flex w-full items-center justify-center rounded-full text-lg font-semibold text-muted-foreground transition-smooth hover:text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground dark:hover:text-primary dark:data-[state=active]:bg-primary/20 dark:data-[state=active]:text-primary"
         >
           <UserRound size={18} />
           {HomeFeedTab.MYFEED}

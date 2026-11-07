@@ -123,29 +123,36 @@ export const ProfileModal = () => {
   const avatarFile = form.state.values.avatarUrl;
   const coverFile = form.state.values.coverImageUrl;
 
-  const avatarPreview = useMemo(() => {
-    if (isFile(avatarFile)) return URL.createObjectURL(avatarFile);
-    return fetchedUser?.avatarUrl || '/images/placeholder.png';
-  }, [avatarFile, fetchedUser?.avatarUrl]);
-
-  const coverPreview = useMemo(() => {
-    if (isFile(coverFile)) return URL.createObjectURL(coverFile);
-    return (
-      fetchedUser?.coverImage?.url ||
+  const [avatarPreview, setAvatarPreview] = useState<string>(
+    fetchedUser?.avatarUrl || '/images/placeholder.png'
+  );
+  const [coverPreview, setCoverPreview] = useState<string>(
+    fetchedUser?.coverImage?.url ||
       fetchedUser?.coverImageUrl ||
       '/images/placeholder-bg.png'
+  );
+
+  useEffect(() => {
+    if (isFile(avatarFile)) {
+      const url = URL.createObjectURL(avatarFile);
+      setAvatarPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setAvatarPreview(fetchedUser?.avatarUrl || '/images/placeholder.png');
+  }, [avatarFile, fetchedUser?.avatarUrl]);
+
+  useEffect(() => {
+    if (isFile(coverFile)) {
+      const url = URL.createObjectURL(coverFile);
+      setCoverPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setCoverPreview(
+      fetchedUser?.coverImage?.url ||
+        fetchedUser?.coverImageUrl ||
+        '/images/placeholder-bg.png'
     );
   }, [coverFile, fetchedUser?.coverImage?.url, fetchedUser?.coverImageUrl]);
-
-  useEffect(() => {
-    if (!isFile(avatarFile)) return;
-    return () => URL.revokeObjectURL(avatarPreview);
-  }, [avatarFile, avatarPreview]);
-
-  useEffect(() => {
-    if (!isFile(coverFile)) return;
-    return () => URL.revokeObjectURL(coverPreview);
-  }, [coverFile, coverPreview]);
 
   return (
     <Dialog open={profileModal.isOpen} onOpenChange={profileModal.onClose}>

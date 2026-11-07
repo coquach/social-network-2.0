@@ -16,6 +16,13 @@ module.exports = {
     ],
   },
   experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'react-icons',
+      'date-fns',
+      '@tanstack/react-query',
+      'recharts',
+    ],
     serverActions: {
       bodySizeLimit: '2mb',
     },

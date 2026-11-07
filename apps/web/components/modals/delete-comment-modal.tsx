@@ -17,7 +17,6 @@ import { toast } from 'sonner';
 
 export const DeleteCommentModal = () => {
   const { isOpen, closeModal, rootId, commentId } = useDeleteCommentModal();
-  console.log('DeleteCommentModal rendered with commentId:', commentId, 'and rootId:', rootId);
   const { mutateAsync, isPending } = useDeleteComment();
 
   const handleDelete = async () => {
