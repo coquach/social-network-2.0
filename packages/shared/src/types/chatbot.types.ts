@@ -85,6 +85,11 @@ export interface AssistantProposeActionPayload {
   category?: AssistantActionCategory;
   isDestructive?: boolean;
   expiresAt?: string;
+  status?: 'idle' | 'executing' | 'success' | 'cancelled' | 'error';
+  executionResult?: {
+    success: boolean;
+    message?: string;
+  };
 }
 
 export interface AssistantProposeAction {

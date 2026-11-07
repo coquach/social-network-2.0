@@ -47,6 +47,7 @@ export function AssistantChatModal({
     isRefreshingHistory,
     isSyncingHistory,
     resetError,
+    updateProposalStatus,
   } = useAssistantChatSession(userId ?? '', { limit: 20, enabled: visible, surface });
 
   const messages = React.useMemo(() => {
@@ -197,6 +198,7 @@ export function AssistantChatModal({
                 onClose();
                 router.push(targetPath as any);
               }}
+              onStatusChange={updateProposalStatus}
             />
           </View>
 

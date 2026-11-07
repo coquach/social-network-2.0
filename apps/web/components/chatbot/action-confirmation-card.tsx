@@ -25,6 +25,11 @@ import { toast } from 'sonner';
 interface ActionConfirmationCardProps {
   proposals: AssistantProposeAction[];
   onExecuted?: (result: ExecuteActionResultDTO) => void;
+  onStatusChange?: (
+    key: string,
+    status: 'idle' | 'executing' | 'success' | 'cancelled' | 'error',
+    message?: string,
+  ) => void;
 }
 
 type CardStatus = 'idle' | 'executing' | 'success' | 'cancelled' | 'error';
@@ -37,8 +42,21 @@ interface ActionState {
 export function ActionConfirmationCard({
   proposals,
   onExecuted,
+  onStatusChange,
 }: ActionConfirmationCardProps) {
-  const [actionStates, setActionStates] = useState<Record<string, ActionState>>({});
+  const [actionStates, setActionStates] = useState<Record<string, ActionState>>(() => {
+    const initial: Record<string, ActionState> = {};
+    for (const p of proposals || []) {
+      const key = p.payload?.idempotencyKey || p.id;
+      if (p.payload?.status) {
+        initial[key] = {
+          status: p.payload.status,
+          message: p.payload.executionResult?.message,
+        };
+      }
+    }
+    return initial;
+  });
 
   if (!proposals || proposals.length === 0) return null;
 
@@ -48,6 +66,7 @@ export function ActionConfirmationCard({
       ...prev,
       [key]: { status: 'executing' },
     }));
+    onStatusChange?.(key, 'executing');
 
     try {
       const result = await chatbotService.executeAction({
@@ -58,23 +77,27 @@ export function ActionConfirmationCard({
       });
 
       if (result.success) {
+        const msg = result.message || 'Thao tác đã được thực hiện thành công.';
         setActionStates((prev) => ({
           ...prev,
           [key]: {
             status: 'success',
-            message: result.message || 'Thao tác đã được thực hiện thành công.',
+            message: msg,
           },
         }));
+        onStatusChange?.(key, 'success', msg);
         toast.success(result.message || 'Thực hiện thành công!');
         onExecuted?.(result);
       } else {
+        const msg = result.message || 'Không thể thực hiện thao tác.';
         setActionStates((prev) => ({
           ...prev,
           [key]: {
             status: 'error',
-            message: result.message || 'Không thể thực hiện thao tác.',
+            message: msg,
           },
         }));
+        onStatusChange?.(key, 'error', msg);
         toast.error(result.message || 'Có lỗi xảy ra khi thực hiện.');
       }
     } catch (err: unknown) {
@@ -86,6 +109,7 @@ export function ActionConfirmationCard({
           message: errMsg,
         },
       }));
+      onStatusChange?.(key, 'error', errMsg);
       toast.error('Có lỗi xảy ra khi gửi yêu cầu thực thi.');
     }
   };
@@ -99,6 +123,7 @@ export function ActionConfirmationCard({
         message: 'Đã hủy thao tác.',
       },
     }));
+    onStatusChange?.(key, 'cancelled', 'Đã hủy thao tác.');
   };
 
   const renderIcon = (actionName: string, category?: string) => {

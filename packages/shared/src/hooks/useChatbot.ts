@@ -17,6 +17,7 @@ import { chatbotService } from '../api/services/chatbot.service';
 import { getAssistantMessageActions } from '../navigation/actions';
 import { queryKeys } from './query-keys';
 import type {
+  AssistantProposeAction,
   AssistantRespondDataDTO,
   ChatbotClearHistoryResultDTO,
   ChatbotHistoryPageDTO,
@@ -495,6 +496,62 @@ export const useAssistantChatSession = (
     clearMutation.reset();
   }, [clearMutation]);
 
+  const updateProposalStatus = useCallback(
+    (
+      key: string,
+      status: 'idle' | 'executing' | 'success' | 'cancelled' | 'error',
+      message?: string,
+    ) => {
+      queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
+        historyQueryKey,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((msg) => {
+                const proposals = msg.metadata?.proposals as AssistantProposeAction[] | undefined;
+                if (!Array.isArray(proposals)) return msg;
+
+                const hasMatch = proposals.some(
+                  (p) => (p.payload.idempotencyKey || p.id) === key,
+                );
+                if (!hasMatch) return msg;
+
+                const updatedProposals = proposals.map((p) => {
+                  if ((p.payload.idempotencyKey || p.id) === key) {
+                    return {
+                      ...p,
+                      payload: {
+                        ...p.payload,
+                        status,
+                        executionResult: {
+                          success: status === 'success',
+                          message,
+                        },
+                      },
+                    };
+                  }
+                  return p;
+                });
+
+                return {
+                  ...msg,
+                  metadata: {
+                    ...msg.metadata,
+                    proposals: updatedProposals,
+                  },
+                };
+              }),
+            })),
+          };
+        },
+      );
+    },
+    [historyQueryKey, queryClient],
+  );
+
   const retryHistory = useCallback(async () => {
     await historyQuery.refetch();
   }, [historyQuery]);
@@ -530,6 +587,7 @@ export const useAssistantChatSession = (
     error,
     isHistoryError: historyQuery.isError,
     resetError,
+    updateProposalStatus,
   };
 };
 

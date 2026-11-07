@@ -36,6 +36,11 @@ type AssistantMessageListProps = {
   isFetchingNextPage?: boolean;
   onFetchNextPage?: () => void;
   onActionNavigate?: (path: string) => void;
+  onStatusChange?: (
+    key: string,
+    status: 'idle' | 'executing' | 'success' | 'cancelled' | 'error',
+    message?: string,
+  ) => void;
 };
 
 function AssistantMessageSkeleton() {
@@ -71,6 +76,7 @@ export function AssistantMessageList({
   isFetchingNextPage = false,
   onFetchNextPage,
   onActionNavigate,
+  onStatusChange,
 }: AssistantMessageListProps) {
   // Dữ liệu từ hook đã được chuẩn hóa theo thứ tự cũ -> mới.
   const orderedMessages = React.useMemo(() => messages, [messages]);
@@ -219,6 +225,7 @@ export function AssistantMessageList({
                         />
                         <ActionConfirmationCard
                           proposals={getAssistantProposeActions(message.metadata)}
+                          onStatusChange={onStatusChange}
                         />
                         <AssistantActionButtons
                           actions={getAssistantMessageActions(message.metadata)}

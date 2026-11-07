@@ -224,3 +224,81 @@ export function resolveSurfaceFromPathname(
 
   return { screen: 'home' };
 }
+
+/**
+ * Validates and adapts an action URL for the target platform.
+ * Disallows javascript:, data:, vbscript:, and protocol-relative (//) URLs.
+ * Returns null if the URL is deemed unsafe or invalid.
+ */
+export function sanitizeActionUrl(
+  url: string | null | undefined,
+  platform: NavigationPlatform = 'web',
+): string | null {
+  if (!url || typeof url !== 'string') return null;
+
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  // Block javascript:, data:, vbscript: and others with control characters
+  const sanitizedSchemeCheck = trimmed.replace(/[\x00-\x1f\x7f\s]/g, '').toLowerCase();
+  if (
+    sanitizedSchemeCheck.startsWith('javascript:') ||
+    sanitizedSchemeCheck.startsWith('data:') ||
+    sanitizedSchemeCheck.startsWith('vbscript:') ||
+    sanitizedSchemeCheck.startsWith('file:')
+  ) {
+    return null;
+  }
+
+  // Reject protocol-relative URLs (e.g. "//malicious.com")
+  if (trimmed.startsWith('//')) {
+    return null;
+  }
+
+  // Allow external http(s) URLs without routing modifications
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  // Must be an internal path starting with /
+  if (!trimmed.startsWith('/')) {
+    return null;
+  }
+
+  // Route adaptation for Native
+  if (platform === 'native') {
+    // Map /profile/:id (where :id !== 'me') to /user/:id
+    const profileMatch = trimmed.match(/^\/profile\/([^/?#]+)(.*)$/);
+    if (profileMatch && profileMatch[1] && profileMatch[1] !== 'me') {
+      return `/user/${profileMatch[1]}${profileMatch[2] || ''}`;
+    }
+    if (trimmed === '/feed') {
+      return '/newfeeds';
+    }
+    if (trimmed === '/emotions') {
+      return '/sentiment';
+    }
+    if (trimmed === '/settings/privacy') {
+      return '/settings/privacy-settings';
+    }
+  }
+
+  // Route adaptation for Web
+  if (platform === 'web') {
+    const userMatch = trimmed.match(/^\/user\/([^/?#]+)(.*)$/);
+    if (userMatch && userMatch[1]) {
+      return `/profile/${userMatch[1]}${userMatch[2] || ''}`;
+    }
+    if (trimmed === '/newfeeds') {
+      return '/';
+    }
+    if (trimmed === '/sentiment') {
+      return '/emotions';
+    }
+    if (trimmed === '/settings/privacy-settings') {
+      return '/settings/privacy';
+    }
+  }
+
+  return trimmed;
+}

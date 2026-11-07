@@ -3,6 +3,7 @@ import {
   buildDestinationHref,
   DESTINATION_CATALOG,
   resolveSurfaceFromPathname,
+  sanitizeActionUrl,
 } from '../destinations';
 import { getAssistantMessageActions } from '../actions';
 
@@ -139,5 +140,40 @@ describe('resolveSurfaceFromPathname', () => {
       screen: 'conversations.detail',
       entityId: 'conv_888',
     });
+  });
+});
+
+describe('sanitizeActionUrl', () => {
+  it('blocks unsafe protocols and malformed URLs', () => {
+    expect(sanitizeActionUrl('javascript:alert(1)')).toBeNull();
+    expect(sanitizeActionUrl('JAVASCRIPT:alert(1)')).toBeNull();
+    expect(sanitizeActionUrl('java\nscript:alert(1)')).toBeNull();
+    expect(sanitizeActionUrl('data:text/html,<script>alert(1)</script>')).toBeNull();
+    expect(sanitizeActionUrl('vbscript:msgbox(1)')).toBeNull();
+    expect(sanitizeActionUrl('//evil.com/phish')).toBeNull();
+    expect(sanitizeActionUrl('file:///etc/passwd')).toBeNull();
+    expect(sanitizeActionUrl('')).toBeNull();
+    expect(sanitizeActionUrl(null)).toBeNull();
+    expect(sanitizeActionUrl(undefined)).toBeNull();
+  });
+
+  it('preserves valid external URLs', () => {
+    expect(sanitizeActionUrl('https://example.com/audio.mp3')).toBe('https://example.com/audio.mp3');
+    expect(sanitizeActionUrl('http://cdn.stream.com/track')).toBe('http://cdn.stream.com/track');
+  });
+
+  it('maps profile and special routes correctly for Native', () => {
+    expect(sanitizeActionUrl('/profile/user-123', 'native')).toBe('/user/user-123');
+    expect(sanitizeActionUrl('/profile/me', 'native')).toBe('/profile/me');
+    expect(sanitizeActionUrl('/feed', 'native')).toBe('/newfeeds');
+    expect(sanitizeActionUrl('/emotions', 'native')).toBe('/sentiment');
+    expect(sanitizeActionUrl('/groups/grp-456', 'native')).toBe('/groups/grp-456');
+  });
+
+  it('maps user routes correctly for Web', () => {
+    expect(sanitizeActionUrl('/user/user-123', 'web')).toBe('/profile/user-123');
+    expect(sanitizeActionUrl('/newfeeds', 'web')).toBe('/');
+    expect(sanitizeActionUrl('/sentiment', 'web')).toBe('/emotions');
+    expect(sanitizeActionUrl('/profile/user-123', 'web')).toBe('/profile/user-123');
   });
 });

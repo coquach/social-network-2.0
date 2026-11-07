@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import type { AssistantShowCardAction } from '@repo/shared';
+import { sanitizeActionUrl, type AssistantShowCardAction } from '@repo/shared';
 import {
   User,
   Users,
@@ -46,7 +46,8 @@ export function AssistantCards({ cards, onNavigate }: AssistantCardsProps) {
       {cards.map((card) => {
         const { cardType, title, subtitle, imageUrl, actionUrl, actionLabel } = card.payload;
         const isMusic = cardType === 'music';
-        const isPlaying = isMusic && actionUrl && playingTrackUrl === actionUrl;
+        const safeActionUrl = sanitizeActionUrl(actionUrl, 'web');
+        const isPlaying = isMusic && safeActionUrl && playingTrackUrl === safeActionUrl;
 
         return (
           <div
@@ -91,10 +92,10 @@ export function AssistantCards({ cards, onNavigate }: AssistantCardsProps) {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1.5 shrink-0">
-              {isMusic && actionUrl && (
+              {isMusic && safeActionUrl && (
                 <button
                   type="button"
-                  onClick={() => handleTogglePlay(actionUrl)}
+                  onClick={() => handleTogglePlay(safeActionUrl)}
                   aria-label={isPlaying ? 'Dừng phát' : 'Nghe thử'}
                   className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition cursor-pointer active:scale-95"
                 >
@@ -102,10 +103,10 @@ export function AssistantCards({ cards, onNavigate }: AssistantCardsProps) {
                 </button>
               )}
 
-              {actionUrl && (
+              {safeActionUrl && (
                 <button
                   type="button"
-                  onClick={() => onNavigate(actionUrl)}
+                  onClick={() => onNavigate(safeActionUrl)}
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-medium transition cursor-pointer active:scale-95 shadow-2xs"
                 >
                   <span>{actionLabel || (isMusic ? 'Chi tiết' : 'Xem')}</span>

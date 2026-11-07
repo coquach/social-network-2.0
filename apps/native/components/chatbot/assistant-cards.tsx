@@ -1,5 +1,5 @@
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import type { AssistantShowCardAction } from "@repo/shared";
+import { sanitizeActionUrl, type AssistantShowCardAction } from "@repo/shared";
 import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
@@ -16,14 +16,16 @@ export function AssistantCards({ cards, onNavigate }: AssistantCardsProps) {
       {cards.map((card) => {
         const { cardType, title, subtitle, imageUrl, actionUrl, actionLabel } = card.payload;
         const isMusic = cardType === "music";
+        const safeActionUrl = sanitizeActionUrl(actionUrl, "native");
 
         return (
           <TouchableOpacity
             key={card.id}
             activeOpacity={0.8}
+            disabled={!safeActionUrl}
             onPress={() => {
-              if (actionUrl) {
-                onNavigate?.(actionUrl);
+              if (safeActionUrl) {
+                onNavigate?.(safeActionUrl);
               }
             }}
             className="flex-row items-center justify-between rounded-xl bg-app-surface/60 dark:bg-app-surface-dark/40 border border-app-border/70 p-2.5"
@@ -57,7 +59,7 @@ export function AssistantCards({ cards, onNavigate }: AssistantCardsProps) {
             </View>
 
             {/* Right: CTA button */}
-            {actionUrl && (
+            {safeActionUrl && (
               <View className="flex-row items-center gap-1 rounded-lg bg-app-primary px-2.5 py-1">
                 <Text className="text-xs font-medium text-white">
                   {actionLabel || (isMusic ? "Nghe thử" : "Xem")}

@@ -232,6 +232,7 @@ export function AssistantSheet() {
     error,
     retryHistory,
     resetError,
+    updateProposalStatus,
   } = useAssistantChatSession(userId ?? '', { limit: 30, enabled: isOpen, surface });
 
   // Close popup on outside click (excluding floating button)
@@ -521,6 +522,7 @@ export function AssistantSheet() {
                           />
                           <ActionConfirmationCard
                             proposals={getAssistantProposeActions(msg.metadata)}
+                            onStatusChange={updateProposalStatus}
                           />
                           <AssistantActionButtons
                             actions={getAssistantMessageActions(msg.metadata)}
