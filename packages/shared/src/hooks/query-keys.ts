@@ -157,13 +157,16 @@ export const queryKeys = {
   // ==================== Chatbot ====================
   chatbot: {
     all: ['chatbot'] as const,
-    history: (userId: string, pageSize?: number) =>
+    history: (userId: string, pageSize?: number, conversationId?: string) =>
       [
         ...queryKeys.chatbot.all,
         'history',
         userId,
         ...(typeof pageSize === 'number' ? [pageSize] : []),
+        ...(conversationId ? [conversationId] : []),
       ] as const,
+    conversations: (userId: string) =>
+      [...queryKeys.chatbot.all, 'conversations', userId] as const,
   },
 
   // ==================== Groups ====================

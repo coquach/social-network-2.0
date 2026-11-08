@@ -10,6 +10,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
   type InfiniteData,
 } from '@tanstack/react-query';
@@ -23,6 +24,7 @@ import type {
   ChatbotHistoryPageDTO,
   ChatbotHistoryMessageDTO,
   SurfaceContextDTO,
+  AiAssistantPolicy,
 } from '../types';
 
 /**
@@ -31,20 +33,68 @@ import type {
 export const useAssistantHistory = (
   userId: string,
   pageSize?: number,
+  conversationId?: string,
   enabled = true,
 ) => {
   return useInfiniteQuery<ChatbotHistoryPageDTO, Error>({
-    queryKey: queryKeys.chatbot.history(userId, pageSize),
+    queryKey: queryKeys.chatbot.history(userId, pageSize, conversationId),
     queryFn: ({ pageParam }) =>
       chatbotService.getHistory(userId, {
         limit: pageSize,
         cursor: pageParam as string | undefined,
+        conversationId,
       }),
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined as string | undefined,
     enabled: enabled && !!userId,
   });
+};
+
+/**
+ * Manage assistant conversations (multi-session).
+ */
+export const useAssistantConversations = (
+  userId: string,
+  limit = 20,
+  enabled = true,
+) => {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: queryKeys.chatbot.conversations(userId),
+    queryFn: () => chatbotService.getConversations({ limit }),
+    enabled: enabled && !!userId,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (title?: string) => chatbotService.createConversation(title),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.chatbot.conversations(userId),
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (conversationId: string) =>
+      chatbotService.deleteConversation(conversationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.chatbot.conversations(userId),
+      });
+    },
+  });
+
+  return {
+    ...query,
+    conversations: query.data?.items ?? [],
+    totalCount: query.data?.total ?? 0,
+    createConversation: createMutation.mutateAsync,
+    deleteConversation: deleteMutation.mutateAsync,
+    isCreating: createMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+  };
 };
 
 /**
@@ -59,6 +109,9 @@ export const useClearAssistantHistory = () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.chatbot.history(userId),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.chatbot.conversations(userId),
+      });
     },
   });
 };
@@ -67,6 +120,9 @@ type UseAssistantChatSessionOptions = {
   limit?: number;
   enabled?: boolean;
   surface?: SurfaceContextDTO;
+  conversationId?: string;
+  aiPolicy?: AiAssistantPolicy | string;
+  onConversationCreated?: (newConversationId: string) => void;
 };
 
 const LOCAL_CACHE_SOURCE = 'local-cache';
@@ -198,10 +254,14 @@ const waitForAssistantReplyPersistence = async (
   userId: string,
   reply: string,
   pageSize: number,
+  conversationId?: string,
 ): Promise<boolean> => {
   for (let attempt = 0; attempt < HISTORY_PERSISTENCE_CHECK_MAX_ATTEMPTS; attempt += 1) {
     try {
-      const page = await chatbotService.getHistory(userId, { limit: pageSize });
+      const page = await chatbotService.getHistory(userId, {
+        limit: pageSize,
+        conversationId,
+      });
       if (hasPersistedAssistantReply(page.data, reply)) {
         return true;
       }
@@ -222,6 +282,7 @@ const createLocalHistoryMessage = (
     userId: string;
     role: 'user' | 'assistant';
     content: string;
+    conversationId?: string;
     sources?: ChatbotHistoryMessageDTO['sources'];
     metadata?: Record<string, unknown>;
   },
@@ -230,7 +291,7 @@ const createLocalHistoryMessage = (
   const timestamp = Date.now() + offsetMs;
   return {
     id: `local:${params.role}:${timestamp}`,
-    conversationId: '',
+    conversationId: params.conversationId ?? '',
     userId: params.userId,
     role: params.role,
     content: params.content,
@@ -251,21 +312,33 @@ export const useAssistantChatSession = (
   options?: UseAssistantChatSessionOptions,
 ) => {
   const queryClient = useQueryClient();
+  const isNewDraft = options?.conversationId === 'new';
   const historyLimit = options?.limit ?? 20;
-  const historyEnabled = options?.enabled ?? true;
+  const historyEnabled = (options?.enabled ?? true) && !isNewDraft;
   const [lastError, setLastError] = useState<Error | null>(null);
   const [isSyncingHistory, setIsSyncingHistory] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const isSendingMessageRef = useRef(false);
-  const historyQueryKey = queryKeys.chatbot.history(userId, historyLimit);
+  const resolvedConversationId = isNewDraft ? undefined : options?.conversationId;
 
-  const historyQuery = useAssistantHistory(userId, historyLimit, historyEnabled);
+  const historyQueryKey = useMemo(
+    () => queryKeys.chatbot.history(userId, historyLimit, isNewDraft ? 'new' : options?.conversationId),
+    [userId, historyLimit, options?.conversationId, isNewDraft],
+  );
+
+  const historyQuery = useAssistantHistory(
+    userId,
+    historyLimit,
+    resolvedConversationId,
+    historyEnabled,
+  );
   const clearMutation = useClearAssistantHistory();
 
   const historyMessages = useMemo(() => {
+    if (isNewDraft) return [];
     const raw = historyQuery.data?.pages.flatMap((page) => page.data) ?? [];
     return reconcileHistoryMessages(raw);
-  }, [historyQuery.data?.pages]);
+  }, [historyQuery.data?.pages, isNewDraft]);
 
   const sendMessage = useCallback(
     async (message: string, overrideSurface?: SurfaceContextDTO) => {
@@ -285,10 +358,13 @@ export const useAssistantChatSession = (
       setIsResponding(true);
       setLastError(null);
 
+      const targetConversationId = isNewDraft ? undefined : options?.conversationId;
+
       const optimisticUserMessage = createLocalHistoryMessage({
         userId,
         role: 'user',
         content: normalizedMessage,
+        conversationId: targetConversationId,
         metadata: {
           source: LOCAL_PENDING_SOURCE,
           isPending: true,
@@ -300,6 +376,7 @@ export const useAssistantChatSession = (
         userId,
         role: 'assistant',
         content: '',
+        conversationId: targetConversationId,
         metadata: {
           source: LOCAL_PENDING_SOURCE,
           isPending: true,
@@ -336,6 +413,8 @@ export const useAssistantChatSession = (
         const stream = chatbotService.streamRespond({
           message: normalizedMessage,
           surface,
+          conversationId: targetConversationId,
+          aiPolicy: options?.aiPolicy,
         });
 
         for await (const chunk of stream) {
@@ -370,6 +449,7 @@ export const useAssistantChatSession = (
                                   proposals: chunk.proposals && chunk.proposals.length > 0
                                     ? chunk.proposals
                                     : (msg.metadata as { proposals?: unknown })?.proposals,
+                                  policyBlocked: chunk.policyBlocked ?? (msg.metadata as { policyBlocked?: boolean })?.policyBlocked,
                                 },
                               } 
                             : msg
@@ -414,6 +494,7 @@ export const useAssistantChatSession = (
                                 proposals: lastResult?.proposals && lastResult.proposals.length > 0
                                   ? lastResult.proposals
                                   : (msg.metadata as { proposals?: unknown })?.proposals,
+                                policyBlocked: lastResult?.policyBlocked ?? (msg.metadata as { policyBlocked?: boolean })?.policyBlocked,
                               } 
                             } 
                           : msg.id === optimisticUserMessage.id
@@ -427,6 +508,10 @@ export const useAssistantChatSession = (
           },
         );
 
+        if (isNewDraft && lastResult.conversationId && options?.onConversationCreated) {
+          options.onConversationCreated(lastResult.conversationId);
+        }
+
         setIsSyncingHistory(true);
         void (async () => {
           try {
@@ -434,10 +519,14 @@ export const useAssistantChatSession = (
               userId,
               fullReply,
               historyLimit,
+              options?.conversationId,
             );
             if (hasPersistedReply) {
               await queryClient.invalidateQueries({ queryKey: historyQueryKey });
             }
+            await queryClient.invalidateQueries({
+              queryKey: queryKeys.chatbot.conversations(userId),
+            });
           } finally {
             setIsSyncingHistory(false);
           }
@@ -469,7 +558,7 @@ export const useAssistantChatSession = (
         setIsResponding(false);
       }
     },
-    [historyLimit, historyQueryKey, isResponding, isSyncingHistory, queryClient, userId, clearMutation.isPending],
+    [historyLimit, historyQueryKey, isResponding, isSyncingHistory, queryClient, userId, clearMutation.isPending, options?.conversationId, options?.aiPolicy, options?.surface, isNewDraft, options?.onConversationCreated],
   );
 
   const clearHistory = useCallback(async () => {

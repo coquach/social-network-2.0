@@ -14,6 +14,8 @@ export interface SurfaceContextDTO {
 export interface AssistantMessageInput {
   message: string;
   clientMessageId?: string;
+  conversationId?: string;
+  aiPolicy?: string;
   surface?: SurfaceContextDTO;
 }
 
@@ -123,6 +125,8 @@ export interface AssistantRespondDataDTO {
   provider: string;
   requestId?: string;
   latencyMs?: number;
+  policyBlocked?: boolean;
+  conversationId?: string;
 }
 
 export interface ExecuteActionInputDTO {
@@ -157,9 +161,26 @@ export type ChatbotHistoryPageDTO = CursorPageResponse<ChatbotHistoryMessageDTO>
 export interface ChatbotHistoryQuery {
   cursor?: string;
   limit?: number;
+  conversationId?: string;
 }
 
 export interface ChatbotClearHistoryResultDTO {
   deletedCount: number;
   sessionCleared: boolean;
+}
+
+export interface AssistantConversationDTO {
+  id: string;
+  userId: string;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string | null;
+  messageCount?: number;
+}
+
+export interface AssistantConversationListDataDTO {
+  items: AssistantConversationDTO[];
+  total: number;
+  maxLimit: number;
 }

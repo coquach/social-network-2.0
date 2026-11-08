@@ -1,8 +1,8 @@
 'use client';
 
-import { useUser, useUpdateProfile, PrivacyLevel, MessagePrivacy } from '@repo/shared';
+import { useUser, useUpdateProfile, PrivacyLevel, MessagePrivacy, AiAssistantPolicy } from '@repo/shared';
 import { useAuth } from '@clerk/nextjs';
-import { Shield, Lock, Eye, CheckCircle2, ChevronLeft } from 'lucide-react';
+import { Shield, Lock, Eye, CheckCircle2, ChevronLeft, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ export default function PrivacySettingsPage() {
     profileVisibility: PrivacyLevel.PUBLIC,
     friendListVisibility: PrivacyLevel.PUBLIC,
     messagePrivacy: MessagePrivacy.EVERYONE,
+    aiPolicy: AiAssistantPolicy.FULL,
   });
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function PrivacySettingsPage() {
         profileVisibility: user.privacySettings.profileVisibility ?? PrivacyLevel.PUBLIC,
         friendListVisibility: user.privacySettings.friendListVisibility ?? PrivacyLevel.PUBLIC,
         messagePrivacy: user.privacySettings.messagePrivacy ?? MessagePrivacy.EVERYONE,
+        aiPolicy: user.privacySettings.aiPolicy ?? AiAssistantPolicy.FULL,
       });
     }
   }, [user]);
@@ -175,6 +177,51 @@ export default function PrivacySettingsPage() {
                 </div>
                 {settings.messagePrivacy === opt.val && (
                   <CheckCircle2 className="h-5 w-5 text-sky-500 shrink-0" />
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* AI Assistant Privacy Policy */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-2 text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-indigo-500" />
+            Quyền riêng tư Trợ lý AI (Chatbot)
+          </h2>
+          <p className="text-sm text-slate-500 mb-4">
+            Quyết định mức độ truy cập thông tin cá nhân và khả năng thực hiện thao tác tài khoản của Trợ lý AI.
+          </p>
+          <div className="space-y-3">
+            {[
+              {
+                val: AiAssistantPolicy.FULL,
+                label: 'Đầy đủ tính năng (Khuyên dùng)',
+                desc: 'Cho phép AI tra cứu bài viết, nhóm, bạn bè và hỗ trợ tạo bài viết, tham gia nhóm khi bạn yêu cầu.',
+              },
+              {
+                val: AiAssistantPolicy.RESTRICTED,
+                label: 'Riêng tư tối đa',
+                desc: 'AI chỉ trả lời kiến thức chung. Không đọc dữ liệu cá nhân của bạn và không thể thực hiện bất kỳ thao tác nào.',
+              },
+            ].map((opt) => (
+              <button
+                key={opt.val}
+                onClick={() => handleUpdate('aiPolicy', opt.val)}
+                disabled={isPending}
+                className={cn(
+                  "w-full flex items-start gap-4 rounded-xl border p-4 text-left transition-all",
+                  settings.aiPolicy === opt.val 
+                    ? "border-indigo-500 bg-indigo-50/50" 
+                    : "border-slate-100 bg-white hover:border-indigo-200 hover:bg-slate-50"
+                )}
+              >
+                <div className="flex-1">
+                  <div className="font-semibold text-slate-800">{opt.label}</div>
+                  <div className="text-sm text-slate-500 mt-1">{opt.desc}</div>
+                </div>
+                {settings.aiPolicy === opt.val && (
+                  <CheckCircle2 className="h-5 w-5 text-indigo-500 shrink-0" />
                 )}
               </button>
             ))}

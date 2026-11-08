@@ -11,6 +11,7 @@ import {
   useUpdateProfile,
   PrivacyLevel,
   MessagePrivacy,
+  AiAssistantPolicy,
   type UserPrivacySettings,
 } from '@repo/shared';
 
@@ -27,6 +28,7 @@ export default function PrivacySettingsScreen() {
     profileVisibility: PrivacyLevel.PUBLIC,
     friendListVisibility: PrivacyLevel.PUBLIC,
     messagePrivacy: MessagePrivacy.EVERYONE,
+    aiPolicy: AiAssistantPolicy.FULL,
   };
 
   const handleUpdateSetting = (key: SettingType, value: any) => {
@@ -197,6 +199,38 @@ export default function PrivacySettingsScreen() {
                   <Ionicons name="chevron-forward" size={16} color="#64748b" />
                 </View>
               </Pressable>
+              <View className="ml-14 h-px bg-app-border/70 dark:bg-app-border-dark/80" />
+            </View>
+
+            <View>
+              <Pressable
+                className="flex-row items-center gap-3 rounded-2xl px-3 py-3 active:bg-sky-500/10 dark:active:bg-sky-400/15"
+                onPress={() => setActiveSheet('aiPolicy' as SettingType)}
+              >
+                <View className="h-9 w-9 items-center justify-center rounded-xl bg-purple-500/12 dark:bg-purple-400/18">
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={18}
+                    color="#a855f7"
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[15px] font-medium text-app-fg dark:text-app-fg-dark">
+                    Trợ lý AI (Chatbot)
+                  </Text>
+                  <Text className="mt-0.5 text-[13px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                    Quyền riêng tư và thao tác của AI
+                  </Text>
+                </View>
+                <View className="flex-row items-center gap-1">
+                  <Text className="text-[13px] text-app-muted-fg dark:text-app-muted-fg-dark">
+                    {privacySettings.aiPolicy === AiAssistantPolicy.RESTRICTED
+                      ? 'Riêng tư tối đa'
+                      : 'Đầy đủ'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color="#64748b" />
+                </View>
+              </Pressable>
             </View>
           </AppCard>
         </ScrollView>
@@ -290,6 +324,30 @@ export default function PrivacySettingsScreen() {
             'people-outline',
             privacySettings.messagePrivacy === MessagePrivacy.FRIENDS,
             () => handleUpdateSetting('messagePrivacy', MessagePrivacy.FRIENDS),
+          )}
+        </View>
+      </AppBottomSheet>
+
+      <AppBottomSheet
+        visible={activeSheet === ('aiPolicy' as SettingType)}
+        onClose={() => setActiveSheet(null)}
+        title="Trợ lý AI (Chatbot)"
+        description="Quyết định mức độ truy cập dữ liệu cá nhân và khả năng thực hiện thao tác tài khoản của AI."
+      >
+        <View className="px-4 pb-8 pt-2">
+          {renderOption(
+            'Đầy đủ tính năng (Khuyên dùng)',
+            'Cho phép AI tra cứu dữ liệu cá nhân và hỗ trợ thực hiện thao tác tài khoản.',
+            'sparkles-outline',
+            privacySettings.aiPolicy === AiAssistantPolicy.FULL,
+            () => handleUpdateSetting('aiPolicy' as SettingType, AiAssistantPolicy.FULL),
+          )}
+          {renderOption(
+            'Riêng tư tối đa',
+            'AI chỉ trả lời kiến thức chung. Không đọc dữ liệu và không thể thao tác tài khoản.',
+            'shield-checkmark-outline',
+            privacySettings.aiPolicy === AiAssistantPolicy.RESTRICTED,
+            () => handleUpdateSetting('aiPolicy' as SettingType, AiAssistantPolicy.RESTRICTED),
           )}
         </View>
       </AppBottomSheet>

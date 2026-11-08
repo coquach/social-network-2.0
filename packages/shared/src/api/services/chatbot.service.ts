@@ -5,6 +5,8 @@
 
 import { getApiClient } from '../client';
 import type {
+  AssistantConversationDTO,
+  AssistantConversationListDataDTO,
   AssistantMessageInput,
   AssistantRespondDataDTO,
   ChatbotClearHistoryResultDTO,
@@ -122,6 +124,12 @@ export const chatbotService = {
     url.searchParams.append('message', data.message);
     if (data.clientMessageId) {
       url.searchParams.append('clientMessageId', data.clientMessageId);
+    }
+    if (data.conversationId) {
+      url.searchParams.append('conversationId', data.conversationId);
+    }
+    if (data.aiPolicy) {
+      url.searchParams.append('aiPolicy', data.aiPolicy);
     }
     if (data.surface) {
       url.searchParams.append('surface', JSON.stringify(data.surface));
@@ -278,6 +286,7 @@ export const chatbotService = {
   ): Promise<ChatbotHistoryPageDTO> {
     const params: Record<string, string | number> = {};
     if (query?.limit) params.page_size = query.limit;
+    if (query?.conversationId) params.conversation_id = query.conversationId;
 
     if (query?.cursor) {
       const decodedCursor = decodeHistoryCursor(query.cursor);
@@ -293,6 +302,40 @@ export const chatbotService = {
     );
 
     return normalizeHistoryPage(response);
+  },
+
+  /**
+   * Get list of conversations for current user (up to 20)
+   */
+  async getConversations(query?: { limit?: number }): Promise<AssistantConversationListDataDTO> {
+    const params: Record<string, number> = {};
+    if (query?.limit) params.limit = query.limit;
+    const response = await getApiClient().get<{ success: boolean; data: AssistantConversationListDataDTO }>(
+      `/assistant/conversations/me`,
+      { params }
+    );
+    return response?.data || { items: [], total: 0, maxLimit: 20 };
+  },
+
+  /**
+   * Create a new conversation session
+   */
+  async createConversation(title?: string): Promise<AssistantConversationDTO> {
+    const response = await getApiClient().post<{ success: boolean; data: AssistantConversationDTO }>(
+      `/assistant/conversations/me`,
+      { title }
+    );
+    return response?.data;
+  },
+
+  /**
+   * Delete a specific conversation session
+   */
+  async deleteConversation(conversationId: string): Promise<boolean> {
+    const response = await getApiClient().delete<{ success: boolean; data: { deleted: boolean } }>(
+      `/assistant/conversations/me/${encodeURIComponent(conversationId)}`
+    );
+    return response?.data?.deleted ?? true;
   },
 
   /**

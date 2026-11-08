@@ -3,19 +3,26 @@
 import { useAuth } from '@clerk/nextjs';
 import { usePathname, useRouter } from 'next/navigation';
 import {
+  AiAssistantPolicy,
   getAssistantMessageActions,
   getAssistantMessageCards,
   getAssistantProposeActions,
   resolveSurfaceFromPathname,
   useAssistantChatSession,
+  useAssistantConversations,
+  useUpdateProfile,
+  useUser,
 } from '@repo/shared';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   Bot,
   Check,
+  ChevronDown,
   Copy,
+  History,
   Loader2,
+  Plus,
   RotateCcw,
   Send,
   Sparkles,
@@ -208,16 +215,31 @@ export function AssistantSheet() {
     () => resolveSurfaceFromPathname(pathname || '/', 'web'),
     [pathname]
   );
+  const { data: user } = useUser(userId ?? '');
+  const { mutateAsync: updateProfile } = useUpdateProfile();
+
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [buttonPos, setButtonPos] = useState<FloatingPosition>({ x: 0, y: 0 });
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [showSessionsDrawer, setShowSessionsDrawer] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
   const floatingButtonContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const {
+    conversations,
+    deleteConversation,
+  } = useAssistantConversations(userId ?? '', 20, isOpen);
+
+  const activeConversation = useMemo(
+    () => conversations.find((c) => c.id === activeConversationId),
+    [conversations, activeConversationId],
+  );
 
   const {
     messages: historyMessages,
@@ -233,7 +255,14 @@ export function AssistantSheet() {
     retryHistory,
     resetError,
     updateProposalStatus,
-  } = useAssistantChatSession(userId ?? '', { limit: 30, enabled: isOpen, surface });
+  } = useAssistantChatSession(userId ?? '', {
+    limit: 30,
+    enabled: isOpen,
+    surface,
+    conversationId: activeConversationId ?? undefined,
+    aiPolicy: user?.privacySettings?.aiPolicy,
+    onConversationCreated: (newId) => setActiveConversationId(newId),
+  });
 
   // Close popup on outside click (excluding floating button)
   useClickOutside(
@@ -343,33 +372,61 @@ export function AssistantSheet() {
             className="flex flex-col bg-background/95 backdrop-blur-xl border border-border/80 rounded-3xl shadow-2xl shadow-primary/15 overflow-hidden"
           >
             {/* ── Popup Header ── */}
-            <div className="px-5 py-4 border-b border-border bg-card/60 backdrop-blur-md flex flex-row items-center justify-between space-y-0 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent text-primary-foreground shadow-sm">
-                  <Sparkles size={20} />
+            <div className="px-4 py-3.5 border-b border-border bg-card/60 backdrop-blur-md flex flex-row items-center justify-between space-y-0 shrink-0 gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-accent text-primary-foreground shadow-sm shrink-0">
+                  <Sparkles size={18} />
                 </div>
-                <div>
-                  <h2 className="text-base font-bold text-foreground">
-                    Trợ lý Sentimeta AI
-                  </h2>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
-                    <span>Sẵn sàng hỗ trợ & lắng nghe</span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h2 className="text-sm font-bold text-foreground truncate">
+                      Sentimeta AI
+                    </h2>
+                    {user?.privacySettings?.aiPolicy === AiAssistantPolicy.RESTRICTED && (
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
+                        Riêng tư
+                      </span>
+                    )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSessionsDrawer((prev) => !prev)}
+                    className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition cursor-pointer max-w-[190px] text-left"
+                    title="Đổi phiên trò chuyện"
+                  >
+                    <History size={11} className="text-primary shrink-0" />
+                    <span className="truncate font-medium">
+                      {activeConversation?.title || 'Cuộc trò chuyện mới'}
+                    </span>
+                    <ChevronDown size={11} className="shrink-0 text-muted-foreground" />
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer rounded-full"
+                  onClick={() => {
+                    setActiveConversationId('new');
+                    setShowSessionsDrawer(false);
+                  }}
+                  title="Cuộc trò chuyện mới"
+                  aria-label="Cuộc trò chuyện mới"
+                >
+                  <Plus size={16} />
+                </Button>
                 {historyMessages.length > 0 && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer rounded-full"
                     onClick={() => setShowClearConfirm(true)}
-                    title="Xóa lịch sử"
-                    aria-label="Xóa lịch sử"
+                    title="Xóa lịch sử phiên hiện tại"
+                    aria-label="Xóa lịch sử phiên hiện tại"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={15} />
                   </Button>
                 )}
                 <Button
@@ -380,10 +437,89 @@ export function AssistantSheet() {
                   title="Đóng cửa sổ"
                   aria-label="Đóng cửa sổ"
                 >
-                  <X size={18} />
+                  <X size={17} />
                 </Button>
               </div>
             </div>
+
+            {/* ── Sessions Drawer ── */}
+            <AnimatePresence>
+              {showSessionsDrawer && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="border-b border-border bg-card/95 backdrop-blur-md px-4 py-3 shrink-0 max-h-[280px] overflow-y-auto app-scroll"
+                >
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/50">
+                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <History size={13} className="text-primary" />
+                      Lịch sử phiên ({conversations.length}/20)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveConversationId('new');
+                        setShowSessionsDrawer(false);
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline cursor-pointer"
+                    >
+                      <Plus size={12} />
+                      Tạo phiên mới
+                    </button>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {conversations.length === 0 ? (
+                      <p className="text-center text-xs text-muted-foreground py-3">
+                        Chưa có phiên trò chuyện nào được lưu.
+                      </p>
+                    ) : (
+                      conversations.map((conv) => (
+                        <div
+                          key={conv.id}
+                          className={`group flex items-center justify-between p-2 rounded-xl border text-left cursor-pointer transition text-xs ${
+                            activeConversationId === conv.id
+                              ? 'border-primary bg-primary/10 text-primary font-medium'
+                              : 'border-border/60 hover:bg-muted/60 text-foreground'
+                          }`}
+                          onClick={() => {
+                            setActiveConversationId(conv.id);
+                            setShowSessionsDrawer(false);
+                          }}
+                        >
+                          <div className="flex-1 min-w-0 pr-2">
+                            <p className="truncate font-medium">{conv.title || 'Cuộc trò chuyện'}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {new Date(conv.lastMessageAt || conv.createdAt).toLocaleDateString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                day: '2-digit',
+                                month: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void deleteConversation(conv.id);
+                              if (activeConversationId === conv.id) {
+                                setActiveConversationId(null);
+                              }
+                            }}
+                            className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition opacity-60 group-hover:opacity-100"
+                            title="Xóa phiên"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* ── Error Banner ── */}
             {error && (
@@ -531,6 +667,49 @@ export function AssistantSheet() {
                               router.push(href);
                             }}
                           />
+                          {/* Just-In-Time AI Privacy Policy Consent Card */}
+                          {!isUser &&
+                            user?.privacySettings?.aiPolicy === AiAssistantPolicy.RESTRICTED &&
+                            (msg.metadata?.policyBlocked === true ||
+                              msg.content.toLowerCase().includes('riêng tư tối đa') ||
+                              msg.content.toLowerCase().includes('quyền riêng tư') ||
+                              msg.content.toLowerCase().includes('không thể truy cập thông tin') ||
+                              msg.content.toLowerCase().includes('không thể thực hiện thao tác')) && (
+                              <div className="mt-3 p-3 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50/90 to-purple-50/90 dark:from-indigo-950/40 dark:to-purple-950/40 text-xs">
+                                <div className="flex items-start gap-2.5">
+                                  <Sparkles className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                                  <div className="flex-1 space-y-1">
+                                    <p className="font-semibold text-indigo-950 dark:text-indigo-200">
+                                      Chế độ Riêng tư tối đa đang bật
+                                    </p>
+                                    <p className="text-slate-600 dark:text-slate-400 leading-normal">
+                                      AI cần quyền Đầy đủ tính năng để tìm kiếm dữ liệu cá nhân hoặc hỗ trợ bạn thực hiện các thao tác.
+                                    </p>
+                                    <div className="pt-1.5 flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 shadow-xs"
+                                        onClick={async () => {
+                                          try {
+                                            await updateProfile({
+                                              privacySettings: {
+                                                ...user.privacySettings,
+                                                aiPolicy: AiAssistantPolicy.FULL,
+                                              },
+                                            });
+                                            toast.success('Đã cấp quyền Đầy đủ tính năng cho Trợ lý AI!');
+                                          } catch {
+                                            toast.error('Không thể cập nhật quyền riêng tư');
+                                          }
+                                        }}
+                                      >
+                                        Cấp quyền Đầy đủ tính năng
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           <div className="mt-2 pt-2 border-t border-border/50 flex justify-end">
                             <button
                               type="button"

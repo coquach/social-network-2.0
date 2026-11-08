@@ -1,9 +1,16 @@
 import { useAuth } from '@clerk/expo';
-import { AntDesign } from '@expo/vector-icons';
-import { resolveSurfaceFromPathname, useAssistantChatSession } from '@repo/shared';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
+import {
+  AiAssistantPolicy,
+  resolveSurfaceFromPathname,
+  useAssistantChatSession,
+  useAssistantConversations,
+  useCurrentUser,
+  useUpdateProfile,
+} from '@repo/shared';
 import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import {
   AssistantMessageList,
@@ -28,8 +35,24 @@ export function AssistantChatModal({
     () => resolveSurfaceFromPathname(pathname || '', 'native'),
     [pathname],
   );
+  const { data: currentUser } = useCurrentUser();
+  const updateProfile = useUpdateProfile();
+
   const [input, setInput] = React.useState('');
+  const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
+  const [showSessionsList, setShowSessionsList] = React.useState(false);
   const fallbackTimestampBaseRef = React.useRef(Date.now());
+
+  const {
+    conversations,
+    deleteConversation,
+  } = useAssistantConversations(userId ?? '', 20, visible);
+
+  const activeConversation = React.useMemo(
+    () => conversations.find((c) => c.id === activeConversationId),
+    [conversations, activeConversationId],
+  );
+
   const {
     messages: historyMessages,
     isLoading,
@@ -48,7 +71,14 @@ export function AssistantChatModal({
     isSyncingHistory,
     resetError,
     updateProposalStatus,
-  } = useAssistantChatSession(userId ?? '', { limit: 20, enabled: visible, surface });
+  } = useAssistantChatSession(userId ?? '', {
+    limit: 20,
+    enabled: visible,
+    surface,
+    conversationId: activeConversationId ?? undefined,
+    aiPolicy: currentUser?.privacySettings?.aiPolicy,
+    onConversationCreated: (newId) => setActiveConversationId(newId),
+  });
 
   const messages = React.useMemo(() => {
     const fallbackBase = fallbackTimestampBaseRef.current;
@@ -157,32 +187,114 @@ export function AssistantChatModal({
             </View>
           ) : null}
 
-          <View className="mb-2 flex-row items-center justify-end gap-2">
+          <View className="mb-2 flex-row items-center justify-between gap-1">
             <SecondaryButton
-              className="h-10 rounded-full px-4"
-              disabled={isRefreshingHistory}
-              onPress={() => {
-                void refreshHistory();
-              }}
+              className="h-9 rounded-full px-3 max-w-[170px]"
+              onPress={() => setShowSessionsList((prev) => !prev)}
             >
-              <AntDesign name="reload" size={14} color="#0ea5e9" />
-              <Text className="ml-2 text-sm font-semibold text-app-fg dark:text-app-fg-dark">
-                {isRefreshingHistory ? 'Đang làm mới...' : 'Làm mới'}
+              <Ionicons name="chatbubbles-outline" size={14} color="#0ea5e9" />
+              <Text numberOfLines={1} className="ml-1 text-xs font-semibold text-app-fg dark:text-app-fg-dark">
+                {activeConversation?.title || 'Phiên mới'}
               </Text>
             </SecondaryButton>
-            <SecondaryButton
-              className="h-10 rounded-full px-4"
-              disabled={isClearing || isChatBusy || messages.length === 0}
-              onPress={() => {
-                void handleClearHistory();
-              }}
-            >
-              <AntDesign name="delete" size={14} color="#0ea5e9" />
-              <Text className="ml-2 text-sm font-semibold text-app-fg dark:text-app-fg-dark">
-                Xóa lịch sử
-              </Text>
-            </SecondaryButton>
+
+            <View className="flex-row items-center gap-1">
+              <SecondaryButton
+                className="h-9 rounded-full px-2.5"
+                onPress={() => {
+                  setActiveConversationId('new');
+                  setShowSessionsList(false);
+                }}
+              >
+                <Ionicons name="add" size={16} color="#0ea5e9" />
+              </SecondaryButton>
+              <SecondaryButton
+                className="h-9 rounded-full px-2.5"
+                disabled={isRefreshingHistory}
+                onPress={() => {
+                  void refreshHistory();
+                }}
+              >
+                <AntDesign name="reload" size={13} color="#0ea5e9" />
+              </SecondaryButton>
+              <SecondaryButton
+                className="h-9 rounded-full px-2.5"
+                disabled={isClearing || isChatBusy || messages.length === 0}
+                onPress={() => {
+                  void handleClearHistory();
+                }}
+              >
+                <AntDesign name="delete" size={13} color="#0ea5e9" />
+              </SecondaryButton>
+            </View>
           </View>
+
+          {showSessionsList ? (
+            <View className="mb-2 max-h-48 rounded-2xl border border-app-border bg-app-surface-elevated p-2 dark:border-app-border-dark dark:bg-app-surface-elevated-dark">
+              <View className="mb-2 flex-row items-center justify-between px-1">
+                <Text className="text-xs font-bold text-app-fg dark:text-app-fg-dark">
+                  Lịch sử phiên ({conversations.length}/20)
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setActiveConversationId('new');
+                    setShowSessionsList(false);
+                  }}
+                >
+                  <Text className="text-xs font-semibold text-sky-500">+ Phiên mới</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView className="max-h-36">
+                {conversations.length === 0 ? (
+                  <Text className="py-2 text-center text-xs text-app-muted-fg">
+                    Chưa có phiên nào được lưu.
+                  </Text>
+                ) : (
+                  conversations.map((conv) => (
+                    <TouchableOpacity
+                      key={conv.id}
+                      onPress={() => {
+                        setActiveConversationId(conv.id);
+                        setShowSessionsList(false);
+                      }}
+                      className={`mb-1 flex-row items-center justify-between rounded-xl p-2 ${
+                        activeConversationId === conv.id
+                          ? 'bg-sky-500/15'
+                          : 'bg-app-surface dark:bg-app-surface-dark'
+                      }`}
+                    >
+                      <View className="flex-1 pr-2">
+                        <Text
+                          numberOfLines={1}
+                          className={`text-xs font-medium ${
+                            activeConversationId === conv.id
+                              ? 'text-sky-600 dark:text-sky-400'
+                              : 'text-app-fg dark:text-app-fg-dark'
+                          }`}
+                        >
+                          {conv.title || 'Cuộc trò chuyện'}
+                        </Text>
+                        <Text className="text-[10px] text-app-muted-fg">
+                          {new Date(conv.lastMessageAt || conv.createdAt).toLocaleDateString('vi-VN')}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => {
+                          void deleteConversation(conv.id);
+                          if (activeConversationId === conv.id) {
+                            setActiveConversationId(null);
+                          }
+                        }}
+                        className="p-1"
+                      >
+                        <AntDesign name="delete" size={12} color="#94a3b8" />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </ScrollView>
+            </View>
+          ) : null}
 
           <View style={{ minHeight: 220, flex: 1 }}>
             <AssistantMessageList
@@ -199,6 +311,15 @@ export function AssistantChatModal({
                 router.push(targetPath as any);
               }}
               onStatusChange={updateProposalStatus}
+              aiPolicy={currentUser?.privacySettings?.aiPolicy}
+              onGrantFullPolicy={() => {
+                updateProfile.mutate({
+                  privacySettings: {
+                    ...currentUser?.privacySettings,
+                    aiPolicy: AiAssistantPolicy.FULL,
+                  },
+                });
+              }}
             />
           </View>
 

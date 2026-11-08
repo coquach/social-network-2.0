@@ -14,10 +14,17 @@ export enum MessagePrivacy {
   FRIENDS = 'FRIENDS',
 }
 
+export enum AiAssistantPolicy {
+  FULL = 'FULL',
+  RESTRICTED = 'RESTRICTED',
+}
+
 export interface UserPrivacySettings {
-  profileVisibility: PrivacyLevel;
-  messagePrivacy: MessagePrivacy;
-  friendListVisibility: PrivacyLevel;
+  profileVisibility?: PrivacyLevel;
+  messagePrivacy?: MessagePrivacy;
+  friendListVisibility?: PrivacyLevel;
+  allowProactiveIntervention?: boolean;
+  aiPolicy?: AiAssistantPolicy;
 }
 
 /**
