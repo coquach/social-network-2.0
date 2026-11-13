@@ -41,7 +41,8 @@
     "packages/*"
   ],
   "dependencies": {
-    "@expo/vector-icons": "^15.0.2"
+    "@expo/vector-icons": "^15.0.2",
+    "@kurkle/color": "^0.6.5"
   },
   "overrides": {
     "react": "19.2.3",
