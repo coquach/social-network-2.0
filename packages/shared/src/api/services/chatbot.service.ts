@@ -144,7 +144,16 @@ export const chatbotService = {
       url.searchParams.append('aiPolicy', data.aiPolicy);
     }
     if (data.surface) {
-      url.searchParams.append('surface', JSON.stringify(data.surface));
+      // Backend v2 contract: surface JSON uses a top-level `surface` key
+      // (e.g. {"surface":"feed"}), optional entityId/metadata are preserved.
+      url.searchParams.append(
+        'surface',
+        JSON.stringify({
+          surface: data.surface.screen,
+          entityId: data.surface.entityId,
+          metadata: data.surface.metadata,
+        }),
+      );
     }
 
     // React Native Fallback: Use XMLHttpRequest since fetch() doesn't support ReadableStream
