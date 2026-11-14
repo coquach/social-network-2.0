@@ -22,7 +22,7 @@ import { AssistantCards } from "./assistant-cards";
 
 export type AssistantMessageItem = {
   id: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   createdAt: number;
   isPending?: boolean;
@@ -196,6 +196,21 @@ export function AssistantMessageList({
             }
             renderItem={({ item }: { item: AssistantMessageItem }) => {
               const message = item;
+
+              if (message.role === "system") {
+                return (
+                  <View className="w-full my-3 flex-row items-center px-2">
+                    <View className="h-[1px] flex-1 bg-app-border dark:bg-app-border-dark" />
+                    <View className="mx-2 max-w-[85%] rounded-full bg-app-surface px-3 py-1.5 dark:bg-app-surface-dark">
+                      <Text className="text-center text-[11px] italic text-app-muted-fg dark:text-app-muted-fg-dark">
+                        {message.content}
+                      </Text>
+                    </View>
+                    <View className="h-[1px] flex-1 bg-app-border dark:bg-app-border-dark" />
+                  </View>
+                );
+              }
+
               const isUser = message.role === "user";
               const isStreaming = message.isPending && !isUser;
 

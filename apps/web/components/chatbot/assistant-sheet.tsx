@@ -225,6 +225,7 @@ export function AssistantSheet() {
   const [buttonPos, setButtonPos] = useState<FloatingPosition>({ x: 0, y: 0 });
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [showSessionsDrawer, setShowSessionsDrawer] = useState(false);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -234,7 +235,15 @@ export function AssistantSheet() {
   const {
     conversations,
     deleteConversation,
+    isDeleting,
   } = useAssistantConversations(userId ?? '', 20, isOpen);
+
+  // Auto-select latest active conversation on initial open
+  useEffect(() => {
+    if (isOpen && activeConversationId === null && conversations.length > 0) {
+      setActiveConversationId(conversations[0].id);
+    }
+  }, [isOpen, activeConversationId, conversations]);
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId),
@@ -330,11 +339,34 @@ export function AssistantSheet() {
     toast.success('Đã sao chép phản hồi');
   };
 
-  const handleClearHistory = async () => {
+  const handleDeleteCurrentConversation = async () => {
+    if (activeConversationId && activeConversationId !== 'new') {
+      try {
+        await deleteConversation(activeConversationId);
+        setActiveConversationId(null);
+        setShowClearConfirm(false);
+        toast.success('Đã xóa cuộc trò chuyện');
+      } catch {
+        toast.error('Không thể xóa cuộc trò chuyện. Vui lòng thử lại.');
+      }
+    } else {
+      try {
+        await clearHistory();
+        setShowClearConfirm(false);
+        toast.success('Đã làm mới cuộc trò chuyện');
+      } catch {
+        toast.error('Không thể xóa lịch sử. Vui lòng thử lại.');
+      }
+    }
+  };
+
+  const handleClearAllHistory = async () => {
     try {
       await clearHistory();
-      setShowClearConfirm(false);
-      toast.success('Đã xóa toàn bộ lịch sử trò chuyện');
+      setActiveConversationId(null);
+      setShowClearAllConfirm(false);
+      setShowSessionsDrawer(false);
+      toast.success('Đã xóa toàn bộ lịch sử và hồ sơ cá nhân');
     } catch {
       toast.error('Không thể xóa lịch sử. Vui lòng thử lại.');
     }
@@ -423,8 +455,8 @@ export function AssistantSheet() {
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer rounded-full"
                     onClick={() => setShowClearConfirm(true)}
-                    title="Xóa lịch sử phiên hiện tại"
-                    aria-label="Xóa lịch sử phiên hiện tại"
+                    title="Xóa cuộc trò chuyện hiện tại"
+                    aria-label="Xóa cuộc trò chuyện hiện tại"
                   >
                     <Trash2 size={15} />
                   </Button>
@@ -517,6 +549,19 @@ export function AssistantSheet() {
                       ))
                     )}
                   </div>
+
+                  {conversations.length > 0 && (
+                    <div className="pt-2.5 mt-2 border-t border-border/50 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowClearAllConfirm(true)}
+                        className="text-[11px] text-destructive hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                      >
+                        <Trash2 size={11} />
+                        Xóa toàn bộ lịch sử & hồ sơ AI
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -620,6 +665,19 @@ export function AssistantSheet() {
 
               {/* Message items */}
               {historyMessages.map((msg) => {
+                // Gap Marker phân tách ngữ cảnh
+                if (msg.role === 'system') {
+                  return (
+                    <div key={msg.id} className="flex items-center justify-center my-3 px-4">
+                      <div className="h-[1px] flex-1 bg-border/60" />
+                      <span className="mx-3 text-[11px] text-muted-foreground/80 italic bg-muted/30 px-2.5 py-1 rounded-full text-center">
+                        {msg.content}
+                      </span>
+                      <div className="h-[1px] flex-1 bg-border/60" />
+                    </div>
+                  );
+                }
+
                 const isUser = msg.role === 'user';
 
                 return (
@@ -790,21 +848,50 @@ export function AssistantSheet() {
         )}
       </AnimatePresence>
 
-      {/* ── Clear History Confirmation Dialog ── */}
+      {/* ── Delete Conversation Confirmation Dialog ── */}
       <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa lịch sử trò chuyện?</AlertDialogTitle>
+            <AlertDialogTitle>Xóa cuộc trò chuyện này?</AlertDialogTitle>
             <AlertDialogDescription>
-              Toàn bộ tin nhắn trước đây với Trợ lý AI sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
+              Đoạn chat này sẽ bị xóa khỏi lịch sử. Hồ sơ thông tin dài hạn mà AI đã ghi nhớ về bạn vẫn được giữ nguyên.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting || isClearing}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleDeleteCurrentConversation()}
+              disabled={isDeleting || isClearing}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground cursor-pointer"
+            >
+              {isDeleting || isClearing ? (
+                <>
+                  <Loader2 size={14} className="animate-spin mr-1.5" />
+                  Đang xóa...
+                </>
+              ) : (
+                'Xóa cuộc trò chuyện'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Clear All History & Memory Profile Confirmation Dialog ── */}
+      <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa toàn bộ lịch sử & hồ sơ AI?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Toàn bộ các cuộc trò chuyện và hồ sơ ghi nhớ cá nhân dài hạn (User Memory Profile) sẽ bị xóa sạch hoàn toàn. Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isClearing}>Hủy</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => void handleClearHistory()}
+              onClick={() => void handleClearAllHistory()}
               disabled={isClearing}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground cursor-pointer"
             >
               {isClearing ? (
                 <>
@@ -812,7 +899,7 @@ export function AssistantSheet() {
                   Đang xóa...
                 </>
               ) : (
-                'Xác nhận xóa'
+                'Xóa toàn bộ dữ liệu'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

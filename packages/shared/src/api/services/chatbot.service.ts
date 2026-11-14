@@ -108,6 +108,18 @@ const normalizeClearHistory = (
   sessionCleared: payload.sessionCleared ?? payload.session_cleared ?? false,
 });
 
+const normalizeConversationItem = (item: any): AssistantConversationDTO => ({
+  id: item?.id ?? '',
+  userId: item?.userId ?? item?.user_id ?? '',
+  title: item?.title ?? null,
+  status: item?.status ?? 'active',
+  turnCount: item?.turnCount ?? item?.turn_count ?? 0,
+  createdAt: item?.createdAt ?? item?.created_at ?? '',
+  updatedAt: item?.updatedAt ?? item?.updated_at ?? item?.createdAt ?? item?.created_at ?? '',
+  lastMessageAt: item?.lastMessageAt ?? item?.last_message_at ?? null,
+  messageCount: item?.messageCount ?? item?.message_count,
+});
+
 export const chatbotService = {
   /**
    * Stream response from assistant/chatbot
@@ -310,22 +322,28 @@ export const chatbotService = {
   async getConversations(query?: { limit?: number }): Promise<AssistantConversationListDataDTO> {
     const params: Record<string, number> = {};
     if (query?.limit) params.limit = query.limit;
-    const response = await getApiClient().get<{ success: boolean; data: AssistantConversationListDataDTO }>(
+    const response = await getApiClient().get<{ success: boolean; data: any }>(
       `/assistant/conversations/me`,
       { params }
     );
-    return response?.data || { items: [], total: 0, maxLimit: 20 };
+    const data = response?.data;
+    const rawItems = Array.isArray(data?.items) ? data.items : [];
+    return {
+      items: rawItems.map(normalizeConversationItem),
+      total: data?.total ?? rawItems.length,
+      maxLimit: data?.maxLimit ?? data?.max_limit ?? 20,
+    };
   },
 
   /**
    * Create a new conversation session
    */
   async createConversation(title?: string): Promise<AssistantConversationDTO> {
-    const response = await getApiClient().post<{ success: boolean; data: AssistantConversationDTO }>(
+    const response = await getApiClient().post<{ success: boolean; data: any }>(
       `/assistant/conversations/me`,
       { title }
     );
-    return response?.data;
+    return normalizeConversationItem(response?.data);
   },
 
   /**

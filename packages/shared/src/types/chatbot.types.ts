@@ -127,6 +127,7 @@ export interface AssistantRespondDataDTO {
   latencyMs?: number;
   policyBlocked?: boolean;
   conversationId?: string;
+  persisted?: boolean;
 }
 
 export interface ExecuteActionInputDTO {
@@ -173,6 +174,9 @@ export interface AssistantConversationDTO {
   id: string;
   userId: string;
   title: string | null;
+  status?: string;
+  turnCount?: number;
+  turn_count?: number;
   createdAt: string;
   updatedAt: string;
   lastMessageAt: string | null;

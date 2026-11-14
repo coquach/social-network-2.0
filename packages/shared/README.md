@@ -4,12 +4,12 @@
 Shared client logic and data layer package for Sentimeta, providing platform-agnostic API client services, Zod validation schemas, Zustand state stores, React Query hooks, React contexts, and domain TypeScript types shared across the Web (`apps/web`) and Mobile (`apps/native`) clients.
 
 ## Interface
-- **API Services** (`./src/api`): `ApiClient`, `userService`, `postService`, `chatService`, `emotionService`, `callService`, `commentService`, `conversationService`, `feedService`, `friendService`, `groupService`, `messageService`, `moderationService`, `musicService`, `notificationService`, `reactionService`, `searchService`, `shareService`, `userActivityService`
+- **API Services** (`./src/api`): `ApiClient`, `chatbotService`, `userService`, `postService`, `chatService`, `emotionService`, `callService`, `commentService`, `conversationService`, `feedService`, `friendService`, `groupService`, `messageService`, `moderationService`, `musicService`, `notificationService`, `reactionService`, `searchService`, `shareService`, `userActivityService`
 - **React Contexts** (`./src/contexts`): `AuthContext`, `SocketContext`, `UploadContext`
 - **Zustand State Stores** (`./src/store`): `useChatStore`, `useCallStore`, `usePresenceStore`, `useCreatePostModal`, `usePostModel`
-- **React Query Hooks** (`./src/hooks`): `useFeed`, `useConversation`, `useGroup`, `useNotification`, `useMusic`, `usePost`, `useShare`, `useEmotion`, `useUserActivity`
+- **React Query Hooks** (`./src/hooks`): `useChatbot`, `useAssistantConversations`, `useAssistantHistory`, `useFeed`, `useConversation`, `useGroup`, `useNotification`, `useMusic`, `usePost`, `useShare`, `useEmotion`, `useUserActivity`
 - **Validation Schemas** (`./src/schemas`): Zod schemas for user profiles, posts, comments, direct messages, shares, and moderation reports
-- **Domain Types** (`./src/types`): Core domain models (`User`, `Post`, `Comment`, `Conversation`, `Message`, `EmotionReport`, `Notification`)
+- **Domain Types** (`./src/types`): Core domain models (`User`, `Post`, `Comment`, `Conversation`, `Message`, `EmotionReport`, `Notification`, `AssistantConversationDTO`, `ChatbotHistoryMessageDTO`, `AssistantRespondDataDTO`)
 - **Navigation & Utilities** (`./src/navigation`, `./src/utils`): Cross-platform deep linking, query client configuration, and data normalizers
 
 ## Invariants

@@ -79,9 +79,15 @@ export const useAssistantConversations = (
   const deleteMutation = useMutation({
     mutationFn: (conversationId: string) =>
       chatbotService.deleteConversation(conversationId),
-    onSuccess: () => {
+    onSuccess: (_data, conversationId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.chatbot.conversations(userId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.chatbot.history(userId),
+      });
+      queryClient.removeQueries({
+        queryKey: queryKeys.chatbot.history(userId, undefined, conversationId),
       });
     },
   });
@@ -410,8 +416,14 @@ export const useAssistantChatSession = (
 
       try {
         const surface = overrideSurface ?? options?.surface;
+        const clientMessageId =
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
         const stream = chatbotService.streamRespond({
           message: normalizedMessage,
+          clientMessageId,
           surface,
           conversationId: targetConversationId,
           aiPolicy: options?.aiPolicy,
@@ -508,9 +520,19 @@ export const useAssistantChatSession = (
           },
         );
 
-        if (isNewDraft && lastResult.conversationId && options?.onConversationCreated) {
-          options.onConversationCreated(lastResult.conversationId);
+        if (isNewDraft && lastResult.conversationId) {
+          const newKey = queryKeys.chatbot.history(userId, historyLimit, lastResult.conversationId);
+          const currentCached = queryClient.getQueryData<InfiniteData<ChatbotHistoryPageDTO>>(historyQueryKey);
+          if (currentCached) {
+            queryClient.setQueryData(newKey, currentCached);
+          }
+          if (options?.onConversationCreated) {
+            options.onConversationCreated(lastResult.conversationId);
+          }
         }
+
+        const effectiveConversationId =
+          lastResult.conversationId || (isNewDraft ? undefined : options?.conversationId);
 
         setIsSyncingHistory(true);
         void (async () => {
@@ -519,10 +541,19 @@ export const useAssistantChatSession = (
               userId,
               fullReply,
               historyLimit,
-              options?.conversationId,
+              effectiveConversationId,
             );
             if (hasPersistedReply) {
               await queryClient.invalidateQueries({ queryKey: historyQueryKey });
+              if (effectiveConversationId) {
+                await queryClient.invalidateQueries({
+                  queryKey: queryKeys.chatbot.history(
+                    userId,
+                    historyLimit,
+                    effectiveConversationId,
+                  ),
+                });
+              }
             }
             await queryClient.invalidateQueries({
               queryKey: queryKeys.chatbot.conversations(userId),

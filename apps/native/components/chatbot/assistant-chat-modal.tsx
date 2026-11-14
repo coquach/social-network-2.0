@@ -46,7 +46,15 @@ export function AssistantChatModal({
   const {
     conversations,
     deleteConversation,
+    isDeleting,
   } = useAssistantConversations(userId ?? '', 20, visible);
+
+  // Auto-select latest active conversation on initial open
+  React.useEffect(() => {
+    if (visible && activeConversationId === null && conversations.length > 0) {
+      setActiveConversationId(conversations[0].id);
+    }
+  }, [visible, activeConversationId, conversations]);
 
   const activeConversation = React.useMemo(
     () => conversations.find((c) => c.id === activeConversationId),
@@ -116,7 +124,12 @@ export function AssistantChatModal({
 
       return {
         id: `server:${message.id}`,
-        role: message.role === 'assistant' ? 'assistant' : 'user',
+        role:
+          message.role === 'assistant'
+            ? 'assistant'
+            : message.role === 'system'
+              ? 'system'
+              : 'user',
         content: message.content,
         createdAt,
         isPending: message.metadata?.isPending === true,
@@ -144,6 +157,23 @@ export function AssistantChatModal({
     }
   }, [input, isChatBusy, sendMessage, userId]);
 
+  const handleDeleteCurrent = React.useCallback(async () => {
+    if (!userId || isClearing || isDeleting || isChatBusy) {
+      return;
+    }
+
+    try {
+      if (activeConversationId && activeConversationId !== 'new') {
+        await deleteConversation(activeConversationId);
+        setActiveConversationId(null);
+      } else {
+        await clearHistory();
+      }
+    } catch (clearError) {
+      console.error('[assistant] delete conversation failed:', clearError);
+    }
+  }, [activeConversationId, clearHistory, deleteConversation, isChatBusy, isClearing, isDeleting, userId]);
+
   const handleClearHistory = React.useCallback(async () => {
     if (!userId || isClearing || isChatBusy) {
       return;
@@ -151,6 +181,7 @@ export function AssistantChatModal({
 
     try {
       await clearHistory();
+      setActiveConversationId(null);
     } catch (clearError) {
       console.error('[assistant] clear history failed:', clearError);
     }
@@ -219,9 +250,9 @@ export function AssistantChatModal({
               </SecondaryButton>
               <SecondaryButton
                 className="h-9 rounded-full px-2.5"
-                disabled={isClearing || isChatBusy || messages.length === 0}
+                disabled={isClearing || isDeleting || isChatBusy || messages.length === 0}
                 onPress={() => {
-                  void handleClearHistory();
+                  void handleDeleteCurrent();
                 }}
               >
                 <AntDesign name="delete" size={13} color="#0ea5e9" />
@@ -293,6 +324,19 @@ export function AssistantChatModal({
                   ))
                 )}
               </ScrollView>
+              {conversations.length > 0 ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    void handleClearHistory();
+                    setShowSessionsList(false);
+                  }}
+                  className="mt-2 border-t border-app-border pt-1.5 dark:border-app-border-dark"
+                >
+                  <Text className="text-center text-[11px] font-semibold text-rose-500">
+                    Xóa toàn bộ lịch sử & hồ sơ AI
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
 
