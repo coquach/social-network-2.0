@@ -64,6 +64,9 @@ export interface PostDTO {
   content: string;
   media: MediaDTO[];
   feeling?: Emotion;
+  mainEmotion?: Emotion | null;
+  secondaryEmotions?: Emotion[];
+  mainEmotionScore?: number;
   audience: Audience;
   postStat: PostStatDTO;
   createdAt: Date;
@@ -83,7 +86,8 @@ export interface PostSnapshotDTO {
   audience: Audience;
   mediaPreviews?: MediaDTO[];
   mediaRemaining?: number;
-  mainEmotion?: Emotion;
+  mainEmotion?: Emotion | null;
+  secondaryEmotions?: Emotion[];
   postStat?: PostStatDTO;
   reactedType?: ReactionType;
   createdAt: Date;

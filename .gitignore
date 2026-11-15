@@ -37,3 +37,7 @@ yarn-error.log*
 .turbo
 # skills agents
 .agents
+
+
+# lockfile
+package-lock.json

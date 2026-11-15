@@ -96,6 +96,8 @@ export const AuthField = React.forwardRef<any, AuthFieldProps>(
   },
 );
 
+AuthField.displayName = 'AuthField';
+
 type AuthErrorTextProps = {
   message?: string | null;
 };

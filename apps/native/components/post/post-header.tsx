@@ -57,21 +57,43 @@ function PostHeaderComponent({
     return { icon: 'lock-closed-outline' as const };
   }, [audience]);
 
+  const emotionEmojis: Record<string, string> = {
+    JOY: '😊',
+    SADNESS: '😢',
+    ANGER: '😡',
+    FEAR: '😨',
+    DISGUST: '🤢',
+    SURPRISE: '😮',
+    NEUTRAL: '😐',
+  };
+
   const mainEmotion = React.useMemo(() => {
     if (isShared || !('mainEmotion' in data) || !data.mainEmotion) return null;
 
-    const emotionMap: Record<string, string> = {
-      JOY: '😊',
-      SADNESS: '😢',
-      ANGER: '😡',
-      FEAR: '😨',
-      DISGUST: '🤢',
-      SURPRISE: '😮',
-      NEUTRAL: '😐',
-    };
-
-    return emotionMap[data.mainEmotion] ?? null;
+    return emotionEmojis[data.mainEmotion as string] ?? null;
   }, [data, isShared]);
+
+  const secondaryEmotions = React.useMemo(() => {
+    if (
+      isShared ||
+      !('secondaryEmotions' in data) ||
+      !Array.isArray(data.secondaryEmotions)
+    ) {
+      return [];
+    }
+
+    const seen = new Set<string>();
+    for (const emo of data.secondaryEmotions) {
+      if (emo && emotionEmojis[emo as string]) seen.add(emo as string);
+    }
+    return [...seen].map((emo) => emotionEmojis[emo]!);
+  }, [data, isShared]);
+
+  const visibleSecondaryEmotions = secondaryEmotions.slice(0, 2);
+  const extraEmotionCount = Math.max(
+    0,
+    secondaryEmotions.length - visibleSecondaryEmotions.length,
+  );
 
   const group = React.useMemo(() => {
     if (isShared) return undefined;
@@ -231,6 +253,13 @@ function PostHeaderComponent({
               {mainEmotion && (
                 <Text className="text-[12px] text-app-muted-fg">
                   {mainEmotion}
+                </Text>
+              )}
+
+              {visibleSecondaryEmotions.length > 0 && (
+                <Text className="text-[11px] text-app-muted-fg">
+                  {visibleSecondaryEmotions.join(' ')}
+                  {extraEmotionCount > 0 ? ` +${extraEmotionCount}` : ''}
                 </Text>
               )}
             </View>

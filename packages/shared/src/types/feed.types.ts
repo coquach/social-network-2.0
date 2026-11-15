@@ -11,6 +11,18 @@ import type { PostSnapshotDTO, ShareSnapshotDTO } from './post.types';
 export enum FeedType {
   POST = 'POST',
   SHARE = 'SHARE',
+  INTERVENTION = 'INTERVENTION',
+}
+
+/**
+ * Safe Space intervention card payload (AI chatbot entry point)
+ */
+export interface FeedInterventionDTO {
+  id: string;
+  type: 'AI_CHATBOT_SAFE_SPACE';
+  title: string;
+  description: string;
+  buttonText: string;
 }
 
 /**
@@ -19,10 +31,11 @@ export enum FeedType {
 export interface FeedDTO {
   id: string;
   type: FeedType;
-  item: PostSnapshotDTO | ShareSnapshotDTO; // Can be post or shared post
+  item?: PostSnapshotDTO | ShareSnapshotDTO; // Can be post or shared post
+  intervention?: FeedInterventionDTO; // Present when type is INTERVENTION
 }
 
-export type PersonalFeedItem =
+export type FeedItem =
   | {
       id: string;
       type: FeedType.POST;
@@ -32,4 +45,15 @@ export type PersonalFeedItem =
       id: string;
       type: FeedType.SHARE;
       data: ShareSnapshotDTO;
+    }
+  | {
+      id: string;
+      type: FeedType.INTERVENTION;
+      data: FeedInterventionDTO;
     };
+
+/**
+ * Backwards-compatible alias: personal feed items share the same
+ * polymorphic shape as trending feed items.
+ */
+export type PersonalFeedItem = FeedItem;

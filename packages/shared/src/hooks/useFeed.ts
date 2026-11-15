@@ -9,39 +9,48 @@ import type {
   CursorPageResponse,
   Emotion,
   FeedDTO,
-  PersonalFeedItem,
-  PostDTO,
-  PostSnapshotDTO,
+  FeedItem,
 } from '../types';
 import { queryKeys } from './query-keys';
-import {
-  normalizePersonalFeedItem,
-  normalizeTrendingPost,
-} from '../lib/mapper/feed.mapper';
+import { normalizeFeedItem } from '../lib/mapper/feed.mapper';
 
-const personalPageCache = new WeakMap<object, PersonalFeedItem[]>();
-const trendingPageCache = new WeakMap<object, PostSnapshotDTO[]>();
+const personalPageCache = new WeakMap<object, FeedItem[]>();
+const trendingPageCache = new WeakMap<object, FeedItem[]>();
 
-function mapPersonalPageCached(page: { data: FeedDTO[] }) {
-  const cached = personalPageCache.get(page as object);
+/**
+ * Maps a polymorphic feed page to FeedItem[], skipping malformed items
+ * (e.g. INTERVENTION/POST/SHARE items with a missing payload) instead of
+ * crashing the whole feed.
+ */
+function mapPageCached(
+  page: { data: FeedDTO[] },
+  cache: WeakMap<object, FeedItem[]>,
+): FeedItem[] {
+  const cached = cache.get(page as object);
   if (cached) {
     return cached;
   }
 
-  const mapped = page.data.map(normalizePersonalFeedItem);
-  personalPageCache.set(page as object, mapped);
+  const mapped: FeedItem[] = [];
+  for (const feed of page.data) {
+    try {
+      mapped.push(normalizeFeedItem(feed));
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[useFeed] Skipping malformed feed item:', feed.id, err);
+      }
+    }
+  }
+  cache.set(page as object, mapped);
   return mapped;
 }
 
-function mapTrendingPageCached(page: { data: PostDTO[] }) {
-  const cached = trendingPageCache.get(page as object);
-  if (cached) {
-    return cached;
-  }
+function mapPersonalPageCached(page: { data: FeedDTO[] }) {
+  return mapPageCached(page, personalPageCache);
+}
 
-  const mapped = page.data.map(normalizeTrendingPost);
-  trendingPageCache.set(page as object, mapped);
-  return mapped;
+function mapTrendingPageCached(page: { data: FeedDTO[] }) {
+  return mapPageCached(page, trendingPageCache);
 }
 
 /**
@@ -54,7 +63,7 @@ export const useMyFeed = (params?: {
   return useInfiniteQuery<
     CursorPageResponse<FeedDTO>,
     Error,
-    PersonalFeedItem[]
+    FeedItem[]
   >({
     queryKey: queryKeys.feed.personal(params?.mainEmotion),
     queryFn: ({ pageParam }) =>
@@ -65,7 +74,7 @@ export const useMyFeed = (params?: {
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: undefined,
     select: (data) => {
-      const merged: PersonalFeedItem[] = [];
+      const merged: FeedItem[] = [];
       for (const page of data.pages) {
         merged.push(...mapPersonalPageCached(page));
       }
@@ -87,9 +96,9 @@ export const useTrendingFeed = (params?: {
   limit?: number;
 }) => {
   return useInfiniteQuery<
-    CursorPageResponse<PostDTO>,
+    CursorPageResponse<FeedDTO>,
     Error,
-    PostSnapshotDTO[]
+    FeedItem[]
   >({
     queryKey: queryKeys.feed.trending(params?.mainEmotion),
     queryFn: ({ pageParam }) =>
@@ -100,7 +109,7 @@ export const useTrendingFeed = (params?: {
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: undefined,
     select: (data) => {
-      const merged: PostSnapshotDTO[] = [];
+      const merged: FeedItem[] = [];
       for (const page of data.pages) {
         merged.push(...mapTrendingPageCached(page));
       }

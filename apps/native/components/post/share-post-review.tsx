@@ -13,6 +13,31 @@ export function SharePostReview({ post, author }: SharePostReviewProps) {
   const router = useRouter();
   const { height } = useWindowDimensions();
 
+  // navigation centralized (giống web)
+  const postId = post?.postId;
+  const goToPost = React.useCallback(() => {
+    if (!postId) return;
+    router.push(`/posts/${postId}` as never);
+  }, [postId, router]);
+
+  // giới hạn chiều cao preview
+  const maxPreviewHeight = React.useMemo(
+    () => Math.max(Math.floor(height * 0.6), 220),
+    [height],
+  );
+
+  // detect nested share (share của share)
+  const nestedPost = React.useMemo(() => {
+    if (!post) return null;
+    const candidate = (post as PostSnapshotDTO & { post?: unknown }).post;
+
+    if (!candidate || typeof candidate !== 'object') return null;
+
+    const maybePost = candidate as Partial<PostSnapshotDTO>;
+
+    return typeof maybePost.postId === 'string' ? maybePost : null;
+  }, [post]);
+
   if (!post || !post.postId) {
     return (
       <View className="rounded-2xl border border-app-border/70 bg-app-surface-elevated/50 p-4 dark:border-app-border-dark/70 dark:bg-app-surface-elevated-dark/50">
@@ -28,29 +53,6 @@ export function SharePostReview({ post, author }: SharePostReviewProps) {
     firstName: '',
     lastName: '',
   };
-
-  // navigation centralized (giống web)
-  const goToPost = React.useCallback(() => {
-    if (!post?.postId) return;
-    router.push(`/posts/${post.postId}` as never);
-  }, [post?.postId, router]);
-
-  // giới hạn chiều cao preview
-  const maxPreviewHeight = React.useMemo(
-    () => Math.max(Math.floor(height * 0.6), 220),
-    [height],
-  );
-
-  // detect nested share (share của share)
-  const nestedPost = React.useMemo(() => {
-    const candidate = (post as PostSnapshotDTO & { post?: unknown }).post;
-
-    if (!candidate || typeof candidate !== 'object') return null;
-
-    const maybePost = candidate as Partial<PostSnapshotDTO>;
-
-    return typeof maybePost.postId === 'string' ? maybePost : null;
-  }, [post]);
 
   return (
     <View className="gap-2.5">

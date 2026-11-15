@@ -1,8 +1,9 @@
 ﻿import React from 'react';
-import { useTrendingFeed } from '@repo/shared';
-import type { Emotion, PostSnapshotDTO } from '@repo/shared';
+import { FeedType, useTrendingFeed } from '@repo/shared';
+import type { Emotion, FeedItem } from '@repo/shared';
 
 import { PostCardFull } from '~/components/post/post-card-full';
+import { SafeSpaceCard } from '~/components/newfeeds/feed/safe-space-card';
 import { FeedList } from './feed-list';
 
 type TrendingFeedProps = {
@@ -34,19 +35,33 @@ export const TrendingFeed = React.memo(function TrendingFeed({
     isFetchingNextPage,
   } = useTrendingFeed({ mainEmotion, limit: 10 });
 
-  const posts = data ?? [];
+  const feedItems = data ?? [];
 
   const renderItem = React.useCallback(
-    ({ item }: { item: PostSnapshotDTO }) => <PostCardFull data={item} />,
+    ({ item }: { item: FeedItem }) => {
+      if (item.type === FeedType.INTERVENTION) {
+        return <SafeSpaceCard data={item.data} />;
+      }
+
+      // Backend trending only returns POST | INTERVENTION
+      if (item.type === FeedType.POST) {
+        return <PostCardFull data={item.data} />;
+      }
+
+      return null;
+    },
     [],
   );
 
   const keyExtractor = React.useCallback(
-    (item: PostSnapshotDTO) => item.postId,
+    (item: FeedItem) => item.id,
     [],
   );
 
-  const getItemType = React.useCallback(() => 'post', []);
+  const getItemType = React.useCallback(
+    (item: FeedItem) => item.type,
+    [],
+  );
 
   const handleLoadMore = React.useCallback(() => {
     fetchNextPage().catch((err: unknown) => {
@@ -66,7 +81,7 @@ export const TrendingFeed = React.memo(function TrendingFeed({
 
   return (
     <FeedList
-      items={posts}
+      items={feedItems}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       isLoading={isLoading}
@@ -86,4 +101,3 @@ export const TrendingFeed = React.memo(function TrendingFeed({
     />
   );
 });
-

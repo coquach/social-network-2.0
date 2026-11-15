@@ -127,10 +127,24 @@ export default function PostHeader({
 
   const feeling = useMemo(() => {
     if (isShared) return null;
-    const emo = (data as PostSnapshotDTO).mainEmotion as Emotion | undefined;
+    const emo = (data as PostSnapshotDTO).mainEmotion as Emotion | null;
     if (!emo) return null;
     return feelingMap.get(emo) ?? null;
   }, [data, isShared]);
+
+  const secondaryFeelings = useMemo(() => {
+    if (isShared) return [];
+    const list = (data as PostSnapshotDTO).secondaryEmotions ?? [];
+    return list
+      .map((emo) => feelingMap.get(emo))
+      .filter((f) => f != null);
+  }, [data, isShared]);
+
+  const visibleSecondaryFeelings = secondaryFeelings.slice(0, 2);
+  const extraSecondaryCount = Math.max(
+    0,
+    secondaryFeelings.length - visibleSecondaryFeelings.length,
+  );
 
   return (
     <>
@@ -209,6 +223,22 @@ export default function PostHeader({
                     <span className="font-medium">{feeling.name}</span>
                   </span>
                 </>
+              )}
+
+              {visibleSecondaryFeelings.map((f, index) => (
+                <span key={`${f.type}-${index}`} className="inline-flex items-center gap-1">
+                  <span className="text-neutral-300">•</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-[11px] text-neutral-500">
+                    <span>{f.emoji}</span>
+                    <span>{f.name}</span>
+                  </span>
+                </span>
+              ))}
+
+              {extraSecondaryCount > 0 && (
+                <span className="text-[11px] text-neutral-400">
+                  +{extraSecondaryCount}
+                </span>
               )}
             </div>
           </div>

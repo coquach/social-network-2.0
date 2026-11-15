@@ -1,7 +1,7 @@
 import {
   FeedDTO,
+  FeedItem,
   FeedType,
-  PersonalFeedItem,
   PostDTO,
   PostSnapshotDTO,
   SharePostDTO,
@@ -39,7 +39,8 @@ export const toPostSnapshot = (
     audience: post.audience,
     mediaPreviews: post.media,
     mediaRemaining: 0,
-    mainEmotion: post.feeling,
+    mainEmotion: post.mainEmotion ?? post.feeling,
+    secondaryEmotions: post.secondaryEmotions,
     postStat: post.postStat,
     reactedType: post.reactedType,
     createdAt: parseSafeDate(post.createdAt),
@@ -85,13 +86,38 @@ export const toShareSnapshot = (
   return normalized;
 };
 
-export const normalizePersonalFeedItem = (feed: FeedDTO): PersonalFeedItem => {
+export const normalizeFeedItem = (feed: FeedDTO): FeedItem => {
+  if (feed.type === FeedType.INTERVENTION) {
+    const intervention = feed.intervention;
+    if (!intervention) {
+      throw new Error(
+        `Feed item ${feed.id} of type INTERVENTION is missing intervention payload`,
+      );
+    }
+    return {
+      id: feed.id,
+      type: FeedType.INTERVENTION,
+      data: intervention,
+    };
+  }
+
   if (feed.type === FeedType.SHARE) {
+    if (!feed.item) {
+      throw new Error(
+        `Feed item ${feed.id} of type SHARE is missing item payload`,
+      );
+    }
     return {
       id: feed.id,
       type: FeedType.SHARE,
       data: toShareSnapshot(feed.item as ShareSnapshotDTO),
     };
+  }
+
+  if (!feed.item) {
+    throw new Error(
+      `Feed item ${feed.id} of type POST is missing item payload`,
+    );
   }
 
   return {
@@ -100,6 +126,11 @@ export const normalizePersonalFeedItem = (feed: FeedDTO): PersonalFeedItem => {
     data: toPostSnapshot(feed.item as PostSnapshotDTO),
   };
 };
+
+/**
+ * Backwards-compatible alias for normalizeFeedItem.
+ */
+export const normalizePersonalFeedItem = normalizeFeedItem;
 
 export const normalizeTrendingPost = (
   post: PostDTO | PostSnapshotDTO,

@@ -27,8 +27,9 @@ export function mapPostToSnapshot(
     // nếu component PostMedia đang cần mediaRemaining để show "+N"
     mediaRemaining: mediaRemaining > 0 ? mediaRemaining : undefined,
 
-    // bạn đang có feeling, snapshot dùng mainEmotion
-    mainEmotion: post.feeling,
+    // ưu tiên mainEmotion (AI) rồi mới fallback về feeling (user legacy)
+    mainEmotion: post.mainEmotion ?? post.feeling,
+    secondaryEmotions: post.secondaryEmotions,
 
     postStat: post.postStat,
     reactedType: post.reactedType,

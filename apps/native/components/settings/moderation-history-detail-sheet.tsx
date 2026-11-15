@@ -65,6 +65,7 @@ export const ModerationHistoryDetailSheet = React.forwardRef<
         moderationId,
         reason: appealReason.trim(),
       });
+
       setAppealReason('');
       Keyboard.dismiss();
       refetch();
@@ -332,7 +333,7 @@ export const ModerationHistoryDetailSheet = React.forwardRef<
                             Phản hồi từ hệ thống
                           </Text>
                           <Text className="text-[13px] text-slate-500 italic dark:text-slate-400">
-                            "{appeal.reviewNote}"
+                            {`"${appeal.reviewNote}"`}
                           </Text>
                         </View>
                       )}
@@ -351,6 +352,8 @@ export const ModerationHistoryDetailSheet = React.forwardRef<
     </BottomSheetModal>
   );
 });
+
+ModerationHistoryDetailSheet.displayName = 'ModerationHistoryDetailSheet';
 
 function DetailItem({ 
   label, 

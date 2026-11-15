@@ -1,14 +1,10 @@
 ﻿import React from 'react';
 import { FeedType, useMyFeed } from '@repo/shared';
-import type {
-  Emotion,
-  PersonalFeedItem,
-  PostSnapshotDTO,
-  SharePostSnapshotDTO,
-} from '@repo/shared';
+import type { Emotion, FeedItem } from '@repo/shared';
 
 import { PostCardFull } from '~/components/post/post-card-full';
 import { SharePost } from '~/components/post/share-post';
+import { SafeSpaceCard } from '~/components/newfeeds/feed/safe-space-card';
 import { FeedList } from './feed-list';
 
 type PersonalFeedProps = {
@@ -43,23 +39,27 @@ export const PersonalFeed = React.memo(function PersonalFeed({
   const feedItems = data ?? [];
 
   const keyExtractor = React.useCallback(
-    (item: PersonalFeedItem) => item.id,
+    (item: FeedItem) => item.id,
     [],
   );
 
   const renderItem = React.useCallback(
-    ({ item }: { item: PersonalFeedItem }) => {
-      if (item.type === FeedType.SHARE) {
-        return <SharePost data={item.data as SharePostSnapshotDTO} />;
+    ({ item }: { item: FeedItem }) => {
+      if (item.type === FeedType.INTERVENTION) {
+        return <SafeSpaceCard data={item.data} />;
       }
 
-      return <PostCardFull data={item.data as PostSnapshotDTO} />;
+      if (item.type === FeedType.SHARE) {
+        return <SharePost data={item.data} />;
+      }
+
+      return <PostCardFull data={item.data} />;
     },
     [],
   );
 
   const getItemType = React.useCallback(
-    (item: PersonalFeedItem) => item.type,
+    (item: FeedItem) => item.type,
     [],
   );
 

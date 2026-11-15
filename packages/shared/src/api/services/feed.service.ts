@@ -7,7 +7,6 @@ import { getApiClient } from '../client';
 import type {
   CursorPageResponse,
   FeedDTO,
-  PostDTO,
   Emotion,
 } from '../../types';
 
@@ -40,11 +39,12 @@ export const feedService = {
   },
 
   /**
-   * Get trending posts feed (paginated)
+   * Get trending feed (paginated). Returns the same polymorphic
+   * FeedItemDTO shape as the personal feed (POST | SHARE | INTERVENTION).
    */
   async getTrendingFeed(
     params?: TrendingFeedParams,
-  ): Promise<CursorPageResponse<PostDTO>> {
+  ): Promise<CursorPageResponse<FeedDTO>> {
     return getApiClient().getCursorPage('/feeds/trending', { params });
   },
 

@@ -2,9 +2,15 @@
 
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
+import { SafeSpaceCard } from '@/components/feed/safe-space-card';
 import { AsyncList } from '@/components/ui/async-list';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
-import { useTrendingFeed, Emotion, PostSnapshotDTO } from '@repo/shared';
+import {
+  useTrendingFeed,
+  FeedType,
+  FeedItem,
+  Emotion,
+} from '@repo/shared';
 
 export const TrendingFeed = ({
   mainEmotion,
@@ -12,7 +18,7 @@ export const TrendingFeed = ({
   mainEmotion?: Emotion;
 }) => {
   const {
-    data: allPosts = [],
+    data: allFeedItems = [],
     isLoading,
     isError,
     error,
@@ -24,9 +30,9 @@ export const TrendingFeed = ({
   const { sentinelRef } = useInfiniteScroll({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   return (
-    <AsyncList<PostSnapshotDTO>
-      items={allPosts}
-      keyExtractor={(post) => post.postId}
+    <AsyncList<FeedItem>
+      items={allFeedItems}
+      keyExtractor={(feed) => feed.id}
       isLoading={isLoading}
       isError={isError}
       errorState={<ErrorFallback message={error?.message} />}
@@ -37,7 +43,15 @@ export const TrendingFeed = ({
           Không có bài viết xu hướng nào.
         </div>
       }
-      renderItem={(post) => <PostCardFull data={post} />}
+      renderItem={(feed) => {
+        if (feed.type === FeedType.INTERVENTION) {
+          return <SafeSpaceCard data={feed.data} />;
+        }
+        // Backend trending only returns POST | INTERVENTION
+        return feed.type === FeedType.POST ? (
+          <PostCardFull data={feed.data} />
+        ) : null;
+      }}
       sentinelRef={sentinelRef}
       loadingMore={<PostCardFull.Skeleton />}
       stagger

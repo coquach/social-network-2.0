@@ -3,14 +3,13 @@
 import { ErrorFallback } from '@/components/error-fallback';
 import { PostCardFull } from '@/components/post/post-card-full';
 import { ShareCard } from '@/components/post/share-post';
+import { SafeSpaceCard } from '@/components/feed/safe-space-card';
 import { AsyncList } from '@/components/ui/async-list';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import {
   useMyFeed,
   FeedType,
-  PostSnapshotDTO,
-  ShareSnapshotDTO as SharePostSnapshotDTO,
-  PersonalFeedItem,
+  FeedItem,
   Emotion,
 } from '@repo/shared';
 
@@ -32,7 +31,7 @@ export const PersonalFeed = ({
   const { sentinelRef } = useInfiniteScroll({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
   return (
-    <AsyncList<PersonalFeedItem>
+    <AsyncList<FeedItem>
       items={allFeedItems}
       keyExtractor={(feed) => feed.id}
       isLoading={isLoading}
@@ -45,13 +44,16 @@ export const PersonalFeed = ({
           Không có bài viết nào trong bảng tin.
         </div>
       }
-      renderItem={(feed) =>
-        feed.type === FeedType.POST ? (
-          <PostCardFull data={feed.data as PostSnapshotDTO} />
+      renderItem={(feed) => {
+        if (feed.type === FeedType.INTERVENTION) {
+          return <SafeSpaceCard data={feed.data} />;
+        }
+        return feed.type === FeedType.POST ? (
+          <PostCardFull data={feed.data} />
         ) : (
-          <ShareCard data={feed.data as SharePostSnapshotDTO} />
-        )
-      }
+          <ShareCard data={feed.data} />
+        );
+      }}
       sentinelRef={sentinelRef}
       loadingMore={<PostCardFull.Skeleton />}
       stagger
