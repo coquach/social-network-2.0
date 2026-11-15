@@ -47,6 +47,8 @@ export const useAssistantHistory = (
       lastPage.hasNextPage ? lastPage.nextCursor ?? undefined : undefined,
     initialPageParam: undefined as string | undefined,
     enabled: enabled && !!userId,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -323,7 +325,7 @@ export const useAssistantChatSession = (
   const [isSyncingHistory, setIsSyncingHistory] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const isSendingMessageRef = useRef(false);
-  const resolvedConversationId = isNewDraft ? undefined : options?.conversationId;
+  const resolvedConversationId = isNewDraft ? 'new' : options?.conversationId;
 
   const historyQueryKey = useMemo(
     () => queryKeys.chatbot.history(userId, historyLimit, isNewDraft ? 'new' : options?.conversationId),
@@ -339,9 +341,14 @@ export const useAssistantChatSession = (
   const clearMutation = useClearAssistantHistory();
 
   const historyMessages = useMemo(() => {
+    if (isNewDraft) {
+      const cached = queryClient.getQueryData<InfiniteData<ChatbotHistoryPageDTO>>(historyQueryKey);
+      const raw = cached?.pages.flatMap((page) => page.data) ?? [];
+      return reconcileHistoryMessages(raw);
+    }
     const raw = historyQuery.data?.pages.flatMap((page) => page.data) ?? [];
     return reconcileHistoryMessages(raw);
-  }, [historyQuery.data?.pages]);
+  }, [historyQuery.data?.pages, isNewDraft, historyQueryKey, queryClient]);
 
   const sendMessage = useCallback(
     async (message: string, overrideSurface?: SurfaceContextDTO): Promise<boolean> => {
@@ -523,17 +530,26 @@ export const useAssistantChatSession = (
           },
         );
 
-        if (isNewDraft && lastResult.conversationId) {
+        const isCreatingNewConversation =
+          (isNewDraft || !options?.conversationId) && !!lastResult.conversationId;
+
+        if (isCreatingNewConversation && lastResult.conversationId) {
           const newKey = queryKeys.chatbot.history(userId, historyLimit, lastResult.conversationId);
           const currentCached = queryClient.getQueryData<InfiniteData<ChatbotHistoryPageDTO>>(historyQueryKey);
           if (currentCached) {
             queryClient.setQueryData(newKey, currentCached);
           }
-          queryClient.removeQueries({ queryKey: historyQueryKey, exact: true });
+          if (isNewDraft) {
+            queryClient.removeQueries({ queryKey: historyQueryKey, exact: true });
+          }
           if (options?.onConversationCreated) {
             options.onConversationCreated(lastResult.conversationId);
           }
         }
+
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.chatbot.conversations(userId),
+        });
 
         const effectiveConversationId =
           lastResult.conversationId || (isNewDraft ? undefined : options?.conversationId);
@@ -548,16 +564,13 @@ export const useAssistantChatSession = (
               effectiveConversationId,
             );
             if (hasPersistedReply) {
-              await queryClient.invalidateQueries({ queryKey: historyQueryKey });
-              if (effectiveConversationId) {
-                await queryClient.invalidateQueries({
-                  queryKey: queryKeys.chatbot.history(
-                    userId,
-                    historyLimit,
-                    effectiveConversationId,
-                  ),
-                });
-              }
+              await queryClient.invalidateQueries({
+                queryKey: queryKeys.chatbot.history(
+                  userId,
+                  historyLimit,
+                  effectiveConversationId,
+                ),
+              });
             }
             await queryClient.invalidateQueries({
               queryKey: queryKeys.chatbot.conversations(userId),

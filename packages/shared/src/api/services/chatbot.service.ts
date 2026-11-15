@@ -120,6 +120,40 @@ const normalizeConversationItem = (item: any): AssistantConversationDTO => ({
   messageCount: item?.messageCount ?? item?.message_count,
 });
 
+const normalizeStreamChunk = (value: unknown): AssistantRespondDataDTO => {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'reply' in value &&
+    typeof value.reply === 'string'
+  ) {
+    return value as AssistantRespondDataDTO;
+  }
+
+  if (
+    value &&
+    typeof value === 'object' &&
+    'error' in value &&
+    typeof value.error === 'object' &&
+    value.error &&
+    'message' in value.error &&
+    typeof value.error.message === 'string'
+  ) {
+    throw new Error(value.error.message);
+  }
+
+  if (
+    value &&
+    typeof value === 'object' &&
+    'message' in value &&
+    typeof value.message === 'string'
+  ) {
+    throw new Error(value.message);
+  }
+
+  throw new Error('Chat stream returned an invalid assistant response');
+};
+
 export const chatbotService = {
   /**
    * Stream response from assistant/chatbot
@@ -131,27 +165,19 @@ export const chatbotService = {
     
     const token = await client.getToken();
     
-    // Construct URL with query params for SSE GET request (matching API Gateway @Sse)
-    const url = new URL(`${baseURL}/assistant/messages-stream`);
-    url.searchParams.append('message', data.message);
-    if (data.clientMessageId) {
-      url.searchParams.append('clientMessageId', data.clientMessageId);
-    }
-    if (data.conversationId) {
-      url.searchParams.append('conversationId', data.conversationId);
-    }
-    if (data.surface) {
-      // Backend v2 contract: surface JSON uses a top-level `surface` key
-      // (e.g. {"surface":"feed"}), optional entityId/metadata are preserved.
-      url.searchParams.append(
-        'surface',
-        JSON.stringify({
-          surface: data.surface.screen,
+    const url = `${baseURL}/assistant/respond-stream`;
+    const requestBody = {
+      message: data.message,
+      clientMessageId: data.clientMessageId,
+      conversationId: data.conversationId,
+      surface: data.surface
+        ? {
+          screen: data.surface.screen,
           entityId: data.surface.entityId,
           metadata: data.surface.metadata,
-        }),
-      );
-    }
+        }
+        : undefined,
+    };
 
     // React Native Fallback: Use XMLHttpRequest since fetch() doesn't support ReadableStream
     if (
@@ -160,9 +186,10 @@ export const chatbotService = {
     ) {
       const XHR = (globalThis as any).XMLHttpRequest;
       const xhr = new XHR();
-      xhr.open('GET', url.toString(), true);
+      xhr.open('POST', url, true);
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       xhr.setRequestHeader('Accept', 'text/event-stream');
+      xhr.setRequestHeader('Content-Type', 'application/json');
 
       let lastIndex = 0;
       let buffer = '';
@@ -219,18 +246,20 @@ export const chatbotService = {
         }
       };
 
-      xhr.send();
+      xhr.send(JSON.stringify(requestBody));
 
       try {
         while (true) {
           if (queue.length > 0) {
             const jsonStr = queue.shift()!;
+            let parsed: unknown;
             try {
-              const chunk = JSON.parse(jsonStr);
-              yield chunk;
+              parsed = JSON.parse(jsonStr);
             } catch (e) {
               console.error('[chatbotService] Failed to parse SSE chunk:', e);
+              continue;
             }
+            yield normalizeStreamChunk(parsed);
           } else if (isDone) {
             if (streamError) throw streamError;
             break;
@@ -245,11 +274,14 @@ export const chatbotService = {
     }
 
     // Web Environment (Native fetch + ReadableStream)
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'text/event-stream',
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -280,12 +312,14 @@ export const chatbotService = {
           if (line.startsWith('data: ')) {
             const jsonStr = line.replace('data: ', '').trim();
             if (jsonStr) {
+              let parsed: unknown;
               try {
-                const chunk = JSON.parse(jsonStr);
-                yield chunk;
+                parsed = JSON.parse(jsonStr);
               } catch (e) {
                 console.error('[chatbotService] Failed to parse SSE chunk:', e);
+                continue;
               }
+              yield normalizeStreamChunk(parsed);
             }
           }
         }
@@ -328,16 +362,22 @@ export const chatbotService = {
   async getConversations(query?: { limit?: number }): Promise<AssistantConversationListDataDTO> {
     const params: Record<string, number> = {};
     if (query?.limit) params.limit = query.limit;
-    const response = await getApiClient().get<{ success: boolean; data: any }>(
+    const response = await getApiClient().get<any>(
       `/assistant/conversations/me`,
       { params }
     );
-    const data = response?.data;
-    const rawItems = Array.isArray(data?.items) ? data.items : [];
+    const data = response?.data ?? response;
+    const rawItems = Array.isArray(data?.items)
+      ? data.items
+      : Array.isArray(data)
+      ? data
+      : Array.isArray(response?.items)
+      ? response.items
+      : [];
     return {
       items: rawItems.map(normalizeConversationItem),
-      total: data?.total ?? rawItems.length,
-      maxLimit: data?.maxLimit ?? data?.max_limit ?? 20,
+      total: data?.total ?? response?.total ?? rawItems.length,
+      maxLimit: data?.maxLimit ?? data?.max_limit ?? response?.max_limit ?? 20,
     };
   },
 
@@ -345,21 +385,23 @@ export const chatbotService = {
    * Create a new conversation session
    */
   async createConversation(title?: string): Promise<AssistantConversationDTO> {
-    const response = await getApiClient().post<{ success: boolean; data: any }>(
+    const response = await getApiClient().post<any>(
       `/assistant/conversations/me`,
       { title }
     );
-    return normalizeConversationItem(response?.data);
+    const data = response?.data ?? response;
+    return normalizeConversationItem(data);
   },
 
   /**
    * Delete a specific conversation session
    */
   async deleteConversation(conversationId: string): Promise<boolean> {
-    const response = await getApiClient().delete<{ success: boolean; data: { deleted: boolean } }>(
+    const response = await getApiClient().delete<any>(
       `/assistant/conversations/me/${encodeURIComponent(conversationId)}`
     );
-    return response?.data?.deleted ?? true;
+    const data = response?.data ?? response;
+    return data?.deleted ?? true;
   },
 
   /**

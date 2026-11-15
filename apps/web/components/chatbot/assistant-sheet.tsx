@@ -9,6 +9,7 @@ import {
   getAssistantMessageCards,
   getAssistantProposeActions,
   getPolicyBlockBannerState,
+  queryKeys,
   resolveSurfaceFromPathname,
   useAssistantChatSession,
   useAssistantConversations,
@@ -16,12 +17,12 @@ import {
   useUpdateProfile,
   useUser,
 } from '@repo/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   Bot,
   Check,
-  ChevronDown,
   Copy,
   History,
   Loader2,
@@ -34,6 +35,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClickOutside } from '@/hooks/use-click-outside';
 import { ActionConfirmationCard } from './action-confirmation-card';
 import { AssistantActionButtons } from './assistant-action-buttons';
@@ -60,6 +63,12 @@ const QUICK_PROMPTS = [
   { emoji: '💤', text: 'Gợi ý cho tôi các cách cải thiện giấc ngủ sâu' },
   { emoji: '🫁', text: 'Hướng dẫn bài tập hít thở thư giãn 4-7-8' },
   { emoji: '🎯', text: 'Làm thế nào để duy trì thói quen tích cực mỗi ngày?' },
+];
+
+const PROACTIVE_QUICK_PROMPTS = [
+  { emoji: '🌿', text: 'Chia sẻ thêm với mình' },
+  { emoji: '🧘', text: 'Gợi ý cho mình các bài tập thư giãn nhẹ nhàng' },
+  { emoji: '💬', text: 'Mình đang cảm thấy hơi quá tải, cần lời khuyên' },
 ];
 
 const POPUP_WIDTH = 460;
@@ -212,6 +221,7 @@ function FormattedAssistantText({ content }: { content: string }) {
 
 export function AssistantSheet() {
   const { userId } = useAuth();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
   const surface = useMemo(
@@ -219,7 +229,7 @@ export function AssistantSheet() {
     [pathname]
   );
   const { data: user } = useUser(userId ?? '');
-  const { mutateAsync: updateProfile } = useUpdateProfile();
+  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -231,6 +241,21 @@ export function AssistantSheet() {
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [activeProactiveContext, setActiveProactiveContext] =
     useState<ProactiveCheckinContext | null>(null);
+  const [pendingCrisisContext, setPendingCrisisContext] =
+    useState<ProactiveCheckinContext | null>(null);
+  const [showCrisisConfirm, setShowCrisisConfirm] = useState(false);
+
+  const handleStartNewChat = useCallback(() => {
+    if (userId) {
+      queryClient.removeQueries({
+        queryKey: queryKeys.chatbot.history(userId, 30, 'new'),
+      });
+    }
+    setActiveProactiveContext(null);
+    setActiveConversationId('new');
+    setShowSessionsDrawer(false);
+    setInput('');
+  }, [queryClient, userId]);
 
   const pendingProactiveContext = useAssistantStore((s) => s.pendingProactiveContext);
   const openRequestSeq = useAssistantStore((s) => s.openRequestSeq);
@@ -246,28 +271,6 @@ export function AssistantSheet() {
       },
     };
   }, [surface, activeProactiveContext]);
-
-  const prevIsOpenRef = useRef(isOpen);
-
-  // Open sheet with 0-LLM local proactive check-in context when requested
-  useEffect(() => {
-    if (openRequestSeq > 0 && pendingProactiveContext) {
-      setActiveProactiveContext(pendingProactiveContext);
-      setActiveConversationId('new');
-      setShowSessionsDrawer(false);
-      setIsOpen(true);
-      consumeProactiveContext();
-    }
-  }, [openRequestSeq, pendingProactiveContext, consumeProactiveContext]);
-
-  // Clear ephemeral proactive check-in context only on an actual open -> close transition
-  useEffect(() => {
-    const wasOpen = prevIsOpenRef.current;
-    prevIsOpenRef.current = isOpen;
-    if (wasOpen && !isOpen) {
-      setActiveProactiveContext(null);
-    }
-  }, [isOpen]);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -320,6 +323,24 @@ export function AssistantSheet() {
     conversationId: activeConversationId ?? undefined,
     onConversationCreated: (newId) => setActiveConversationId(newId),
   });
+
+  // Open sheet with 0-LLM local proactive check-in context when requested
+  useEffect(() => {
+    if (openRequestSeq > 0 && pendingProactiveContext) {
+      const isChatting = historyMessages.length > 0 || input.trim().length > 0 || isResponding;
+      if (isOpen && isChatting) {
+        setPendingCrisisContext(pendingProactiveContext);
+        setShowCrisisConfirm(true);
+        consumeProactiveContext();
+      } else {
+        setActiveProactiveContext(pendingProactiveContext);
+        setActiveConversationId('new');
+        setShowSessionsDrawer(false);
+        setIsOpen(true);
+        consumeProactiveContext();
+      }
+    }
+  }, [openRequestSeq, pendingProactiveContext, consumeProactiveContext, isOpen, historyMessages.length, input, isResponding]);
 
   // Close popup on outside click (excluding floating button)
   useClickOutside(
@@ -473,58 +494,71 @@ export function AssistantSheet() {
                       </span>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowSessionsDrawer((prev) => !prev)}
-                    className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition cursor-pointer max-w-[190px] text-left"
-                    title="Đổi phiên trò chuyện"
-                  >
-                    <History size={11} className="text-primary shrink-0" />
-                    <span className="truncate font-medium">
-                      {activeConversation?.title || 'Cuộc trò chuyện mới'}
-                    </span>
-                    <ChevronDown size={11} className="shrink-0 text-muted-foreground" />
-                  </button>
+                  <p className="text-[11px] text-muted-foreground font-medium truncate max-w-[190px]">
+                    {activeConversation?.title || 'Cuộc trò chuyện mới'}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer rounded-full"
-                  onClick={() => {
-                    setActiveProactiveContext(null);
-                    setActiveConversationId('new');
-                    setShowSessionsDrawer(false);
-                  }}
-                  title="Cuộc trò chuyện mới"
-                  aria-label="Cuộc trò chuyện mới"
-                >
-                  <Plus size={16} />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer rounded-full"
+                      onClick={() => setShowSessionsDrawer((prev) => !prev)}
+                      aria-label="Lịch sử phiên"
+                    >
+                      <History size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Lịch sử phiên</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer rounded-full"
+                      onClick={handleStartNewChat}
+                      aria-label="Cuộc trò chuyện mới"
+                    >
+                      <Plus size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Cuộc trò chuyện mới</TooltipContent>
+                </Tooltip>
                 {historyMessages.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer rounded-full"
-                    onClick={() => setShowClearConfirm(true)}
-                    title="Xóa cuộc trò chuyện hiện tại"
-                    aria-label="Xóa cuộc trò chuyện hiện tại"
-                  >
-                    <Trash2 size={15} />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer rounded-full"
+                        onClick={() => setShowClearConfirm(true)}
+                        aria-label="Xóa cuộc trò chuyện hiện tại"
+                      >
+                        <Trash2 size={15} />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Xóa cuộc trò chuyện hiện tại</TooltipContent>
+                  </Tooltip>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer rounded-full"
-                  onClick={() => setIsOpen(false)}
-                  title="Đóng cửa sổ"
-                  aria-label="Đóng cửa sổ"
-                >
-                  <X size={17} />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer rounded-full"
+                      onClick={() => setIsOpen(false)}
+                      aria-label="Đóng cửa sổ"
+                    >
+                      <X size={17} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Đóng cửa sổ</TooltipContent>
+                </Tooltip>
               </div>
             </div>
 
@@ -532,10 +566,24 @@ export function AssistantSheet() {
             <AnimatePresence>
               {showSessionsDrawer && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="border-b border-border bg-card/95 backdrop-blur-md px-4 py-3 shrink-0 max-h-[280px] overflow-y-auto app-scroll"
+                  key="sessions-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-20 bg-black/40 backdrop-blur-[1px]"
+                  onClick={() => setShowSessionsDrawer(false)}
+                />
+              )}
+              {showSessionsDrawer && (
+                <motion.div
+                  key="sessions-sheet"
+                  role="dialog"
+                  aria-label="Lịch sử phiên"
+                  initial={{ x: '-100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '-100%' }}
+                  transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+                  className="absolute inset-y-0 left-0 z-30 w-[82%] max-w-[320px] border-r border-border bg-card shadow-2xl px-4 py-3 overflow-y-auto app-scroll"
                 >
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/50">
                     <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
@@ -544,11 +592,15 @@ export function AssistantSheet() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setActiveProactiveContext(null);
-                        setActiveConversationId('new');
-                        setShowSessionsDrawer(false);
-                      }}
+                      onClick={() => setShowSessionsDrawer(false)}
+                      className="p-1 rounded-full text-muted-foreground hover:bg-muted cursor-pointer"
+                      aria-label="Đóng lịch sử"
+                    >
+                      <X size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleStartNewChat}
                       className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline cursor-pointer"
                     >
                       <Plus size={12} />
@@ -654,48 +706,6 @@ export function AssistantSheet() {
               ref={scrollRef}
               className="flex-1 overflow-y-auto px-5 py-4 space-y-4 app-scroll"
             >
-              {/* 0-LLM Proactive Check-In Context Card */}
-              {activeProactiveContext && (
-                <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/80 dark:bg-indigo-950/30 p-3.5 text-xs space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-1.5 font-semibold text-indigo-950 dark:text-indigo-200">
-                      <Sparkles className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                      <span>Gợi ý đồng hành</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveProactiveContext(null)}
-                      className="text-muted-foreground hover:text-foreground cursor-pointer"
-                      aria-label="Đóng gợi ý"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {activeProactiveContext.promptContext}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    {['Chia sẻ thêm với mình', 'Gợi ý bài tập thư giãn'].map((reply) => (
-                      <button
-                        key={reply}
-                        type="button"
-                        disabled={isChatBusy}
-                        onClick={async () => {
-                          if (isChatBusy) return;
-                          const sent = await sendMessage(reply);
-                          if (sent) {
-                            setActiveProactiveContext(null);
-                          }
-                        }}
-                        className="rounded-full border border-indigo-300/80 dark:border-indigo-800 bg-background px-2.5 py-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/40 disabled:opacity-50 transition cursor-pointer"
-                      >
-                        {reply}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Load more previous messages button */}
               {hasNextPage && (
                 <div className="flex justify-center pt-2">
@@ -724,40 +734,78 @@ export function AssistantSheet() {
                 </div>
               )}
 
-              {/* Empty state: Quick prompts */}
+              {/* Empty state: Unified (Normal or Proactive Safe Space) */}
               {!isLoading && historyMessages.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-6 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary/20 to-accent/20 flex items-center justify-center text-primary mb-3 shadow-inner">
-                    <Bot size={28} />
-                  </div>
-                  <h3 className="font-semibold text-foreground text-sm">
-                    Xin chào! Tôi có thể giúp gì cho bạn?
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-1 max-w-[280px]">
-                    Hãy chia sẻ cảm xúc, tìm kiếm bài viết, bạn bè hoặc nhờ tôi hướng dẫn các tính năng của Sentimeta.
-                  </p>
+                  {activeProactiveContext ? (
+                    <>
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 shadow-inner">
+                        <Sparkles size={28} />
+                      </div>
+                      <h3 className="font-semibold text-foreground text-sm">
+                        Góc nhỏ lắng nghe
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1.5 max-w-[300px] leading-relaxed">
+                        {activeProactiveContext.promptContext}
+                      </p>
 
-                  <div className="mt-5 w-full space-y-2">
-                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider text-left pl-1">
-                      Gợi ý câu hỏi:
-                    </p>
-                    {QUICK_PROMPTS.map((prompt, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setInput(prompt.text);
-                          textareaRef.current?.focus();
-                        }}
-                        className="w-full text-left p-2.5 rounded-xl border border-border/60 bg-card hover:bg-accent/40 text-xs text-foreground transition flex items-center gap-2 cursor-pointer group"
-                      >
-                        <span className="text-base group-hover:scale-110 transition-transform">
-                          {prompt.emoji}
-                        </span>
-                        <span className="flex-1 line-clamp-1">{prompt.text}</span>
-                      </button>
-                    ))}
-                  </div>
+                      <div className="mt-5 w-full space-y-2">
+                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider text-left pl-1">
+                          Gợi ý trò chuyện:
+                        </p>
+                        {PROACTIVE_QUICK_PROMPTS.map((prompt, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setInput(prompt.text);
+                              textareaRef.current?.focus();
+                            }}
+                            className="w-full text-left p-2.5 rounded-xl border border-indigo-200/60 dark:border-indigo-900/40 bg-card hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-xs text-foreground transition flex items-center gap-2 cursor-pointer group"
+                          >
+                            <span className="text-base group-hover:scale-110 transition-transform">
+                              {prompt.emoji}
+                            </span>
+                            <span className="flex-1 line-clamp-1">{prompt.text}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary/20 to-accent/20 flex items-center justify-center text-primary mb-3 shadow-inner">
+                        <Bot size={28} />
+                      </div>
+                      <h3 className="font-semibold text-foreground text-sm">
+                        Xin chào! Tôi có thể giúp gì cho bạn?
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 max-w-[280px]">
+                        Hãy chia sẻ cảm xúc, tìm kiếm bài viết, bạn bè hoặc nhờ tôi hướng dẫn các tính năng của Sentimeta.
+                      </p>
+
+                      <div className="mt-5 w-full space-y-2">
+                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider text-left pl-1">
+                          Gợi ý câu hỏi:
+                        </p>
+                        {QUICK_PROMPTS.map((prompt, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setInput(prompt.text);
+                              textareaRef.current?.focus();
+                            }}
+                            className="w-full text-left p-2.5 rounded-xl border border-border/60 bg-card hover:bg-accent/40 text-xs text-foreground transition flex items-center gap-2 cursor-pointer group"
+                          >
+                            <span className="text-base group-hover:scale-110 transition-transform">
+                              {prompt.emoji}
+                            </span>
+                            <span className="flex-1 line-clamp-1">{prompt.text}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -777,16 +825,22 @@ export function AssistantSheet() {
                 }
 
                 const isUser = msg.role === 'user';
+                const isPendingAssistant =
+                  !isUser && msg.metadata?.isPending === true;
+
+                if (isPendingAssistant && !msg.content) {
+                  return null;
+                }
 
                 return (
                   <div
                     key={msg.id}
-                    className={`flex gap-2.5 ${
+                    className={`flex items-end gap-2.5 ${
                       isUser ? 'justify-end' : 'justify-start'
                     }`}
                   >
                     {!isUser && (
-                      <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 mb-0.5">
                         <Bot size={15} />
                       </div>
                     )}
@@ -847,26 +901,34 @@ export function AssistantSheet() {
                                         <p className="text-slate-600 dark:text-slate-400 leading-normal">
                                           AI cần quyền Đầy đủ tính năng để tìm kiếm dữ liệu cá nhân hoặc hỗ trợ bạn thực hiện các thao tác.
                                         </p>
-                                        <div className="pt-1.5 flex items-center gap-2">
-                                          <Button
-                                            size="sm"
-                                            className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 shadow-xs"
-                                            onClick={async () => {
+                                        <div className="pt-1.5 flex items-center justify-between gap-2">
+                                          <span className="text-[11px] font-medium text-indigo-900 dark:text-indigo-200">
+                                            Cho phép trợ lý truy cập dữ liệu
+                                          </span>
+                                          <Switch
+                                            checked={user?.privacySettings?.aiPolicy === AiAssistantPolicy.FULL}
+                                            disabled={isUpdatingProfile}
+                                            aria-label="Cho phép Trợ lý AI truy cập dữ liệu"
+                                            onCheckedChange={async (enabled) => {
                                               try {
                                                 await updateProfile({
                                                   privacySettings: {
                                                     ...user?.privacySettings,
-                                                    aiPolicy: AiAssistantPolicy.FULL,
+                                                    aiPolicy: enabled
+                                                      ? AiAssistantPolicy.FULL
+                                                      : AiAssistantPolicy.RESTRICTED,
                                                   },
                                                 });
-                                                toast.success('Đã cấp quyền Đầy đủ tính năng cho Trợ lý AI!');
+                                                toast.success(
+                                                  enabled
+                                                    ? 'Đã cấp quyền Đầy đủ tính năng cho Trợ lý AI!'
+                                                    : 'Đã giới hạn quyền truy cập của Trợ lý AI.',
+                                                );
                                               } catch {
                                                 toast.error('Không thể cập nhật quyền riêng tư');
                                               }
                                             }}
-                                          >
-                                            Cấp quyền Đầy đủ tính năng
-                                          </Button>
+                                          />
                                         </div>
                                       </>
                                     ) : (
@@ -884,25 +946,47 @@ export function AssistantSheet() {
                               </div>
                             );
                           })()}
-                          <div className="mt-2 pt-2 border-t border-border/50 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(msg.id, msg.content)}
-                              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition cursor-pointer"
-                            >
-                              {copiedId === msg.id ? (
-                                <>
-                                  <Check size={12} className="text-emerald-500" />
-                                  <span>Đã chép</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy size={12} />
-                                  <span>Sao chép</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
+                          {msg.sources.length > 0 && (
+                            <div className="mt-3 border-t border-border/50 pt-2.5">
+                              <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
+                                Nguồn tham khảo
+                              </p>
+                              <ol className="space-y-1">
+                                {msg.sources.map((source, index) => (
+                                  <li
+                                    key={`${source.type}:${source.id}:${index}`}
+                                    className="text-[11px] text-muted-foreground"
+                                  >
+                                    <span className="mr-1 font-medium text-foreground/70">
+                                      [{index + 1}]
+                                    </span>
+                                    {source.title || source.source || `${source.type}: ${source.id}`}
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+                          )}
+                          {msg.metadata?.isPending !== true && (
+                            <div className="mt-2 pt-2 border-t border-border/50 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(msg.id, msg.content)}
+                                className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition cursor-pointer"
+                              >
+                                {copiedId === msg.id ? (
+                                  <>
+                                    <Check size={12} className="text-emerald-500" />
+                                    <span>Đã chép</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy size={12} />
+                                    <span>Sao chép</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </>
                       )}
                     </div>
@@ -912,8 +996,8 @@ export function AssistantSheet() {
 
               {/* Responding indicator */}
               {isResponding && (
-                <div className="flex gap-2.5 justify-start">
-                  <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                <div className="flex items-end gap-2.5 justify-start">
+                  <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 mb-0.5">
                     <Bot size={15} />
                   </div>
                   <div className="bg-card border border-border shadow-xs rounded-2xl rounded-bl-xs px-4 py-3 flex items-center gap-1.5 text-muted-foreground">
@@ -960,6 +1044,64 @@ export function AssistantSheet() {
                 Sentimeta AI là trợ lý đồng hành cảm xúc, không thay thế chẩn đoán y tế.
               </p>
             </div>
+
+            {/* ── Switch to Crisis Proactive In-Chat Confirmation Dialog ── */}
+            <AnimatePresence>
+              {showCrisisConfirm && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-40 flex items-center justify-center p-5 bg-black/50 backdrop-blur-xs"
+                >
+                  <motion.div
+                    initial={{ scale: 0.92, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.92, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 24, stiffness: 300 }}
+                    className="w-full max-w-[340px] rounded-2xl border border-border bg-card p-5 shadow-2xl text-center space-y-3"
+                  >
+                    <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-indigo-500/15 text-indigo-500">
+                      <Sparkles size={22} />
+                    </div>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Mở phiên hỗ trợ tâm lý mới?
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Bạn vừa chọn một gợi ý hỗ trợ cảm xúc mới. Cuộc trò chuyện hiện tại sẽ được lưu an toàn trong lịch sử phiên.
+                    </p>
+                    <div className="flex items-center gap-2 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 rounded-xl text-xs h-9 cursor-pointer"
+                        onClick={() => {
+                          setShowCrisisConfirm(false);
+                          setPendingCrisisContext(null);
+                        }}
+                      >
+                        Ở lại phiên này
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="flex-1 rounded-xl text-xs h-9 bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+                        onClick={() => {
+                          setShowCrisisConfirm(false);
+                          setActiveProactiveContext(pendingCrisisContext);
+                          setActiveConversationId('new');
+                          setPendingCrisisContext(null);
+                          setInput('');
+                        }}
+                      >
+                        Mở phiên mới
+                      </Button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>

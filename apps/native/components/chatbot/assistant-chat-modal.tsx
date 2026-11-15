@@ -12,7 +12,8 @@ import {
 } from '@repo/shared';
 import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeIn, FadeOut, SlideInLeft, SlideOutLeft } from 'react-native-reanimated';
 
 import {
   AssistantMessageList,
@@ -45,6 +46,9 @@ export function AssistantChatModal({
   const [showSessionsList, setShowSessionsList] = React.useState(false);
   const [activeProactiveContext, setActiveProactiveContext] =
     React.useState<ProactiveCheckinContext | null>(null);
+  const [pendingCrisisContext, setPendingCrisisContext] =
+    React.useState<ProactiveCheckinContext | null>(null);
+  const [showCrisisConfirm, setShowCrisisConfirm] = React.useState(false);
   const fallbackTimestampBaseRef = React.useRef(Date.now());
 
   const pendingProactiveContext = useAssistantStore((s) => s.pendingProactiveContext);
@@ -60,26 +64,6 @@ export function AssistantChatModal({
       },
     };
   }, [surface, activeProactiveContext]);
-
-  const prevVisibleRef = React.useRef(visible);
-
-  React.useEffect(() => {
-    if (visible && pendingProactiveContext) {
-      setActiveProactiveContext(pendingProactiveContext);
-      setActiveConversationId('new');
-      setShowSessionsList(false);
-      consumeProactiveContext();
-    }
-  }, [visible, pendingProactiveContext, consumeProactiveContext]);
-
-  // Clear ephemeral proactive check-in context only on an actual visible -> hidden transition
-  React.useEffect(() => {
-    const wasVisible = prevVisibleRef.current;
-    prevVisibleRef.current = visible;
-    if (wasVisible && !visible) {
-      setActiveProactiveContext(null);
-    }
-  }, [visible]);
 
   const {
     conversations,
@@ -181,6 +165,23 @@ export function AssistantChatModal({
       } satisfies AssistantMessageItem;
     });
   }, [historyMessages]);
+
+  React.useEffect(() => {
+    if (visible && pendingProactiveContext) {
+      const isChatting = messages.length > 0 || input.trim().length > 0 || isResponding;
+      if (isChatting) {
+        setPendingCrisisContext(pendingProactiveContext);
+        setShowCrisisConfirm(true);
+        consumeProactiveContext();
+      } else {
+        setActiveProactiveContext(pendingProactiveContext);
+        setActiveConversationId('new');
+        setShowSessionsList(false);
+        consumeProactiveContext();
+      }
+    }
+  }, [visible, pendingProactiveContext, consumeProactiveContext, messages.length, input, isResponding]);
+
   const isChatBusy = isResponding || isSyncingHistory;
 
   const handleSend = React.useCallback(async () => {
@@ -266,17 +267,20 @@ export function AssistantChatModal({
           ) : null}
 
           <View className="mb-2 flex-row items-center justify-between gap-1">
-            <SecondaryButton
-              className="h-9 rounded-full px-3 max-w-[170px]"
-              onPress={() => setShowSessionsList((prev) => !prev)}
+            <Text
+              numberOfLines={1}
+              className="flex-1 pr-2 text-xs font-semibold text-app-fg dark:text-app-fg-dark"
             >
-              <Ionicons name="chatbubbles-outline" size={14} color="#0ea5e9" />
-              <Text numberOfLines={1} className="ml-1 text-xs font-semibold text-app-fg dark:text-app-fg-dark">
-                {activeConversation?.title || 'Phiên mới'}
-              </Text>
-            </SecondaryButton>
+              {activeConversation?.title || 'Phiên mới'}
+            </Text>
 
             <View className="flex-row items-center gap-1">
+              <SecondaryButton
+                className="h-9 rounded-full px-2.5"
+                onPress={() => setShowSessionsList((prev) => !prev)}
+              >
+                <Ionicons name="time-outline" size={16} color="#0ea5e9" />
+              </SecondaryButton>
               <SecondaryButton
                 className="h-9 rounded-full px-2.5"
                 onPress={() => {
@@ -286,6 +290,9 @@ export function AssistantChatModal({
                 }}
               >
                 <Ionicons name="add" size={16} color="#0ea5e9" />
+                <Text className="ml-1 text-xs font-semibold text-app-fg dark:text-app-fg-dark">
+                  Mới
+                </Text>
               </SecondaryButton>
               <SecondaryButton
                 className="h-9 rounded-full px-2.5"
@@ -309,7 +316,23 @@ export function AssistantChatModal({
           </View>
 
           {showSessionsList ? (
-            <View className="mb-2 max-h-48 rounded-2xl border border-app-border bg-app-surface-elevated p-2 dark:border-app-border-dark dark:bg-app-surface-elevated-dark">
+            <View className="absolute inset-0 z-20" pointerEvents="box-none">
+              <Animated.View
+                entering={FadeIn}
+                exiting={FadeOut}
+                className="absolute inset-0 bg-black/40"
+              >
+                <Pressable
+                  className="flex-1"
+                  onPress={() => setShowSessionsList(false)}
+                  accessibilityLabel="Đóng lịch sử"
+                />
+              </Animated.View>
+              <Animated.View
+                entering={SlideInLeft}
+                exiting={SlideOutLeft}
+                className="absolute bottom-0 left-0 top-0 w-[82%] rounded-2xl border border-app-border bg-app-surface-elevated p-3 dark:border-app-border-dark dark:bg-app-surface-elevated-dark"
+              >
               <View className="mb-2 flex-row items-center justify-between px-1">
                 <Text className="text-xs font-bold text-app-fg dark:text-app-fg-dark">
                   Lịch sử phiên ({conversations.length}/20)
@@ -324,7 +347,7 @@ export function AssistantChatModal({
                   <Text className="text-xs font-semibold text-sky-500">+ Phiên mới</Text>
                 </TouchableOpacity>
               </View>
-              <ScrollView className="max-h-36">
+              <ScrollView className="flex-1">
                 {conversations.length === 0 ? (
                   <Text className="py-2 text-center text-xs text-app-muted-fg">
                     Chưa có phiên nào được lưu.
@@ -387,6 +410,7 @@ export function AssistantChatModal({
                   </Text>
                 </TouchableOpacity>
               ) : null}
+              </Animated.View>
             </View>
           ) : null}
 
@@ -415,12 +439,8 @@ export function AssistantChatModal({
                   <TouchableOpacity
                     key={reply}
                     disabled={isChatBusy}
-                    onPress={async () => {
-                      if (isChatBusy) return;
-                      const sent = await sendMessage(reply);
-                      if (sent) {
-                        setActiveProactiveContext(null);
-                      }
+                    onPress={() => {
+                      setInput(reply);
                     }}
                     className={`rounded-full border border-indigo-300 bg-white px-2.5 py-1 dark:border-indigo-800 dark:bg-app-surface-dark ${
                       isChatBusy ? 'opacity-50' : ''
@@ -499,6 +519,49 @@ export function AssistantChatModal({
             </TouchableOpacity>
           </View>
         </View>
+
+        {showCrisisConfirm ? (
+          <View className="absolute inset-0 z-30 items-center justify-center rounded-[28px] bg-black/60 p-4">
+            <View className="w-full max-w-xs rounded-2xl border border-app-border bg-app-surface p-4 text-center dark:border-app-border-dark dark:bg-app-surface-dark">
+              <View className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500/15">
+                <Ionicons name="sparkles" size={20} color="#6366f1" />
+              </View>
+              <Text className="text-center text-sm font-bold text-app-fg dark:text-app-fg-dark">
+                Mở phiên hỗ trợ tâm lý mới?
+              </Text>
+              <Text className="mt-1 text-center text-xs text-app-muted-fg leading-4">
+                Bạn vừa chọn một gợi ý hỗ trợ cảm xúc mới. Cuộc trò chuyện hiện tại sẽ được lưu an toàn vào lịch sử phiên.
+              </Text>
+              <View className="mt-4 flex-row gap-2">
+                <TouchableOpacity
+                  className="flex-1 items-center justify-center rounded-xl border border-app-border py-2.5 dark:border-app-border-dark"
+                  onPress={() => {
+                    setShowCrisisConfirm(false);
+                    setPendingCrisisContext(null);
+                  }}
+                >
+                  <Text className="text-xs font-semibold text-app-fg dark:text-app-fg-dark">
+                    Ở lại phiên này
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="flex-1 items-center justify-center rounded-xl bg-indigo-600 py-2.5"
+                  onPress={() => {
+                    setShowCrisisConfirm(false);
+                    setActiveProactiveContext(pendingCrisisContext);
+                    setActiveConversationId('new');
+                    setPendingCrisisContext(null);
+                    setInput('');
+                  }}
+                >
+                  <Text className="text-xs font-semibold text-white">
+                    Mở phiên mới
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        ) : null}
       </View>
     </AppModal>
   );

@@ -51,7 +51,11 @@ export const isProposeAction = (value: unknown): value is AssistantProposeAction
 export const getAssistantMessageActions = (
   metadata: unknown,
 ): AssistantNavigateAction[] => {
-  const raw = (metadata as { actions?: unknown } | null | undefined)?.actions;
+  const meta = metadata as
+    | { actions?: unknown; suggestedActions?: unknown }
+    | null
+    | undefined;
+  const raw = meta?.actions ?? meta?.suggestedActions;
   return Array.isArray(raw) ? raw.filter(isNavigateAction) : [];
 };
 
@@ -63,13 +67,18 @@ export const getAssistantMessageCards = (
   metadata: unknown,
 ): AssistantShowCardAction[] => {
   if (!metadata || typeof metadata !== 'object') return [];
-  const meta = metadata as { cards?: unknown; actions?: unknown };
+  const meta = metadata as {
+    cards?: unknown;
+    actions?: unknown;
+    suggestedActions?: unknown;
+  };
   if (Array.isArray(meta.cards)) {
     const fromCards = meta.cards.filter(isShowCardAction);
     if (fromCards.length > 0) return fromCards;
   }
-  if (Array.isArray(meta.actions)) {
-    return meta.actions.filter(isShowCardAction);
+  const rawActions = meta.actions ?? meta.suggestedActions;
+  if (Array.isArray(rawActions)) {
+    return rawActions.filter(isShowCardAction);
   }
   return [];
 };
@@ -81,13 +90,18 @@ export const getAssistantProposeActions = (
   metadata: unknown,
 ): AssistantProposeAction[] => {
   if (!metadata || typeof metadata !== 'object') return [];
-  const meta = metadata as { proposals?: unknown; actions?: unknown };
+  const meta = metadata as {
+    proposals?: unknown;
+    actions?: unknown;
+    suggestedActions?: unknown;
+  };
   if (Array.isArray(meta.proposals)) {
     const fromProposals = meta.proposals.filter(isProposeAction);
     if (fromProposals.length > 0) return fromProposals;
   }
-  if (Array.isArray(meta.actions)) {
-    return meta.actions.filter(isProposeAction);
+  const rawActions = meta.actions ?? meta.suggestedActions;
+  if (Array.isArray(rawActions)) {
+    return rawActions.filter(isProposeAction);
   }
   return [];
 };

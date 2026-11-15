@@ -226,10 +226,6 @@ export function AssistantFloatingButton({
           className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25 cursor-pointer"
         >
           <Bot size={24} />
-          <span className="absolute top-1 right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-          </span>
         </button>
       </div>
     );
@@ -270,18 +266,12 @@ export function AssistantFloatingButton({
           {isOpen ? (
             <X size={24} className="transition-transform duration-200" />
           ) : (
-            <>
-              <Bot
-                size={25}
-                className={`transition-transform duration-300 ${
-                  isDragging ? 'rotate-12 scale-110' : 'group-hover:rotate-6 group-hover:scale-110'
-                }`}
-              />
-              <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-              </span>
-            </>
+            <Bot
+              size={25}
+              className={`transition-transform duration-300 ${
+                isDragging ? 'rotate-12 scale-110' : 'group-hover:rotate-6 group-hover:scale-110'
+              }`}
+            />
           )}
         </div>
       </button>
