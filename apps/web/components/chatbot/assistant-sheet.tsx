@@ -4,12 +4,15 @@ import { useAuth } from '@clerk/nextjs';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   AiAssistantPolicy,
+  type ProactiveCheckinContext,
   getAssistantMessageActions,
   getAssistantMessageCards,
   getAssistantProposeActions,
+  getPolicyBlockBannerState,
   resolveSurfaceFromPathname,
   useAssistantChatSession,
   useAssistantConversations,
+  useAssistantStore,
   useUpdateProfile,
   useUser,
 } from '@repo/shared';
@@ -226,6 +229,45 @@ export function AssistantSheet() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [showSessionsDrawer, setShowSessionsDrawer] = useState(false);
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+  const [activeProactiveContext, setActiveProactiveContext] =
+    useState<ProactiveCheckinContext | null>(null);
+
+  const pendingProactiveContext = useAssistantStore((s) => s.pendingProactiveContext);
+  const openRequestSeq = useAssistantStore((s) => s.openRequestSeq);
+  const consumeProactiveContext = useAssistantStore((s) => s.consumeProactiveContext);
+
+  const effectiveSurface = useMemo(() => {
+    if (!activeProactiveContext) return surface;
+    return {
+      ...surface,
+      metadata: {
+        chatbotPromptContext: activeProactiveContext.promptContext,
+        interventionId: activeProactiveContext.interventionId,
+      },
+    };
+  }, [surface, activeProactiveContext]);
+
+  const prevIsOpenRef = useRef(isOpen);
+
+  // Open sheet with 0-LLM local proactive check-in context when requested
+  useEffect(() => {
+    if (openRequestSeq > 0 && pendingProactiveContext) {
+      setActiveProactiveContext(pendingProactiveContext);
+      setActiveConversationId('new');
+      setShowSessionsDrawer(false);
+      setIsOpen(true);
+      consumeProactiveContext();
+    }
+  }, [openRequestSeq, pendingProactiveContext, consumeProactiveContext]);
+
+  // Clear ephemeral proactive check-in context only on an actual open -> close transition
+  useEffect(() => {
+    const wasOpen = prevIsOpenRef.current;
+    prevIsOpenRef.current = isOpen;
+    if (wasOpen && !isOpen) {
+      setActiveProactiveContext(null);
+    }
+  }, [isOpen]);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -238,12 +280,18 @@ export function AssistantSheet() {
     isDeleting,
   } = useAssistantConversations(userId ?? '', 20, isOpen);
 
-  // Auto-select latest active conversation on initial open
+  // Auto-select latest active conversation on initial open (unless a 0-LLM proactive entry is active)
   useEffect(() => {
-    if (isOpen && activeConversationId === null && conversations.length > 0) {
+    if (
+      isOpen &&
+      activeConversationId === null &&
+      !activeProactiveContext &&
+      !pendingProactiveContext &&
+      conversations.length > 0
+    ) {
       setActiveConversationId(conversations[0].id);
     }
-  }, [isOpen, activeConversationId, conversations]);
+  }, [isOpen, activeConversationId, activeProactiveContext, pendingProactiveContext, conversations]);
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId),
@@ -259,6 +307,7 @@ export function AssistantSheet() {
     sendMessage,
     clearHistory,
     isResponding,
+    isSyncingHistory,
     isClearing,
     error,
     retryHistory,
@@ -267,9 +316,8 @@ export function AssistantSheet() {
   } = useAssistantChatSession(userId ?? '', {
     limit: 30,
     enabled: isOpen,
-    surface,
+    surface: effectiveSurface,
     conversationId: activeConversationId ?? undefined,
-    aiPolicy: user?.privacySettings?.aiPolicy,
     onConversationCreated: (newId) => setActiveConversationId(newId),
   });
 
@@ -315,15 +363,20 @@ export function AssistantSheet() {
     }
   }, [isOpen]);
 
+  const isChatBusy = isResponding || isSyncingHistory;
+
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || isResponding) return;
-    setInput('');
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+    if (!text || isChatBusy) return;
+    const sent = await sendMessage(text);
+    if (sent) {
+      setInput('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+      setActiveProactiveContext(null);
     }
-    await sendMessage(text);
-  }, [input, isResponding, sendMessage]);
+  }, [input, isChatBusy, sendMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -441,6 +494,7 @@ export function AssistantSheet() {
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 cursor-pointer rounded-full"
                   onClick={() => {
+                    setActiveProactiveContext(null);
                     setActiveConversationId('new');
                     setShowSessionsDrawer(false);
                   }}
@@ -491,6 +545,7 @@ export function AssistantSheet() {
                     <button
                       type="button"
                       onClick={() => {
+                        setActiveProactiveContext(null);
                         setActiveConversationId('new');
                         setShowSessionsDrawer(false);
                       }}
@@ -516,6 +571,7 @@ export function AssistantSheet() {
                               : 'border-border/60 hover:bg-muted/60 text-foreground'
                           }`}
                           onClick={() => {
+                            setActiveProactiveContext(null);
                             setActiveConversationId(conv.id);
                             setShowSessionsDrawer(false);
                           }}
@@ -598,6 +654,48 @@ export function AssistantSheet() {
               ref={scrollRef}
               className="flex-1 overflow-y-auto px-5 py-4 space-y-4 app-scroll"
             >
+              {/* 0-LLM Proactive Check-In Context Card */}
+              {activeProactiveContext && (
+                <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/80 dark:bg-indigo-950/30 p-3.5 text-xs space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5 font-semibold text-indigo-950 dark:text-indigo-200">
+                      <Sparkles className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                      <span>Gợi ý đồng hành</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveProactiveContext(null)}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer"
+                      aria-label="Đóng gợi ý"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {activeProactiveContext.promptContext}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {['Chia sẻ thêm với mình', 'Gợi ý bài tập thư giãn'].map((reply) => (
+                      <button
+                        key={reply}
+                        type="button"
+                        disabled={isChatBusy}
+                        onClick={async () => {
+                          if (isChatBusy) return;
+                          const sent = await sendMessage(reply);
+                          if (sent) {
+                            setActiveProactiveContext(null);
+                          }
+                        }}
+                        className="rounded-full border border-indigo-300/80 dark:border-indigo-800 bg-background px-2.5 py-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/40 disabled:opacity-50 transition cursor-pointer"
+                      >
+                        {reply}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Load more previous messages button */}
               {hasNextPage && (
                 <div className="flex justify-center pt-2">
@@ -716,6 +814,7 @@ export function AssistantSheet() {
                           />
                           <ActionConfirmationCard
                             proposals={getAssistantProposeActions(msg.metadata)}
+                            conversationId={msg.conversationId || activeConversationId || undefined}
                             onStatusChange={updateProposalStatus}
                           />
                           <AssistantActionButtons
@@ -725,49 +824,66 @@ export function AssistantSheet() {
                               router.push(href);
                             }}
                           />
-                          {/* Just-In-Time AI Privacy Policy Consent Card */}
-                          {!isUser &&
-                            user?.privacySettings?.aiPolicy === AiAssistantPolicy.RESTRICTED &&
-                            (msg.metadata?.policyBlocked === true ||
-                              msg.content.toLowerCase().includes('riêng tư tối đa') ||
-                              msg.content.toLowerCase().includes('quyền riêng tư') ||
-                              msg.content.toLowerCase().includes('không thể truy cập thông tin') ||
-                              msg.content.toLowerCase().includes('không thể thực hiện thao tác')) && (
+                          {/* Just-In-Time AI Privacy Policy Consent / Server Fail-Closed Banner */}
+                          {(() => {
+                            const bannerState = !isUser
+                              ? getPolicyBlockBannerState(
+                                  msg.content,
+                                  msg.metadata,
+                                  user?.privacySettings?.aiPolicy,
+                                )
+                              : null;
+                            if (!bannerState) return null;
+                            return (
                               <div className="mt-3 p-3 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50/90 to-purple-50/90 dark:from-indigo-950/40 dark:to-purple-950/40 text-xs">
                                 <div className="flex items-start gap-2.5">
                                   <Sparkles className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
                                   <div className="flex-1 space-y-1">
-                                    <p className="font-semibold text-indigo-950 dark:text-indigo-200">
-                                      Chế độ Riêng tư tối đa đang bật
-                                    </p>
-                                    <p className="text-slate-600 dark:text-slate-400 leading-normal">
-                                      AI cần quyền Đầy đủ tính năng để tìm kiếm dữ liệu cá nhân hoặc hỗ trợ bạn thực hiện các thao tác.
-                                    </p>
-                                    <div className="pt-1.5 flex items-center gap-2">
-                                      <Button
-                                        size="sm"
-                                        className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 shadow-xs"
-                                        onClick={async () => {
-                                          try {
-                                            await updateProfile({
-                                              privacySettings: {
-                                                ...user.privacySettings,
-                                                aiPolicy: AiAssistantPolicy.FULL,
-                                              },
-                                            });
-                                            toast.success('Đã cấp quyền Đầy đủ tính năng cho Trợ lý AI!');
-                                          } catch {
-                                            toast.error('Không thể cập nhật quyền riêng tư');
-                                          }
-                                        }}
-                                      >
-                                        Cấp quyền Đầy đủ tính năng
-                                      </Button>
-                                    </div>
+                                    {bannerState === 'user_restricted' ? (
+                                      <>
+                                        <p className="font-semibold text-indigo-950 dark:text-indigo-200">
+                                          Chế độ Riêng tư tối đa đang bật
+                                        </p>
+                                        <p className="text-slate-600 dark:text-slate-400 leading-normal">
+                                          AI cần quyền Đầy đủ tính năng để tìm kiếm dữ liệu cá nhân hoặc hỗ trợ bạn thực hiện các thao tác.
+                                        </p>
+                                        <div className="pt-1.5 flex items-center gap-2">
+                                          <Button
+                                            size="sm"
+                                            className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 shadow-xs"
+                                            onClick={async () => {
+                                              try {
+                                                await updateProfile({
+                                                  privacySettings: {
+                                                    ...user?.privacySettings,
+                                                    aiPolicy: AiAssistantPolicy.FULL,
+                                                  },
+                                                });
+                                                toast.success('Đã cấp quyền Đầy đủ tính năng cho Trợ lý AI!');
+                                              } catch {
+                                                toast.error('Không thể cập nhật quyền riêng tư');
+                                              }
+                                            }}
+                                          >
+                                            Cấp quyền Đầy đủ tính năng
+                                          </Button>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <p className="font-semibold text-indigo-950 dark:text-indigo-200">
+                                          Quyền truy cập dữ liệu cá nhân tạm thời bị hạn chế
+                                        </p>
+                                        <p className="text-slate-600 dark:text-slate-400 leading-normal">
+                                          Hệ thống đang tạm giới hạn truy cập thông tin cá nhân để bảo vệ an toàn. Bạn có thể thử lại sau ít phút.
+                                        </p>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               </div>
-                            )}
+                            );
+                          })()}
                           <div className="mt-2 pt-2 border-t border-border/50 flex justify-end">
                             <button
                               type="button"
@@ -823,17 +939,17 @@ export function AssistantSheet() {
                   onKeyDown={handleKeyDown}
                   placeholder="Hỏi trợ lý Sentimeta AI..."
                   rows={1}
-                  disabled={isResponding}
+                  disabled={isChatBusy}
                   className="flex-1 max-h-[120px] resize-none border-0 bg-transparent px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-hidden disabled:opacity-50"
                 />
                 <Button
                   type="button"
                   size="icon"
                   onClick={() => void handleSend()}
-                  disabled={!input.trim() || isResponding}
+                  disabled={!input.trim() || isChatBusy}
                   className="h-8 w-8 rounded-xl shrink-0 cursor-pointer"
                 >
-                  {isResponding ? (
+                  {isChatBusy ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
                     <Send size={16} />

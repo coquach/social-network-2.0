@@ -2,9 +2,11 @@ import { useAuth } from '@clerk/expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import {
   AiAssistantPolicy,
+  type ProactiveCheckinContext,
   resolveSurfaceFromPathname,
   useAssistantChatSession,
   useAssistantConversations,
+  useAssistantStore,
   useCurrentUser,
   useUpdateProfile,
 } from '@repo/shared';
@@ -41,7 +43,43 @@ export function AssistantChatModal({
   const [input, setInput] = React.useState('');
   const [activeConversationId, setActiveConversationId] = React.useState<string | null>(null);
   const [showSessionsList, setShowSessionsList] = React.useState(false);
+  const [activeProactiveContext, setActiveProactiveContext] =
+    React.useState<ProactiveCheckinContext | null>(null);
   const fallbackTimestampBaseRef = React.useRef(Date.now());
+
+  const pendingProactiveContext = useAssistantStore((s) => s.pendingProactiveContext);
+  const consumeProactiveContext = useAssistantStore((s) => s.consumeProactiveContext);
+
+  const effectiveSurface = React.useMemo(() => {
+    if (!activeProactiveContext) return surface;
+    return {
+      ...surface,
+      metadata: {
+        chatbotPromptContext: activeProactiveContext.promptContext,
+        interventionId: activeProactiveContext.interventionId,
+      },
+    };
+  }, [surface, activeProactiveContext]);
+
+  const prevVisibleRef = React.useRef(visible);
+
+  React.useEffect(() => {
+    if (visible && pendingProactiveContext) {
+      setActiveProactiveContext(pendingProactiveContext);
+      setActiveConversationId('new');
+      setShowSessionsList(false);
+      consumeProactiveContext();
+    }
+  }, [visible, pendingProactiveContext, consumeProactiveContext]);
+
+  // Clear ephemeral proactive check-in context only on an actual visible -> hidden transition
+  React.useEffect(() => {
+    const wasVisible = prevVisibleRef.current;
+    prevVisibleRef.current = visible;
+    if (wasVisible && !visible) {
+      setActiveProactiveContext(null);
+    }
+  }, [visible]);
 
   const {
     conversations,
@@ -49,12 +87,18 @@ export function AssistantChatModal({
     isDeleting,
   } = useAssistantConversations(userId ?? '', 20, visible);
 
-  // Auto-select latest active conversation on initial open
+  // Auto-select latest active conversation on initial open (unless a 0-LLM proactive entry is active)
   React.useEffect(() => {
-    if (visible && activeConversationId === null && conversations.length > 0) {
+    if (
+      visible &&
+      activeConversationId === null &&
+      !activeProactiveContext &&
+      !pendingProactiveContext &&
+      conversations.length > 0
+    ) {
       setActiveConversationId(conversations[0].id);
     }
-  }, [visible, activeConversationId, conversations]);
+  }, [visible, activeConversationId, activeProactiveContext, pendingProactiveContext, conversations]);
 
   const activeConversation = React.useMemo(
     () => conversations.find((c) => c.id === activeConversationId),
@@ -82,9 +126,8 @@ export function AssistantChatModal({
   } = useAssistantChatSession(userId ?? '', {
     limit: 20,
     enabled: visible,
-    surface,
+    surface: effectiveSurface,
     conversationId: activeConversationId ?? undefined,
-    aiPolicy: currentUser?.privacySettings?.aiPolicy,
     onConversationCreated: (newId) => setActiveConversationId(newId),
   });
 
@@ -124,6 +167,7 @@ export function AssistantChatModal({
 
       return {
         id: `server:${message.id}`,
+        conversationId: message.conversationId,
         role:
           message.role === 'assistant'
             ? 'assistant'
@@ -150,8 +194,11 @@ export function AssistantChatModal({
     }
 
     try {
-      await sendMessage(message);
-      setInput('');
+      const sent = await sendMessage(message);
+      if (sent) {
+        setInput('');
+        setActiveProactiveContext(null);
+      }
     } catch (sendError) {
       console.error('[assistant] send failed:', sendError);
     }
@@ -233,6 +280,7 @@ export function AssistantChatModal({
               <SecondaryButton
                 className="h-9 rounded-full px-2.5"
                 onPress={() => {
+                  setActiveProactiveContext(null);
                   setActiveConversationId('new');
                   setShowSessionsList(false);
                 }}
@@ -268,6 +316,7 @@ export function AssistantChatModal({
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
+                    setActiveProactiveContext(null);
                     setActiveConversationId('new');
                     setShowSessionsList(false);
                   }}
@@ -285,6 +334,7 @@ export function AssistantChatModal({
                     <TouchableOpacity
                       key={conv.id}
                       onPress={() => {
+                        setActiveProactiveContext(null);
                         setActiveConversationId(conv.id);
                         setShowSessionsList(false);
                       }}
@@ -340,6 +390,51 @@ export function AssistantChatModal({
             </View>
           ) : null}
 
+          {activeProactiveContext ? (
+            <View className="mb-2.5 rounded-[16px] border border-indigo-200 bg-indigo-50/90 p-3 dark:border-indigo-900/60 dark:bg-indigo-950/40">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center gap-1.5">
+                  <Ionicons name="sparkles" size={14} color="#6366f1" />
+                  <Text className="text-xs font-semibold text-indigo-950 dark:text-indigo-200">
+                    Gợi ý đồng hành
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setActiveProactiveContext(null)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Đóng gợi ý"
+                >
+                  <Ionicons name="close" size={16} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+              <Text className="mt-1.5 text-xs leading-5 text-slate-700 dark:text-slate-300">
+                {activeProactiveContext.promptContext}
+              </Text>
+              <View className="mt-2 flex-row flex-wrap gap-1.5">
+                {['Chia sẻ thêm với mình', 'Gợi ý bài tập thư giãn'].map((reply) => (
+                  <TouchableOpacity
+                    key={reply}
+                    disabled={isChatBusy}
+                    onPress={async () => {
+                      if (isChatBusy) return;
+                      const sent = await sendMessage(reply);
+                      if (sent) {
+                        setActiveProactiveContext(null);
+                      }
+                    }}
+                    className={`rounded-full border border-indigo-300 bg-white px-2.5 py-1 dark:border-indigo-800 dark:bg-app-surface-dark ${
+                      isChatBusy ? 'opacity-50' : ''
+                    }`}
+                  >
+                    <Text className="text-[11px] font-medium text-indigo-700 dark:text-indigo-300">
+                      {reply}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
           <View style={{ minHeight: 220, flex: 1 }}>
             <AssistantMessageList
               messages={messages}
@@ -355,6 +450,7 @@ export function AssistantChatModal({
                 router.push(targetPath as any);
               }}
               onStatusChange={updateProposalStatus}
+              conversationId={activeConversationId ?? undefined}
               aiPolicy={currentUser?.privacySettings?.aiPolicy}
               onGrantFullPolicy={() => {
                 updateProfile.mutate({

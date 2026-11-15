@@ -18,3 +18,6 @@ export * from './useCreatePostModal';
 
 // Call store
 export * from './useCallStore';
+
+// Assistant overlay & proactive check-in store
+export * from './useAssistantStore';

@@ -15,7 +15,6 @@ export interface AssistantMessageInput {
   message: string;
   clientMessageId?: string;
   conversationId?: string;
-  aiPolicy?: string;
   surface?: SurfaceContextDTO;
 }
 
@@ -82,6 +81,8 @@ export interface AssistantProposeActionPayload {
   description: string;
   params: Record<string, unknown>;
   idempotencyKey: string;
+  proposalToken?: string;
+  conversationId?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   category?: AssistantActionCategory;
@@ -112,6 +113,9 @@ export interface AssistantMessageMetadata {
   actions?: AssistantSuggestedActionDTO[];
   cards?: AssistantShowCardAction[];
   proposals?: AssistantProposeAction[];
+  policyBlocked?: boolean;
+  requestId?: string;
+  latencyMs?: number;
   [key: string]: unknown;
 }
 
@@ -135,6 +139,8 @@ export interface ExecuteActionInputDTO {
   actionName: AssistantExecutableActionName | string;
   params: Record<string, unknown>;
   idempotencyKey: string;
+  proposalToken: string;
+  conversationId: string;
 }
 
 export interface ExecuteActionResultDTO {
@@ -187,4 +193,9 @@ export interface AssistantConversationListDataDTO {
   items: AssistantConversationDTO[];
   total: number;
   maxLimit: number;
+}
+
+export interface ProactiveCheckinContext {
+  interventionId?: string;
+  promptContext: string;
 }

@@ -2,7 +2,11 @@
 
 import React, { useState } from 'react';
 import type { AssistantProposeAction, ExecuteActionResultDTO } from '@repo/shared';
-import { chatbotService } from '@repo/shared';
+import {
+  chatbotService,
+  isNonRetryableProposalError,
+  resolveProposalExecutionContext,
+} from '@repo/shared';
 import {
   UserPlus,
   UserCheck,
@@ -24,6 +28,7 @@ import { toast } from 'sonner';
 
 interface ActionConfirmationCardProps {
   proposals: AssistantProposeAction[];
+  conversationId?: string;
   onExecuted?: (result: ExecuteActionResultDTO) => void;
   onStatusChange?: (
     key: string,
@@ -37,31 +42,39 @@ type CardStatus = 'idle' | 'executing' | 'success' | 'cancelled' | 'error';
 interface ActionState {
   status: CardStatus;
   message?: string;
+  nonRetryable?: boolean;
 }
 
 export function ActionConfirmationCard({
   proposals,
+  conversationId,
   onExecuted,
   onStatusChange,
 }: ActionConfirmationCardProps) {
-  const [actionStates, setActionStates] = useState<Record<string, ActionState>>(() => {
-    const initial: Record<string, ActionState> = {};
-    for (const p of proposals || []) {
-      const key = p.payload?.idempotencyKey || p.id;
-      if (p.payload?.status) {
-        initial[key] = {
-          status: p.payload.status,
-          message: p.payload.executionResult?.message,
-        };
-      }
-    }
-    return initial;
-  });
+  const [actionStates, setActionStates] = useState<Record<string, ActionState>>({});
 
   if (!proposals || proposals.length === 0) return null;
 
   const handleConfirm = async (proposal: AssistantProposeAction) => {
     const key = proposal.payload.idempotencyKey || proposal.id;
+    const existingStatus = actionStates[key]?.status;
+    if (existingStatus === 'executing' || existingStatus === 'success') {
+      return;
+    }
+
+    const execCtx = resolveProposalExecutionContext(proposal, conversationId);
+    if (!execCtx.canExecute || !execCtx.proposalToken || !execCtx.conversationId) {
+      const msg = execCtx.isExpired
+        ? 'Đề xuất thao tác đã hết hạn. Hãy yêu cầu trợ lý đề xuất lại.'
+        : 'Đề xuất thao tác không còn khả dụng.';
+      setActionStates((prev) => ({
+        ...prev,
+        [key]: { status: 'error', message: msg, nonRetryable: true },
+      }));
+      onStatusChange?.(key, 'error', msg);
+      return;
+    }
+
     setActionStates((prev) => ({
       ...prev,
       [key]: { status: 'executing' },
@@ -74,6 +87,8 @@ export function ActionConfirmationCard({
         actionName: proposal.payload.actionName,
         params: proposal.payload.params,
         idempotencyKey: proposal.payload.idempotencyKey,
+        proposalToken: execCtx.proposalToken,
+        conversationId: execCtx.conversationId,
       });
 
       if (result.success) {
@@ -101,12 +116,18 @@ export function ActionConfirmationCard({
         toast.error(result.message || 'Có lỗi xảy ra khi thực hiện.');
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : 'Lỗi kết nối máy chủ.';
+      const nonRetryable = isNonRetryableProposalError(err);
+      const errMsg = nonRetryable
+        ? 'Đề xuất thao tác đã hết hạn hoặc không còn hợp lệ. Hãy yêu cầu trợ lý đề xuất lại.'
+        : err instanceof Error
+          ? err.message
+          : 'Lỗi kết nối máy chủ.';
       setActionStates((prev) => ({
         ...prev,
         [key]: {
           status: 'error',
           message: errMsg,
+          nonRetryable,
         },
       }));
       onStatusChange?.(key, 'error', errMsg);
@@ -163,7 +184,20 @@ export function ActionConfirmationCard({
     >
       {proposals.map((proposal) => {
         const key = proposal.payload.idempotencyKey || proposal.id;
-        const current = actionStates[key] || { status: 'idle' };
+        const persistedState: ActionState | undefined = proposal.payload.status
+          ? {
+              status: proposal.payload.status,
+              message: proposal.payload.executionResult?.message,
+            }
+          : undefined;
+        const current: ActionState = actionStates[key] ?? persistedState ?? { status: 'idle' };
+        const execCtx = resolveProposalExecutionContext(proposal, conversationId);
+        const unavailableReason =
+          current.status === 'idle' && !execCtx.canExecute
+            ? execCtx.isExpired
+              ? 'Đề xuất thao tác đã hết hạn.'
+              : 'Đề xuất thao tác cũ không còn khả dụng.'
+            : null;
         const { actionName, title, description, confirmLabel, cancelLabel, category, isDestructive } = proposal.payload;
 
         return (
@@ -194,7 +228,14 @@ export function ActionConfirmationCard({
 
             {/* Status and Action Buttons */}
             <div className="mt-3 flex items-center justify-end gap-2">
-              {current.status === 'idle' && (
+              {current.status === 'idle' && unavailableReason && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground py-0.5">
+                  <AlertCircle size={14} />
+                  <span>{unavailableReason}</span>
+                </div>
+              )}
+
+              {current.status === 'idle' && !unavailableReason && (
                 <>
                   <Button
                     type="button"
@@ -244,16 +285,18 @@ export function ActionConfirmationCard({
                     <AlertCircle size={14} />
                     <span className="truncate max-w-[190px]">{current.message}</span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-6 px-2 text-[11px] gap-1 cursor-pointer"
-                    onClick={() => handleConfirm(proposal)}
-                  >
-                    <RotateCcw size={11} />
-                    Thử lại
-                  </Button>
+                  {!current.nonRetryable && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2 text-[11px] gap-1 cursor-pointer"
+                      onClick={() => handleConfirm(proposal)}
+                    >
+                      <RotateCcw size={11} />
+                      Thử lại
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

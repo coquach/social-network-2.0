@@ -24,7 +24,6 @@ import type {
   ChatbotHistoryPageDTO,
   ChatbotHistoryMessageDTO,
   SurfaceContextDTO,
-  AiAssistantPolicy,
 } from '../types';
 
 /**
@@ -127,7 +126,6 @@ type UseAssistantChatSessionOptions = {
   enabled?: boolean;
   surface?: SurfaceContextDTO;
   conversationId?: string;
-  aiPolicy?: AiAssistantPolicy | string;
   onConversationCreated?: (newConversationId: string) => void;
 };
 
@@ -341,13 +339,12 @@ export const useAssistantChatSession = (
   const clearMutation = useClearAssistantHistory();
 
   const historyMessages = useMemo(() => {
-    if (isNewDraft) return [];
     const raw = historyQuery.data?.pages.flatMap((page) => page.data) ?? [];
     return reconcileHistoryMessages(raw);
-  }, [historyQuery.data?.pages, isNewDraft]);
+  }, [historyQuery.data?.pages]);
 
   const sendMessage = useCallback(
-    async (message: string, overrideSurface?: SurfaceContextDTO) => {
+    async (message: string, overrideSurface?: SurfaceContextDTO): Promise<boolean> => {
       const normalizedMessage = message.trim();
       if (
         !normalizedMessage ||
@@ -357,7 +354,7 @@ export const useAssistantChatSession = (
         isSendingMessageRef.current ||
         isSyncingHistory
       ) {
-        return;
+        return false;
       }
 
       isSendingMessageRef.current = true;
@@ -426,7 +423,6 @@ export const useAssistantChatSession = (
           clientMessageId,
           surface,
           conversationId: targetConversationId,
-          aiPolicy: options?.aiPolicy,
         });
 
         for await (const chunk of stream) {
@@ -491,12 +487,15 @@ export const useAssistantChatSession = (
                         msg.id === assistantMessageId 
                           ? { 
                               ...msg, 
+                              conversationId: lastResult?.conversationId ?? msg.conversationId,
                               metadata: { 
                                 ...msg.metadata, 
                                 isPending: false, 
                                 source: LOCAL_CACHE_SOURCE,
                                 model: lastResult?.model,
                                 provider: lastResult?.provider,
+                                requestId: lastResult?.requestId,
+                                latencyMs: lastResult?.latencyMs,
                                 actions: lastResult?.suggestedActions && lastResult.suggestedActions.length > 0
                                   ? lastResult.suggestedActions
                                   : getAssistantMessageActions(msg.metadata),
@@ -510,7 +509,11 @@ export const useAssistantChatSession = (
                               } 
                             } 
                           : msg.id === optimisticUserMessage.id
-                            ? { ...msg, metadata: { ...msg.metadata, isPending: false, source: LOCAL_CACHE_SOURCE } }
+                            ? {
+                                ...msg,
+                                conversationId: lastResult?.conversationId ?? msg.conversationId,
+                                metadata: { ...msg.metadata, isPending: false, source: LOCAL_CACHE_SOURCE },
+                              }
                             : msg
                       )
                     }
@@ -526,6 +529,7 @@ export const useAssistantChatSession = (
           if (currentCached) {
             queryClient.setQueryData(newKey, currentCached);
           }
+          queryClient.removeQueries({ queryKey: historyQueryKey, exact: true });
           if (options?.onConversationCreated) {
             options.onConversationCreated(lastResult.conversationId);
           }
@@ -562,6 +566,7 @@ export const useAssistantChatSession = (
             setIsSyncingHistory(false);
           }
         })();
+        return true;
       } catch (error) {
         // Rollback on error
         queryClient.setQueryData<InfiniteData<ChatbotHistoryPageDTO>>(
@@ -584,12 +589,13 @@ export const useAssistantChatSession = (
           },
         );
         setLastError(error as Error);
+        return false;
       } finally {
         isSendingMessageRef.current = false;
         setIsResponding(false);
       }
     },
-    [historyLimit, historyQueryKey, isResponding, isSyncingHistory, queryClient, userId, clearMutation.isPending, options?.conversationId, options?.aiPolicy, options?.surface, isNewDraft, options?.onConversationCreated],
+    [historyLimit, historyQueryKey, isResponding, isSyncingHistory, queryClient, userId, clearMutation.isPending, options?.conversationId, options?.surface, isNewDraft, options?.onConversationCreated],
   );
 
   const clearHistory = useCallback(async () => {
@@ -632,14 +638,24 @@ export const useAssistantChatSession = (
               ...page,
               data: page.data.map((msg) => {
                 const proposals = msg.metadata?.proposals as AssistantProposeAction[] | undefined;
-                if (!Array.isArray(proposals)) return msg;
+                const actions = msg.metadata?.actions as Array<Record<string, unknown>> | undefined;
 
-                const hasMatch = proposals.some(
-                  (p) => (p.payload.idempotencyKey || p.id) === key,
-                );
-                if (!hasMatch) return msg;
+                const hasProposalMatch =
+                  Array.isArray(proposals) &&
+                  proposals.some((p) => (p.payload.idempotencyKey || p.id) === key);
+                const hasActionMatch =
+                  Array.isArray(actions) &&
+                  actions.some(
+                    (a) =>
+                      a?.type === 'propose_action' &&
+                      typeof a.payload === 'object' &&
+                      a.payload !== null &&
+                      (((a.payload as { idempotencyKey?: string }).idempotencyKey || (a.id as string)) === key),
+                  );
 
-                const updatedProposals = proposals.map((p) => {
+                if (!hasProposalMatch && !hasActionMatch) return msg;
+
+                const applyStatus = (p: AssistantProposeAction): AssistantProposeAction => {
                   if ((p.payload.idempotencyKey || p.id) === key) {
                     return {
                       ...p,
@@ -654,13 +670,22 @@ export const useAssistantChatSession = (
                     };
                   }
                   return p;
-                });
+                };
 
                 return {
                   ...msg,
                   metadata: {
                     ...msg.metadata,
-                    proposals: updatedProposals,
+                    ...(hasProposalMatch && proposals
+                      ? { proposals: proposals.map(applyStatus) }
+                      : {}),
+                    ...(hasActionMatch && actions
+                      ? {
+                          actions: actions.map((a) =>
+                            a?.type === 'propose_action' ? applyStatus(a as unknown as AssistantProposeAction) : a,
+                          ),
+                        }
+                      : {}),
                   },
                 };
               }),

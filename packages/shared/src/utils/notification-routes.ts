@@ -62,7 +62,11 @@ export const getNotificationRoute = (
     actorId = flatData.actorId;
   }
 
-  // 3. Chat / Message / Call routing
+  // 3. Chat / Message / Call / Proactive Intervention routing
+  if (type === 'proactive_intervention') {
+    return platform === 'native' ? '/(main)/sentiment' : '/emotions';
+  }
+
   if (type === 'call') {
     return '/chat/call';
   }

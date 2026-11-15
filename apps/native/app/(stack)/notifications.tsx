@@ -1,5 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { getNotificationRoute, useMarkAllNotificationsAsRead, useMarkNotificationAsRead, useNotifications } from '@repo/shared';
+import {
+  extractProactiveCheckinContext,
+  getNotificationRoute,
+  useAssistantStore,
+  useMarkAllNotificationsAsRead,
+  useMarkNotificationAsRead,
+  useNotifications,
+} from '@repo/shared';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
@@ -52,6 +59,8 @@ export default function NotificationsScreen() {
         return { title: 'Lời mời vào nhóm', icon: 'mail-open', color: '#f59e0b', bg: 'bg-amber-500/10' };
       case 'post_mention':
         return { title: 'Lượt nhắc đến', icon: 'at', color: '#f59e0b', bg: 'bg-amber-500/10' };
+      case 'proactive_intervention':
+        return { title: 'Gợi ý đồng hành', icon: 'sparkles', color: '#6366f1', bg: 'bg-indigo-500/10' };
       case 'system':
         return { title: 'Hệ thống', icon: 'information-circle', color: '#64748b', bg: 'bg-slate-500/10' };
       default:
@@ -61,9 +70,17 @@ export default function NotificationsScreen() {
 
 
 
+  const openWithProactiveContext = useAssistantStore((s) => s.openWithProactiveContext);
+
   const handlePressItem = (item: any) => {
     const isRead = item.isRead ?? item.status === 'read';
     if (!isRead) markAsRead(item._id);
+
+    const proactiveCtx = extractProactiveCheckinContext(item);
+    if (proactiveCtx) {
+      openWithProactiveContext(proactiveCtx);
+      return;
+    }
 
     const route = getNotificationRoute(item, 'native');
     if (route && route !== '/notifications' && route !== '/(stack)/notifications') {

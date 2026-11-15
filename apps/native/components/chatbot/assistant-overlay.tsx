@@ -15,6 +15,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAssistantStore } from "@repo/shared";
 import { AssistantChatModal } from "~/components/chatbot/assistant-chat-modal";
 import { useAppTheme } from "~/providers/theme-provider";
 import { getItem, setItem } from "~/utils/storage";
@@ -62,8 +63,23 @@ export function AssistantOverlay() {
   const [isKeyboardVisible, setIsKeyboardVisible] = React.useState(false);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
 
-  const canRenderOverlay = isLoaded && isSignedIn && isAllowedPathname(pathname);
-  const shouldShowBubble = !isKeyboardVisible && !isSheetOpen;
+  const isAuthenticated = isLoaded && isSignedIn;
+  const canRenderBubble = isAuthenticated && isAllowedPathname(pathname);
+  const lastHandledSeqRef = React.useRef(0);
+  const openRequestSeq = useAssistantStore((s) => s.openRequestSeq);
+  const pendingProactiveContext = useAssistantStore((s) => s.pendingProactiveContext);
+  const hasPendingProactiveOpen =
+    Boolean(pendingProactiveContext) && openRequestSeq > lastHandledSeqRef.current;
+  const canRenderOverlay =
+    isAuthenticated && (canRenderBubble || isSheetOpen || hasPendingProactiveOpen);
+  const shouldShowBubble = canRenderBubble && !isKeyboardVisible && !isSheetOpen;
+
+  React.useEffect(() => {
+    if (isAuthenticated && hasPendingProactiveOpen) {
+      lastHandledSeqRef.current = openRequestSeq;
+      setIsSheetOpen(true);
+    }
+  }, [isAuthenticated, hasPendingProactiveOpen, openRequestSeq]);
 
   const minX = BUBBLE_MARGIN;
   const maxX = Math.max(BUBBLE_MARGIN, width - BUBBLE_SIZE - BUBBLE_MARGIN);

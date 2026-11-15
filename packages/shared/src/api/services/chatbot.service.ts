@@ -140,9 +140,6 @@ export const chatbotService = {
     if (data.conversationId) {
       url.searchParams.append('conversationId', data.conversationId);
     }
-    if (data.aiPolicy) {
-      url.searchParams.append('aiPolicy', data.aiPolicy);
-    }
     if (data.surface) {
       // Backend v2 contract: surface JSON uses a top-level `surface` key
       // (e.g. {"surface":"feed"}), optional entityId/metadata are preserved.

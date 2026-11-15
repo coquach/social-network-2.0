@@ -4,9 +4,13 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { NotificationDTO } from '@repo/shared';
+import {
+  NotificationDTO,
+  extractProactiveCheckinContext,
+  getNotificationRoute,
+  useAssistantStore,
+} from '@repo/shared';
 import { getNotificationTypeLabel } from '@/lib/notification-type-labels';
-import { getNotificationRoute } from '@repo/shared';
 import { BLUR_PLACEHOLDERS } from '@/lib/blur-placeholder';
 
 interface NotificationCardCompactProps {
@@ -23,7 +27,7 @@ export const NotificationCardCompact = ({
   onClick,
 }: NotificationCardCompactProps) => {
   const { payload, message, status, createdAt } = notif;
-  const href = getNotificationRoute(payload as any, 'web');
+  const href = getNotificationRoute(notif, 'web');
   const safePayload =
     payload && typeof payload === 'object'
       ? (payload as Record<string, unknown>)
@@ -38,7 +42,15 @@ export const NotificationCardCompact = ({
       : typeof safePayload?.content === 'string'
       ? safePayload.content
       : '';
-  const handleClick = () => onClick?.(notif._id);
+  const openWithProactiveContext = useAssistantStore((s) => s.openWithProactiveContext);
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    onClick?.(notif._id);
+    const proactiveCtx = extractProactiveCheckinContext(notif);
+    if (proactiveCtx) {
+      e.preventDefault();
+      openWithProactiveContext(proactiveCtx);
+    }
+  };
 
   return (
     <Link

@@ -1,11 +1,16 @@
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import type { AssistantProposeAction, ExecuteActionResultDTO } from "@repo/shared";
-import { chatbotService } from "@repo/shared";
+import {
+  chatbotService,
+  isNonRetryableProposalError,
+  resolveProposalExecutionContext,
+} from "@repo/shared";
 import React, { useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 type ActionConfirmationCardProps = {
   proposals: AssistantProposeAction[];
+  conversationId?: string;
   onExecuted?: (result: ExecuteActionResultDTO) => void;
   onStatusChange?: (
     key: string,
@@ -19,31 +24,39 @@ type CardStatus = "idle" | "executing" | "success" | "cancelled" | "error";
 type ActionState = {
   status: CardStatus;
   message?: string;
+  nonRetryable?: boolean;
 };
 
 export function ActionConfirmationCard({
   proposals,
+  conversationId,
   onExecuted,
   onStatusChange,
 }: ActionConfirmationCardProps) {
-  const [actionStates, setActionStates] = useState<Record<string, ActionState>>(() => {
-    const initial: Record<string, ActionState> = {};
-    for (const p of proposals || []) {
-      const key = p.payload?.idempotencyKey || p.id;
-      if (p.payload?.status) {
-        initial[key] = {
-          status: p.payload.status,
-          message: p.payload.executionResult?.message,
-        };
-      }
-    }
-    return initial;
-  });
+  const [actionStates, setActionStates] = useState<Record<string, ActionState>>({});
 
   if (!proposals || proposals.length === 0) return null;
 
   const handleConfirm = async (proposal: AssistantProposeAction) => {
     const key = proposal.payload.idempotencyKey || proposal.id;
+    const existingStatus = actionStates[key]?.status;
+    if (existingStatus === "executing" || existingStatus === "success") {
+      return;
+    }
+
+    const execCtx = resolveProposalExecutionContext(proposal, conversationId);
+    if (!execCtx.canExecute || !execCtx.proposalToken || !execCtx.conversationId) {
+      const msg = execCtx.isExpired
+        ? "Đề xuất thao tác đã hết hạn. Hãy yêu cầu trợ lý đề xuất lại."
+        : "Đề xuất thao tác không còn khả dụng.";
+      setActionStates((prev) => ({
+        ...prev,
+        [key]: { status: "error", message: msg, nonRetryable: true },
+      }));
+      onStatusChange?.(key, "error", msg);
+      return;
+    }
+
     setActionStates((prev) => ({
       ...prev,
       [key]: { status: "executing" },
@@ -56,6 +69,8 @@ export function ActionConfirmationCard({
         actionName: proposal.payload.actionName,
         params: proposal.payload.params,
         idempotencyKey: proposal.payload.idempotencyKey,
+        proposalToken: execCtx.proposalToken,
+        conversationId: execCtx.conversationId,
       });
 
       if (result.success) {
@@ -81,12 +96,18 @@ export function ActionConfirmationCard({
         onStatusChange?.(key, "error", msg);
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Lỗi kết nối máy chủ.";
+      const nonRetryable = isNonRetryableProposalError(err);
+      const errMsg = nonRetryable
+        ? "Đề xuất thao tác đã hết hạn hoặc không còn hợp lệ. Hãy yêu cầu trợ lý đề xuất lại."
+        : err instanceof Error
+          ? err.message
+          : "Lỗi kết nối máy chủ.";
       setActionStates((prev) => ({
         ...prev,
         [key]: {
           status: "error",
           message: errMsg,
+          nonRetryable,
         },
       }));
       onStatusChange?.(key, "error", errMsg);
@@ -138,7 +159,20 @@ export function ActionConfirmationCard({
     <View className="mt-2.5 gap-2 pt-1 border-t border-app-border/40">
       {proposals.map((proposal) => {
         const key = proposal.payload.idempotencyKey || proposal.id;
-        const current = actionStates[key] || { status: "idle" };
+        const persistedState: ActionState | undefined = proposal.payload.status
+          ? {
+              status: proposal.payload.status,
+              message: proposal.payload.executionResult?.message,
+            }
+          : undefined;
+        const current: ActionState = actionStates[key] ?? persistedState ?? { status: "idle" };
+        const execCtx = resolveProposalExecutionContext(proposal, conversationId);
+        const unavailableReason =
+          current.status === "idle" && !execCtx.canExecute
+            ? execCtx.isExpired
+              ? "Đề xuất thao tác đã hết hạn."
+              : "Đề xuất thao tác cũ không còn khả dụng."
+            : null;
         const { actionName, title, description, confirmLabel, cancelLabel, category, isDestructive } = proposal.payload;
 
         return (
@@ -175,7 +209,16 @@ export function ActionConfirmationCard({
 
             {/* Actions / Status */}
             <View className="mt-3 flex-row items-center justify-end gap-2">
-              {current.status === "idle" && (
+              {current.status === "idle" && unavailableReason ? (
+                <View className="flex-row items-center gap-1 py-1">
+                  <Ionicons name="alert-circle" size={14} color="#94a3b8" />
+                  <Text className="text-xs text-app-fg/60 dark:text-app-fg-dark/60">
+                    {unavailableReason}
+                  </Text>
+                </View>
+              ) : null}
+
+              {current.status === "idle" && !unavailableReason && (
                 <>
                   <TouchableOpacity
                     activeOpacity={0.7}
@@ -241,15 +284,17 @@ export function ActionConfirmationCard({
                       {current.message}
                     </Text>
                   </View>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => handleConfirm(proposal)}
-                    className="rounded-lg border border-rose-300 px-2 py-1"
-                  >
-                    <Text className="text-[11px] font-medium text-rose-500">
-                      Thử lại
-                    </Text>
-                  </TouchableOpacity>
+                  {!current.nonRetryable && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => handleConfirm(proposal)}
+                      className="rounded-lg border border-rose-300 px-2 py-1"
+                    >
+                      <Text className="text-[11px] font-medium text-rose-500">
+                        Thử lại
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
             </View>

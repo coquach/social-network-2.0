@@ -4,6 +4,7 @@ import {
   getAssistantMessageActions,
   getAssistantMessageCards,
   getAssistantProposeActions,
+  getPolicyBlockBannerState,
 } from "@repo/shared";
 import { Button } from "heroui-native/button";
 import { Spinner } from "heroui-native/spinner";
@@ -22,6 +23,7 @@ import { AssistantCards } from "./assistant-cards";
 
 export type AssistantMessageItem = {
   id: string;
+  conversationId?: string;
   role: "user" | "assistant" | "system";
   content: string;
   createdAt: number;
@@ -42,6 +44,7 @@ type AssistantMessageListProps = {
     status: 'idle' | 'executing' | 'success' | 'cancelled' | 'error',
     message?: string,
   ) => void;
+  conversationId?: string;
   aiPolicy?: string;
   onGrantFullPolicy?: () => void;
 };
@@ -80,6 +83,7 @@ export function AssistantMessageList({
   onFetchNextPage,
   onActionNavigate,
   onStatusChange,
+  conversationId,
   aiPolicy,
   onGrantFullPolicy,
 }: AssistantMessageListProps) {
@@ -245,38 +249,54 @@ export function AssistantMessageList({
                         />
                         <ActionConfirmationCard
                           proposals={getAssistantProposeActions(message.metadata)}
+                          conversationId={message.conversationId || conversationId}
                           onStatusChange={onStatusChange}
                         />
                         <AssistantActionButtons
                           actions={getAssistantMessageActions(message.metadata)}
                           onNavigate={onActionNavigate}
                         />
-                        {!isUser &&
-                          aiPolicy === 'RESTRICTED' &&
-                          (message.metadata?.policyBlocked === true ||
-                            message.content.toLowerCase().includes('riêng tư tối đa') ||
-                            message.content.toLowerCase().includes('quyền riêng tư') ||
-                            message.content.toLowerCase().includes('không thể truy cập') ||
-                            message.content.toLowerCase().includes('không thể thực hiện thao tác')) && (
+                        {(() => {
+                          const bannerState = getPolicyBlockBannerState(
+                            message.content,
+                            message.metadata,
+                            aiPolicy,
+                          );
+                          if (!bannerState) return null;
+                          return (
                             <View className="mt-2.5 rounded-xl border border-indigo-200 bg-indigo-50/90 p-2.5 dark:border-indigo-900/60 dark:bg-indigo-950/40">
-                              <Text className="text-xs font-semibold text-indigo-900 dark:text-indigo-200">
-                                Chế độ Riêng tư tối đa đang bật
-                              </Text>
-                              <Text className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
-                                AI cần quyền Đầy đủ tính năng để tìm kiếm dữ liệu hoặc thao tác thay bạn.
-                              </Text>
-                              {onGrantFullPolicy ? (
-                                <TouchableOpacity
-                                  onPress={onGrantFullPolicy}
-                                  className="mt-2 self-start rounded-lg bg-indigo-600 px-3 py-1.5"
-                                >
-                                  <Text className="text-xs font-semibold text-white">
-                                    Cấp quyền Đầy đủ tính năng
+                              {bannerState === "user_restricted" ? (
+                                <>
+                                  <Text className="text-xs font-semibold text-indigo-900 dark:text-indigo-200">
+                                    Chế độ Riêng tư tối đa đang bật
                                   </Text>
-                                </TouchableOpacity>
-                              ) : null}
+                                  <Text className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
+                                    AI cần quyền Đầy đủ tính năng để tìm kiếm dữ liệu hoặc thao tác thay bạn.
+                                  </Text>
+                                  {onGrantFullPolicy ? (
+                                    <TouchableOpacity
+                                      onPress={onGrantFullPolicy}
+                                      className="mt-2 self-start rounded-lg bg-indigo-600 px-3 py-1.5"
+                                    >
+                                      <Text className="text-xs font-semibold text-white">
+                                        Cấp quyền Đầy đủ tính năng
+                                      </Text>
+                                    </TouchableOpacity>
+                                  ) : null}
+                                </>
+                              ) : (
+                                <>
+                                  <Text className="text-xs font-semibold text-indigo-900 dark:text-indigo-200">
+                                    Quyền truy cập dữ liệu cá nhân tạm thời bị hạn chế
+                                  </Text>
+                                  <Text className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
+                                    Hệ thống đang tạm giới hạn truy cập thông tin cá nhân để bảo vệ an toàn. Bạn có thể thử lại sau ít phút.
+                                  </Text>
+                                </>
+                              )}
                             </View>
-                          )}
+                          );
+                        })()}
                       </>
                     )}
                     {message.isPending && isUser ? (
